@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.wisp
   displayName: Wisp
   kind: 0
-  size: 0.9
+  size: 1.1
   flies: 0
   moveSpeed: 1.2
   biome: 12

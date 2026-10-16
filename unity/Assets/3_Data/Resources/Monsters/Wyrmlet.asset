@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.wyrmlet
   displayName: Wyrmlet
   kind: 0
-  size: 2
+  size: 2.2
   flies: 0
   moveSpeed: 0.7
   biome: 0

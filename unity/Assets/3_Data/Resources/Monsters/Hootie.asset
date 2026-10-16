@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.hootie
   displayName: Hootie
   kind: 0
-  size: 0.35
+  size: 0.55
   flies: 1
   moveSpeed: 1.2
   biome: 6

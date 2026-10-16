@@ -66,11 +66,12 @@ and the chat replies.
 they never multiply each other. A Raw +0 piece is worth exactly its base × roll × rarity.
 
 - **A weapon's base is 50 × its swing time in seconds**, divided by 1.5 for a pair weapon (one item in both hands,
-  whose second hand lands at half power), so every weapon deals the same damage a second at equal gear. Staff, Wand
+  whose second hand lands at half power), so every weapon deals the same damage a second at equal gear. The swing
+  time comes from the weapon's weight: 0.8 s plus 0.005 s per point a hand carries. Staff, Wand
   and Scythe give Magic Attack; every other weapon gives Attack.
-- **An armour piece's base:** a body or a garment is worth one sixth of a sword's base on the armour exchange rate
+- **An armour piece's base:** a body or a garment is worth one sixth of a 1-second weapon's base (50, a Dagger's) on the armour exchange rate
   (1 Defence = 8 HP = 4 MP = 0.5% Attack Speed, Evasion at double Defence), split between its material's two stats;
-  head and shoes half of that. At equal gear a full metal set's Defence is **25% of a sword's Attack**. No piece
+  head and shoes half of that. At equal gear a full metal set's Defence is **25% of a Dagger's Attack** (20% of a Sword's). No piece
   gives movement speed.
 - **The roll.** Only a piece a creature DROPS rolls its base, at **85% to 115%** in whole percents, evenly — on the
   server, when it drops, saved on the copy and never changed. Every other piece — a new character's, a shop's, a
@@ -354,11 +355,11 @@ move once it is played. Change it here, in place, when it does.
 | A | +10 | 70% | 600% | 6 | 70 | ×1.5 |
 
 - **Base, Common, at a 100% roll:** a weapon **50 × its swing time in seconds** (÷ 1.5 for a pair weapon) — a Sword
-  50, a Dagger 40, a Greatsword 65; a body or garment one sixth of a sword's base — metal **4 Defence and 33 HP**,
+  63, a Dagger 50, a Greatsword 80; a body or garment one sixth of a Dagger's base — metal **4 Defence and 33 HP**,
   leather **2.1% Attack Speed and 2 Evasion**, cloth **4 Magic Defence and 17 MP**; head and shoes half. Every
   weapon's and slot's base is in [Crafting Tables](crafting-tables.md).
-- **A Common sword at +10** of each grade is worth 100 · 250 · 500 · 850 · 1,300 · 1,850 · **2,500** Attack (Raw …
-  A). A Legendary A +10 sword at a 115% roll is 50 × 1.15 × 1.50 × 50 = **4,313 Attack**.
+- **A Common Sword at +10** of each grade is worth 125 · 313 · 625 · 1,063 · 1,625 · 2,313 · **3,125** Attack (Raw …
+  A). A Legendary A +10 Sword at a 115% roll is 62.5 × 1.15 × 1.50 × 50 = **5,391 Attack**.
 - **Rarity multiplies the base:** Common **×1.00** · Uncommon **×1.10** · Rare **×1.20** · Epic **×1.35** ·
   Legendary **×1.50**. **The roll:** 85% to 115%, creature drops only.
 - **Fold cost:** Temper Dust, the grade's step in units (1 at Raw … 7 at A), plus **0.6 kills of income** at the

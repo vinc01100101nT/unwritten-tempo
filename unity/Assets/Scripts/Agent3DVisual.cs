@@ -151,6 +151,25 @@ public abstract class Agent3DVisual : MonoBehaviour
     Vector3 lastPos;
     bool seated;   // the feet have been placed at least once; a still unit then needs no further ground ray
 
+    // THE GROUND ITSELF CAN CHANGE UNDER A STANDING BODY. Townsfolk live in the persistent scene, so while the player
+    // is away on another map they stand over THAT map's ground and seat their feet on it; back in town, a still one
+    // never re-cast and kept floating at the other map's height. Every map load or unload bumps this, and a body
+    // whose last seat predates it seats again once — one ray per body per map change, nothing per frame.
+    static int groundVersion;
+    int seatedOnVersion = -1;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void WatchMapChanges()
+    {
+        groundVersion = 0;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnMapLoaded;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnMapLoaded;
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= OnMapUnloaded;
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnMapUnloaded;
+    }
+    static void OnMapLoaded(UnityEngine.SceneManagement.Scene s, UnityEngine.SceneManagement.LoadSceneMode m) => groundVersion++;
+    static void OnMapUnloaded(UnityEngine.SceneManagement.Scene s) => groundVersion++;
+
     // FOOTSTEPS, for every body this drives. Fired the instant this body's OWN walk or run animation crosses an
     // authored foot-plant frame — never a per-second timer — so the steps are glued to the feet you can see planting,
     // at any speed, with nothing to retune. This used to be written out twice, once on a townsperson and once on a
@@ -401,11 +420,16 @@ public abstract class Agent3DVisual : MonoBehaviour
         //
         // The raycast is still gated on having moved — a body in the air is moving every frame, so an airborne one
         // re-seats; a still crowd standing on the floor costs nothing, exactly as before.
-        if (model != null && (!seated || moved.sqrMagnitude > 1e-10f)
-            && GroundSnap.TryGroundY(transform.position, groundMask, out float groundY))
+        if (model != null && (!seated || seatedOnVersion != groundVersion || moved.sqrMagnitude > 1e-10f))
         {
-            model.position = new Vector3(model.position.x, groundY + toldAbove, model.position.z);
-            seated = true;
+            // Stamped on the attempt, hit or miss: a standing body over no ground at all (a townsperson while its
+            // town is not loaded) must not cast every frame; the next map change gives it another try.
+            seatedOnVersion = groundVersion;
+            if (GroundSnap.TryGroundY(transform.position, groundMask, out float groundY))
+            {
+                model.position = new Vector3(model.position.x, groundY + toldAbove, model.position.z);
+                seated = true;
+            }
         }
 
         // …and the steps, off the very frames this body just posed. Last, so it reads the pose this frame produced.

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.flutterby
   displayName: Flutterby
   kind: 0
-  size: 0.3
+  size: 0.5
   flies: 1
   moveSpeed: 1.1
   biome: 0

@@ -473,3 +473,18 @@ MonoBehaviour:
     hairStyle: 
     hairColour: 
     headgear: 
+  - id: beta-hatter
+    name: Hatter
+    description: Headgear (beta testing)
+    model: Casual2_Male
+    map: lastline
+    home: {x: 0.3, y: 0, z: -3.8}
+    wanderRadius: 0
+    facing: 180
+    station: 0
+    shop: beta-headgear
+    level: 1
+    barks: 1
+    hairStyle: hair12
+    hairColour: '#8B7643'
+    headgear: 

@@ -28,10 +28,6 @@ public class BiomeWeather : ScriptableObject
                  "0 = only while it snows, 1 = fully covered.")]
         public float alwaysSnowCover;
         [Range(0f, 1f)]
-        [Tooltip("Fog this biome's maps always show, whatever the weather: 0 = only in foggy weather, 1 = the full " +
-                 "fog of the Fog weather.")]
-        public float alwaysFog;
-        [Range(0f, 1f)]
         [Tooltip("Clouds floating over the map at treetop height, which this biome's maps always show: 0 = none, " +
                  "1 = full.")]
         [UnityEngine.Serialization.FormerlySerializedAs("alwaysCloudSea")]
@@ -72,9 +68,6 @@ public class BiomeWeather : ScriptableObject
 
     /// <summary>Snow blanket the map loaded right now always shows (0..1).</summary>
     public static float AlwaysSnowCoverHere { get { var r = Here; return r != null ? r.alwaysSnowCover : 0f; } }
-
-    /// <summary>Fog the map loaded right now always shows (0..1).</summary>
-    public static float AlwaysFogHere { get { var r = Here; return r != null ? r.alwaysFog : 0f; } }
 
     /// <summary>Clouds at treetop height the map loaded right now always shows (0..1).</summary>
     public static float AlwaysCloudsHere { get { var r = Here; return r != null ? r.alwaysClouds : 0f; } }

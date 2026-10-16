@@ -136,66 +136,12 @@ public class CharacterSpec : ScriptableObject
     [Tooltip("How hard that second hit lands, as a share of a full swing — 0.5 = half. It rolls its own miss and crit.")]
     [Range(0f, 1f)] public float offHandPower = 0.5f;
 
-    // WHY THESE TWO LIVE HERE: every fighter — a person or a creature — swings bare-handed by the same rule, so the
-    // reach and the cadence have ONE home. Creatures used to carry their own typed copy of both.
+    // WHY THIS LIVES HERE: every fighter — a person or a creature — swings bare-handed by the same rule, so the
+    // reach has ONE home. Creatures used to carry their own typed copy. The cadence is worked out from the weapon's
+    // weight instead (UnitOffense.SwingSeconds).
     [Tooltip("Bare-handed reach, in world units at full size. A weapon's own attack range replaces it while one is " +
              "held — for a person and a creature alike.")]
     public float unarmedReach = 0.5f;
-    [Tooltip("Seconds between ordinary bare-handed swings before attack speed is applied — for a person and a " +
-             "creature alike. A weapon listed below swings at its own pace instead.")]
-    public float swingInterval = 1f;
-
-    [System.Serializable]
-    public struct WeaponSwing
-    {
-        public WeaponType weapon;
-        [Tooltip("Seconds between ordinary swings while this weapon is held, before attack speed is applied.")]
-        public float seconds;
-    }
-
-    [Tooltip("Seconds between ordinary swings for each weapon, before attack speed is applied — for a person and a " +
-             "creature alike. A weapon not listed swings at the bare-handed pace above.")]
-    public WeaponSwing[] weaponSwingIntervals =
-    {
-        new WeaponSwing { weapon = WeaponType.Dagger,       seconds = 0.8f },
-        new WeaponSwing { weapon = WeaponType.Knuckle,      seconds = 0.8f },
-        new WeaponSwing { weapon = WeaponType.Katar,        seconds = 0.85f },
-        new WeaponSwing { weapon = WeaponType.Shuriken,     seconds = 0.9f },
-        new WeaponSwing { weapon = WeaponType.Sword,        seconds = 1f },
-        new WeaponSwing { weapon = WeaponType.Wand,         seconds = 1f },
-        new WeaponSwing { weapon = WeaponType.Axe,          seconds = 1.1f },
-        new WeaponSwing { weapon = WeaponType.Spear,        seconds = 1.1f },
-        new WeaponSwing { weapon = WeaponType.Bow,          seconds = 1.1f },
-        new WeaponSwing { weapon = WeaponType.Staff,        seconds = 1.2f },
-        new WeaponSwing { weapon = WeaponType.Scythe,       seconds = 1.25f },
-        new WeaponSwing { weapon = WeaponType.Mace,         seconds = 1.3f },
-        new WeaponSwing { weapon = WeaponType.TwoHandSword, seconds = 1.3f },
-        new WeaponSwing { weapon = WeaponType.Firearm,      seconds = 1.4f },
-    };
-
-    // Indexed by (int)WeaponType, 0 = not listed. Built on the first ask and after an edit in the Inspector, so a
-    // swing reads one array entry.
-    [System.NonSerialized] float[] swingByWeapon;
-
-    /// <summary>Seconds between ordinary swings while holding <paramref name="weapon"/>, before attack speed is
-    /// applied: the weapon's own pace, or the bare-handed one for empty hands and a weapon not listed. The one answer
-    /// a person's swing and a creature's both read.</summary>
-    public float SwingInterval(WeaponType weapon)
-    {
-        if (swingByWeapon == null)
-        {
-            int largest = 0;
-            foreach (int v in System.Enum.GetValues(typeof(WeaponType))) if (v > largest) largest = v;
-            swingByWeapon = new float[largest + 1];
-            if (weaponSwingIntervals != null)
-                foreach (var each in weaponSwingIntervals)
-                    if ((int)each.weapon > 0 && (int)each.weapon <= largest) swingByWeapon[(int)each.weapon] = each.seconds;
-        }
-        int i = (int)weapon;
-        return i > 0 && i < swingByWeapon.Length && swingByWeapon[i] > 0f ? swingByWeapon[i] : swingInterval;
-    }
-
-    void OnValidate() => swingByWeapon = null;
 
     [Tooltip("How far inside reach a fighter stops walking in: it stops at reach divided by this, then stays put " +
              "until the target moves past its full reach, and chases again. Stops the stand-vs-chase decision " +

@@ -26,7 +26,7 @@ public class CalendarPanel : MonoBehaviour
     const int Days = GameCalendar.DaysPerSeason;   // 12 cells per page
 
     [Header("Weather icons — Ninja Adventure 'Meteo' set, assigned by UIShellBuilder at bake time")]
-    public Sprite sunIcon;       // Clear (and dimmed for Cloudy/Fog)
+    public Sprite sunIcon;       // Clear (and dimmed for Cloudy)
     public Sprite rainIcon;      // LightRain / Thunderstorm
     public Sprite snowIcon;      // Snow
 
@@ -226,7 +226,7 @@ public class CalendarPanel : MonoBehaviour
         }
     }
 
-    // Icon sprite + tint per weather. The pack ships clean Sun/Rain/Snow pixel icons but no Cloud/Storm/Fog,
+    // Icon sprite + tint per weather. The pack ships clean Sun/Rain/Snow pixel icons but no Cloud/Storm,
     // so the gaps reuse the closest icon with a wash — overcast = dimmed Sun, storm = violet-washed Rain — and
     // the coloured text tag underneath names each one exactly.
     (Sprite sprite, Color tint) IconFor(Preset p)
@@ -238,7 +238,6 @@ public class CalendarPanel : MonoBehaviour
             case Preset.LightRain:    return (rainIcon, Color.white);
             case Preset.Thunderstorm: return (rainIcon, new Color(0.80f, 0.74f, 1.00f));   // violet storm wash
             case Preset.Snow:         return (snowIcon, Color.white);
-            case Preset.Fog:          return (sunIcon,  new Color(0.80f, 0.82f, 0.84f));   // pale misty
             default:                  return (sunIcon,  Color.white);
         }
     }

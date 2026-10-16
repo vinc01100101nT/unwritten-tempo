@@ -27,7 +27,7 @@ public class SkillEffectCatalogWindow : EditorWindow
     {
         C("damage",         "Damage",           "mult",   "effect-output", "yes",  "ATK/MATK multiplier; final = the caster's ATK/MATK roll × this × affinity"),
         C("hits",           "Hits",             "int",    "effect-output", "yes",  "strikes per landing; each is a proc trigger (hitCountAffinity)"),
-        C("heal_amount",    "Heal Amount",      "flat HP","effect-output", "yes",  "Heal amount (sustain: HP/MP/Def)"),
+        C("heal_amount",    "Heal Amount",      "HP (or a range)","effect-output", "yes",  "Heal amount (sustain: HP/MP/Def)"),
         C("heal_per_tick",  "Heal / sec",       "HP",     "effect-output", "yes",  "Regen HoT, every 0.8s"),
         C("shield_amount",  "Barrier HP",       "flat HP","effect-output", "yes",  "Shield absorb pool (sustain)"),
         C("dmg_reduction",  "Damage Reduction", "0..1",   "effect-output", "yes",  "Guard cut fraction (clamped to 1)"),
@@ -64,7 +64,7 @@ public class SkillEffectCatalogWindow : EditorWindow
         [SkillEffectKind.DrainMana]     = E("mobs/any", "no", "mp_drained (amount), proc_chance", "mp_drained", "ICombatUnit.SpendMana + GainMana", "Takes up to N MP from the unit it lands on (never more than it holds); the caster gains exactly what was taken."),
         [SkillEffectKind.SpendAllMana]  = E("self", "no", "—", "—", "SkillEffectApplier.PayAllInCosts", "The caster spends every point of MP held. Paid once per cast; a Damage effect later in the cast grows by its 'damage mult per point given up'."),
         [SkillEffectKind.DropHealthToOne] = E("self", "no", "—", "—", "ICombatUnit.GiveUpHealthDownToOne", "The caster's HP drops to 1 (never 0); not a hit. Paid once per cast; a Damage effect later in the cast grows by its 'damage mult per point given up'."),
-        [SkillEffectKind.Heal]          = E("self/others","no", "heal_amount", "heal_amount", "Health/Character.Heal", "Flat HP restored; landing follows the tick's TargetMode."),
+        [SkillEffectKind.Heal]          = E("self/others","no", "heal_amount", "heal_amount", "Health/Character.Heal", "HP restored, fixed or a range rolled per heal; landing follows the tick's TargetMode."),
         [SkillEffectKind.Status]        = E("mobs/self", "no", "ailment; dot_damage, duration, proc_chance", "output + duration (proc_chance never)", "StatusController.Apply", "Only the DoTs carry a number now; Stun/Freeze/Silence are duration-only. Slow and Blind moved to the sub-stat debuff."),
         [SkillEffectKind.Taunt]         = E("mobs", "no", "duration", "duration", "MonsterAI3D.Taunt", "Forces mob aggro onto the caster."),
         [SkillEffectKind.Teleport]      = E("self (point)","no", "—", "—", "Player3DController.Teleport", "Instant blink to the aimed, range-clamped point."),

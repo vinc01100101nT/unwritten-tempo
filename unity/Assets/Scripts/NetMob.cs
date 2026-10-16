@@ -90,9 +90,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     /// the map name is: the wire carries it, the saved prefab does not.</summary>
     [SyncVar] CreatureKind netKind;
 
-    /// <summary>The creature's CURRENT level as the server holds it — re-sent on every push, because a creature
-    /// levels up mid-fight and a summon can be re-statted to any level, so its creature data's level is not the
-    /// answer.</summary>
+    /// <summary>The creature's CURRENT level as the server holds it — re-sent on every push, because a summon
+    /// can be re-statted to any level, so its creature data's level is not the answer.</summary>
     [SyncVar] int netLevel;
 
     public CreatureKind Kind => netKind;
@@ -382,8 +381,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // WHAT IT WEARS, re-sent only when the worn set has changed — a new life's fresh gear, above all.
         if (serverGear != null && serverGear.Version != wornVersionSent) PublishWorn();
 
-        // BOTH numbers, every push — not just the current one. A creature's maximum is not fixed for life: it
-        // levels up, and levelling re-derives its whole stat block including how much health it can hold. Sending
+        // BOTH numbers, every push — not just the current one. A creature's maximum is not fixed for life: a
+        // re-stat or fresh gear re-derives its whole stat block including how much health it can hold. Sending
         // only the current figure meant every watching player measured a grown creature's bar against the maximum
         // it was BORN with, so a full-health veteran read as overflowing and a hurt one read as healthier than it
         // was. Both are cheap, and a SyncVar that is written the same value it already holds sends nothing.
@@ -591,7 +590,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // nameplate below only redraws when it sees a different value anyway.
         //
         // BOTH numbers are watched, not just the current one. Watching only the current figure would have made the
-        // maximum's delivery depend on the current one happening to move in the same breath — true when a level-up
+        // maximum's delivery depend on the current one happening to move in the same breath — true when a re-stat
         // heals to full, and quietly false the day anything raises a creature's ceiling without touching what it is
         // holding right now. A bar is a pair of numbers; either one moving is news.
         if (viewHealth != null && (netHealth != lastShownHealth || netMaxHealth != lastShownMaxHealth))

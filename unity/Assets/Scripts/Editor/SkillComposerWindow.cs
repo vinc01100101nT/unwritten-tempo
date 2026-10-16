@@ -617,6 +617,10 @@ public class SkillComposerWindow : EditorWindow
                        "Fires at most once every 15 seconds per unit, so drawing over and over can't keep a buff up — " +
                        "keep the buff shorter than that. Creatures fire it too when they draw. This is the moment each " +
                        "weapon's draw buff answers.";
+            case SkillTrigger.OnHealDealt:
+                return "A HEAL YOU CAST RESTORED HEALTH — to anybody, yourself included. Aims at whoever was healed.\n\n" +
+                       "Fires only when health was really given back: a heal on somebody already full fires nothing. " +
+                       "Only a skill's heal fires it — a potion or anything else an item runs never does.";
             default:
                 return "";
         }
@@ -1844,7 +1848,15 @@ public class SkillComposerWindow : EditorWindow
                     break;
                 case SkillEffectKind.Heal:
                     // The base value of the one formula — always shown, whether or not a pile sizes it.
-                    NumberRow("HP", "Flat HP restored to the caster.", ref ef.amount, ef.useStacks, whole: true);
+                    NumberRow("HP", "Flat HP restored to the caster — the lowest a heal rolls.", ref ef.amount, ef.useStacks, whole: true);
+                    if (ef.healAmountMaxSet)
+                        NumberRow("HP up to", "The most HP one heal restores. Each heal rolls a whole number from HP up " +
+                                  "to this. Equal to HP = always exactly HP.", ref ef.healAmountMax, ef.useStacks, whole: true);
+                    else if (GUILayout.Button(new GUIContent("Heal a range", "Each heal rolls between HP and a top you set, like an RO potion.")))
+                    {
+                        ef.healAmountMax = ef.amount;
+                        ef.healAmountMaxSet = true;
+                    }
                     break;
                 case SkillEffectKind.Status:
                     // The ailment is chosen in the State ▸ Debuffs picker above — not repeated here (no double-knob).
@@ -2125,7 +2137,7 @@ public class SkillComposerWindow : EditorWindow
         switch (k)
         {
             case SkillEffectKind.Damage:        return "Deals damage to whoever this tick hits. The ATK/MATK multiplier below says how many of the caster's own hits it is worth.";
-            case SkillEffectKind.Heal:          return "Restores a flat chunk of HP to the caster.";
+            case SkillEffectKind.Heal:          return "Restores HP to the caster — a fixed amount, or a range rolled each heal.";
             case SkillEffectKind.DrainMana:     return "Takes MP from whoever this lands on and gives the caster exactly what was taken.";
             case SkillEffectKind.SpendAllMana:  return "The caster spends ALL their MP. A strike in the same cast can grow with how much was spent.";
             case SkillEffectKind.DropHealthToOne: return "The caster's HP drops to 1. A strike in the same cast can grow with how much HP was given up.";

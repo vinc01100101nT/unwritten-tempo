@@ -316,6 +316,11 @@ public enum SkillTrigger
     /// <see cref="WeaponDrawMath.DrawBuffSpacingSeconds"/> per unit, so drawing again and again never keeps its buff
     /// up. No entity is passed — it is always about you. Each weapon's draw buff answers this.</summary>
     OnWeaponDrawn,
+
+    /// <summary>A HEAL YOU CAST RESTORED HEALTH — to anybody, yourself included. Fired on the server by
+    /// <c>SkillEffectApplier</c> when a Heal effect of one of your SKILLS actually gave health back (a target already
+    /// full fires nothing); what an item runs (a potion) never fires it. Entity = whoever was healed.</summary>
+    OnHealDealt,
 }
 
 /// <summary>ONE way a skill can start — a moment, plus the state gate that moment must satisfy. A skill owns a LIST of

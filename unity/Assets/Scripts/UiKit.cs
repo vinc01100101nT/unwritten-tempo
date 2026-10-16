@@ -104,6 +104,15 @@ public static class UiKit
         return m;
     }
 
+    /// <summary>THE look of a count drawn over an item's picture — in the bag, storage, a shop's grid, the hotbar —
+    /// white with a black edge, so it reads over any picture. Every such count is styled here and nowhere else.</summary>
+    public static void StyleItemCount(TMP_Text t)
+    {
+        if (t == null) return;
+        t.color = TextOnDim;
+        t.fontSharedMaterial = OutlinedMaterial(t.font, 0.25f);
+    }
+
     // THE look of a name floating over the world — the name over whoever you point at, and an item's name on the
     // floor. The interface face, drawn bold, with a heavier black edge than other outlined text (0.3, the width the damage
     // numbers use) so it reads over any ground. The bold is heavier too: the font file holds only the regular

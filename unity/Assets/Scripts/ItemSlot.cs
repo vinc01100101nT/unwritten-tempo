@@ -79,7 +79,9 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     {
         if (!nameOnHover) return;
         if (instance != null) ItemTooltip.ShowName(ItemTooltip.CopyTitle(instance));
-        else if (item != null) ItemTooltip.ShowName(item.displayName);
+        else if (item != null)
+            ItemTooltip.ShowName(boundEntry != null && boundEntry.def == item && !boundEntry.IsEquip
+                ? item.displayName + " x" + boundEntry.count : item.displayName);
     }
 
     public void OnPointerExit(PointerEventData e)

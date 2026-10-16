@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.swampfang
   displayName: Swampfang
   kind: 0
-  size: 1
+  size: 1.2
   flies: 0
   moveSpeed: 1.1
   biome: 11

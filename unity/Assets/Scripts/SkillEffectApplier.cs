@@ -560,10 +560,12 @@ public static class SkillEffectApplier
                     var healed = unit as Character;
                     int hpBefore = healed != null ? healed.CurrentHP : 0;
                     int hpMax = healed != null ? healed.MaxHP : 0;
-                    unit.Heal(ScaledAmount(e, caster, vars));
+                    int anyBefore = unit.CurrentHP;
+                    unit.Heal(RolledHeal(e, caster, vars));
                     var healer = healed != null ? KillLedger.PersonBehind(caster) : null;
                     if (healer != null && !ReferenceEquals(healer, healed))
                         healed.Hurts.Credit(healer, healed.CurrentHP - hpBefore, hpMax - hpBefore);
+                    if (unit.CurrentHP > anyBefore) HealDealt(caster, unit);
                 }
                 break;
             case SkillEffectKind.Status:
@@ -1144,6 +1146,29 @@ public static class SkillEffectApplier
     // alone (StackedAmount) and no multiplier can move it by less than a whole one.
     static int ScaledAmount(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.amount.ResolveInt(vars, OutputMult(e, caster));
+    /// <summary>One heal's HP: a roll from the amount up to its top, both resolved the same way. Only the server's
+    /// heal lands (Character.Heal / Health.Heal drop it on a watched copy), so only the server's roll counts.</summary>
+    // A HEAL THAT GAVE HEALTH BACK is the healer's moment (OnHealDealt) — only when a skill cast it, never when an item
+    // ran it, so a potion is not a heal "you cast".
+    static void HealDealt(ICombatUnit caster, ICombatUnit healed)
+    {
+        if (caster == null || healed == null) return;
+        var by = SkillCatalog.Get(PassiveEvents.CurrentSkillId);
+        if (by == null || by.ItemUseEntry != null) return;
+        PassiveEvents.Fire(caster, SkillTrigger.OnHealDealt, null, healed.Body);
+    }
+
+    static int RolledHeal(SkillEffect e, ICombatUnit caster, in StackVars vars)
+    {
+        int low = ScaledAmount(e, caster, vars);
+        if (!e.healAmountMaxSet) return low;
+        int high = e.healAmountMax.ResolveInt(vars, OutputMult(e, caster));
+        return HealInRange(low, high, CombatRng.Value01());
+    }
+    /// <summary>A whole number from <paramref name="low"/> to <paramref name="high"/>, both included, picked by a roll
+    /// in [0, 1). A top below the bottom heals the bottom.</summary>
+    public static int HealInRange(int low, int high, float roll01) =>
+        high <= low ? low : low + Mathf.Min(high - low, Mathf.FloorToInt((high - low + 1) * roll01));
     /// <summary>Feed ANOTHER skill's pile. What one of its charges is worth is read from THAT skill's own authored
     /// effect — the single definition of its charge — so a pile that is running and one that is not both end up with
     /// identical stacks, and a modifier never has to invent a number. A skill that grants nothing of that kind (or was

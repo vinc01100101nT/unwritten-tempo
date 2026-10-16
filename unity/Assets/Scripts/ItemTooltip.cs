@@ -396,6 +396,7 @@ public class ItemTooltip : MonoBehaviour
         AppendHeader(sb, item);
         AppendRarity(sb, Rarities.Of(item, null));
         AppendAttackKind(sb, item);
+        AppendHeadgear(sb, item);
         AppendUseEffect(sb, item);
         AppendFooter(sb, item);
         AppendMaterialUse(sb, item);
@@ -458,6 +459,7 @@ public class ItemTooltip : MonoBehaviour
         AppendRarity(sb, Rarities.Of(def, inst));
         AppendAttackKind(sb, def);
         AppendCopyStats(sb, inst);
+        AppendHeadgear(sb, def);
         AppendTrademark(sb, inst);
         AppendWord(sb, inst);
 
@@ -558,6 +560,31 @@ public class ItemTooltip : MonoBehaviour
                 if (word != null) into.Add(pct + word);
             }
         }
+    }
+
+    // WHAT A HAT ADDS while worn — the same on every copy, read off its design — then what its effect does, in the
+    // words the skill's own card uses (SkillTooltip), so a hat and a skill can never word one effect two ways.
+    static readonly System.Collections.Generic.List<string> wornLines = new System.Collections.Generic.List<string>();
+    static void AppendHeadgear(StringBuilder sb, Item item)
+    {
+        if (item == null) return;
+        var eb = default(EquipBonuses);
+        Headgear.AddInto(item, ref eb);
+        int before = sb.Length;
+        sb.Append("\n<b><size=115%>");
+        int opened = sb.Length;
+        AppendStatList(sb, eb);
+        AppendStat(sb, "attack reach", eb.attackReach);
+        AppendStat(sb, "experience", eb.experiencePercent, "%");
+        if (sb.Length == opened) sb.Length = before;
+        else sb.Append("</size></b>");
+
+        var skill = string.IsNullOrEmpty(item.wornSkillId) ? null : SkillCatalog.Get(item.wornSkillId);
+        if (skill == null) return;
+        wornLines.Clear();
+        SkillTooltip.EffectLines(skill, SkillTooltip.Dialect.RichText, wornLines);
+        sb.Append("\n\n" + DimTag).Append(SkillTooltip.TriggerLine(skill, SkillTooltip.Dialect.RichText)).Append(":</color>");
+        for (int i = 0; i < wornLines.Count; i++) sb.Append("\n" + UseTag).Append(wornLines[i]).Append("</color>");
     }
 
     // THIS COPY's armour word — its name, then the one thing it does, at the finished amount the server wrote.
@@ -695,8 +722,11 @@ public class ItemTooltip : MonoBehaviour
         // A SELL VALUE OF 0 IS NOT SHOWN AS A 0: it means no shop will buy it, and it says so.
         if (item.CanBeSold)
             sb.Append("\n" + DimTag + "Value ").Append(Wallet.Amount(item.value)).Append("</color>");
-        else
-            sb.Append("\n" + DimTag).Append(Item.CannotBeSoldText).Append("</color>");
+        // EVERY RESTRICTION ITS TAGS PUT ON IT, one per line.
+        if (!item.CanBeDropped) sb.Append("\n" + DimTag).Append(Item.CannotBeDroppedText).Append("</color>");
+        if (!item.CanBeSold)    sb.Append("\n" + DimTag).Append(Item.CannotBeSoldText).Append("</color>");
+        if (!item.CanBeStored)  sb.Append("\n" + DimTag).Append(Item.CannotBeStoredText).Append("</color>");
+        if (!item.CanBeTraded)  sb.Append("\n" + DimTag).Append(Item.CannotBeTradedText).Append("</color>");
         if (!string.IsNullOrWhiteSpace(item.description))
             sb.Append("\n\n" + MainTag).Append(item.description).Append("</color>");
     }

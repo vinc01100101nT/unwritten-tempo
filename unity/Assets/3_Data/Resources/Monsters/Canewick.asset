@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.canewick
   displayName: Canewick
   kind: 0
-  size: 0.8
+  size: 1
   flies: 0
   moveSpeed: 0
   biome: 6

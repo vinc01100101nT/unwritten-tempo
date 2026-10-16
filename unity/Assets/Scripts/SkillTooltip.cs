@@ -130,6 +130,7 @@ public static class SkillTooltip
             case SkillTrigger.OnParry:             return "When you parry";
             case SkillTrigger.OnDamageReceived:    return "When you take damage";
             case SkillTrigger.OnWeaponDrawn:       return "When you draw your weapon";
+            case SkillTrigger.OnHealDealt:         return "When you heal someone";
             default:                               return "Passive";
         }
     }
@@ -364,7 +365,14 @@ public static class SkillTooltip
             case SkillEffectKind.Execute:
                 return (e.chance.value < 1f ? Pct(e.chance.value) + " per hit: " : "")
                      + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.value.ToString("0.##")) + ")";
-            case SkillEffectKind.Heal:          return "Heals " + Hl(Mathf.RoundToInt(e.amount.value * LiveMult(e)).ToString()) + " HP";
+            case SkillEffectKind.Heal:
+            {
+                float mult = LiveMult(e);
+                string low = Mathf.RoundToInt(e.amount.value * mult).ToString();
+                return e.healAmountMaxSet && e.healAmountMax.value > e.amount.value
+                    ? "Heals " + Hl(low + "–" + Mathf.RoundToInt(e.healAmountMax.value * mult)) + " HP"
+                    : "Heals " + Hl(low) + " HP";
+            }
             case SkillEffectKind.DrainMana:     return "Drains up to " + Hl(Mathf.RoundToInt(e.amount.value).ToString()) + " MP and gives it to you";
             case SkillEffectKind.SpendAllMana:  return "Spends all your MP";
             case SkillEffectKind.DropHealthToOne: return "Drops your HP to 1";

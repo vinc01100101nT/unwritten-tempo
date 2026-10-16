@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.abyss-maw
   displayName: Abyss Maw
   kind: 1
-  size: 4
+  size: 4.2
   flies: 0
   moveSpeed: 0.8
   biome: 13

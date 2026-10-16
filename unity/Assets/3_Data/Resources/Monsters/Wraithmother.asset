@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.wraithmother
   displayName: Wraithmother
   kind: 1
-  size: 2.5
+  size: 2.7
   flies: 0
   moveSpeed: 1
   biome: 14

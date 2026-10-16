@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.glowcoil
   displayName: Glowcoil
   kind: 0
-  size: 0.35
+  size: 0.55
   flies: 0
   moveSpeed: 1.1
   biome: 13

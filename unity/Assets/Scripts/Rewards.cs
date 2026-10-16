@@ -84,7 +84,9 @@ public static class Rewards
         // of a creature at any level. Every kill that gets this far steps the run, even one that rounds to nothing.
         double now = KillCombo.Now;
         int combo = CountKill(character, victim, now);
-        int paid = KillComboMath.Paid(eventPaid, combo);
+        int comboPaid = KillComboMath.Paid(eventPaid, combo);
+        // AND UNDER WHAT THEIR HEADGEAR ADDS (the Chef's Hat), on top of both.
+        int paid = Headgear.ExperienceWithBonus(comboPaid, character.WornExperiencePercent);
         PlaySession.Killed(character, paid);
         character.KillCombo.Earned(now, paid, 0);
         if (paid > 0)
@@ -97,14 +99,14 @@ public static class Rewards
                 {
                     SpawnIds.MapOf(character), " ", SpawnIds.Label(character), " (", GameNetwork.CharacterIdOf(character),
                     ") earned ", paid.ToString(), " experience from ", victim != null ? SpawnIds.Label(victim) : "somebody",
-                    ComboWords(combo, paid - eventPaid),
+                    ComboWords(combo, comboPaid - eventPaid), paid > comboPaid ? ", +" + (paid - comboPaid) + " from headgear" : "",
                 }));
             // On a server the character being paid is not the one on that player's screen, so their machine has to
             // be told or the kill quietly earns them nothing. Does nothing anywhere else.
             GameNetwork.TellOwnerTheyEarned(character, paid, 0, levelsGained, ringLevelsGained);
         }
         // Their combo, what this kill paid and their per-hour rates, to their own screen — every kill, paid or not.
-        GameNetwork.TellOwnerTheirKillCombo(character, victim, true, paid, paid - eventPaid, 0, 0);
+        GameNetwork.TellOwnerTheirKillCombo(character, victim, true, paid, comboPaid - eventPaid, 0, 0);
 
         // AND ANY QUEST COUNTING THIS CREATURE — the same kill, paid to the same person, through this same door.
         // A SAVED CHARACTER is not the creature whose body it wears — the same exclusion SavedCharacters makes.

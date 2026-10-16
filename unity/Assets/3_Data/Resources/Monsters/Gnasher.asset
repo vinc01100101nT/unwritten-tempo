@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.gnasher
   displayName: Gnasher
   kind: 0
-  size: 2.8
+  size: 3
   flies: 0
   moveSpeed: 1.2
   biome: 10

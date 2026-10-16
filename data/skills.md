@@ -11,6 +11,20 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | — | Blink Step *(unpublished)* | active | MP **6**  CD **6s**  Instant  Range **6** | pressed | Blinks to the target location |
 | — | Bulwark *(unpublished)* | active | MP **12**  CD **14s**  Instant  Range **6** | pressed | +**50%** damage reduction for **5s** · Taunts nearby enemies for **5s** |
 | — | Ember Bolt *(unpublished)* | active | MP **8**  CD **1.5s**  Cast **1.1s**  Range **11** | pressed | Deals **1×** magic damage · +**100%** damage reduction for **0.5s** |
+| `Ah` | Army Helmet *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When you draw your weapon | +**20%** damage for **5s** |
+| `Cb` | Cowboy Hat *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**10%** movement speed for **2s** |
+| `Gh` | Golden Horned Helm *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **40** | When you kill a mob | Deals **0.3×** physical damage |
+| `Hd` | Hard Hat *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **40** | When you deal damage | **6%** per hit: stun for **1s** |
+| `Hb` | Headband *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When you take damage | +1 MP regen per stack for **5s** |
+| `Hh` | Horned Helm *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**2%** attack speed per stack for **3s** |
+| `Nh` | Ninja Hood *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +0.01 crit chance per stack for **4s** |
+| `Og` | Open Golden Helm *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **40** | When a basic attack lands | **8%** per hit: −**10%** defense for **4s** |
+| `Pi` | Pirate Hat *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **40** | When a basic attack lands | **10%** per hit: Poison **3**/tick for **3s** |
+| `Ph` | Plumed Helm *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | **5%** per hit: your next attack deals +**50%** damage within **5s** |
+| `Pt` | Pointed Hat *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **40** | When you deal damage | **5%** per hit: Burn **3**/tick for **3s** |
+| `Tb` | Tailed Headband *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +1 HP regen per stack for **4s** |
+| `Th` | Top Hat *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When you heal someone | +1 MP regen per stack for **5s** |
+| `Wh` | Witch Hat *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **40** | When you deal damage | **6%** per hit: Silence for **2s** |
 | — | Sanctuary *(unpublished)* | active | MP **10**  CD **4.5s**  Cast **2s**  Range **11** | pressed | Heals **100** HP |
 | — | Hex Field *(unpublished)* | active | MP **16**  CD **10s**  Cast **0.5s**  Range **11** | pressed | Deals **1×** magic damage · Stun for **4s** |
 | — | Antidote *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Removes **3** debuff(s) |
@@ -20,25 +34,25 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | — | Fly Wing *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Sets you down somewhere random on this map |
 | — | Frost Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Water** (level 1) for **5:00** |
 | — | Frost Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Water** for **5:00** |
-| — | Grand Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **2500** HP |
+| — | Grand Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **2800–3600** HP |
 | — | Grand Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +250 MP regen for **5s** |
-| — | Greater Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **400** HP |
+| — | Greater Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **520–680** HP |
 | — | Greater Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +40 MP regen for **5s** |
 | — | Grilled Fish *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** attack for **300s** |
 | — | Hard Bread *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** defense for **300s** |
-| — | Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **150** HP |
+| — | Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **240–320** HP |
 | — | Lightning Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Wind** (level 1) for **5:00** |
 | — | Lightning Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Wind** for **5:00** |
 | — | Lucky Dumpling *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +0.05 crit chance for **300s** |
 | — | Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +15 MP regen for **5s** |
-| — | Minor Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **50** HP |
+| — | Minor Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **130–170** HP |
 | — | Minor Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +5 MP regen for **5s** |
-| — | Newbie Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **30** HP |
+| — | Newbie Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **80–100** HP |
 | — | Sage Stew *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** magic attack for **300s** |
 | — | Seismic Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Earth** (level 1) for **5:00** |
 | — | Seismic Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Earth** for **5:00** |
 | — | Spiced Broth *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**10%** attack speed for **300s** |
-| — | Superior Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **1000** HP |
+| — | Superior Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **1150–1450** HP |
 | — | Superior Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +100 MP regen for **5s** |
 | — | Traveller's Tea *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**20%** movement speed for **300s** |
 | — | Mending Tide *(unpublished)* | active | MP **18**  CD **12s**  Cast **0.5s**  Range **6** | pressed | +7.5 HP regen for **6s** · Removes **1** debuff(s) |

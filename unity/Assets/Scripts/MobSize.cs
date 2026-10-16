@@ -20,14 +20,14 @@ public enum MobSize
 public static class MobSizes
 {
     /// <summary>Below this a creature is Small.</summary>
-    public const float SmallBelow = 0.6f;
+    public const float SmallBelow = 0.8f;
     /// <summary>Above this a creature is Large; from <see cref="SmallBelow"/> up to and including this, Medium.</summary>
-    public const float LargeAbove = 1.5f;
+    public const float LargeAbove = 1.7f;
     /// <summary>The largest size a creature may have.</summary>
-    public const float Largest = 5.2f;
+    public const float Largest = 5.4f;
     /// <summary>The smallest size a creature may have: Plopling's, the level-1 creature. HARD RULE (the user, 2026-10-05) —
     /// no creature is ever smaller than Plopling.</summary>
-    public const float Smallest = 0.3f;
+    public const float Smallest = 0.5f;
     /// <summary>A character's size, and every shadow's.</summary>
     public const float Character = 1f;
 

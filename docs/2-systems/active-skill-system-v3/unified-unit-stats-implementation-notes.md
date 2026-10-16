@@ -31,13 +31,13 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **`Character` computes nothing.** Every derived getter delegates to `UnitStatMath`. The formulas were *moved*, not copied — if you add a stat, add it there or the two sides drift.
 
-**A respawn is a fresh creature.** `MobRespawn.Reactivate` — the one choke both the in-place recycle and the pooled `FieldMobSpawner` reuse go through — calls `UnitStatBlock.ResetToSpawnLevel()` and `MonsterAI3D.ResetCombatXp()` before `Health.Revive()`. Without it a recycled object keeps the levels and banked XP it earned last life, so farming one spot would ratchet a zone permanently upward. The pool is per-type, so the remembered `spawnLevel` always belongs to that mob's own def.
+**A respawn is a fresh creature.** `MobRespawn.Reactivate` — the one choke both the in-place recycle and the pooled `FieldMobSpawner` reuse go through — seats fresh gear, re-derives, and refills mana (`UnitStatBlock.RefillManaForNewLife()`) before `Health.Revive()`. A creature never gains a level in a fight, so there is no level to put back.
 
 **The training dummy opts OUT of the model.** `TrainingDummy.MakeOne` (run by the `/dummy` GM command) strips the `UnitStatBlock` after building, because the block would re-derive over its hand-set 10M HP / 0 attack and turn the punching bag into an ordinary level-1 mob. It's a measuring instrument, not a unit.
 
 **Tune the CAUSE, never the result.** Anything that changes a mob's numbers — `/summon` with a level included — sets Level + the six primaries and re-derives. Writing a derived stat directly is silently overwritten by the block on the next level-up.
 
-**Level-up RE-DERIVES, it never scales.** `UnitStatBlock.LevelUp()` raises the level and recomputes. `MonsterAI3D.perLevelGrowth` (a flat 1.15× on attack/HP) is **deleted**. A mob's level-20 numbers are simply what level 20 produces.
+**A creature never levels up.** Its level is what it spawned at (or what `/summon` re-statted it to), and its numbers are re-derived from that level, never scaled. A mob's level-20 numbers are simply what level 20 produces.
 
 **Primaries are a budget, not free numbers.** `PointsEarnedByLevel(L)` = 48 + Σ`⌊L/5⌋+3`; `PointsSpent` charges the same rising `StatCost` curve the player pays. A mob at level L may carry exactly what a player who reached L could have bought — that, not a multiplier, is what keeps the sides comparable. `Allocate` spends a whole budget across a weighted spread (verified on-budget L1→L99; 0–4 points can remain unspendable when the next point costs more than what's left).
 

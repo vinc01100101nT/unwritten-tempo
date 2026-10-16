@@ -29,3 +29,22 @@ MonoBehaviour:
     - item.fly-wing
     - item.butterfly-wing
     buysLoot: 1
+  - id: beta-headgear
+    stock:
+    - item.golden-horned-helm
+    - item.horned-helm
+    - item.plumed-helm
+    - item.pirate-hat
+    - item.ninja-hood
+    - item.hard-hat
+    - item.open-golden-helm
+    - item.cowboy-hat
+    - item.pointed-hat
+    - item.top-hat
+    - item.witch-hat
+    - item.army-helmet
+    - item.headband
+    - item.tailed-headband
+    - item.chefs-hat
+    buysLoot: 0
+    testPrice: 1

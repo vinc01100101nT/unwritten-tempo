@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.newtie
   displayName: Newtie
   kind: 0
-  size: 0.3
+  size: 0.5
   flies: 0
   moveSpeed: 1.2
   biome: 10

@@ -842,8 +842,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 241219ace226b4d4187df39fb0a61692, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FogOverlay
-  intensity: 0
-  rampTime: 6
   startDistance: 10
   fullDistance: 29
   driftSpeed: 4

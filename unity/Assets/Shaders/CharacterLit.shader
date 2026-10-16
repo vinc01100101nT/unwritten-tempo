@@ -89,6 +89,8 @@ Shader "Unwritten/CharacterLit"
         [HideInInspector] _CapeClothHem("Cape Cloth At Hem", Color) = (0.53,0.05,0.04,1)
         [HideInInspector] _CapeTrim("Cape Trim", Color) = (0.67,0.54,0.22,1)
         [HideInInspector] _CapeGradient("Cape Gradient", Float) = 0
+        // A costume (CostumePiece) is drawn in its own colours: the wearer's clothes colours are not laid on it.
+        [HideInInspector] _OwnColours("Own Colours", Float) = 0
 
         [ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
         // Editmode props

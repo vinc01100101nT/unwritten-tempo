@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.golden-bandit
   displayName: Golden Bandit
   kind: 1
-  size: 1.8
+  size: 2
   flies: 0
   moveSpeed: 1.4
   biome: 9

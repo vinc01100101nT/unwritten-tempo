@@ -3,8 +3,9 @@ using UnityEngine;
 /// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
 /// Integer values are PINNED so the rename from the old taxonomy (Body→Armor) doesn't shift any serialized
 /// scene/prefab/item data — only the names changed. The VISIBLE places are Head/Armor/Garment/Weapon/Boots — shown to a
-/// player as Head, Body, Garment, Weapon and Shoes (see <see cref="EquipSlots"/>); the three Costume* slots are reserved
-/// for a future cosmetic layer (not shown in v1).
+/// player as Head, Body, Garment, Weapon and Shoes (see <see cref="EquipSlots"/>), plus Costume Body — a look-only
+/// layer whose model is the wearer's body in the costume (<see cref="CostumePiece"/>). Costume Head and Costume Back are
+/// reserved and not shown.
 ///
 /// <para>6 and 7 were the two accessory places, removed because the ring already fills that role. Never give those
 /// numbers to a new slot: an old save or asset still holding one would silently land in it.</para></summary>
@@ -18,7 +19,8 @@ public enum EquipSlotType
     // new slot: an old save still naming it would silently land in it.
     Boots = 5,        // shown as "Shoes"
     Garment = 8,
-    CostumeHead = 9,  // reserved cosmetic layer — not shown in v1 UI
+    // Costume Head and Costume Back are reserved and not shown; Costume Body is worn and shown.
+    CostumeHead = 9,
     CostumeBody = 10,
     CostumeBack = 11,
     // 12 was the Ring of Progression vessel. The ring is part of the character now, not a worn item, so no
@@ -115,6 +117,7 @@ public class Item : ScriptableObject
              "it on the hand bone; its root WeaponGrip authors how it sits — Tools ▸ unwritten ▸ Weapons ▸ Weapon " +
              "Grip Tuner). A Head item: a headgear piece (its root HeadPiece) that HeadSocket puts on the head. " +
              "A Garment: a back piece such as a cape (its root BackPiece) that GarmentSocket hangs on the upper back. " +
+             "A Costume Body: a costume (its root CostumePiece) that CostumeSocket swaps in for the wearer's body. " +
              "None = nothing shown.")]
     public GameObject equipModel;
 
@@ -131,8 +134,9 @@ public class Item : ScriptableObject
     public ItemCategory category = ItemCategory.Etc;
     [Tooltip("Number of card sockets (◇ pips). 0 = no sockets. Only meaningful for equipment.")]
     public int cardSlots;
-    [Tooltip("How heavy it is. A weapon's weight sets how long it takes to draw and to put away: 0.2 s plus 0.006 s " +
-             "per point.")]
+    [Tooltip("How heavy it is. A weapon's weight sets how long it takes to draw and to put away (0.2 s plus 0.006 s " +
+             "per point) and the time between its swings (0.8 s plus 0.005 s per point a hand carries — a pair " +
+             "weapon's two hands carry half each).")]
     public int weight;
     [Tooltip("What one is worth, in Unsigned — the ONE price of this item. A shop sells it for this plus Tax, and buys " +
              "it for this less Tax (ShopMath). Whether a shop buys it at all is the Unsellable tag, never this price.")]
@@ -162,11 +166,26 @@ public class Item : ScriptableObject
 
     /// <summary>What every readout says in place of a sell value of 0.</summary>
     public const string CannotBeSoldText = "Cannot be sold to NPC";
+    public const string CannotBeDroppedText = "Cannot be dropped";
+    public const string CannotBeStoredText = "Cannot be stored";
+    public const string CannotBeTradedText = "Cannot be traded";
+
+    /// <summary>The red chat line when a player tries what a tag forbids: "Item cannot be dropped".</summary>
+    public static string RefusedLine(string restriction) => "Item " + char.ToLowerInvariant(restriction[0]) + restriction.Substring(1);
 
     // A CRAFTED PIECE HAS NO NUMBERS OF ITS OWN. What a weapon or a piece of armour is worth comes from its folds,
     // its quality and its rarity, worked out by the server when it is made, folded or quenched, plus whatever Ink has
     // written on it — all of it on the COPY (EquipmentInstance), never on the shared design. The flat bonus fields
     // and the armour roll ranges that used to sit here are gone for that reason; do not add either back.
+    // HEADGEAR IS NOT CRAFTED: a hat never rolls, folds or takes a rarity, so every copy of it is the same and what it
+    // adds is written once, below, on the design.
+
+    [Header("Headgear")]
+    [Tooltip("Headgear only: what wearing it adds. The same on every copy — a hat is never rolled, folded or quenched.")]
+    public HeadgearBonus headgear;
+    [Tooltip("Headgear only: the passive skill that runs while it is worn, e.g. \"skill.headgear.top-hat\". It must " +
+             "have no On Cast trigger. Empty = it runs none.")]
+    public string wornSkillId = "";
 
     [Header("Crafting")]
     [Tooltip("What this PIECE is made of, which decides the station that works it: Metal at a smith, Cloth at a " +
@@ -206,4 +225,15 @@ public class Item : ScriptableObject
     public SfxSet hitSfx;
 
     [TextArea] public string description;
+}
+
+/// <summary>What a piece of headgear adds while it is worn — the same on every copy. Read by <see cref="Headgear"/>.</summary>
+[System.Serializable]
+public struct HeadgearBonus
+{
+    public int str, agi, vit, intel, dex, luk;
+    [Tooltip("World units added to how far a basic attack reaches.")]
+    public float attackReach;
+    [Tooltip("Whole percent added to the experience every kill pays (15 = +15%).")]
+    public float experiencePercent;
 }

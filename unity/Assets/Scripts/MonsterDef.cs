@@ -23,8 +23,8 @@ public class MonsterDef : ScriptableObject
              "(see CreatureKinds); strength still comes from level and stats alone.")]
     public CreatureKind kind = CreatureKind.Normal;
     [Tooltip("Body size: how many times a character's height it stands, 1 being a character. Its melee reach counts " +
-             "the same number. Under 0.6 it is Small, 0.6 to 1.5 Medium, over 1.5 Large; 0.3 to 5.2 — nothing is " +
-             "smaller than Plopling, 0.3. A Shadow is always 1 whatever this says.")]
+             "the same number. Under 0.8 it is Small, 0.8 to 1.7 Medium, over 1.7 Large; 0.5 to 5.4 — nothing is " +
+             "smaller than Plopling, 0.5. A Shadow is always 1 whatever this says.")]
     public float size = MobSizes.Character;
     [Tooltip("Flies: its picture is drawn in the air, the middle of its body level with a character's head, and its " +
              "nameplate, numbers, aim point and click spot rise with it. Its walking body stays on the ground, so where " +

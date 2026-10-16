@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// THE READOUT THAT FLOATS OVER THE CREATURE YOU ARE POINTING AT — its name (its portrait and its element beside it),
+/// THE READOUT THAT FLOATS OVER THE CREATURE YOU ARE POINTING AT — or, when you point at nobody, over the creature you
+/// have locked as your target, for as long as it stays locked — its name (its portrait and its element beside it),
 /// its health and its mana. The plate itself is a <see cref="UnitPlate"/>, the same widget the plates kept up over
 /// every person are; this decides only WHICH creature it rides and feeds it what the server said about them.
 ///
@@ -29,6 +30,10 @@ public class HoverPlate : MonoBehaviour
     // What the cursor found last, and whether that was a person — asked once per change, not per frame.
     Health lastPicked;
     bool pickedIsPerson;
+
+    // The locked target's bar shows whenever the cursor is over nobody. The rig is found once per player body.
+    StatusController lastPlayer;
+    Player3DController rig;
 
     // A creature's name carries its level, which the server re-sends when it changes; null for anyone else.
     NetMob shell;
@@ -63,9 +68,10 @@ public class HoverPlate : MonoBehaviour
             pickedIsPerson = unit != null && NetPlayer.ShellForBody(unit.gameObject) != null;
         }
         if (pickedIsPerson) unit = null;
+        if (unit == null) unit = LockedTarget();
         if (unit != tracked) Bind(unit);
 
-        // NOTHING UNDER THE CURSOR.
+        // NOTHING UNDER THE CURSOR, AND NO LOCKED TARGET.
         if (tracked == null || tracked.IsDead)
         {
             plate.Show(false);
@@ -88,6 +94,13 @@ public class HoverPlate : MonoBehaviour
 
         // An armour converter starting or ending is a state change, and it changes the element the tile shows.
         if (elementDirty) { elementDirty = false; DrawElement(); }
+    }
+
+    Health LockedTarget()
+    {
+        var p = StatusController.Player;
+        if (p != lastPlayer) { lastPlayer = p; rig = p != null ? p.GetComponent<Player3DController>() : null; }
+        return rig != null ? rig.AttackTarget : null;
     }
 
     // ---- binding ------------------------------------------------------------------------------------------

@@ -224,7 +224,7 @@ public static class VfxCue
 }
 
 /// <summary>
-/// The WORD some events put over the unit they happen to — "Poison!", "Stun!", a creature's "Level Up!" — drawn by every
+/// The WORD some events put over the unit they happen to — "Poison!", "Stun!" — drawn by every
 /// screen watching, from the event the server announced (<see cref="VfxCue"/>). One table, so the server knows which
 /// events are worth announcing for their word alone, and every screen says the same thing.
 /// </summary>
@@ -234,7 +234,7 @@ public static class CueWords
     public static bool Has(VfxCueId id) => Word(id, true, out _, out _);
 
     /// <summary>A WATCHING MACHINE: put <paramref name="id"/>'s word over <paramref name="on"/>, if it has one for this
-    /// kind of unit. A person's level-up has its own toast on their screen, so only a creature's says it out loud.</summary>
+    /// kind of unit.</summary>
     public static void Show(VfxCueId id, Transform on, bool isCreature)
     {
         if (on != null && Word(id, isCreature, out var word, out var colour)) DamagePopup.SpawnText(on, word, colour);
@@ -250,9 +250,6 @@ public static class CueWords
             case VfxCueId.OnStun:        word = "Stun!";     colour = new Color(1f, 0.9f, 0.3f);       return true;
             case VfxCueId.OnFreeze:      word = "Frozen!";   colour = new Color(0.6f, 0.85f, 1f);      return true;
             case VfxCueId.OnSilence:     word = "Silenced!"; colour = new Color(0.7f, 0.5f, 1f);       return true;
-            case VfxCueId.OnLevelUp:
-                word = "Level Up!"; colour = new Color(1f, 0.85f, 0.35f);
-                return isCreature;
             default: word = null; colour = default; return false;
         }
     }

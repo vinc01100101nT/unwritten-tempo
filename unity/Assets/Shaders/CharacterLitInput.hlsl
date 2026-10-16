@@ -54,6 +54,7 @@ half4 _CapeCloth;
 half4 _CapeClothHem;
 half4 _CapeTrim;
 half _CapeGradient;
+half _OwnColours;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -310,7 +311,8 @@ half3 DyeGammaToLin(half3 c)
 
 half3 ApplyDye(half3 linearColour)
 {
-    int count = (int)_DyeCount;
+    // A costume shares its wearer's renderer, and so the wearer's clothes colours; its own material says to keep its own.
+    int count = _OwnColours > 0.5h ? 0 : (int)_DyeCount;
     UNITY_BRANCH
     if (count <= 0) return linearColour;
 

@@ -58,7 +58,7 @@ The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning)
 ## Phase 4 — HP/SP + ASPD (DONE)
 
 - **HP/SP — one curve for every unit:** the level-driven base curve is the same for the player and every creature (`UnitStatInputs.Default`: HP 160 + 6 per level — 160, not RO's 20, since 2026-10-16, SP 10 + 3 per level), and VIT/INT scale it as a PERCENT (authentic — they multiply, not add flat). `MaxHP = round((160 + 6×(lvl−1)) × (1 + VIT×0.02)) + equipFlat`; SP analogous with INT×0.015. There are no classes and no per-unit curve.
-- **ASPD:** AGI is primary, **DEX adds ¼** (`DexAspdShare`). Kept as the game's speed-MULTIPLIER model, not the RO 0–200 scale. The base swing interval every unit divides by that multiplier is shared per weapon (`CharacterSpec.SwingInterval`): 1 s bare-handed and each weapon its own: Dagger and Fist 0.8 s, Katar 0.85 s, Shuriken 0.9 s, Sword and Wand 1 s, Axe, Spear and Bow 1.1 s, Staff 1.2 s, Scythe 1.25 s, Warhammer and Greatsword 1.3 s, Sniper 1.4 s.
+- **ASPD:** AGI is primary, **DEX adds ¼** (`DexAspdShare`). Kept as the game's speed-MULTIPLIER model, not the RO 0–200 scale. The base swing interval every unit divides by that multiplier comes from the held weapon's weight (`UnitOffense.SwingSeconds`): 0.8 s bare-handed plus 0.005 s per point of weight a hand carries (a pair weapon's two hands carry half its weight each): Fist 0.95 s, Dagger, Shuriken and Katar 1 s, Wand 1.05 s, Bow and Axe 1.1 s, Staff 1.2 s, Sword 1.25 s, Spear and Sniper 1.35 s, Warhammer 1.45 s, Scythe 1.5 s, Greatsword 1.6 s.
 - **Tuning dials:** `VitHpPercent`, `IntSpPercent`, `DexAspdShare` (consts in `UnitStatMath`), and the curve in `UnitStatInputs.Default`.
 
 :warning: **Notable rebalance — expected, by design:** VIT is a *multiplier* on level-driven base HP, not flat — weaker early, scales with level (the authentic relationship). Early game is fragile until you level / invest VIT. Retune via the dials above if too punishing.
@@ -75,7 +75,7 @@ creatures pay by level. Both live in `UnitStatMath` and are pinned by `tools/che
 - **A kill pays**, by the creature's own level = **0.31 × L² × e^(0.02 × L)**, rounded, never below 2 — the curve
   Ragnarok's normal creatures follow. An **elite pays 10×** and a **shadow 20×** (Ragnarok's bosses pay 5–10× a normal
   creature of their level). Nothing typed onto a creature changes it, and there is no level-gap rule, as in
-  pre-renewal. A creature that levels up mid-fight pays its new level.
+  pre-renewal. A creature never levels up, so it always pays the level it spawned at.
 - **Kills a level takes:** 3 at level 1, 15 at 30, 49 at 50, 180 at 70, 706 at 90, 4,728 at 98 — about 26,800 from 1
   to 99, 62% of them after 90.
 - **The cap is base level 99.** At 99 the character earns nothing more; the ring and weapon mastery still do. The

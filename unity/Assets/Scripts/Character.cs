@@ -682,7 +682,9 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <para>Owned HERE for the same reason reach is (see <see cref="MeleeReachFullSize"/>): a cadence is a fact about
     /// the character, and it has to have an answer on a machine where that character has no body standing in a
     /// scene.</para></summary>
-    public float SwingTime => UnitOffense.AttackInterval(CharacterSpec.Active.SwingInterval(HeldWeaponType), AttackSpeedMult);
+    public float SwingTime => UnitOffense.AttackInterval(UnitOffense.SwingSeconds(HeldWeaponType, HeldWeaponWeight), AttackSpeedMult);
+
+    int HeldWeaponWeight { get { var w = GetEquipped(EquipSlotType.Weapon); return w != null ? w.weight : 0; } }
 
     /// <summary>The player is built to the shared character body, so that is its size for melee-contact maths.</summary>
     public float MeleeScale => UnitScale.CharacterScale;
@@ -1147,7 +1149,10 @@ public class Character : MonoBehaviour, ICombatUnit
     public void SetEquipped(EquipSlotType slot, EquipmentInstance instance)
     {
         if (slot == EquipSlotType.None) return;
-        Gear.Equip(slot, instance != null && instance.def != null ? instance : null);
+        var displaced = Gear.Equip(slot, instance != null && instance.def != null ? instance : null);
+        // A PIECE THAT RUNS A SKILL (a hat's effect) changes what this character can use, on or off.
+        bool wornSkillMoved = (displaced != null && displaced.def != null && !string.IsNullOrEmpty(displaced.def.wornSkillId))
+                           || (instance != null && instance.def != null && !string.IsNullOrEmpty(instance.def.wornSkillId));
         CurrentHP = Mathf.Min(CurrentHP, MaxHP);   // clamp if max dropped
 
         if (notifyingEquip) return;                // re-entered from a listener — apply, but don't re-notify
@@ -1161,7 +1166,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
         // V2: the weapon owns its skill kit — equipping (or removing) a weapon replaces the numbered hotbar with its
         // granted skills. Only fires on a real equip action, not on load (RestoreEquipment writes the dict directly).
-        if (slot == EquipSlotType.Weapon)
+        if (slot == EquipSlotType.Weapon || wornSkillMoved)
         {
             // AND THE SKILLS THEMSELVES, not just the bar. A character carries only what it can use, so changing
             // weapons changes the list — without this a player would keep the old weapon's skills and have none
@@ -1348,6 +1353,14 @@ public class Character : MonoBehaviour, ICombatUnit
             if (def != null && def.IsUsable) usableIds.Add(def.useSkillId);
         }
 
+        // WHAT THEIR WORN PIECES RUN — a hat's effect is a passive that is live for as long as it is worn.
+        for (int i = 0; i < WornSlots.Length; i++)
+        {
+            var inst = Gear.Get(WornSlots[i]);
+            if (inst != null && inst.def != null && !string.IsNullOrEmpty(inst.def.wornSkillId))
+                usableIds.Add(inst.def.wornSkillId);
+        }
+
         // IN THE CATALOG'S ORDER, always. A skill's position is what the no-self-feeding brake identifies it by
         // within this process, so the list must not depend on which pocket each id happened to come out of.
         usable.Clear();
@@ -1358,6 +1371,32 @@ public class Character : MonoBehaviour, ICombatUnit
             if (def != null && !string.IsNullOrEmpty(def.id) && usableIds.Contains(def.id)) usable.Add(def);
         }
         return usable;
+    }
+
+    /// <summary>Every place a piece can be worn — what <see cref="UsableSkills"/> and <see cref="WearsSkill"/> walk.</summary>
+    static readonly EquipSlotType[] WornSlots = BuildWornSlots();
+    static EquipSlotType[] BuildWornSlots()
+    {
+        var all = (EquipSlotType[])System.Enum.GetValues(typeof(EquipSlotType));
+        var list = new System.Collections.Generic.List<EquipSlotType>(all.Length);
+        foreach (var s in all) if (s != EquipSlotType.None) list.Add(s);
+        return list.ToArray();
+    }
+
+    /// <summary>Whole percent more experience every kill pays them, from what they wear (<see cref="Headgear"/>).</summary>
+    public float WornExperiencePercent => Gear.Bonuses.experiencePercent;
+
+    /// <summary>Is <paramref name="skillId"/> run by a piece this character is wearing right now (a hat's effect)?
+    /// Allocation-free: one lookup per place a piece can be worn.</summary>
+    public bool WearsSkill(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return false;
+        for (int i = 0; i < WornSlots.Length; i++)
+        {
+            var inst = Gear.Get(WornSlots[i]);
+            if (inst != null && inst.def != null && inst.def.wornSkillId == skillId) return true;
+        }
+        return false;
     }
 
     // Reused across calls: this runs on a weapon swap and at every join, and a server does it once per person.

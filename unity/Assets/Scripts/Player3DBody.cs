@@ -114,6 +114,8 @@ public static class Player3DBody
         HeadSocket.MarkMine(head);
         // The Garment this machine's own character wears, on its back.
         if (instance.GetComponent<GarmentSocket>() == null) instance.AddComponent<GarmentSocket>();
+        // The Costume Body this machine's own character wears, swapped in for the plain body.
+        if (instance.GetComponent<CostumeSocket>() == null) instance.AddComponent<CostumeSocket>();
         // The x-ray occlusion silhouette flags THIS object's renderers (the visible model) — it lives here, not on
         // the player root, because the model is a SEPARATE object riding the controller (the root only holds the
         // hidden sprite). A model swap rebuilds this object, so the fresh renderers are re-tagged automatically.

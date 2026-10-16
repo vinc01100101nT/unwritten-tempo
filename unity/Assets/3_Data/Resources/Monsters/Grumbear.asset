@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.grumbear
   displayName: Grumbear
   kind: 0
-  size: 1.6
+  size: 1.8
   flies: 0
   moveSpeed: 1.1
   biome: 1

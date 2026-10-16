@@ -45,7 +45,7 @@ public enum SkillEffectKind
     /// <c>Health</c>/<c>Character</c> damage sinks. Owns only <see cref="SkillEffect.hitCount"/> (multi-hit) — each
     /// strike is the trigger point where the binding's PROC effects (Status / Execute) roll. Does ONE thing.</summary>
     Damage,
-    /// <summary>Restore <see cref="SkillEffect.amount"/> flat HP → <c>Health.Heal</c>/<c>Character.Heal</c>.</summary>
+    /// <summary>Restore <see cref="SkillEffect.amount"/> HP, or a roll up to <see cref="SkillEffect.healAmountMax"/> → <c>Health.Heal</c>/<c>Character.Heal</c>.</summary>
     Heal,
     /// <summary>Inflict an <see cref="Ailment"/> (DoT / stun / slow / …) for <see cref="SkillEffect.seconds"/> at
     /// <see cref="SkillEffect.magnitude"/> → the shared <c>Status.Apply</c> front door.</summary>
@@ -441,6 +441,12 @@ public class SkillEffect
     [Tooltip("Flat HP restored (Heal kind). Drain Mana: the most MP taken from the unit it lands on, and given to the " +
              "caster.")]
     public ScaledNumber amount = new ScaledNumber(10f);
+    [Tooltip("Heal kind only: the most HP one heal can restore. Each heal rolls a whole number from the amount above " +
+             "up to this, like an RO potion (130 to 170). Equal to the amount = always that exact amount.")]
+    public ScaledNumber healAmountMax = new ScaledNumber(0f);
+    // Every value of healAmountMax is a legal-looking number, so an effect saved before it existed would read as
+    // "heals up to 0". This says whether anybody wrote it; unwritten = the heal is exactly `amount`.
+    [HideInInspector] public bool healAmountMaxSet = false;
 
     [Header("Status / duration / magnitude")]
     [Tooltip("Which ailment to inflict (Status kind).")]

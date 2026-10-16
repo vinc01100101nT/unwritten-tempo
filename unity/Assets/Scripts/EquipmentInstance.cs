@@ -185,7 +185,7 @@ public class EquipmentInstance
         else
         {
             piece = NumbersAt(upgrade, quality);
-            Swing(def.weaponType, out int ms, out int offHand);
+            Swing(def, out int ms, out int offHand);
             baseStats = CraftingMath.BaseNumbers(def.slot, def.weaponType, def.madeOf, basePercent, ms, offHand);
         }
         wordAmount = word == ArmourWord.None ? 0f : ArmourWords.Amount(word, quality);
@@ -197,15 +197,15 @@ public class EquipmentInstance
     public CraftingMath.PieceStats NumbersAt(int folds, Quality q)
     {
         if (def == null) return default;
-        Swing(def.weaponType, out int ms, out int offHand);
+        Swing(def, out int ms, out int offHand);
         return CraftingMath.PieceNumbers(def.slot, def.weaponType, def.madeOf, folds, q, rarity, basePercent, ms, offHand);
     }
 
     // A weapon's swing time and its off hand's power, as the whole thousandths a piece's worth is worked out from.
-    static void Swing(WeaponType weapon, out int ms, out int offHand)
+    static void Swing(Item def, out int ms, out int offHand)
     {
         var spec = CharacterSpec.Active;
-        ms = spec != null ? CraftingMath.Thousandths(spec.SwingInterval(weapon)) : 0;
+        ms = CraftingMath.Thousandths(UnitOffense.SwingSeconds(def.weaponType, def.weight));
         offHand = spec != null ? CraftingMath.Thousandths(spec.offHandPower) : 0;
     }
 
@@ -479,6 +479,7 @@ public class EquipmentInstance
         if (def == null) return;
         CraftingMath.AddPiece(piece, inkStats, inkValues, ref eb);
         ArmourWords.AddWord(word, wordAmount, ref eb);
+        Headgear.AddInto(def, ref eb);
     }
 }
 
@@ -506,6 +507,9 @@ public struct EquipBonuses
                  wordDamagePercent, wordStaminaCutPercent, wordShoveCutPercent, wordHPRegen;
     /// <summary>Whole-percent cut to damage of one element, from a garment's ward word.</summary>
     public float wardFirePercent, wardWaterPercent, wardEarthPercent, wardWindPercent;
+    /// <summary>What worn headgear adds (<see cref="Headgear"/>): world units of basic attack reach, and whole percent
+    /// more experience from every kill.</summary>
+    public float attackReach, experiencePercent;
 
     /// <summary>The flat primary-stat bonus for one stat (gear + cards).</summary>
     public int Stat(PrimaryStat s)

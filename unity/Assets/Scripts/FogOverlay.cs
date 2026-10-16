@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// DEPTH FOG: the dedicated renderer that makes the <see cref="WeatherDirector.Preset.Fog"/> preset actually look
-/// foggy instead of just "heavy overcast". A single camera-locked full-screen quad runs the <c>Unwritten/FogScreen</c>
+/// DEPTH FOG, always on at full on every map and in every weather (fog is not a weather). A single camera-locked
+/// full-screen quad runs the <c>Unwritten/FogScreen</c>
 /// shader, which reads the scene DEPTH texture and fogs each pixel by its TRUE distance from the camera — so far
 /// trees/houses/ground genuinely dissolve into haze (<see cref="startDistance"/>→<see cref="fullDistance"/> fade band)
 /// while what's near the player stays clear. Same depth-quad pattern as <see cref="WetGround"/>/<see cref="CloudShadows"/>
@@ -11,19 +11,11 @@ using UnityEngine;
 ///
 /// <para>Draws LAST (Overlay queue, after the billboard characters) so it tints over the world AND the sprite
 /// mobs/player; sprites aren't in the depth texture, so they fog by the distance of the ground directly behind them
-/// (≈ their own distance). Decoupled like every other renderer: it follows its own <see cref="WeatherChannel.Fog"/>
-/// channel (central easing lives in <see cref="WeatherChannels"/>), so a sequence can roll fog in gradually,
-/// independent of clouds and rain. Zero-cost when clear: at fog ≈ 0 the quad is deactivated, so it draws nothing.</para>
+/// (≈ their own distance). It reads no weather channel: nothing turns it down.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class FogOverlay : MonoBehaviour
 {
-    [Range(0f, 1f)] [Tooltip("Master fog amount (the TARGET the haze eases toward). 0 = clear (quad disabled). " +
-             "Default 0 — fog is OFF until raised (by the Fog weather preset).")]
-    public float intensity = 0f;
-    [Range(0f, 60f)] [Tooltip("Seconds for the fog to roll IN when it starts (or out when it clears) — used by the " +
-             "standalone fallback; weather sequences set their own ramp.")]
-    public float rampTime = 6f;
     [Tooltip("World distance from the camera where fog BEGINS — anything nearer than this stays clear.")]
     public float startDistance = 10f;
     [Tooltip("World distance from the camera where fog is FULLY thick — anything beyond is lost in the haze. " +
@@ -49,7 +41,6 @@ public class FogOverlay : MonoBehaviour
     Transform quad;
     Mesh mesh;
     float phase;
-    float shown;   // ramped fog amount (0..1) easing toward `intensity` — the actual value fed to the shader
 
     static readonly int ColorID     = Shader.PropertyToID("_Color");
     static readonly int LightTintID = Shader.PropertyToID("_LightTint");
@@ -117,23 +108,14 @@ public class FogOverlay : MonoBehaviour
         rend.shadowCastingMode   = UnityEngine.Rendering.ShadowCastingMode.Off;
         rend.receiveShadows      = false;
         rend.lightProbeUsage     = UnityEngine.Rendering.LightProbeUsage.Off;
-        go.SetActive(false);   // clear until intensity is raised
     }
 
     void LateUpdate()
     {
         if (mat == null) return;
 
-        // Follow the Fog weather channel when present (central easing in WeatherChannels); fall back to the local
-        // `intensity` ease when there's no channels hub (standalone, on a bare scene).
-        var wc = WeatherChannels.Instance;
-        if (wc != null) shown = wc.Shown(WeatherChannel.Fog);
-        else            shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));
-        // A biome that always holds fog (Mist) keeps at least that much whatever the sky does.
-        shown = BiomeWeather.Hold(shown, BiomeWeather.AlwaysFogHere);
-
-        // Zero-cost when clear: deactivate the quad so it issues no draw call at all.
-        bool show = enabled && shown > 0.001f;
+        // FOG IS ALWAYS ON, at full, on every map and in every weather — it is no longer a weather of its own.
+        bool show = enabled;
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
         if (!show) return;
 
@@ -144,7 +126,7 @@ public class FogOverlay : MonoBehaviour
         mat.SetColor(ColorID, color);
         var tod = TimeOfDay.Instance;
         mat.SetColor(LightTintID, tod != null ? tod.WeatherTint(nightTint) : Color.white);
-        mat.SetFloat(IntensityID, shown);
+        mat.SetFloat(IntensityID, 1f);
         mat.SetFloat(PhaseID, phase);
         mat.SetFloat(ScaleID, 1f / Mathf.Max(0.01f, patchSize));
         mat.SetFloat(CoverageID, coverage);

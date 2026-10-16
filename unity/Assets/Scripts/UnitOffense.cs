@@ -56,6 +56,21 @@ public static class UnitOffense
     /// <para>The multiplier is clamped to <see cref="UnitStatMath.MaxAttackSpeedMult"/> — the same ceiling the player's
     /// stat formula already applies — so a stack of haste buffs can't drive a mob's cadence to zero. The 0.05s floor
     /// keeps a heavily-slowed attacker from dividing its way into a frozen swing.</para></summary>
+    /// <summary>Seconds between ordinary swings with empty hands, before attack speed is applied.</summary>
+    public const float BareSwingSeconds = 0.8f;
+
+    /// <summary>What each point of weight a hand carries adds to the time between swings.</summary>
+    public const float SwingSecondsPerWeight = 0.005f;
+
+    /// <summary>Seconds between ordinary swings, before attack speed is applied, holding a weapon of
+    /// <paramref name="weapon"/> type weighing <paramref name="weight"/> (0 = empty hands) — for a person and a creature
+    /// alike. A pair weapon's weight is the pair's, and each hand swings only its own half.</summary>
+    public static float SwingSeconds(WeaponType weapon, int weight)
+    {
+        float perHand = weight > 0 ? (WeaponTypes.IsDualWield(weapon) ? weight * 0.5f : weight) : 0f;
+        return BareSwingSeconds + SwingSecondsPerWeight * perHand;
+    }
+
     public static float AttackInterval(float baseInterval, float attackSpeedMult)
     {
         float m = Mathf.Clamp(attackSpeedMult, 0.01f, UnitStatMath.MaxAttackSpeedMult);

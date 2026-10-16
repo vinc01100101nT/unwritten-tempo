@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.mossmaw
   displayName: Mossmaw
   kind: 1
-  size: 3.5
+  size: 3.7
   flies: 0
   moveSpeed: 0.9
   biome: 7

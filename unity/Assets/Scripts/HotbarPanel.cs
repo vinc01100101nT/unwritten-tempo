@@ -361,7 +361,8 @@ public class HotbarPanel : MonoBehaviour
         }
         // How many are carried (bottom-right), exactly as the bag the server sent says.
         var count = NewText("Count", s.cell.transform, s.itemNoneLeft ? "0" : stack.count.ToString(), 11, FontStyle.Bold,
-                            TextAnchor.LowerRight, s.itemNoneLeft ? UiKit.TextOnDim : UiKit.TitleText);
+                            TextAnchor.LowerRight, UiKit.TextOnDim);
+        UiKit.StyleItemCount(count);
         Stretch(count.rectTransform, 3, 2);
         // Hover: its name. Right-click: its card — the same box behaviour as the bag's.
         var box = ItemBoxOn(s.cell.gameObject);

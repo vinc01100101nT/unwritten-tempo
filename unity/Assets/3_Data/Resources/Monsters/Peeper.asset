@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.peeper
   displayName: Peeper
   kind: 0
-  size: 2.4
+  size: 2.6
   flies: 0
   moveSpeed: 0.8
   biome: 7

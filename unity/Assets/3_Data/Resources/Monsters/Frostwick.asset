@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.frostwick
   displayName: Frostwick
   kind: 0
-  size: 0.7
+  size: 0.9
   flies: 0
   moveSpeed: 0.9
   biome: 14

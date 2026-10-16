@@ -337,7 +337,7 @@ public class ShopPanel : MonoBehaviour
                 if (!WorldShops.Sells(shop, def)) continue;
                 // perf-ok: one entry per stocked thing, made when the window redraws — never per frame
                 stock.Add(new BagEntry { def = def, count = 1 });
-                stockPrice.Add(def.value);
+                stockPrice.Add(WorldShops.PriceOf(shop, def));
             }
         // What can still be bought back, newest first — prices and moments are the server's.
         if (c != null)
@@ -435,7 +435,7 @@ public class ShopPanel : MonoBehaviour
         {
             var line = FindLine(CartKind.Buy, def.id, "");
             if (line != null) line.count = Mathf.Min(ShopCart.MostInOneLine, line.count + n);
-            else cart.Add(Line(CartKind.Buy, stock[row], def.id, "", n, def.value));
+            else cart.Add(Line(CartKind.Buy, stock[row], def.id, "", n, stockPrice[row]));
             CartChanged();
         });
     }
@@ -443,7 +443,8 @@ public class ShopPanel : MonoBehaviour
     /// <summary>Put the bag's <paramref name="entry"/> in the cart to sell. A stack asks how many.</summary>
     void AddFromBag(BagEntry entry, Vector2 at)
     {
-        if (trading || entry == null || entry.def == null || !entry.def.CanBeSold) return;
+        if (trading || entry == null || entry.def == null) return;
+        if (!entry.def.CanBeSold) { ChatController.GameSaid(Item.RefusedLine(Item.CannotBeSoldText), false); return; }
         var shop = WorldShops.Find(shopId);
         if (!WorldShops.Buys(shop, entry)) return;
         var existing = FindSale(entry);

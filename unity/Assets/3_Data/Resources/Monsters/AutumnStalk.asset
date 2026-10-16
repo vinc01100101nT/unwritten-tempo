@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.autumn-stalk
   displayName: Autumn Stalk
   kind: 1
-  size: 3
+  size: 3.2
   flies: 0
   moveSpeed: 0.7
   biome: 6

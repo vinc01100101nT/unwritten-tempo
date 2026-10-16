@@ -64,16 +64,16 @@ map, and the map generator no longer puts any there.
 ## Sizes
 
 - **A creature's size is one number: how many times a character's height it stands.** **1** is a character — the
-  player, the townsfolk and every shadow. It runs from **0.3** to **5.2**: a raccoon is **0.3**, a bear **1.6**, a
-  giant squid **4**. **No creature is ever smaller than Plopling, the level-1 creature, at 0.3** — a hard rule (the
-  user, 2026-10-05), so even the mouse, Squeak, is 0.3. Each creature's art is measured and fitted to that height, so it stands exactly
+  player, the townsfolk and every shadow. It runs from **0.5** to **5.4**: a raccoon is **0.5**, a bear **1.8**, a
+  giant squid **4.2**. **No creature is ever smaller than Plopling, the level-1 creature, at 0.5** — a hard rule (the
+  user, 2026-10-05), so even the mouse, Squeak, is 0.5 — half a character's height. Each creature's art is measured and fitted to that height, so it stands exactly
   that tall whatever padding its picture carries.
-- **Three size groups, worked out from that number and never typed:** under **0.6** is **Small**, **0.6 to 1.5** is
-  **Medium**, over **1.5** is **Large**. The group is what cards and the weapon-vs-size chart will read; the number
+- **Three size groups, worked out from that number and never typed:** under **0.8** is **Small**, **0.8 to 1.7** is
+  **Medium**, over **1.7** is **Large**. The group is what cards and the weapon-vs-size chart will read; the number
   is what the body and reach use.
 - **Melee reach counts the same number**, so how big a creature looks and how far it reaches can never disagree.
-  Against a character, a blow reaches half of (1 + the creature's size) times its full reach — **0.65×** against a
-  raccoon, **1.3×** against a bear, **2.5×** against a giant squid — and the creature's own blows reach the same
+  Against a character, a blow reaches half of (1 + the creature's size) times its full reach — **0.75×** against a
+  raccoon, **1.4×** against a bear, **2.6×** against a giant squid — and the creature's own blows reach the same
   distance back.
 - **Its collision body grows with it.** A creature wider than the usual routing footprint steers around obstacles
   with its own width.

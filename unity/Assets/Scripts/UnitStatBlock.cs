@@ -7,13 +7,12 @@ using UnityEngine;
 /// gear have identical stats, because both roads lead to the same functions.
 ///
 /// <para><b>Why this exists:</b> a mob's derived numbers used to be stamped onto <see cref="Health"/> and
-/// <see cref="MonsterAI3D"/> once at spawn and then hand-scaled by a flat multiplier on level-up — a second growth
-/// curve that drifted away from the player's. Now level-up just raises <see cref="Level"/> and RE-DERIVES; nothing
-/// is ever scaled by a mob-only factor.</para>
+/// <see cref="MonsterAI3D"/> once at spawn and then hand-scaled by a flat multiplier — a second growth curve that
+/// drifted away from the player's. Now everything is RE-DERIVED; nothing is ever scaled by a mob-only factor. A
+/// creature never gains a level in a fight.</para>
 ///
 /// <para>Attached by the mob builder alongside <see cref="Health"/>. Zero per-frame cost: derivation runs only when
-/// something that feeds it actually changes — spawn, level-up, a respawn back to its spawn level, its spawn stats being
-/// replaced, a buff or debuff on it starting or ending, and the dev settings. A mob's gear changes only when it comes
+/// something that feeds it actually changes — spawn, its spawn stats being replaced, a buff or debuff on it starting or ending, and the dev settings. A mob's gear changes only when it comes
 /// back for a new life, when it is re-seated as fresh rolled copies and this re-derives (<c>MobRespawn.Reactivate</c>).</para>
 /// </summary>
 [RequireComponent(typeof(Health))]
@@ -105,32 +104,17 @@ public class UnitStatBlock : MonoBehaviour
 
     public int Level => inputs.level;
 
-    // The level this unit was AUTHORED at — captured once, before any in-combat level-up. A pooled/respawned mob
-    // returns to this rather than keeping the levels it earned last life; without it, farming one spot would ratchet
-    // a zone permanently upward as recycled objects accumulate levels they never lose. -1 = not captured yet.
-    int spawnLevel = -1;
-
-    /// <summary>Put this unit back to the level it spawned at and re-derive — the mob half of "a respawn is a fresh
-    /// creature, not the same one carrying its old career". Called from <c>MobRespawn.Reactivate</c>, the one choke
-    /// point for reviving a mob, so the in-place recycle and the pooled spawner can't disagree.</summary>
-    public void ResetToSpawnLevel()
+    /// <summary>A fresh creature comes back with a full mana pool, like its HP — on the server, which owns both.
+    /// Called from <c>MobRespawn.Reactivate</c>, the one choke point for reviving a mob.</summary>
+    public void RefillManaForNewLife()
     {
-        if (spawnLevel > 0 && inputs.level != spawnLevel)
-        {
-            inputs.level = spawnLevel;
-            Rederive(healToFull: true);
-        }
-        // A fresh creature comes back with a full pool, like its HP — on the server, which owns both.
         if (!GameNetwork.TheWorldIsElsewhere) CurrentMP = MaxMP;
     }
 
-    /// <summary>Replace this unit's level + primaries after it has spawned and re-derive from them. Re-baselines the
-    /// respawn level too, so a recycled mob comes back as what it was RE-STATTED to rather than snapping back to what
-    /// its prefab was baked at.</summary>
+    /// <summary>Replace this unit's level + primaries after it has spawned and re-derive from them.</summary>
     public void SetSpawnInputs(in UnitStatInputs newInputs)
     {
         inputs = newInputs;
-        spawnLevel = Mathf.Max(1, inputs.level);
         Rederive(healToFull: true);   // refills HP and MP to the new maxima
     }
 
@@ -191,18 +175,9 @@ public class UnitStatBlock : MonoBehaviour
     {
         health = GetComponent<Health>();
         ai = GetComponent<MonsterAI3D>();
-        if (spawnLevel < 0) spawnLevel = Mathf.Max(1, inputs.level);   // remember the authored level, for respawns
         Rederive(healToFull: true);
         // Mana is worked out from the formulas, so a watching machine's copy is not given any.
         if (!GameNetwork.TheWorldIsElsewhere) CurrentMP = MaxMP;
-    }
-
-    /// <summary>Raise the level by one and re-derive everything from the shared formulas — the mob's mirror of a
-    /// player levelling. No growth multiplier: the new numbers are simply what this level's inputs produce.</summary>
-    public void LevelUp()
-    {
-        inputs.level++;
-        Rederive(healToFull: true);
     }
 
     /// <summary>Recompute every derived stat and write it onto the components that actually read them. Call after

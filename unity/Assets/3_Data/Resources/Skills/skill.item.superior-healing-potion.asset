@@ -19,7 +19,7 @@ MonoBehaviour:
   needsSkillId: 
   published: 0
   maxLevel: 1
-  description: Restores 1000 HP at once.
+  description: Restores 1150 to 1450 HP at once.
   archetype: 3
   family: 0
   shape: 3
@@ -79,11 +79,18 @@ MonoBehaviour:
         scaler: 1
       element: 0
       amount:
-        value: 1000
+        value: 1150
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 1450
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 1
       ailment: 0
       seconds:
         value: 0

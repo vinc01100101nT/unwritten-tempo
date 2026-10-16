@@ -110,6 +110,30 @@ public static class CharacterFade
         Resolve();
     }
 
+    /// <summary>Put <paramref name="materials"/> on <paramref name="renderer"/> — the one way to change a body's own
+    /// materials while it may be faded. Mid-fade it wears see-through copies of them at once, and letting go of the fade
+    /// puts these back, not the ones it had before. Only on a change of what is worn, never per frame.</summary>
+    public static void SetMaterials(Renderer renderer, Material[] materials)
+    {
+        if (renderer == null) return;
+        for (int b = 0; b < dressedBodies.Count; b++)
+        {
+            var parts = dressedBodies[b].parts;
+            for (int i = 0; i < parts.Count; i++)
+            {
+                if (parts[i].renderer != renderer) continue;
+                var p = parts[i];
+                p.original = materials;
+                parts[i] = p;
+                var clone = new Material[materials.Length];
+                for (int m = 0; m < materials.Length; m++) clone[m] = Transparent(materials[m]);
+                renderer.sharedMaterials = clone;
+                return;
+            }
+        }
+        renderer.sharedMaterials = materials;
+    }
+
     /// <summary>Drop every hold and put every body back to solid — a scene change, or a hard reset.</summary>
     public static void Clear()
     {

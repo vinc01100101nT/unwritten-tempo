@@ -145,7 +145,7 @@ public class InventoryStore : MonoBehaviour
         if (inst == null) return;
         // The same free box the server asks for (BagRoom), here because with no world this machine decides.
         var noRoom = Character.Instance.RoomFor(inst.def, 1);
-        if (noRoom != BagRefusal.None) { ChatController.GameSaid(Character.Instance.RefusalLine(inst.def, noRoom, "take off")); return; }
+        if (noRoom != BagRefusal.None) { ChatController.GameSaid(Character.Instance.RefusalLine(inst.def, noRoom, "take off"), false); return; }
         Character.Instance.SetEquipped(slot, (EquipmentInstance)null);
         if (inst.def != null) Entries.Add(new BagEntry { def = inst.def, count = 1, instance = inst });
         Notify();
@@ -161,7 +161,7 @@ public class InventoryStore : MonoBehaviour
     {
         if (e == null || e.def == null || count <= 0 || Character.Instance == null) return;
         if (e.worn) return;
-        if (!e.def.CanBeDropped) return;
+        if (!e.def.CanBeDropped) { ChatController.GameSaid(Item.RefusedLine(Item.CannotBeDroppedText), false); return; }
 
         var me = GameNetwork.MyPlayer;
         if (me != null) { me.AskToDrop(Entries.IndexOf(e), e.def.id, count); return; }

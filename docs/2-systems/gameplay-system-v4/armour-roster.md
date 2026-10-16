@@ -16,8 +16,9 @@ slot. The material decides what a piece's base buys; the slot decides how much, 
 **Head, Body, Garment, Shoes** — the names a player reads (`EquipSlots.Label`). In the code they are `Head`, `Armor`,
 `Garment` and `Boots`; the numbers are pinned for saved data, only the words changed. Shoes are shown in the
 equipment window. **No armour design is made for the Head** (decided 2026-10-16): the Iron Helm, Leather Cap and
-Padded Hood were removed from the game, the Head slot holds only the headgear items that have a 3D model, and a new
-headgear system with special stats, never worn by a creature, comes later.
+Padded Hood were removed from the game, and the Head slot holds only the fifteen hats that have a 3D model. A hat is
+not armour: it adds fixed primary stats and one effect, never rolls a word, and no creature wears one — see
+[Hair and Headgear](../hair-and-headgear.md).
 
 **There is no off-hand (built 2026-10-06).** Shields are gone. Blocking and sending damage back belong to the Fist's
 defence skills (block chance is a sub-stat only a skill grants), and extra ordinary-attack reach to the Sniper's own
@@ -25,10 +26,10 @@ long reach.
 
 ## 2. What a piece's base buys — the material decides, the slot scales
 
-A body or a garment is worth one sixth of a sword's base, priced with Ink's own exchange rate — 1 defence = 8 HP =
+A body or a garment is worth one sixth of a 1-second weapon's base (50, a Dagger's), priced with Ink's own exchange rate — 1 defence = 8 HP =
 4 MP = 0.5% attack speed, and evasion at double defence, since each point takes 1% off the hits that land — split
 between its material's two stats. Head and shoes take half. Sized so a full metal set's defence at equal gear is 25%
-of a sword's attack. The roll, the rarity, and every fold and quench multiply that base the way they do a weapon's,
+of a Dagger's attack (20% of a Sword's). The roll, the rarity, and every fold and quench multiply that base the way they do a weapon's,
 rounded half up once (attack speed to one decimal). Full table: [Crafting Tables](crafting-tables.md).
 
 | Base, Common, Raw +0, unrolled | Body, garment | Head, shoes |
@@ -65,8 +66,8 @@ No design is made from materials: a piece is dropped by a creature that wears it
 - **Its size grows with grade** — the finished amount is written by the server; a player's machine only shows it.
 - **Saved by name** in the copy's roll text, beside the trademark. A new character's starting Chainmail, Iron
   Sabatons and Chain Mantle are made with none.
-- **The three Head words (Ironblood, Steadfast, Wellspring) have no piece to roll on** while no armour is made for
-  the Head; which of them the new headgear system carries is to be decided.
+- **The three Head words (Ironblood, Steadfast, Wellspring) have no piece to roll on**: no armour is made for the
+  Head, and hats roll no word.
 
 | Slot | Word | Its one job | Raw → A |
 | --- | --- | --- | --- |

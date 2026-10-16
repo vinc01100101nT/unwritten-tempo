@@ -1323,6 +1323,7 @@ public class UnitStates : MonoBehaviour
         }
         // WHAT THE UNIT WEARS joins the same table (ArmourWords.FoldIntoSubStats owns the units).
         ArmourWords.FoldIntoSubStats(worn, subStatBonus);
+        Headgear.FoldIntoSubStats(worn, subStatBonus);
 
         // Bonuses → multipliers, once. Floored at 0 so a stack of debuff-shaped piles can't drive a multiplier negative
         // (which would flip damage into healing).

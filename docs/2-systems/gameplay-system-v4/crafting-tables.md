@@ -65,27 +65,30 @@ the end (attack speed to one decimal). The server writes it onto the copy.
 ### The base, Common, at a 100% roll
 
 A weapon's base is **50 × its swing time in seconds**, divided by 1 + the off hand's power (0.5) for a pair weapon,
-so every weapon deals the same damage a second at equal gear. The swing times are the character settings' own.
+so every weapon deals the same damage a second at equal gear. A swing time is 0.8 s plus 0.005 s per point of
+weight a hand carries — a pair weapon's two hands carry half its weight each.
 
 | Weapon | Swing time | Base |
 | --- | --- | --- |
-| Katar (a pair) | 0.85 s | 28 |
-| Axe (a pair) | 1.1 s | 37 |
-| Dagger, Fist | 0.8 s | 40 |
-| Shuriken | 0.9 s | 45 |
-| Sword, Wand | 1.0 s | 50 |
-| Spear, Bow | 1.1 s | 55 |
-| Staff | 1.2 s | 60 |
-| Scythe | 1.25 s | 63 |
-| Greatsword, Warhammer | 1.3 s | 65 |
-| Sniper | 1.4 s | 70 |
+| Katar (a pair, weight 80) | 1.0 s | 33 |
+| Axe (a pair, weight 120) | 1.1 s | 37 |
+| Fist (30) | 0.95 s | 48 |
+| Dagger, Shuriken (40) | 1.0 s | 50 |
+| Wand (50) | 1.05 s | 53 |
+| Bow (60) | 1.1 s | 55 |
+| Staff (80) | 1.2 s | 60 |
+| Sword (90) | 1.25 s | 63 |
+| Spear, Sniper (110) | 1.35 s | 68 |
+| Warhammer (130) | 1.45 s | 73 |
+| Scythe (140) | 1.5 s | 75 |
+| Greatsword (160) | 1.6 s | 80 |
 
 Staff, Wand and Scythe give Magic Attack; every other weapon gives Attack.
 
 **An armour piece's MATERIAL decides what its base buys, and its SLOT how much.** A body or a garment is worth one
-sixth of a sword's base on Ink's exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double
+sixth of a 1-second weapon's base (50, a Dagger's) on Ink's exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double
 defence — split between its material's two stats; head and shoes half. Sized so a full metal set's defence at
-equal gear is 25% of a sword's attack. No piece gives movement speed.
+equal gear is 25% of a Dagger's attack (20% of a Sword's). No piece gives movement speed.
 
 | Material | Body or garment | Head or shoes |
 | --- | --- | --- |
@@ -109,19 +112,19 @@ sale) has no Base line.
 
 ### Folds and quenches add percentages of the base
 
-| Grade | Each fold adds | The quench that reached it adds | Total at +0 | Total at +10 | A Common sword at +10 | Ink slots |
+| Grade | Each fold adds | The quench that reached it adds | Total at +0 | Total at +10 | A Common Sword at +10 | Ink slots |
 | --- | --- | --- | --- | --- | --- | --- |
-| Raw | 10% | — | 0% | 100% | 100 | 0 |
-| F | 20% | 100% | 200% | 400% | 250 | 1 |
-| E | 30% | 200% | 600% | 900% | 500 | 2 |
-| D | 40% | 300% | 1,200% | 1,600% | 850 | 3 |
-| C | 50% | 400% | 2,000% | 2,500% | 1,300 | 4 |
-| B | 60% | 500% | 3,000% | 3,600% | 1,850 | 5 |
-| A | 70% | 600% | 4,200% | 4,900% | **2,500** | 6 |
+| Raw | 10% | — | 0% | 100% | 125 | 0 |
+| F | 20% | 100% | 200% | 400% | 313 | 1 |
+| E | 30% | 200% | 600% | 900% | 625 | 2 |
+| D | 40% | 300% | 1,200% | 1,600% | 1,063 | 3 |
+| C | 50% | 400% | 2,000% | 2,500% | 1,625 | 4 |
+| B | 60% | 500% | 3,000% | 3,600% | 2,313 | 5 |
+| A | 70% | 600% | 4,200% | 4,900% | **3,125** | 6 |
 
 Common body armour at A +10: **208 Defence and 1,667 HP** (metal), **104.2% Attack Speed and 104 Evasion**
-(leather), **208 Magic Defence and 833 MP** (cloth). A full Common A +10 metal set is **624 Defence**, 25% of the
-sword's 2,500. A Legendary A +10 sword at a 115% roll is 50 × 1.15 × 1.50 × 50 = 4,312.5 → **4,313 Attack**.
+(leather), **208 Magic Defence and 833 MP** (cloth). A full Common A +10 metal set is **624 Defence**, 20% of the
+Sword's 3,125. A Legendary A +10 Sword at a 115% roll is 62.5 × 1.15 × 1.50 × 50 = 5,390.6 → **5,391 Attack**.
 
 ## 4. Fold and quench — what each try costs, and its odds
 
@@ -278,15 +281,15 @@ Attack is the sword's own, at a 100% roll.
 
 | Step | Pays, each try | Result |
 | --- | --- | --- |
-| A kill drops it | nothing | Raw +0 (50 Attack) |
-| Fold ×4 | 1 Temper Dust + 42u, always lands | Raw +4 (70) |
-| Fold to +10 | 1 Temper Dust + 42u, 90% down to 40%; a failure back one, never below +4 | Raw +10 (100) |
-| Quench | 1 Quench Oil + 420u, 40% | F +0 (150, 1 Ink slot) — or Raw +0 with no Salt |
-| Fold to +10 | 2 Temper Dust + 126u | F +10 (250) |
-| Quench | 2 Quench Oil + 1,260u, 30% | E +0 (350, 2 slots) — or with Coarse Salt, F +4 |
+| A kill drops it | nothing | Raw +0 (63 Attack) |
+| Fold ×4 | 1 Temper Dust + 42u, always lands | Raw +4 (88) |
+| Fold to +10 | 1 Temper Dust + 42u, 90% down to 40%; a failure back one, never below +4 | Raw +10 (125) |
+| Quench | 1 Quench Oil + 420u, 40% | F +0 (188, 1 Ink slot) — or Raw +0 with no Salt |
+| Fold to +10 | 2 Temper Dust + 126u | F +10 (313) |
+| Quench | 2 Quench Oil + 1,260u, 30% | E +0 (438, 2 slots) — or with Coarse Salt, F +4 |
 | … | | |
-| Fold to +10 at A | 7 Temper Dust + 552u, 22% down to 10% | A +10 (2,500 Attack), 6 Ink slots |
+| Fold to +10 at A | 7 Temper Dust + 552u, 22% down to 10% | A +10 (3,125 Attack), 6 Ink slots |
 
-A level 99 character with 99 STR, 30 DEX and 1 LUK swinging that Common A +10 sword has 2,824 Attack. A Thousand
-Petals dash strikes for 100% of Attack, so it deals about **2,000** to a level 99 creature in Common A +10 metal
+A level 99 character with 99 STR, 30 DEX and 1 LUK swinging that Common A +10 sword has 3,449 Attack. A Thousand
+Petals dash strikes for 100% of Attack, so it deals about **2,625** to a level 99 creature in Common A +10 metal
 armour (624 Defence from the armour and about 200 from its stats), before crits, elements and held charges.

@@ -24,6 +24,9 @@ public class WorldShops : ScriptableObject
         public List<string> stock = new List<string>();
         [Tooltip("Whether it buys what players carry: anything whose sell value is above 0.")]
         public bool buysLoot;
+        [Tooltip("BETA TESTING ONLY. Above 0: everything on the stock list — gear included — sells for exactly this many " +
+                 "Unsigned each, with no Tax, whatever the item's own value. 0 = an ordinary shop.")]
+        public int testPrice;
     }
 
     public List<Row> rows = new List<Row>();
@@ -55,11 +58,21 @@ public class WorldShops : ScriptableObject
     /// is not gear — gear is never bought (decided 2026-09-20).</summary>
     public static bool Sells(Row shop, Item def)
     {
-        if (shop == null || def == null || def.value <= 0 || def.slot != EquipSlotType.None) return false;
+        if (shop == null || def == null) return false;
+        // A BETA TEST SHOP sells whatever is on its list, gear included, at its one test price.
+        if (shop.testPrice <= 0 && (def.value <= 0 || def.slot != EquipSlotType.None)) return false;
         for (int i = 0; i < shop.stock.Count; i++)
             if (ItemCatalog.Resolve(shop.stock[i]) == def) return true;
         return false;
     }
+
+    /// <summary>What one <paramref name="def"/> costs at <paramref name="shop"/> before Tax: the item's own value, or a
+    /// beta test shop's one price.</summary>
+    public static int PriceOf(Row shop, Item def)
+        => shop != null && shop.testPrice > 0 ? shop.testPrice : (def != null ? def.value : 0);
+
+    /// <summary>Does buying at <paramref name="shop"/> pay Tax: every shop but a beta test one.</summary>
+    public static bool Taxes(Row shop) => shop == null || shop.testPrice <= 0;
 
     /// <summary>Does any shop in the world sell <paramref name="def"/>.</summary>
     public static bool AnySells(Item def)

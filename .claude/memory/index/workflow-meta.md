@@ -1,5 +1,7 @@
 # Workflow / tooling / meta (Tempo, MCP, extractors, logs)
 
+- [Game server = map server — ONE thing, say "the game server"](../game-server-is-the-map-server.md) — never list a game server build and a map server as two items; checklists name three: game server (rebuild + restart), character server, account service.
+
 - [restart-servers.sh kept OLD settings (fixed 2026-10-08)](../restart-servers-keeps-old-settings.md) — windows were one long-lived shell where already-set values beat settings.env; now each start rereads the file. Windows opened before the fix need one fresh start.
 
 - [Jira tried and LEFT (2026-09-13); tracking is now the action plan + wiki Roadmap](../jira-sprint-board.md) — what the Atlassian MCP cannot do (delete, create project, change type), why the user left, and how the `sprint-manager` now ticks the action plan and moves Roadmap entries.

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.burrowbo
   displayName: Burrowbo
   kind: 0
-  size: 0.3
+  size: 0.5
   flies: 0
   moveSpeed: 1
   biome: 1

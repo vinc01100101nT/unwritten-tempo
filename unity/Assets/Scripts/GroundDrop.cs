@@ -298,7 +298,7 @@ public class GroundDrop : MonoBehaviour
         if (Character.Instance == null) return;
         // The same room the server asks for, here because with no world this machine is the one deciding.
         var noRoom = Character.Instance.RoomFor(drop.def, drop.instance != null ? 1 : drop.count);
-        if (noRoom != BagRefusal.None) { ChatController.GameSaid(Character.Instance.RefusalLine(drop.def, noRoom, "pick up")); return; }
+        if (noRoom != BagRefusal.None) { ChatController.GameSaid(Character.Instance.RefusalLine(drop.def, noRoom, "pick up"), false); return; }
         if (drop.instance != null) Character.Instance.TakeIntoBag(drop.instance);
         else Character.Instance.TakeIntoBag(drop.def, drop.count);
         drop.Remove();

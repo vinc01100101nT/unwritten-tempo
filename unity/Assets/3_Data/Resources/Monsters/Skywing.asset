@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.skywing
   displayName: Skywing
   kind: 0
-  size: 0.3
+  size: 0.5
   flies: 1
   moveSpeed: 1.6
   biome: 12

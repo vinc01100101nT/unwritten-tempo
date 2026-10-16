@@ -29,7 +29,7 @@ public class WeatherDirector : MonoBehaviour
 
     /// <summary>The weather patterns. Each maps to an authored timeline (see <see cref="WeatherSequences.For"/>) that
     /// drives the channels. Order is the pick order within a pool, but the chosen one is weight-driven, not positional.</summary>
-    public enum Preset { Clear, Cloudy, LightRain, Thunderstorm, Snow, Fog }
+    public enum Preset { Clear, Cloudy, LightRain, Thunderstorm, Snow }
 
     [Header("Determinism")]
     [Tooltip("Shared world weather seed. MUST be identical on every client (like TimeOfDay.Epoch) so everyone " +
@@ -73,7 +73,6 @@ public class WeatherDirector : MonoBehaviour
             case Preset.LightRain:    return "Rainy";
             case Preset.Thunderstorm: return "Storm";
             case Preset.Snow:         return "Snow";
-            case Preset.Fog:          return "Fog";
             default:                  return p.ToString();
         }
     }
@@ -88,7 +87,6 @@ public class WeatherDirector : MonoBehaviour
             case Preset.LightRain:    return new Color(0.45f, 0.65f, 1.00f);   // rain blue
             case Preset.Thunderstorm: return new Color(0.70f, 0.60f, 0.98f);   // storm violet
             case Preset.Snow:         return new Color(0.85f, 0.95f, 1.00f);   // ice white
-            case Preset.Fog:          return new Color(0.72f, 0.74f, 0.74f);   // dull mist
             default:                  return Color.white;
         }
     }
@@ -304,7 +302,7 @@ public class WeatherDirector : MonoBehaviour
     // Allocated once (static) so a day-boundary pick never produces GC.
     static readonly Entry[] Spring =
     {
-        E(Preset.Clear, 4f), E(Preset.Cloudy, 3f), E(Preset.LightRain, 3f), E(Preset.Fog, 1f),
+        E(Preset.Clear, 4f), E(Preset.Cloudy, 3f), E(Preset.LightRain, 3f),
     };
     static readonly Entry[] Summer =
     {
@@ -312,11 +310,11 @@ public class WeatherDirector : MonoBehaviour
     };
     static readonly Entry[] Autumn =
     {
-        E(Preset.Clear, 2f), E(Preset.Cloudy, 3f), E(Preset.LightRain, 3f), E(Preset.Fog, 2f),
+        E(Preset.Clear, 2f), E(Preset.Cloudy, 3f), E(Preset.LightRain, 3f),
     };
     static readonly Entry[] Winter =
     {
-        E(Preset.Clear, 3f), E(Preset.Cloudy, 2f), E(Preset.Snow, 4f), E(Preset.Fog, 1f),
+        E(Preset.Clear, 3f), E(Preset.Cloudy, 2f), E(Preset.Snow, 4f),
     };
 
     static Entry[] PoolFor(Season s)

@@ -16,20 +16,16 @@ MonoBehaviour:
   - biome: 11
     alwaysPuddles: 1
     alwaysSnowCover: 0
-    alwaysFog: 0
     alwaysClouds: 0
   - biome: 1
     alwaysPuddles: 0
     alwaysSnowCover: 1
-    alwaysFog: 0
     alwaysClouds: 0
   - biome: 14
     alwaysPuddles: 0
     alwaysSnowCover: 0
-    alwaysFog: 0.6
     alwaysClouds: 0
   - biome: 12
     alwaysPuddles: 0
     alwaysSnowCover: 0
-    alwaysFog: 0.35
     alwaysClouds: 1

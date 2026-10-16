@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.iris
   displayName: Iris
   kind: 0
-  size: 0.3
+  size: 0.5
   flies: 0
   moveSpeed: 0.8
   biome: 8

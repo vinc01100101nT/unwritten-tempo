@@ -51,17 +51,9 @@ public class MonsterAI3D : MonoBehaviour
     /// a rebel. Set in code each time a body is given its part, so it is never saved.</summary>
     [System.NonSerialized] public bool paysExperience = true;
 
-    [Header("Leveling (mob progression — mirrors the player)")]
     [Min(1)]
-    [Tooltip("Current mob level. Grows in combat; each level-up scales attack + max HP and fires the OnLevelUp cue.")]
+    [Tooltip("This creature's level, written by its stat block. A creature never gains a level in a fight.")]
     public int level = 1;
-    [Tooltip("XP this mob earns per point of damage it deals to the player (the mob's mirror of the player earning " +
-             "XP from combat). 0 = this mob never levels.")]
-    public float xpPerDamageDealt = 1f;
-    [Tooltip("XP for the FIRST level-up; the bar for each subsequent level is this × the current level.")]
-    public int xpToFirstLevel = 20;
-    // (Removed 2026-08-10: perLevelGrowth. A mob's STATS are RE-DERIVED at each level through the same formulas the
-    //  player uses — there is no mob-only stat growth rate to drift.)
 
     [Header("Behavior style")]
     [Tooltip("0 = melee (close in and bite). >0 = HOLD this far from the player and attack from range " +
@@ -111,7 +103,6 @@ public class MonsterAI3D : MonoBehaviour
     bool chasing;
     float nextTouch;
     float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
-    float mobXp;          // XP toward this mob's next level (earned from damage dealt to the player)
     StatusController status;   // poison/bleed/burn/blind host (Stun/Slow still delegate to the fields above)
 
     /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-pilot target
@@ -176,8 +167,17 @@ public class MonsterAI3D : MonoBehaviour
 
     /// <summary>Seconds between our swings at our current attack speed — the same interval the attack site waits.</summary>
     public float SwingTime => UnitOffense.AttackInterval(
-        CharacterSpec.Active.SwingInterval(Equipment != null ? Equipment.WeaponType : WeaponType.None),
+        UnitOffense.SwingSeconds(Equipment != null ? Equipment.WeaponType : WeaponType.None, HeldWeaponWeight),
         attackSpeedMult > 0f ? attackSpeedMult : (MobStates != null ? MobStates.AttackSpeedBuffMult : 1f));
+
+    int HeldWeaponWeight
+    {
+        get
+        {
+            var held = Equipment != null ? Equipment.Get(EquipSlotType.Weapon) : null;
+            return held != null && held.def != null ? held.def.weight : 0;
+        }
+    }
 
     /// <summary>Our swing speed, stamped by <see cref="UnitStatBlock"/> through the player's own formula — AGI, DEX, worn
     /// attack speed, the ring and any live attack-speed buff. Below zero until stamped (a watching machine's copy, a
@@ -412,8 +412,7 @@ public class MonsterAI3D : MonoBehaviour
         if (Health != null)
             Health.onDeath.AddListener(() =>
             {
-                // The kill's experience also trains the killer's weapon mastery — Character.AddXP pays both. Read
-                // at the moment of death, so a creature that levelled up in the fight pays its new level.
+                // The kill's experience also trains the killer's weapon mastery — Character.AddXP pays both.
                 if (paysExperience)
                 {
                     // The gear that pays is its FILE's; a creature with no file (a hand-placed one) pays as ungeared.
@@ -427,45 +426,6 @@ public class MonsterAI3D : MonoBehaviour
 
         nextWander = Time.time + Random.value;
     }
-
-    // XP needed for the next level-up — the first bar (xpToFirstLevel) scaled by the current level.
-    int XpToNext => Mathf.Max(1, xpToFirstLevel * level);
-
-    /// <summary>Award combat XP for <paramref name="damageDealt"/> the mob just landed on the player, and level
-    /// up (possibly several times) once the bar is reached — the mob's mirror of the player's progression.
-    /// Called per-hit (not per-frame); alloc-free.</summary>
-    public void GainCombatXp(int damageDealt)
-    {
-        if (damageDealt <= 0 || xpPerDamageDealt <= 0f) return;
-        mobXp += damageDealt * xpPerDamageDealt;
-        while (mobXp >= XpToNext)
-        {
-            mobXp -= XpToNext;
-            LevelUp();
-        }
-    }
-
-    // One choke point for a mob level-up: RE-DERIVE stats from the shared formulas, fully heal, announce, cue.
-    // There is deliberately NO growth multiplier here — a mob's level-20 numbers are whatever level 20 produces
-    // through UnitStatMath, exactly as they are for the player. (Before 2026-08-10 this scaled attack/HP by a flat
-    // 1.15×, a mob-only curve that drifted away from the player's the longer a mob lived.)
-    void LevelUp()
-    {
-        var block = Stats;
-        if (block != null) block.LevelUp();      // level++ then re-derive; writes maxHealth/attack/hit/etc. back here
-        else
-        {
-            // No stat block (a hand-placed legacy mob): still level, but nothing to re-derive from.
-            level++;
-            if (Health != null) Health.RefillToMax();
-        }
-        VfxCue.Fire(VfxCueId.OnLevelUp, transform);
-    }
-
-    /// <summary>Clear the progress toward this mob's next level. Part of "a respawn is a fresh creature": without it a
-    /// recycled object keeps last life's banked XP and can level up on its first hit back. Paired with
-    /// <c>UnitStatBlock.ResetToSpawnLevel</c> from the one revive choke (<c>MobRespawn.Reactivate</c>).</summary>
-    public void ResetCombatXp() => mobXp = 0f;
 
     UnitStatBlock statBlock;
     /// <summary>This mob's live stat block (level + primaries → every derived number). Cached; may be null on a
@@ -809,8 +769,8 @@ public class MonsterAI3D : MonoBehaviour
     }
 
     /// <summary>One ordinary attack scaled by <paramref name="power"/> — what a thrown blade's hop lands (each jump is
-    /// worth less than the last). The creature's own half of a landed hit, its on-hit ailment and its combat
-    /// experience, comes with it on every hop, onto the unit the hop actually struck.</summary>
+    /// worth less than the last). The creature's own half of a landed hit, its on-hit ailment, comes with it
+    /// on every hop, onto the unit the hop actually struck.</summary>
     public int LandSwing(ICombatUnit victim, bool announceIntent, float power)
     {
         if (Health == null || Health.IsDead || PlayerUnits.Gone(victim) || victim.IsDead) return 0;
@@ -818,7 +778,6 @@ public class MonsterAI3D : MonoBehaviour
         if (dealt > 0)
         {
             TryInflictOnHit(victim);
-            GainCombatXp(dealt);
         }
         return dealt;
     }

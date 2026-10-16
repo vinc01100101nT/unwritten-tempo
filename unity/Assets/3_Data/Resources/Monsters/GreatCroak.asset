@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.great-croak
   displayName: Great Croak
   kind: 1
-  size: 2.2
+  size: 2.4
   flies: 0
   moveSpeed: 1.1
   biome: 10

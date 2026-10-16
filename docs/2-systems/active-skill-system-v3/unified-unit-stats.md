@@ -48,7 +48,7 @@ So the gap is roughly nine additions, not a rebuild — mobs already carry most 
 **Three competing growth paths exist today** and all collapse into the player's:
 
 - the player's per-level growth (`hpPerLevel`, `attackPerLevel`, …) — **the survivor**,
-- `MonsterAI3D.perLevelGrowth` — a flat 1.15× on attack / maxHealth / xpReward at mob level-up (MonsterAI3D.cs:199) — **deleted**,
+- `MonsterAI3D.perLevelGrowth` — a flat 1.15× on attack / maxHealth / xpReward — **deleted**, and creatures no longer level up at all,
 - `MonsterDef.tier` — **deleted** (it becomes a content label at most, never a multiplier).
 
 ## The model
@@ -107,7 +107,7 @@ With tier and the throttle gone there is no single number to turn when playtesti
 
 Only behaviour and inputs: level, the six primaries, worn gear and its state, ring ranks, weapon mastery, `aggroRadius`, `leashRadius`, wander knobs, `preferredRange`, `fleeHpFraction`, element, on-hit ailment, loot, sheet/tint/size.
 
-**No sub-stat is typed onto a unit, with one exception: a creature's own movement speed** (decided 2026-10-14) — a number from 0 to 2 on its catalog entry, set in the Mob Table, that multiplies the shared pace; 1 is a person's pace and 0 never moves. Everything else is shared: the movement pace and bare-handed reach are one value each on `CharacterSpec`, and the base swing interval is one value per weapon there, read by players and creatures alike: a creature chases on the run gear and wanders on the walk gear, each times its own movement speed, reaches `unarmedReach` (0.5) bare-handed or its weapon's `attackRange`, and swings every `SwingInterval(weapon)` (1 s bare-handed) before attack speed. The combat numbers on a creature's body (`Health`, `MonsterAI3D`) are written only by `UnitStatBlock` and are never saved.
+**No sub-stat is typed onto a unit, with one exception: a creature's own movement speed** (decided 2026-10-14) — a number from 0 to 2 on its catalog entry, set in the Mob Table, that multiplies the shared pace; 1 is a person's pace and 0 never moves. Everything else is shared: the movement pace and bare-handed reach are one value each on `CharacterSpec`, and the base swing interval is worked out from the held weapon's weight (`UnitOffense.SwingSeconds`), read by players and creatures alike: a creature chases on the run gear and wanders on the walk gear, each times its own movement speed, reaches `unarmedReach` (0.5) bare-handed or its weapon's `attackRange`, and swings every `UnitOffense.SwingSeconds(weapon, weight)` (0.8 s bare-handed) before attack speed. The combat numbers on a creature's body (`Health`, `MonsterAI3D`) are written only by `UnitStatBlock` and are never saved.
 
 ## Migration — reset to a level template
 
@@ -122,7 +122,7 @@ This trades current balance for a clean base. Expect a re-tuning pass across the
 3. ~~**Give mobs both.**~~ `UnitStatBlock` on every spawned mob, wired by `RigBuilder25D`.
 4. ~~**Teach `Health` to read the states it already stores.**~~ `UnitMitigation` (the damage-reduction pile + Shield) + `ApplyLeech` (the reflect and mana-leech piles).
 5. ~~**Drops from the worn set.**~~ `LootDropper.DropWornGear`.
-6. ~~**Delete `perLevelGrowth` and tier.**~~ Level-up re-derives; tier is gone from every file.
+6. ~~**Delete `perLevelGrowth` and tier.**~~ Creatures never level up; tier is gone from every file.
 7. ~~**Migration tool.**~~ `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries`.
 8. **Re-tune the roster** — the one step left, and it needs play, not code.
 
@@ -183,7 +183,7 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | --- | --- |
 | Movement speed | `CharacterSpec` gear speeds — the run gear is the base at 1 world unit/s, the walk gear 0.4 of it and the sprint gear 2 times it (one movement speed, no gait term) — × `UnitStates.MoveMult`, which carries timed movement-speed effects only; no gear gives movement speed. A creature also multiplies by its own movement speed, 0 to 2 (`MonsterDef.moveSpeed`, through `UnitStatMath.CreatureTravelSpeed`) |
 | Attack reach | `CharacterSpec.unarmedReach` (0.5) bare-handed, or the held weapon's `attackRange`; blended by the pair's body sizes |
-| Base swing interval | `CharacterSpec.SwingInterval(weapon)` for every unit, divided by attack speed — 1 s bare-handed and each weapon its own: Dagger and Fist 0.8 s, Katar 0.85 s, Shuriken 0.9 s, Sword and Wand 1 s, Axe, Spear and Bow 1.1 s, Staff 1.2 s, Scythe 1.25 s, Warhammer and Greatsword 1.3 s, Sniper 1.4 s |
+| Base swing interval | `UnitOffense.SwingSeconds(weapon, weight)` for every unit, divided by attack speed — 0.8 s bare-handed plus 0.005 s per point of weight a hand carries (a pair weapon's two hands carry half its weight each): Fist 0.95 s, Dagger, Shuriken and Katar 1 s, Wand 1.05 s, Bow and Axe 1.1 s, Staff 1.2 s, Sword 1.25 s, Spear and Sniper 1.35 s, Warhammer 1.45 s, Scythe 1.5 s, Greatsword 1.6 s |
 | Mana leech | 0; a timed sub-stat change only |
 | Life steal | worn words + a timed LifeSteal change; nothing typed |
 | Damage reflect | worn words + a timed Reflect change; nothing typed |

@@ -140,7 +140,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
 
         var n = UiKit.MakeText("Count", fillImg.transform, "", 11, FontStyle.Bold, TextAnchor.LowerRight, null, false);
         n.raycastTarget = false;
-        n.color = UiKit.TitleText;
+        UiKit.StyleItemCount(n);
         UiKit.Fill(n.rectTransform, new Vector2(3, 1), new Vector2(-3, -1));
         box.count = n;
 

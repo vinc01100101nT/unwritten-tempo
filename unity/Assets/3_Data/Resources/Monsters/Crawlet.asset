@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.crawlet
   displayName: Crawlet
   kind: 0
-  size: 0.3
+  size: 0.5
   flies: 0
   moveSpeed: 0.6
   biome: 6

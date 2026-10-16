@@ -22,7 +22,7 @@ MonoBehaviour:
   element: 0
   category: 0
   cardSlots: 2
-  weight: 90
+  weight: 110
   value: 8
   undroppable: 0
   unsellable: 0

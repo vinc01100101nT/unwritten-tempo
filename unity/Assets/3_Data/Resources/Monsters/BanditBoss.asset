@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.bandit-boss
   displayName: Bandit Boss
   kind: 1
-  size: 1.8
+  size: 2
   flies: 0
   moveSpeed: 1.2
   biome: 0

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.willo
   displayName: Willo
   kind: 0
-  size: 0.9
+  size: 1.1
   flies: 0
   moveSpeed: 1
   biome: 2

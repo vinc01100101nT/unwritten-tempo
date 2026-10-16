@@ -34,6 +34,7 @@ public class EquipmentPanel : IItemBoxOwner
         (EquipSlotType.Armor,   "Body",    new Vector2(4, 120)),
         (EquipSlotType.Weapon,  "Weapon",  new Vector2(Width - ItemBox.Size - 4, 150)),
         (EquipSlotType.Boots,   "Shoes",   new Vector2(4, -1)),
+        (EquipSlotType.CostumeBody, EquipSlots.Label(EquipSlotType.CostumeBody), new Vector2(Width - ItemBox.Size - 4, -1)),
     };
 
     readonly ItemBox[] boxes = new ItemBox[Places.Length];

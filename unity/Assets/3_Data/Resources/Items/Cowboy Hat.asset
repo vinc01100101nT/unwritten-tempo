@@ -28,6 +28,16 @@ MonoBehaviour:
   unsellable: 1
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 2
+    vit: 0
+    intel: 0
+    dex: 4
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: skill.headgear.cowboy-hat
   madeOf: 0
   materialKind: 0
   materialStep: 0

@@ -77,6 +77,328 @@
       ]
     },
     {
+      "id": "skill.headgear.army-helmet",
+      "name": "Army Helmet",
+      "symbol": "Ah",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When you draw your weapon",
+      "description": "Drawing your weapon: +20% damage for 5s.",
+      "trademark": "",
+      "effects": [
+        "+**20%** damage for **5s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.cowboy-hat",
+      "name": "Cowboy Hat",
+      "symbol": "Cb",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When a basic attack lands",
+      "description": "Each basic attack that lands: +10% movement speed for 2s.",
+      "trademark": "",
+      "effects": [
+        "+**10%** movement speed for **2s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.golden-horned-helm",
+      "name": "Golden Horned Helm",
+      "symbol": "Gh",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant  Range **40**",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When you kill a mob",
+      "description": "Each kill deals 30% of your attack to every enemy within 2 units.",
+      "trademark": "",
+      "effects": [
+        "Deals **0.3×** physical damage"
+      ]
+    },
+    {
+      "id": "skill.headgear.hard-hat",
+      "name": "Hard Hat",
+      "symbol": "Hd",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant  Range **40**",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When you deal damage",
+      "description": "Any damage you deal has a 6% chance to stun the target for 1s.",
+      "trademark": "",
+      "effects": [
+        "**6%** per hit: stun for **1s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.headband",
+      "name": "Headband",
+      "symbol": "Hb",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When you take damage",
+      "description": "Each hit you take: +1 MP a second for 5s, stacking up to 5 times.",
+      "trademark": "",
+      "effects": [
+        "+1 MP regen per stack for **5s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.horned-helm",
+      "name": "Horned Helm",
+      "symbol": "Hh",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When a basic attack lands",
+      "description": "Each basic attack that lands: +2% attack speed for 3s, stacking up to 10 times.",
+      "trademark": "",
+      "effects": [
+        "+**2%** attack speed per stack for **3s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.ninja-hood",
+      "name": "Ninja Hood",
+      "symbol": "Nh",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When a basic attack lands",
+      "description": "Each basic attack that lands: +1% crit chance for 4s, stacking up to 10 times.",
+      "trademark": "",
+      "effects": [
+        "+0.01 crit chance per stack for **4s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.open-golden-helm",
+      "name": "Open Golden Helm",
+      "symbol": "Og",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant  Range **40**",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When a basic attack lands",
+      "description": "Each basic attack that lands has an 8% chance to cut the target's defence by 10% for 4s.",
+      "trademark": "",
+      "effects": [
+        "**8%** per hit: −**10%** defense for **4s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.pirate-hat",
+      "name": "Pirate Hat",
+      "symbol": "Pi",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant  Range **40**",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When a basic attack lands",
+      "description": "Each basic attack that lands has a 10% chance to poison the target for 3s, stacking up to 5 times.",
+      "trademark": "",
+      "effects": [
+        "**10%** per hit: Poison **3**/tick for **3s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.plumed-helm",
+      "name": "Plumed Helm",
+      "symbol": "Ph",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When a basic attack lands",
+      "description": "Each basic attack that lands has a 5% chance to charge your next attack with +50% damage, within 5s.",
+      "trademark": "",
+      "effects": [
+        "**5%** per hit: your next attack deals +**50%** damage within **5s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.pointed-hat",
+      "name": "Pointed Hat",
+      "symbol": "Pt",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant  Range **40**",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When you deal damage",
+      "description": "Any damage you deal has a 5% chance to burn the target for 3s, stacking up to 5 times.",
+      "trademark": "",
+      "effects": [
+        "**5%** per hit: Burn **3**/tick for **3s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.tailed-headband",
+      "name": "Tailed Headband",
+      "symbol": "Tb",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When a basic attack lands",
+      "description": "Each basic attack that lands: +1 HP a second for 4s, stacking up to 10 times.",
+      "trademark": "",
+      "effects": [
+        "+1 HP regen per stack for **4s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.top-hat",
+      "name": "Top Hat",
+      "symbol": "Th",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When you heal someone",
+      "description": "Each heal you cast that restores health: +1 MP a second for 5s, stacking up to 5 times.",
+      "trademark": "",
+      "effects": [
+        "+1 MP regen per stack for **5s**"
+      ]
+    },
+    {
+      "id": "skill.headgear.witch-hat",
+      "name": "Witch Hat",
+      "symbol": "Wh",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant  Range **40**",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 40,
+      "trigger": "When you deal damage",
+      "description": "Any damage you deal has a 6% chance to silence the target for 2s.",
+      "trademark": "",
+      "effects": [
+        "**6%** per hit: Silence for **2s**"
+      ]
+    },
+    {
       "id": "skill.heal_circle",
       "name": "Sanctuary",
       "symbol": "",
@@ -301,10 +623,10 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "Passive",
-      "description": "Restores 2500 HP at once.",
+      "description": "Restores 2800 to 3600 HP at once.",
       "trademark": "",
       "effects": [
-        "Heals **2500** HP"
+        "Heals **2800–3600** HP"
       ]
     },
     {
@@ -347,10 +669,10 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "Passive",
-      "description": "Restores 400 HP at once.",
+      "description": "Restores 520 to 680 HP at once.",
       "trademark": "",
       "effects": [
-        "Heals **400** HP"
+        "Heals **520–680** HP"
       ]
     },
     {
@@ -439,10 +761,10 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "Passive",
-      "description": "Restores 150 HP at once.",
+      "description": "Restores 240 to 320 HP at once.",
       "trademark": "",
       "effects": [
-        "Heals **150** HP"
+        "Heals **240–320** HP"
       ]
     },
     {
@@ -554,10 +876,10 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "Passive",
-      "description": "Restores 50 HP at once.",
+      "description": "Restores 130 to 170 HP at once.",
       "trademark": "",
       "effects": [
-        "Heals **50** HP"
+        "Heals **130–170** HP"
       ]
     },
     {
@@ -600,10 +922,10 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "Passive",
-      "description": "Restores 30 HP at once.",
+      "description": "Restores 80 to 100 HP at once.",
       "trademark": "",
       "effects": [
-        "Heals **30** HP"
+        "Heals **80–100** HP"
       ]
     },
     {
@@ -715,10 +1037,10 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "Passive",
-      "description": "Restores 1000 HP at once.",
+      "description": "Restores 1150 to 1450 HP at once.",
       "trademark": "",
       "effects": [
-        "Heals **1000** HP"
+        "Heals **1150–1450** HP"
       ]
     },
     {

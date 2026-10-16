@@ -9,8 +9,9 @@ body** (peace). The server alone decides which; every screen draws what it is to
 weapon is moving is remembered (the newest wins) and carried out when the move ends. A new life and a weapon swap
 put the weapon away at once, with nothing pending.
 
-**How long a move takes:** 0.2 s + 0.006 s × the weapon's weight (0.74 s at weight 90, 0.56 s at 60, 0.998 s for the
-Greatsword at 133, 0.2 s bare handed). Drawing and putting away take the same time. The legs keep moving throughout.
+**How long a move takes:** 0.2 s + 0.006 s × the weapon's weight (0.74 s at weight 90, 0.56 s at 60, 1.16 s for the
+Greatsword at 160, 0.2 s bare handed). Drawing and putting away take the same time. The same weight also sets the
+time between swings (0.8 s plus 0.005 s per point a hand carries), so changing a weapon's weight moves both. The legs keep moving throughout.
 
 ## What takes it out and what puts it away
 

@@ -78,18 +78,18 @@ weather can still bring more on top, and rain still brings its falling drops and
   only). Rain on a Swamp fills its hollows further like anywhere else. Walking through the water plays the splash
   footsteps.
 - **Snow** — the snow blanket over the ground and every prop, at full, on every quality setting.
-- **Mist** — fog at 0.6 of the Fog weather's thickness: near things stay clear, the far edge of the map fades.
 - **Sacred** — patchy, soft white clouds floating over the whole map at treetop height (between about 2 and 4.5
   metres above the ground), drifting slowly. Tree tops rise out of them and the ground shows through the gaps
   between patches; within about 6 metres of the point the camera looks at (you) the clouds are gone, and they fade
-  back to full by about 10 metres, so you are never hidden while the far side of the map dissolves into cloud. Fog at
-  0.35 of the Fog weather's thickness hazes the distance on top. The clouds fade in over about 2 seconds on arrival.
-- **Every other biome** — nothing held; puddles, snow and fog come only with the weather.
+  back to full by about 10 metres, so you are never hidden while the far side of the map dissolves into cloud. The clouds fade in over about 2 seconds on arrival.
+- **Every other biome** — nothing held; puddles and snow come only with the weather.
+
+**Fog is not a weather and not a biome's: every map, in every weather, shows it at full** — near things stay clear
+and the far edge of the map fades.
 
 The levels live in `unity/Assets/3_Data/Resources/BiomeWeather.asset` (one row per biome that holds something). A map
 knows its biome because the generator stamps a biome marker into every map it builds; maps built before that carry
-none and hold nothing. Arriving on a map starts straight at its snow blanket rather than building up or melting. Fog shows at the held level
-the moment the map loads.
+none and hold nothing. Arriving on a map starts straight at its snow blanket rather than building up or melting.
 **Parked (the user, 2026-09-25):** how often each kind of weather comes per biome — snow maps often snowing,
 grassland often sunny.
 

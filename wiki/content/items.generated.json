@@ -67,6 +67,27 @@
             ]
         },
         {
+            "id": "item.adventurer-outfit",
+            "name": "Adventurer Outfit",
+            "description": "",
+            "type": "Armor",
+            "slot": "Costume Body",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "reach": "",
+            "materialKind": "",
+            "mergesInto": "",
+            "rarity": "",
+            "slotOrder": 6,
+            "materialKindOrder": 0,
+            "cardSlots": 0,
+            "weight": 0,
+            "sellsFor": 0,
+            "materialStep": 0,
+            "droppedBy": []
+        },
+        {
             "id": "item.antidote",
             "name": "Antidote",
             "description": "Chalky, sharp, and faster than waiting it out.",
@@ -152,7 +173,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 120,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -1609,7 +1630,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 40,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -2397,7 +2418,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 30,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -3347,7 +3368,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 133,
+            "weight": 160,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -4425,7 +4446,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 80,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -7057,7 +7078,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 140,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -7603,7 +7624,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 40,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -7723,7 +7744,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 60,
+            "weight": 110,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -7787,7 +7808,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 110,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -7971,7 +7992,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 80,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -9463,7 +9484,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 50,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
@@ -9527,7 +9548,7 @@
             "slotOrder": 2,
             "materialKindOrder": 0,
             "cardSlots": 2,
-            "weight": 90,
+            "weight": 130,
             "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [

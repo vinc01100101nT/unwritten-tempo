@@ -292,7 +292,7 @@ public static class GmCommands
         // THE SERVER'S TOO. Run on one machine these changed one person's sky and nobody else's; held on the server,
         // everybody on it — and everybody who arrives later — sees the same one.
         Register(new GmCommand("time", "time <0..1>", "Set time of day (0=midnight, 0.5=noon).", "time 0.5", CmdTime, false, true) { worksWithNobody = true });
-        Register(new GmCommand("weather", "weather <clear|cloudy|rain|storm|snow|fog>", "Force the weather preset.", "weather rain", CmdWeather, false, true) { worksWithNobody = true });
+        Register(new GmCommand("weather", "weather <clear|cloudy|rain|storm|snow>", "Force the weather preset.", "weather rain", CmdWeather, false, true) { worksWithNobody = true });
         // A WORLD EVENT: every map server, not only this one — the character server holds the list and hands it to
         // all of them (see WorldEvents). Everyone online is told when it starts and when it ends.
         Register(new GmCommand("exprate", "exprate <duration> <multiplier>  ·  exprate off",
@@ -1168,7 +1168,6 @@ public static class GmCommands
             case "rain": case "lightrain": preset = WeatherDirector.Preset.LightRain; return true;
             case "storm": case "thunder": case "thunderstorm": preset = WeatherDirector.Preset.Thunderstorm; return true;
             case "snow": preset = WeatherDirector.Preset.Snow; return true;
-            case "fog": preset = WeatherDirector.Preset.Fog; return true;
             default: preset = WeatherDirector.Preset.Clear; return false;
         }
     }

@@ -206,8 +206,6 @@ MonoBehaviour:
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
   level: 1
-  xpPerDamageDealt: 1
-  xpToFirstLevel: 20
   preferredRange: 0
   fleeHpFraction: 0
   size: 0.3

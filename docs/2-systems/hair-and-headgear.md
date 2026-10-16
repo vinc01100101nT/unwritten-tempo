@@ -1,6 +1,7 @@
 # Hair and Headgear
 
-**Status: BUILT 2026-10-10, not play-tested.** It was planned by the planner, attacked by the red team, and the
+**Status: BUILT 2026-10-10, not play-tested. Hat stats and effects and the beta Hatter BUILT 2026-10-16, not
+play-tested.** It was planned by the planner, attacked by the red team, and the
 user decided the open questions the same day.
 
 ## What the player gets
@@ -19,12 +20,17 @@ user decided the open questions the same day.
   - An animal's head (Cow, Pug) is offered no hair.
 - **Hats are items.** Fifteen Head items, one per headgear model, worn in the Head slot and seen by every other
   player.
-  - They have no effect: no stats, no word, weight 0, worth 0, and they are never handed out at random.
+  - Each hat adds primary stats and one effect, the same on every copy: a hat never rolls, folds, quenches or takes a
+    rarity, and carries no word. Weight 0, worth 0, never handed out at random. The table below lists them.
   - The full helmets and the hood hide the hair under them.
   - Every other hat that covers the head cuts the hair where the hat sits on the head, so only the hair hanging
     below it shows and none sticks out above it.
   - The two headbands sit on the head without covering it, and leave the hair whole.
-  - Which hats exist, what they do and how they are obtained is still to be planned. Until then a GM gives them.
+  - **No card or wiki page names a weapon.** Every effect works with any weapon; each one pays off most with one
+    weapon's way of fighting, and players find out which by wearing them. Which weapon each one fits is written
+    only in this doc, in the table below.
+  - **How they are obtained is still to be planned.** Until then a GM gives them, and for beta testing the Hatter,
+    by the fountain in the middle of Lastline, sells all fifteen for 1u each with no Tax.
 - **Townsfolk** wear the hair their body was made with, and the hat their body had now comes from the matching Head
   item.
 - **No creature wears headgear** (decided 2026-10-16), shadows included: they wear hair only. The three model-less head pieces they once carried (Iron Helm, Leather Cap, Padded Hood) were removed from the game.
@@ -71,6 +77,27 @@ user decided the open questions the same day.
 | Pirate Hat | Pirate_Male |
 | Horned Helm | VikingHelmet |
 | Hard Hat | Worker_Male |
+
+**What each hat does.** Stats are added while worn; the effect fires at its moment and is then over. All numbers are
+first guesses, to be tuned in play.
+
+| Hat | Stats | Effect | Fits (never shown to players) |
+|---|---|---|---|
+| Golden Horned Helm | STR +5, VIT +1 | On a kill: 30% of your attack to every enemy within 2 units | Greatsword — a cleave kills several at once |
+| Horned Helm | STR +4, VIT +2 | Basic attack lands: +2% attack speed for 3s, stacking up to 10 | Axe — faster while it keeps swinging |
+| Plumed Helm | STR +3, VIT +3 | Basic attack lands: 5% chance your next attack deals +50% damage, within 5s | Sword — single-target bursts |
+| Pirate Hat | AGI +3, LUK +3 | Basic attack lands: 10% chance to poison for 3s (3 a tick), stacking up to 5 | Dagger — poison piles on one target |
+| Ninja Hood | AGI +3, LUK +3 | Basic attack lands: +1% crit chance for 4s, stacking up to 10 | Katar — crits climb through a fight |
+| Hard Hat | VIT +4, STR +2 | Any damage dealt: 6% chance to stun for 1s | Warhammer — stun skills that hit groups |
+| Open Golden Helm | STR +3, DEX +3, +0.5 attack reach | Basic attack lands: 8% chance to cut the target's defence by 10% for 4s | Spear — cuts the defence of what it fights |
+| Cowboy Hat | DEX +4, AGI +2 | Basic attack lands: +10% movement speed for 2s | Bow — fights on the move |
+| Pointed Hat | INT +4, DEX +2 | Any damage dealt: 5% chance to burn for 3s (3 a tick), stacking up to 5 | Staff — area spells roll it on every enemy hit |
+| Top Hat | INT +3, DEX +3 | A heal you cast restores health: +1 MP a second for 5s, stacking up to 5 | Wand — the more it heals, the longer its mana lasts |
+| Witch Hat | INT +3, LUK +3 | Any damage dealt: 6% chance to silence for 2s | Scythe — wears enemies down with curses |
+| Army Helmet | DEX +4, VIT +2 | Drawing your weapon: +20% damage for 5s | Sniper — one big opening shot |
+| Headband | VIT +3, AGI +3 | Each hit taken: +1 MP a second for 5s, stacking up to 5 | Fist, both paths — the defence path takes the hits, the offence path spends all its MP on one blow |
+| Tailed Headband | STR +3, DEX +3 | Basic attack lands: +1 HP a second for 4s, stacking up to 10 | Shuriken, both paths — thrown or swung, it lands many hits; the even STR/DEX split suits both |
+| Chef's Hat | VIT +3, LUK +3, +15% experience from every kill | — | The newbie hat; fits no weapon |
 
 **Bodies that needed a head.**
 - The three knights and the two ninja bodies had a helmet or a hood instead of a head. Each now has the plain head
@@ -157,11 +184,28 @@ It does nothing outside Play or on the map server.
 - **Shadow creatures** carry `hairStyle` and `hairColour` on their creature entry.
 - **The shared character string** moved to `unwritten-character-v22` with this work; both sides say `unwritten-character-v28` today.
 
-### Head items made of nothing
+### What a hat adds, in code
 
-A worn piece whose material is None is worn for its look alone. It rolls no armour word and is never handed out at
-random (`EquipmentInstance.RollWord`, `ItemCatalog`). Every armour piece made before this has a material, so no
-existing item changed.
+- **Made of nothing.** A worn piece whose material is None rolls no armour word and is never handed out at random
+  (`EquipmentInstance.RollWord`, `ItemCatalog`).
+- **Its numbers are on the design**, not the copy: `Item.headgear` (six primaries, `attackReach`,
+  `experiencePercent`). `Headgear.AddInto` adds them into the worn total from `EquipmentInstance.AddPieceInto`, the
+  same place a copy's own numbers are added, so the stat sheet, the equip preview and the card read one sum. The
+  reach is folded into the sub-stat table beside the armour words (`Headgear.FoldIntoSubStats`, from `UnitStates`).
+- **Its effect is a passive skill**, `Item.wornSkillId` → `skill.headgear.<hat>` (weapon None, unpublished, so it
+  never rolls on a weapon or shows in the Skills window). `Character.UsableSkills` gives the wearer a position for it,
+  `PassiveLoadout.IsActive` switches it on while `Character.WearsSkill` says it is worn, whatever weapon is held, and
+  it fires through the ordinary passive door on the server. Equipping or removing a piece that runs a skill rebuilds
+  the list (`Character.SetEquipped`).
+- **The Top Hat's moment, `OnHealDealt`**, fires from `SkillEffectApplier` when a skill's Heal gave health back to
+  anybody, the caster included; what an item runs never fires it.
+- **The Chef's Hat's experience** multiplies what a kill pays after the world event and the kill combo
+  (`Rewards.PayShare`, `Headgear.ExperienceWithBonus`). One payment feeds all three tracks, so the character, the
+  ring and the weapon mastery all get the bonus.
+- **The card** (`ItemTooltip.AppendHeadgear`) lists the stats, then the effect in the skill card's own words
+  (`SkillTooltip.TriggerLine` / `EffectLines`).
+- **The beta Hatter** is a townsfolk row in Lastline whose shop row `beta-headgear` sets `testPrice: 1`
+  (`WorldShops.PriceOf` / `Taxes`): a test shop sells gear and charges its one price with no Tax. Beta testing only.
 
 ### Checks
 

@@ -53,7 +53,7 @@ public static class QuestRewards
         PlaySession.QuestFinished(c);
         GameLog.Info(LogCat.Loot, string.Concat(SpawnIds.MapOf(c), " ", SpawnIds.Label(c), " (",
                                                  GameNetwork.CharacterIdOf(c), ") finished quest ", def.id, " — ", said.ToString()));
-        shell?.TellQuestLine(said.ToString(), "Quest complete");
+        shell?.TellQuestLine(said.ToString(), "Completed: " + def.title);
     }
 
     static void Part(StringBuilder sb, ref bool first, string what)

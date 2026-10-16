@@ -2104,8 +2104,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         TargetGotItem(connectionToClient, itemId, count, folds, (int)rarity);
     }
 
-    /// <summary>Server-only: a sentence from the game to the person playing here, in their chat log — why a press
-    /// was refused, and anything else they would otherwise only find in the server's log.</summary>
+    /// <summary>Server-only: a sentence from the game to the person playing here, in their chat log, in red — why a
+    /// press was refused, and anything else they would otherwise only find in the server's log.</summary>
     public void TellOwner(string line)
     {
         if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
@@ -2113,7 +2113,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     }
 
     [TargetRpc]
-    void TargetTold(NetworkConnectionToClient target, string line) => ChatController.GameSaid(line);
+    void TargetTold(NetworkConnectionToClient target, string line) => ChatController.GameSaid(line, false);
 
     /// <summary>SERVER ONLY: say in this person's chat that a thing could not go into their bag, and why. Said once per
     /// thing and reason for <paramref name="quietFor"/> seconds — a pickup held down asks every frame, and auto-loot
@@ -2964,7 +2964,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             var b = plan.buys[i];
             if (b.free > 0) c.Quests.TakeFreeBuys(b.def.id, b.free);
             c.TakeIntoBag(b.def, b.count);
-            long cost = ShopMath.BuyCost(b.def.value, b.count - b.free);
+            long cost = ShopMath.BuyCost(b.price, b.count - b.free, b.taxed);
             GameLog.Info(LogCat.Server, playerName + " bought " + b.count + " " + b.def.id + " from '" + shopId + "' for " + cost + " gold"
                          + (b.free > 0 ? " (" + b.free + " free, a tutorial's first run)" : ""));
             // A STEP TO BUY IT counts the purchase; the bag push below judges every step on what they now hold.
@@ -3252,7 +3252,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (RefusedByKeeper(c)) return;
         var e = c.Bag[index];
         if (e.instance != null && (e.instance.copyId ?? "") != (expectedCopyId ?? "")) return;
-        if (!e.def.CanBeStored) { KeeperSaid("That cannot be stored.", false); return; }
+        if (!e.def.CanBeStored) { KeeperSaid(Item.RefusedLine(Item.CannotBeStoredText) + ".", false, Item.RefusedLine(Item.CannotBeStoredText)); return; }
         if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false, "Still saving your last move"); return; }
         if (!serverStorage.Known) { KeeperSaid("Storage is not open.", false); return; }
         var piece = e.instance;
@@ -3638,6 +3638,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (npc == null || string.IsNullOrEmpty(npc.PersonId)) return;
         if (!c.Quests.Accept(questId, npc.PersonId)) return;
         if (GameLog.On(LogCat.Server)) LogDid(c, string.Concat("accepted quest ", questId, " from ", npc.PersonId));
+        var def = QuestCatalog.Get(questId);
+        string title = def != null ? def.title : questId;
+        TellQuestLine(string.Concat("Quest accepted: ", title, "."), string.Concat("Accepted: ", title));
         c.Quests.Advance(c);
         QuestsMoved();
     }
@@ -4326,6 +4329,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             var garment = pose.gameObject.AddComponent<GarmentSocket>();
             garment.ShowGarmentOf(bodyGear);
             GiveBodyItsEmblem(garment);
+            // …and the Costume Body in that same worn set, swapped in for their plain body.
+            // perf-ok: once per body built.
+            pose.gameObject.AddComponent<CostumeSocket>().ShowCostumeOf(bodyGear);
 
             // AND THE NUMBERS, on the body that shows them. Marked as a watched copy first thing: this body does
             // not get to decide it died or how hard it was hit — both arrive from the server like every other fact

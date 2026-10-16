@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.plopling
   displayName: Plopling
   kind: 0
-  size: 0.3
+  size: 0.5
   flies: 0
   moveSpeed: 0.5
   biome: 0

@@ -86,6 +86,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 100
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 1
       ailment: 2
       seconds:
         value: 0

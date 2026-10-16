@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.oculord
   displayName: Oculord
   kind: 1
-  size: 3.5
+  size: 3.7
   flies: 0
   moveSpeed: 0.8
   biome: 7

@@ -72,7 +72,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | --- | --- | --- | --- | --- |
 | damage | Direct damage — base power × ATK/MATK × affinity | mult | yes | yes |
 | hits | Strikes per landing; each is a proc trigger | int | yes (own affinity list) | no |
-| heal_amount | Flat HP restored | HP | yes | yes |
+| heal_amount | HP restored — a fixed amount, or a range rolled per heal (lowest to "HP up to") | HP | yes | yes |
 | shield_amount | Barrier HP absorbed before it breaks | HP | yes | yes |
 | dot_damage | Status DoT per tick (Poison / Bleed / Burn) | HP | yes | yes |
 | sub_stat_magnitude | How far ONE sub-stat moves, up or down | frac or amount (the stat's own answer) | yes | yes |
@@ -116,7 +116,7 @@ Every behavior is a **natural effect authored on the skill** (composed in the Sk
 | Effect | Target | Dmg type | Channels | Ring scales | Details |
 | --- | --- | --- | --- | --- | --- |
 | Damage | mobs/any | yes | damage, hits, mult per point given up, mult per metre | damage, hits | Base power × ATK/MATK × affinity; each strike triggers the binding's procs. Multi-hit SPLITS one total across the strikes. Its multiplier can GROW: by a set amount per point of MP or HP the caster gave up in the same cast (to SpendAllMana / DropHealthToOne, paid once by the first tick carrying one), and by a set amount per metre to the unit struck. Both 0 = no growth |
-| Heal | self/others | no | heal_amount | heal_amount | Flat HP; landing follows the tick's TargetMode |
+| Heal | self/others | no | heal_amount | heal_amount | HP, fixed or a range rolled per heal; landing follows the tick's TargetMode |
 | Status | mobs/self | no | ailment + dot_damage, duration, proc_chance | output + duration (not proc_chance) | The **six** ailments: Poison / Bleed / Burn (DoT) and Stun / Freeze / Silence (duration-only) |
 | Taunt | mobs | no | duration | duration | Forces mob aggro onto the caster |
 | Teleport | self (point) | no | — | — | Instant blink to the aimed, range-clamped point |

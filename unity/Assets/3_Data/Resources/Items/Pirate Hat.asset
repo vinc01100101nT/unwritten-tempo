@@ -28,6 +28,16 @@ MonoBehaviour:
   unsellable: 1
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 3
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 3
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: skill.headgear.pirate-hat
   madeOf: 0
   materialKind: 0
   materialStep: 0

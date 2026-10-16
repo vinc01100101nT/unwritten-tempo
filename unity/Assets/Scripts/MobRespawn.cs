@@ -111,17 +111,12 @@ public class MobRespawn : MonoBehaviour
 
         var dd = mob.GetComponent<DeathDissolve>(); if (dd != null) dd.ResetAfterRespawn();   // restore lit material + alpha
 
-        // A respawn is a FRESH creature, not the same one resuming its career: drop back to the authored level so a
-        // recycled object can't keep the levels it earned last life. Without this, farming one spot ratchets the zone
-        // permanently upward (pooled objects accumulate levels they never lose). Runs BEFORE Revive so the refill
-        // clamps to the reset level's max HP, not the higher one it died with.
-        // Fresh GEAR first, then the level: the re-derive below reads the worn set, so the new copies must be seated
-        // before it runs. Re-derived unconditionally, because ResetToSpawnLevel only re-derives when the level moved.
+        // A respawn is a FRESH creature. Fresh GEAR first: the re-derive below reads the worn set, so the new copies
+        // must be seated before it runs, and before Revive so the refill clamps to the new maximum.
         var gear = mob.GetComponent<UnitEquipment>(); if (gear != null) gear.ReseatForNewLife();
         var health = mob.GetComponent<Health>();
         var block = mob.GetComponent<UnitStatBlock>();
-        if (block != null) { block.ResetToSpawnLevel(); if (gear != null) block.Rederive(healToFull: true); }
-        var brain = mob.GetComponent<MonsterAI3D>(); if (brain != null) brain.ResetCombatXp();   // and its banked XP
+        if (block != null) { block.RefillManaForNewLife(); if (gear != null) block.Rederive(healToFull: true); }
         if (health != null) health.Revive();          // full HP again
 
         // Re-enable everything DeathDissolve disabled when it became "remains".

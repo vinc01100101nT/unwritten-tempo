@@ -79,7 +79,7 @@ public class OverheadNotice : MonoBehaviour
     const float FadeFor = 0.4f;      // seconds of fade at the end of Life
     const float FadeInFor = 0.2f;    // seconds of fade-IN at the start (new row eases in)
     // Where the newest line's bottom sits: centred, this far above the middle of the screen.
-    const float AboveMiddle = 110f;
+    const float AboveMiddle = 230f;
     const float FontSize = 18f;
     const float LineStep = 24f;      // the gap between stacked lines
     const float SlideIn = 18f;       // how far BELOW its slot a new row starts, so its rise is clearly visible

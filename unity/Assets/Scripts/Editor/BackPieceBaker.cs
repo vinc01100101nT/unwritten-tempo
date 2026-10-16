@@ -45,20 +45,7 @@ public static class BackPieceBaker
         var uv = new List<Vector2>();
         var nrm = new List<Vector3>();
         var corners = new List<(int v, int t, int n)>();
-        foreach (var raw in text.Split('\n'))
-        {
-            var p = raw.Trim().Split(' ');
-            if (p.Length < 3) continue;
-            if (p[0] == "v") pos.Add(new Vector3(F(p[1]), F(p[2]), F(p[3])));
-            else if (p[0] == "vt") uv.Add(new Vector2(F(p[1]), F(p[2])));
-            else if (p[0] == "vn") nrm.Add(new Vector3(F(p[1]), F(p[2]), F(p[3])));
-            else if (p[0] == "f" && p.Length == 4)
-                for (int k = 1; k <= 3; k++)
-                {
-                    var q = p[k].Split('/');
-                    corners.Add((int.Parse(q[0]) - 1, int.Parse(q[1]) - 1, int.Parse(q[2]) - 1));
-                }
-        }
+        ObjModel.Parse(text, pos, uv, nrm, corners);
 
         float modelTop = float.MinValue, modelBottom = float.MaxValue;
         foreach (var c in corners) { modelTop = Mathf.Max(modelTop, pos[c.v].y); modelBottom = Mathf.Min(modelBottom, pos[c.v].y); }
@@ -74,30 +61,7 @@ public static class BackPieceBaker
         var uvs = new List<Vector2>();
         var normals = new List<Vector3>();
         var tris = new List<int>();
-        var seen = new Dictionary<(int, int, int), int>();
-        for (int i = 0; i < corners.Count; i += 3)
-        {
-            var idx = new int[3];
-            for (int k = 0; k < 3; k++)
-            {
-                var c = corners[i + k];
-                if (!seen.TryGetValue(c, out int at))
-                {
-                    at = verts.Count;
-                    seen[c] = at;
-                    verts.Add(Place(pos[c.v]));
-                    uvs.Add(uv[c.t]);
-                    normals.Add(Turn(nrm[c.n]).normalized);
-                }
-                idx[k] = at;
-            }
-            // Unity draws the side whose corners run clockwise; keep the side the model's own normals face.
-            Vector3 a = verts[idx[0]], e = verts[idx[1]], d = verts[idx[2]];
-            Vector3 face = Vector3.Cross(e - a, d - a);
-            Vector3 want = normals[idx[0]] + normals[idx[1]] + normals[idx[2]];
-            if (Vector3.Dot(face, want) < 0f) (idx[1], idx[2]) = (idx[2], idx[1]);
-            tris.AddRange(idx);
-        }
+        ObjModel.Build(pos, uv, nrm, corners, Place, Turn, verts, uvs, normals, tris);
 
         // ONLY WHAT IS SEEN FROM BEHIND. Looking at the plain body from straight behind in its idle pose, every
         // triangle hidden by the cape's own back panel or by an arm is cut away, with the points nothing uses any more.
@@ -206,7 +170,7 @@ public static class BackPieceBaker
         mesh.bindposes = bind;
         mesh.RecalculateBounds();
         mesh.RecalculateTangents();
-        mesh = SaveOrUpdate(mesh, OutDir + name + "_mesh.asset");
+        mesh = ObjModel.SaveOrUpdate(mesh, OutDir + name + "_mesh.asset");
 
         var texPath = src + name + ".png";
         var importer = (TextureImporter)AssetImporter.GetAtPath(texPath);
@@ -860,32 +824,4 @@ public static class BackPieceBaker
         }
         return furthest;
     }
-
-    static Mesh SaveOrUpdate(Mesh made, string path)
-    {
-        var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-        if (existing == null)
-        {
-            AssetDatabase.CreateAsset(made, path);
-            return made;
-        }
-        // Rewritten through the mesh's own calls: copying serialized data over a live mesh leaves its old drawing data
-        // and bone weights in the running editor (docs/5-ai-learnings/rebuilding-an-asset-blanks-open-scene-references.md).
-        existing.Clear();
-        existing.indexFormat = made.indexFormat;
-        existing.SetVertices(made.vertices);
-        existing.SetNormals(made.normals);
-        existing.SetUVs(0, made.uv);
-        existing.subMeshCount = made.subMeshCount;
-        for (int i = 0; i < made.subMeshCount; i++) existing.SetTriangles(made.GetTriangles(i), i);
-        existing.boneWeights = made.boneWeights;
-        existing.bindposes = made.bindposes;
-        existing.RecalculateBounds();
-        existing.RecalculateTangents();
-        Object.DestroyImmediate(made);
-        EditorUtility.SetDirty(existing);
-        return existing;
-    }
-
-    static float F(string s) => float.Parse(s, CultureInfo.InvariantCulture);
 }
