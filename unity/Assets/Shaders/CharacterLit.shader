@@ -84,6 +84,11 @@ Shader "Unwritten/CharacterLit"
         [HideInInspector] _DyeDst5("Dye Target 5", Vector) = (0,0,0,0)
         [HideInInspector] _DyeDst6("Dye Target 6", Vector) = (0,0,0,0)
         [HideInInspector] _DyeDst7("Dye Target 7", Vector) = (0,0,0,0)
+        // Cape colours (BackPiece): only read when the material's _CAPE_TINT is on.
+        [HideInInspector] _CapeCloth("Cape Cloth", Color) = (0.53,0.05,0.04,1)
+        [HideInInspector] _CapeClothHem("Cape Cloth At Hem", Color) = (0.53,0.05,0.04,1)
+        [HideInInspector] _CapeTrim("Cape Trim", Color) = (0.67,0.54,0.22,1)
+        [HideInInspector] _CapeGradient("Cape Gradient", Float) = 0
 
         [ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
         // Editmode props
@@ -152,6 +157,7 @@ Shader "Unwritten/CharacterLit"
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
             #pragma shader_feature_local_fragment _EMISSION
+            #pragma shader_feature_local_fragment _CAPE_TINT
             #pragma shader_feature_local_fragment _METALLICSPECGLOSSMAP
             #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
             #pragma shader_feature_local_fragment _OCCLUSIONMAP
@@ -289,6 +295,7 @@ Shader "Unwritten/CharacterLit"
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             //#pragma shader_feature_local_fragment _ALPHAPREMULTIPLY_ON
             #pragma shader_feature_local_fragment _EMISSION
+            #pragma shader_feature_local_fragment _CAPE_TINT
             #pragma shader_feature_local_fragment _METALLICSPECGLOSSMAP
             #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
             #pragma shader_feature_local_fragment _OCCLUSIONMAP
@@ -462,6 +469,7 @@ Shader "Unwritten/CharacterLit"
             // Material Keywords
             #pragma shader_feature_local_fragment _SPECULAR_SETUP
             #pragma shader_feature_local_fragment _EMISSION
+            #pragma shader_feature_local_fragment _CAPE_TINT
             #pragma shader_feature_local_fragment _METALLICSPECGLOSSMAP
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A

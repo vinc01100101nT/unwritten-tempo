@@ -739,6 +739,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         {
             ServerSaveTick();
             AutoCombatServerTick();
+            EmblemServerTick();
             SendOwedBag();
             if (savePointTripOwed) TakeOwedTrip();
             if (arrivalExpected) StandThemWhereSentIfLate();
@@ -1695,7 +1696,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveOutbox.Submit(ServerCharacterId, body, One, () => questLog.Acknowledge(questsUpTo));
         SaveHotbarNow(One);
         SaveAutoCombatNow(One);
-        SaveOutbox.FlushEmblem(ServerCharacterId, One);
+        SaveEmblemIfOwed(One);
     }
 
 

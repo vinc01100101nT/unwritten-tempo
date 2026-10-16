@@ -50,6 +50,10 @@ half4 _DyeDst4;
 half4 _DyeDst5;
 half4 _DyeDst6;
 half4 _DyeDst7;
+half4 _CapeCloth;
+half4 _CapeClothHem;
+half4 _CapeTrim;
+half _CapeGradient;
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -337,10 +341,30 @@ half3 ApplyDye(half3 linearColour)
     return DyeGammaToLin(DyeHSVtoRGB(half3(dstHSV.x, dstHSV.y, v)));
 }
 
+// ---- Cape colours ---------------------------------------------------------------------------------------------------
+// A cape's picture is baked (BackPieceBaker) to carry no colour of its own: red = how light the cloth is there, as a
+// share of twice its usual brightness; green = 1 on the trim, 0 on the cloth; alpha = how far down the cape the texel
+// sits, 0 at the collar and 1 at the hem. The wearer's chosen colours are laid on at draw time: the trim's, and the
+// cloth's — fading to the hem colour down the cape when the gradient is on. They arrive as Color properties, which a
+// linear project hands over already linear, so they are taken back to sRGB to be shaded and blended the way they were
+// picked. Only a cape's material turns this on.
+half3 CapeTint(half4 baked)
+{
+    half shade = baked.r * 2.0h;
+    half3 cloth = lerp(DyeLinToGamma(_CapeCloth.rgb), DyeLinToGamma(_CapeClothHem.rgb), _CapeGradient * baked.a);
+    half3 colour = lerp(cloth, DyeLinToGamma(_CapeTrim.rgb), step(0.5h, baked.g));
+    return DyeGammaToLin(saturate(colour * shade));
+}
+
 inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
 {
     half4 albedoAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
+#if defined(_CAPE_TINT)
+    albedoAlpha.rgb = CapeTint(albedoAlpha);
+    albedoAlpha.a = 1.0h;
+#else
     albedoAlpha.rgb = ApplyDye(albedoAlpha.rgb);
+#endif
     outSurfaceData.alpha = Alpha(albedoAlpha.a, _BaseColor, _Cutoff);
 
     half4 specGloss = SampleMetallicSpecGloss(uv, albedoAlpha.a);

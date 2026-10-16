@@ -162,13 +162,21 @@ public static class CharacterRows
     }
 
     // The map server checked and re-encoded the picture; this only makes sure what is stored is a 24 x 24 PNG of a sane
-    // size (or "" for removed), whoever sent it. A check of shape, not a second decoder.
+    // size (or "" for none), with cape colours of the packed shape, whoever sent it. A check of shape, not a second decoder.
     static string? CheckEmblem(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return "send { emblem: { … } }";
         if (!e.TryGetProperty("v", out var v) || v.ValueKind != JsonValueKind.Number || !v.TryGetInt32(out int version) || version != 1)
             return "emblem must say v: 1";
         if (!e.TryGetProperty("png", out var p) || p.ValueKind != JsonValueKind.String) return "emblem.png is a string";
+        // The cape colours, packed by the map server: "" or "RRGGBB,RRGGBB,RRGGBB,0|1".
+        if (e.TryGetProperty("colours", out var colours))
+        {
+            if (colours.ValueKind != JsonValueKind.String) return "emblem.colours is a string";
+            string packed = colours.GetString() ?? "";
+            if (packed.Length != 0 && !System.Text.RegularExpressions.Regex.IsMatch(packed, "^([0-9A-Fa-f]{6},){3}[01]$"))
+                return "emblem.colours is three RRGGBB colours and 0 or 1, separated by commas";
+        }
         string text = p.GetString() ?? "";
         if (text.Length == 0) return null;
         byte[] png;

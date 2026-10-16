@@ -11,6 +11,10 @@ using UnityEngine.UI;
 /// a picture that breaks a rule says so before it is sent; but the server reads the file again and its answer is the
 /// one that counts (<see cref="Answered"/>).</para>
 ///
+/// <para><b>The cape's colours.</b> Above the picture, three boxes — Cloth, Trim and the cloth's colour at the hem — and
+/// the Gradient switch, edited with the same colour picker character creation uses. A change is sent a moment after the
+/// player stops picking, and the server's copy is what every screen draws (<see cref="NetPlayer.SetCapeColours"/>).</para>
+///
 /// <para><b>Where the pictures come from.</b> A folder named "Emblem" inside the game's own save folder, as in
 /// Ragnarok — the same on Windows and Mac, with no file dialog. The window lists it on opening and every two seconds
 /// while open, so a picture dropped in shows up without reopening.</para>
@@ -33,6 +37,19 @@ public class EmblemWindow : MonoBehaviour
     Texture2D previewTexture;
     float nextLook;
 
+    // ---- the cape's colours ----
+    // Long enough that dragging across the picker is one request, short enough that it feels instant.
+    const float QuietSecondsBeforeSending = 0.4f;
+    static readonly string[] BoxNames = { "Cloth", "Trim", "Cloth at hem" };
+    CapeColours draft;
+    bool draftLoaded, colourDirty, settingPicker;
+    float sendColoursAt;
+    int editing;
+    ColourPicker picker;
+    readonly Image[] swatches = new Image[3];
+    readonly Button[] boxes = new Button[3];
+    TMPro.TMP_Text gradientLabel;
+
     /// <summary>The folder the window lists: "Emblem" inside the game's own save folder, made when missing.</summary>
     public static string Folder => Path.Combine(Application.persistentDataPath, "Emblem");
 
@@ -40,6 +57,7 @@ public class EmblemWindow : MonoBehaviour
     {
         if (instance == null || instance.root == null) return;
         instance.nextLook = 0f;
+        instance.draftLoaded = false;
         UiAnim.Open(instance.root);
         UISounds.PlayOpen();
     }
@@ -60,7 +78,26 @@ public class EmblemWindow : MonoBehaviour
         if (canvas == null) { enabled = false; return; }
         instance = this;
 
-        list = UiKit.ListWindow(canvas.transform, "Emblem", new Vector2(320, 440), out root);
+        list = UiKit.ListWindow(canvas.transform, "Emblem", new Vector2(320, 520), out root);
+
+        for (int i = 0; i < BoxNames.Length; i++)
+        {
+            int which = i;
+            boxes[i] = UiKit.ListButton(list, BoxNames[i], () => Edit(which), 26);
+            swatches[i] = UiKit.Img("Swatch", boxes[i].transform, Color.white);
+            var srt = swatches[i].rectTransform;
+            srt.anchorMin = new Vector2(1f, 0.5f);
+            srt.anchorMax = new Vector2(1f, 0.5f);
+            srt.pivot = new Vector2(1f, 0.5f);
+            srt.sizeDelta = new Vector2(40f, 16f);
+            srt.anchoredPosition = new Vector2(-6f, 0f);
+            swatches[i].raycastTarget = false;
+        }
+        var gradient = UiKit.ListButton(list, "Gradient: Off", ToggleGradient, 26);
+        gradientLabel = gradient.GetComponentInChildren<TMPro.TMP_Text>();
+        picker = ColourPicker.Build(list);
+        picker.Root.gameObject.AddComponent<LayoutElement>().preferredHeight = ColourPicker.Height;
+        picker.OnChanged += Picked;
         foreach (var rule in EmblemImage.Rules) UiKit.ListLine(list, "• " + rule, 13, UiKit.TextDim);
         UiKit.ListLine(list, "Put pictures in: " + Folder, 11, UiKit.TextDim, 3);
         UiKit.ListButton(list, "Open folder", OpenFolder, 26);
@@ -90,9 +127,77 @@ public class EmblemWindow : MonoBehaviour
 
     void Update()
     {
-        if (root == null || !root.activeSelf || Time.unscaledTime < nextLook) return;
+        if (root == null || !root.activeSelf) return;
+        if (!draftLoaded) LoadColours();
+        if (colourDirty && Time.unscaledTime >= sendColoursAt && NetPlayer.Mine != null)
+        {
+            colourDirty = false;
+            NetPlayer.Mine.SetCapeColours(draft.Pack());
+        }
+        if (Time.unscaledTime < nextLook) return;
         nextLook = Time.unscaledTime + SecondsBetweenFolderLooks;
         LookInFolder();
+    }
+
+    // The boxes start from what the cape shows now: the colours chosen before, or the worn cape's own.
+    void LoadColours()
+    {
+        var mine = NetPlayer.Mine;
+        if (mine != null && CapeColours.TryParse(mine.ChosenCapeColours, out var chosen)) draft = chosen;
+        else
+        {
+            var shown = GarmentSocket.MyCapeColours();
+            draft = shown ?? new CapeColours { cloth = Color.white, trim = Color.white, hem = Color.white };
+        }
+        draftLoaded = true;
+        colourDirty = false;
+        DrawColours();
+        Edit(editing);
+    }
+
+    void Edit(int which)
+    {
+        editing = which;
+        for (int i = 0; i < boxes.Length; i++)
+        {
+            var label = boxes[i].GetComponentInChildren<TMPro.TMP_Text>();
+            if (label != null) label.fontStyle = i == which ? TMPro.FontStyles.Bold : TMPro.FontStyles.Normal;
+        }
+        settingPicker = true;
+        picker.Set(ColourOf(which));
+        settingPicker = false;
+    }
+
+    Color ColourOf(int which) => which == 0 ? draft.cloth : which == 1 ? draft.trim : draft.hem;
+
+    void Picked(Color c)
+    {
+        if (!draftLoaded || settingPicker) return;
+        if (editing == 0) draft.cloth = c;
+        else if (editing == 1) draft.trim = c;
+        else draft.hem = c;
+        Changed();
+    }
+
+    void ToggleGradient()
+    {
+        draft.gradient = !draft.gradient;
+        if (!draft.gradient && editing == 2) Edit(0);
+        Changed();
+    }
+
+    void Changed()
+    {
+        DrawColours();
+        colourDirty = true;
+        sendColoursAt = Time.unscaledTime + QuietSecondsBeforeSending;
+    }
+
+    void DrawColours()
+    {
+        for (int i = 0; i < swatches.Length; i++) swatches[i].color = ColourOf(i);
+        boxes[2].gameObject.SetActive(draft.gradient);
+        gradientLabel.text = draft.gradient ? "Gradient: On" : "Gradient: Off";
     }
 
     // The folder's BMP and PNG files, as one button each — rebuilt only when the list of names changed.

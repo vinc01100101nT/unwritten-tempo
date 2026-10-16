@@ -15,6 +15,14 @@ public partial class NetPlayer
     /// <summary>The id of the emblem this person wears — the first 16 hex digits of its stored picture's hash — or empty.</summary>
     [SyncVar(hook = nameof(OnEmblemArrived))] string emblem = "";
 
+    /// <summary>The cape colours this person chose (<see cref="CapeColours.Pack"/>), or empty for the cape's own.</summary>
+    [SyncVar(hook = nameof(OnCapeColoursArrived))] string capeColours = "";
+
+    // Colours change while a player drags the picker, so their row is written on the same beat as the progress save,
+    // never once per change; leaving writes whatever is still owed (SaveEmblemIfOwed).
+    bool emblemRowOwed;
+    float nextEmblemRowAt;
+
     /// <summary>One accepted upload per this many seconds per character: each one is a database write and a fetch by
     /// everyone in view.</summary>
     const float SecondsBetweenEmblemUploads = 10f;
@@ -32,6 +40,7 @@ public partial class NetPlayer
     public void EmblemArrived(EmblemWire wire)
     {
         if (!isServer) return;
+        capeColours = wire != null && CapeColours.TryParse(wire.colours, out var chosen) ? chosen.Pack() : "";
         byte[] png = null;
         if (wire != null && !string.IsNullOrEmpty(wire.png))
         {
@@ -89,6 +98,31 @@ public partial class NetPlayer
     }
 
     [Command]
+    void CmdCapeColours(string packed)
+    {
+        if (Leaving || ServerCharacter == null) return;
+        // Anything that is not exactly the packed shape means "the cape's own colours".
+        string kept = CapeColours.TryParse(packed, out var chosen) ? chosen.Pack() : "";
+        if (kept == capeColours) return;
+        capeColours = kept;
+        if (!emblemRowOwed) nextEmblemRowAt = Time.time + SecondsBetweenSaves;
+        emblemRowOwed = true;
+    }
+
+    // Every server frame: the colours' row, once its wait is over.
+    void EmblemServerTick()
+    {
+        if (emblemRowOwed && Time.time >= nextEmblemRowAt) SaveEmblemNow(null);
+    }
+
+    // Leaving: write the row if a change is still owed, otherwise make sure the last write has landed.
+    void SaveEmblemIfOwed(Action<bool> whenDone)
+    {
+        if (emblemRowOwed) SaveEmblemNow(whenDone);
+        else SaveOutbox.FlushEmblem(ServerCharacterId, whenDone);
+    }
+
+    [Command]
     void CmdAskEmblem(string id)
     {
         float now = Time.unscaledTime;
@@ -102,10 +136,12 @@ public partial class NetPlayer
     // Passed to the leave sequence as a flush: whoever takes the character over reads the row as it stands.
     void SaveEmblemNow(Action<bool> whenDone)
     {
+        emblemRowOwed = false;
         if (string.IsNullOrEmpty(ServerCharacterId)) { whenDone?.Invoke(true); return; }
         string png = emblemPng != null ? Convert.ToBase64String(emblemPng) : "";
-        // The door's body: { emblem: { v: 1, png: "…" }, handover: n } — see charserver/CharacterRows.cs.
-        string body = string.Concat("{\"emblem\":{\"v\":1,\"png\":\"", png, "\"},\"handover\":", ServerHandover.ToString(), "}");
+        // The door's body: { emblem: { v: 1, png: "…", colours: "…" }, handover: n } — see charserver/CharacterRows.cs.
+        string body = string.Concat("{\"emblem\":{\"v\":1,\"png\":\"", png, "\",\"colours\":\"", capeColours,
+                                    "\"},\"handover\":", ServerHandover.ToString(), "}");
         SaveOutbox.SubmitEmblem(ServerCharacterId, body, whenDone);
     }
 
@@ -128,6 +164,12 @@ public partial class NetPlayer
     /// <summary>Send the file the player picked; the answer comes back to the upload window.</summary>
     public void UploadEmblem(byte[] file) { if (file != null) CmdUploadEmblem(file); }
 
+    /// <summary>Send the cape colours the player picked (<see cref="CapeColours.Pack"/>), or empty for the cape's own.</summary>
+    public void SetCapeColours(string packed) => CmdCapeColours(packed ?? "");
+
+    /// <summary>The cape colours this person chose, packed, or empty.</summary>
+    public string ChosenCapeColours => capeColours;
+
     /// <summary>Ask the server for the picture of <paramref name="id"/>.</summary>
     public void AskEmblem(string id) { if (!string.IsNullOrEmpty(id)) CmdAskEmblem(id); }
 
@@ -141,8 +183,23 @@ public partial class NetPlayer
 
     void OnEmblemArrived(string _, string now) => ShowEmblem(now);
 
+    void OnCapeColoursArrived(string _, string now) => ShowCapeColours();
+
+    // The chosen colours on this person's cape: your own avatar's, or the body built for anyone else.
+    void ShowCapeColours()
+    {
+        if (GameServer.IsServer) return;
+        CapeColours? chosen = CapeColours.TryParse(capeColours, out var c) ? c : (CapeColours?)null;
+        if (isLocalPlayer) GarmentSocket.ShowMyColours(chosen);
+        else if (bodyGarment != null) bodyGarment.ShowColours(chosen);
+    }
+
     // This machine's own person: their emblem goes on their own avatar from the moment they are in the world.
-    void ShowMyEmblemOnStart() => ShowEmblem(emblem);
+    void ShowMyEmblemOnStart()
+    {
+        ShowEmblem(emblem);
+        ShowCapeColours();
+    }
 
     // Want the new picture before letting go of the old, so a body changing emblem never drops a shared texture
     // another body still draws. Your own emblem goes on your own avatar; anyone else's on the body built for them.
@@ -175,6 +232,7 @@ public partial class NetPlayer
         emblemWanted = "";
         ShowEmblem(emblem);
         EmblemCache.Release(held);
+        ShowCapeColours();
     }
 
     // The body went: its hold on the shared texture goes with it.
@@ -194,4 +252,6 @@ public class EmblemWire
 {
     public int v;
     public string png;
+    // The cape colours, packed (CapeColours.Pack); empty for the cape's own.
+    public string colours;
 }

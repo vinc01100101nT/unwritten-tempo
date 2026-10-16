@@ -20,11 +20,40 @@ public class GarmentSocket : MonoBehaviour
     SkinnedMeshRenderer body;
     GameObject shown, prefabShown;
     Texture2D emblem;
+    CapeColours? colours;
 
     // THIS MACHINE'S OWN PERSON'S EMBLEM: set by their player shell, read by whichever avatar body is theirs now (a
     // model swap builds a new one), so a rebuilt avatar puts it straight back on.
     static Texture2D myEmblem;
+    static CapeColours? myColours;
     static event System.Action MyEmblemChanged;
+
+    /// <summary>The cape colours this machine's own person chose, or null for the cape's own — from their player shell.</summary>
+    public static void ShowMyColours(CapeColours? chosen)
+    {
+        myColours = chosen;
+        MyEmblemChanged?.Invoke();
+    }
+
+    /// <summary>The colours this machine's own person's cape shows now — theirs if chosen, else the worn cape's own;
+    /// null when no cape is worn. What the colour boxes in the Emblem window start from.</summary>
+    public static CapeColours? MyCapeColours()
+    {
+        if (myColours.HasValue) return myColours;
+        var piece = mine != null && mine.shown != null ? mine.shown.GetComponent<BackPiece>() : null;
+        return piece != null ? piece.OwnColours : (CapeColours?)null;
+    }
+
+    static GarmentSocket mine;
+
+    /// <summary>Draw the cloth and trim in <paramref name="chosen"/> (null = the cape's own), now and on every cape worn
+    /// after it.</summary>
+    public void ShowColours(CapeColours? chosen)
+    {
+        colours = chosen;
+        var piece = shown != null ? shown.GetComponent<BackPiece>() : null;
+        if (piece != null) piece.ShowColours(colours);
+    }
 
     /// <summary>The emblem this machine's own person wears, or null — from their player shell.</summary>
     public static void ShowMyEmblem(Texture2D texture)
@@ -42,7 +71,11 @@ public class GarmentSocket : MonoBehaviour
         if (piece != null) piece.ShowEmblem(emblem);
     }
 
-    void MineChanged() => ShowEmblem(myEmblem);
+    void MineChanged()
+    {
+        ShowEmblem(myEmblem);
+        ShowColours(myColours);
+    }
 
     bool told;
     UnitEquipment gear;
@@ -67,7 +100,9 @@ public class GarmentSocket : MonoBehaviour
     {
         if (told) return;
         MyEmblemChanged += MineChanged;
+        mine = this;
         emblem = myEmblem;
+        colours = myColours;
         subscribed = Character.Instance;
         if (subscribed != null)
         {
@@ -86,6 +121,7 @@ public class GarmentSocket : MonoBehaviour
         }
         if (gear != null) gear.OnChanged -= Refresh;
         MyEmblemChanged -= MineChanged;
+        if (mine == this) mine = null;
     }
 
     void Refresh()
@@ -115,7 +151,11 @@ public class GarmentSocket : MonoBehaviour
         if (shown != null)
         {
             var piece = shown.GetComponent<BackPiece>();
-            if (piece != null) piece.ShowEmblem(emblem);
+            if (piece != null)
+            {
+                piece.ShowEmblem(emblem);
+                piece.ShowColours(colours);
+            }
         }
 
         // The outline that shows a person through a wall takes the new piece into their shape.
@@ -148,8 +188,7 @@ public class GarmentSocket : MonoBehaviour
         go.hideFlags = HideFlags.DontSaveInEditor;
         var piece = go.GetComponent<BackPiece>();
         if (piece != null)
-            piece.PushedBy(Bone(all, "LeftArm"), Bone(all, "LeftForeArm"), Bone(all, "RightArm"), Bone(all, "RightForeArm"),
-                           body.GetComponentInParent<WeaponSocket>());
+            piece.PushedBy(Bone(all, "LeftArm"), Bone(all, "LeftForeArm"), Bone(all, "RightArm"), Bone(all, "RightForeArm"));
         return go;
     }
 

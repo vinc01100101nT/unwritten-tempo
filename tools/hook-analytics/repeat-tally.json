@@ -8,7 +8,10 @@
     "counts": {
       "build-game.sh server": 3,
       "npm run migrate": 1
-    }
+    },
+    "told": [
+      "build-game.sh server"
+    ]
   },
   "c660f476-5d5f-4023-aebc-9ab9e054d5f4": {
     "counts": {

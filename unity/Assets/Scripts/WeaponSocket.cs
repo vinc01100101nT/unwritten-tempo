@@ -28,11 +28,6 @@ public class WeaponSocket : MonoBehaviour
     DrawSaid said;          // default = Sheathed: a body nobody has spoken for yet starts at peace
     WeaponGrip grip;        // the mounted model's grip (hand place AND put-away place), or null
     Transform handBone, pairHandBone, stowBone;
-
-    // The mounted model's rough shape as one tube along its longest side, in the model's own space: worked out once
-    // per mount from its meshes, so a worn cape can keep its cloth out of the weapon (BackPiece).
-    Vector3 shapeFrom, shapeTo;
-    float shapeRadius;
     readonly float[] handFrac = new float[4];   // put away main/pair, take out main/pair — share of the clip
     bool mainInHand = true, pairInHand = true;
     bool placedOnce;
@@ -78,53 +73,6 @@ public class WeaponSocket : MonoBehaviour
 
     /// <summary>The weapon in the hand as it is mounted, or null — its size is what the flying copy is drawn at.</summary>
     public Transform Mounted => mounted != null ? mounted.transform : null;
-
-    /// <summary>Copy <paramref name="which"/> (0 = the weapon, 1 = its pair in the other hand) as a tube in the world,
-    /// wherever it is now — in the hand or put away. False when that copy is not on show.</summary>
-    public bool WeaponShape(int which, out Vector3 from, out Vector3 to, out float radius)
-    {
-        var copy = which == 0 ? mounted : mountedPair;
-        from = to = Vector3.zero;
-        radius = 0f;
-        if (copy == null || !copy.activeInHierarchy || shapeRadius <= 0f) return false;
-        var t = copy.transform;
-        from = t.TransformPoint(shapeFrom);
-        to = t.TransformPoint(shapeTo);
-        var s = t.lossyScale;
-        radius = shapeRadius * Mathf.Max(Mathf.Abs(s.x), Mathf.Max(Mathf.Abs(s.y), Mathf.Abs(s.z)));
-        return true;
-    }
-
-    // The tube that holds the model: along the longest side of its box, as wide as the box's middle side.
-    void MeasureShape(GameObject copy)
-    {
-        shapeRadius = 0f;
-        if (copy == null) return;
-        var root = copy.transform;
-        bool any = false;
-        var box = new Bounds();
-        foreach (var f in copy.GetComponentsInChildren<MeshFilter>(true))
-        {
-            if (f.sharedMesh == null) continue;
-            var b = f.sharedMesh.bounds;
-            for (int c = 0; c < 8; c++)
-            {
-                var corner = new Vector3((c & 1) == 0 ? b.min.x : b.max.x, (c & 2) == 0 ? b.min.y : b.max.y, (c & 4) == 0 ? b.min.z : b.max.z);
-                var p = root.InverseTransformPoint(f.transform.TransformPoint(corner));
-                if (!any) { box = new Bounds(p, Vector3.zero); any = true; }
-                else box.Encapsulate(p);
-            }
-        }
-        if (!any) return;
-        var e = box.extents;
-        int longest = e.x >= e.y && e.x >= e.z ? 0 : e.y >= e.z ? 1 : 2;
-        float a = longest == 0 ? e.y : e.x, c2 = longest == 2 ? e.y : e.z;
-        shapeRadius = Mathf.Max(a, c2);
-        var axis = Vector3.zero;
-        axis[longest] = Mathf.Max(0f, e[longest] - shapeRadius);
-        shapeFrom = box.center - axis;
-        shapeTo = box.center + axis;
-    }
 
     /// <summary>One of this body's thrown weapons has left the hand. The hand stays empty until every one is back.</summary>
     public void HideForFlight() { bladesOut++; ApplyFlights(); }
@@ -472,7 +420,6 @@ public class WeaponSocket : MonoBehaviour
         if (mounted != null) { Destroy(mounted); mounted = null; }
         if (mountedPair != null) { Destroy(mountedPair); mountedPair = null; }
         shown = weapon;
-        shapeRadius = 0f;
         grip = null; handBone = pairHandBone = stowBone = null;
         placedOnce = false;
         // The arms follow the weapon's TYPE, model or not — the same way the swing is picked.
@@ -490,7 +437,6 @@ public class WeaponSocket : MonoBehaviour
         var rot = grip != null ? Quaternion.Euler(grip.localEuler) : Quaternion.identity;
         var scale = grip != null ? grip.localScale : Vector3.one;
         mounted = Mount(model, hand, pos, rot, scale);
-        MeasureShape(mounted);
         handBone = hand;
         if (grip != null && grip.stowAuthored && anim != null && anim.isHuman) stowBone = anim.GetBoneTransform(grip.stowBone);
         ResolveHandovers(weapon.weaponType, grip == null || grip.hand == WeaponHand.Right);

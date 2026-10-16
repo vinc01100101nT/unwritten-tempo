@@ -89,6 +89,7 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
+    - _CapeGradient: 0
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 0
@@ -120,6 +121,9 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CapeCloth: {r: 0.53, g: 0.049999982, b: 0.04, a: 1}
+    - _CapeClothHem: {r: 0.53, g: 0.049999982, b: 0.04, a: 1}
+    - _CapeTrim: {r: 0.67, g: 0.53999996, b: 0.21999997, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DyeDst0: {r: 0, g: 0, b: 0, a: 0}
     - _DyeDst1: {r: 0, g: 0, b: 0, a: 0}

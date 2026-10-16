@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6b7844f3b139fc3419325ecbeaecc050, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _CAPE_TINT
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -25,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: f0c4f93b67dd3cc44a85c79b20633da5, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3afeef7abf7dcda46b71980b5e88fd99, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -49,7 +50,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: f0c4f93b67dd3cc44a85c79b20633da5, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3afeef7abf7dcda46b71980b5e88fd99, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -88,6 +89,7 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
+    - _CapeGradient: 0
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 0
@@ -119,6 +121,9 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CapeCloth: {r: 0.5294118, g: 0.047058824, b: 0.043137256, a: 1}
+    - _CapeClothHem: {r: 0.5294118, g: 0.047058824, b: 0.043137256, a: 1}
+    - _CapeTrim: {r: 0.627451, g: 0.5019608, b: 0.20784314, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DyeDst0: {r: 0, g: 0, b: 0, a: 0}
     - _DyeDst1: {r: 0, g: 0, b: 0, a: 0}

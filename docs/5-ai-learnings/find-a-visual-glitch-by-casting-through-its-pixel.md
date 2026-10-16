@@ -1,11 +1,13 @@
 # Find a Visual Glitch by Casting a Ray Through Its Pixel
 
-**Reach for this when:** a rendered picture shows a line, streak, hole or dark crease, you have already guessed at
-its cause once, and your fix left the picture exactly the same.
+**Reach for this when:** the user marks a spot in a picture — a line, streak, hole, crease or pale patch — and you
+are about to fix it; or a fix left the picture exactly the same; or the user says your fixes never touched the spot
+they marked.
 
 ## The rule
 
-Stop guessing which surface the artifact is. Rebuild the exact camera that drew the picture, cast a ray through the
+Before the FIRST fix, not after a failed one: find what is drawn at the marked pixels. Guessing which surface the
+artifact is costs a round per guess. Rebuild the exact camera that drew the picture, cast a ray through the
 artifact's pixel (and a row of pixels across it), and list every surface each ray hits, in order, with its height and
 facing. The artifact is whatever the ray reports — usually two surfaces fighting for the same spot, or a surface
 facing the wrong way.
@@ -23,7 +25,17 @@ An hour earlier the same method would have caught a sibling: the first rounded c
 middle of the rock face, and they were the underside of ledges wound the wrong way — invisible faces showing the
 ground behind them. A ray lists that too (it passes through the backface and hits the ground).
 
+2026-10-16, a cape with pale spots in every colour: three fixes were built on reasoning — re-shading a flat patch of
+its picture, smoothing its light directions, keeping only one of its two sheets of cloth — and each was checked by a
+new picture. The first two left the spots exactly as they were; the third turned each spot into a hole showing the
+body. That hole was the answer all along: the outer sheet had holes, and the inner sheet showed through them. One ray
+through a spot's pixel would have named the inner sheet as the surface hit, before any of the three.
+
 ## How to apply
+
+0. **Judge a fix at the spot the user marked, under the conditions they saw it in.** Crop your new picture to their
+   circle and compare it with theirs; light it the way the game is lit there. "The big spots are gone" from an overall
+   view is not a check — on 2026-10-16 that sentence went out while both marks were still on screen.
 
 1. Render your own picture with a camera you place in code (never the user's view), so you know its exact position,
    angle and field of view.
