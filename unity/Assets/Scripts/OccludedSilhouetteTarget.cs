@@ -15,7 +15,8 @@ using UnityEngine;
 /// is visible here", so the body behind your OWN sword counts as visible and is NOT x-rayed. Equipment gets only
 /// this bit, never <see cref="Bit"/> — so the weapon covers the body but is itself never drawn as a silhouette.</item>
 /// </list>
-/// Equipment is recognised by its authored <see cref="WeaponGrip"/> (present on every weapon prefab root).</para>
+/// Equipment is recognised by its authored <see cref="WeaponGrip"/> (present on every weapon prefab root). Effects
+/// (particles, trails, lines) get neither bit: only mesh and skinned-mesh renderers are ever flagged.</para>
 ///
 /// Applied at <see cref="Start"/> and re-applied by <see cref="WeaponSocket"/> whenever the weapon changes (the
 /// weapon mounts AFTER this runs, and can be swapped at runtime), so a freshly-equipped model always gets flagged.
@@ -52,7 +53,10 @@ public class OccludedSilhouetteTarget : MonoBehaviour
         {
             var r = scratch[i];
             if (r == null) continue;
-            if (!shown) { r.renderingLayerMask &= ~(Bit | CoverBit); continue; }
+            // Only solid models take part. An effect riding the body — a weapon's enchant, an armour set's aura, any
+            // particle, trail or line — would be painted as a flat silhouette slab, and would hide the body behind it.
+            bool solid = r is SkinnedMeshRenderer || r is MeshRenderer;
+            if (!shown || !solid) { r.renderingLayerMask &= ~(Bit | CoverBit); continue; }
             bool isEquipment = r.GetComponentInParent<WeaponGrip>() != null;
             if (isEquipment)
                 r.renderingLayerMask = (r.renderingLayerMask & ~Bit) | CoverBit;   // covers the body, never painted
