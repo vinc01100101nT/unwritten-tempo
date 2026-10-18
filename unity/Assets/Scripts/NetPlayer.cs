@@ -3614,7 +3614,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             var comesBack = go.GetComponent<MobRespawn>();
             if (comesBack != null) Destroy(comesBack);
             var brain = go.GetComponent<MonsterAI3D>();
-            if (brain != null) { brain.SetHome(at); brain.tetherRadius = SummonMath.TetherMetres; }
+            if (brain != null) { brain.SetHome(at); }
             go.AddComponent<SummonedBoss>().Begin(spot);
             GameNetwork.PublishMob(go, def.id);
             me.PushBagToOwner();

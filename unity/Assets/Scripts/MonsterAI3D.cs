@@ -2,8 +2,9 @@ using UnityEngine;
 
 /// <summary>
 /// Pure brain for a billboard mob. Wanders near its spawn,
-/// CHASES the <see cref="Player3DController"/> once within <see cref="aggroRadius"/>, and gives up
-/// past <see cref="leashRadius"/>. Movement is delegated to a <see cref="PathAgent3D"/> sibling
+/// CHASES whoever walks into <see cref="aggroRadius"/> (only when it is aggressive) or hurts it, and gives up once the
+/// target has stayed outside that area for <see cref="AggroMath.GiveUpSeconds"/> — where it stands, never walking
+/// home. Movement is delegated to a <see cref="PathAgent3D"/> sibling
 /// (routes around props via the grid A*); <see cref="BillboardAnimator3D"/> animates from that
 /// motion. Reuses <see cref="Health"/> for HP/death and the existing <see cref="Character"/> for
 /// touch-damage + XP (no-ops in the standalone spike, which has no Character yet).
@@ -16,7 +17,6 @@ public class MonsterAI3D : MonoBehaviour
 
     [Header("Senses (world units)")]
     public float aggroRadius = 6f;
-    public float leashRadius = 10f;
 
     [Header("Wander")]
     public float wanderRadius = 3f;
@@ -89,10 +89,13 @@ public class MonsterAI3D : MonoBehaviour
     Vector3 home;
     float nextWander;
 
-    /// <summary>How far this creature may be led from <see cref="Home"/> before it gives up the chase, walks back and
-    /// heals to full. 0 = no tether (every ordinary creature). A summoned boss is tethered to where it appeared.</summary>
-    [System.NonSerialized] public float tetherRadius;
-    bool returningHome;
+    // When its target last left the aggro area while it chased them; below zero while they are inside it.
+    const float TargetInside = -1f;
+    float outsideSince = TargetInside;
+    // WHERE IT GAVE UP, which it wanders around from then on instead of walking back to Home. Cleared each life and
+    // whenever it is set down somewhere new, so a respawn and a Butterfly Wing still use Home.
+    Vector3 strayedTo;
+    bool strayed;
 
     // The world's floor, asked for once and shared. LayerMask.GetMask is a string lookup; a creature must not pay
     // for it every time it decides where to stroll.
@@ -292,7 +295,7 @@ public class MonsterAI3D : MonoBehaviour
 
     /// <summary>Move this mob's wander anchor to <paramref name="p"/>. Used when a pooled mob is reused at a
     /// new spot (<see cref="FieldMobSpawner"/>) so it wanders around where it reappeared, not its first spawn.</summary>
-    public void SetHome(Vector3 p) => home = p;
+    public void SetHome(Vector3 p) { home = p; strayed = false; }
 
     /// <summary>Where this creature wanders from — the spot it was last set down at. Where a return-home effect (a
     /// Butterfly Wing's) sends it.</summary>
@@ -313,6 +316,7 @@ public class MonsterAI3D : MonoBehaviour
         if (leader == null || !leader.isActiveAndEnabled || leader.Health == null || leader.Health.IsDead) return false;
         Vector3 at = leader.transform.position;
         home = at;
+        strayed = false;
         float range = CreatureKinds.SummonFollowRange;
         if (PlanarSqr(pos, at) > range * range)
         {
@@ -383,7 +387,7 @@ public class MonsterAI3D : MonoBehaviour
     }
     // A swing still on its way in dies with the life that began it — a body switched off for death or the pool must not
     // land it when it comes back.
-    void OnDisable() { Active.Remove(this); Unfile(); Engage(null); swingAt = null; offSwingAt = null; ownMoveSpeed = -1f; }
+    void OnDisable() { Active.Remove(this); Unfile(); Engage(null); swingAt = null; offSwingAt = null; ownMoveSpeed = -1f; aggressiveRead = false; chasing = false; outsideSince = TargetInside; strayed = false; }
 
     // HOW MANY CREATURES ARE ON EACH UNIT — Ragnarok cuts a unit's FLEE for every attacker past the second. Counted as
     // each creature starts or stops chasing somebody, so a blow reads one number instead of walking every creature.
@@ -422,6 +426,42 @@ public class MonsterAI3D : MonoBehaviour
             var file = MonsterCatalog.ById(Health.creatureId);
             return ownMoveSpeed = file != null ? file.moveSpeed : 1f;
         }
+    }
+
+    // WHETHER IT ATTACKS FIRST, from its catalog entry, asked once per life like its speed. A creature with no entry
+    // (a hand-placed one) is aggressive.
+    bool aggressive, aggressiveRead;
+    bool Aggressive
+    {
+        get
+        {
+            if (aggressiveRead) return aggressive;
+            aggressiveRead = true;
+            if (Health == null || string.IsNullOrEmpty(Health.creatureId)) return aggressive = true;
+            var file = MonsterCatalog.ById(Health.creatureId);
+            return aggressive = file == null || file.aggressive;
+        }
+    }
+
+    /// <summary><paramref name="attacker"/> just took health off this creature. With nobody to fight it fights them;
+    /// already fighting somebody else, it turns only when they have now taken more health off it than its target has
+    /// (<see cref="AggroMath.TakesAggro"/>). Being hit by its own target keeps the chase going wherever they stand.
+    /// Called on the machine that owns the world, from the one place a blow lowers health.</summary>
+    public void HurtBy(ICombatUnit attacker)
+    {
+        if (!ThinksForItself || attacker == null || Health == null || Health.IsDead) return;
+        if (PlayerUnits.Gone(attacker) || attacker.IsDead || attacker.Body == null || !Sides.Hostile(Health, attacker)) return;
+        if (leader != null || Taunted) return;
+        if (ReferenceEquals(Prey, attacker)) { chasing = true; outsideSince = TargetInside; return; }
+        bool hasTarget = chasing && Prey != null && !Prey.IsDead && !PlayerUnits.Gone(Prey);
+        if (hasTarget)
+        {
+            var ledger = Health.Ledger;
+            if (ledger == null || !AggroMath.TakesAggro(ledger.DealtBy(attacker), ledger.DealtBy(Prey))) return;
+        }
+        SetPrey(attacker);
+        chasing = true;
+        outsideSince = TargetInside;
     }
 
     void Start()
@@ -587,28 +627,25 @@ public class MonsterAI3D : MonoBehaviour
         Vector3 pos = transform.position;
         if (FollowLeader(pos)) return;
         PickPrey(pos);
-        // A dead or departed target is no target: leash off and resume wandering until somebody else turns up.
+        // A dead or departed target is no target: stop chasing and resume wandering until somebody else turns up.
         bool playerAlive = player != null && Prey != null && !Prey.IsDead;
         // Compare SQUARED distances against squared radii — avoids a sqrt per check, per mob, per frame.
         float toPlayerSqr = playerAlive ? PlanarSqr(pos, player.position) : Mathf.Infinity;
 
         bool was = chasing;
-        if (Taunted && playerAlive) chasing = true;   // taunt overrides leash — locked onto the player
-        else if (chasing && toPlayerSqr > leashRadius * leashRadius) chasing = false;
-        else if (!chasing && toPlayerSqr <= NoticeSqr()) chasing = true;
-        // TETHERED: led too far from home, it drops everything, walks back and heals once there — so a summoned boss
-        // can never be dragged into a town square.
-        if (tetherRadius > 0f && Health != null && !Health.IsWatchedCopy)
+        bool inArea = playerAlive && toPlayerSqr <= NoticeSqr();
+        // a taunt locks it on, whatever the distance
+        if (Taunted && playerAlive) chasing = true;
+        else if (!playerAlive) chasing = false;
+        // GIVING UP: the target outside the aggro area for GiveUpSeconds in a row. It stops where it stands.
+        else if (chasing)
         {
-            float fromHomeSqr = PlanarSqr(pos, home);
-            if (!returningHome && fromHomeSqr > tetherRadius * tetherRadius) { returningHome = true; nextWander = 0f; }
-            if (returningHome)
-            {
-                chasing = false;
-                float near = wanderRadius + 1f;
-                if (fromHomeSqr <= near * near) { returningHome = false; Health.RefillToMax(); }
-            }
+            if (inArea) outsideSince = TargetInside;
+            else if (outsideSince == TargetInside) outsideSince = Time.time;
+            else if (AggroMath.GivesUp(outsideSince, Time.time)) { chasing = false; strayedTo = pos; strayed = true; }
         }
+        else if (inArea && Aggressive) chasing = true;
+        if (!chasing || inArea) outsideSince = TargetInside;
 
         Engage(chasing && playerAlive ? Prey : null);
 
@@ -772,7 +809,7 @@ public class MonsterAI3D : MonoBehaviour
                 // home, so a creature living near an edge would eventually be told to walk over it.
                 // perf-ok: same beat as above.
                 Vector2 r = Random.insideUnitCircle * wanderRadius;
-                Vector3 target = home + new Vector3(r.x, 0f, r.y);
+                Vector3 target = (strayed ? strayedTo : home) + new Vector3(r.x, 0f, r.y);
                 if (GroundSnap.TryGroundY(target, WanderGroundMask, 2f, 40f, out _)) agent.MoveTo(target);
             }
         }
@@ -1064,8 +1101,8 @@ public class MonsterAI3D : MonoBehaviour
         if (Time.time < nextPreyCheck) return;
         nextPreyCheck = Time.time + PreyCheckInterval;
 
-        // Already busy with somebody who is still in reach of the chase — leave it be.
-        if (Prey != null && chasing && PlanarSqr(pos, Prey.Body.position) <= leashRadius * leashRadius) return;
+        // Already chasing somebody — leave it be. Only giving up, a taunt, or an attacker taking its aggro moves it.
+        if (Prey != null && chasing) return;
 
         // ONLY ITS ENEMIES, AND ONLY IN THIS CREATURE'S OWN MAP. The machine that owns the world holds every map at once
         // in one set of coordinates, so "nearest by distance" alone picks units that are not here at all. Who its
@@ -1121,7 +1158,5 @@ public class MonsterAI3D : MonoBehaviour
     {
         Gizmos.color = new Color(1f, 0.55f, 0.2f, 0.7f);
         Gizmos.DrawWireSphere(transform.position, aggroRadius);
-        Gizmos.color = new Color(1f, 0.25f, 0.25f, 0.5f);
-        Gizmos.DrawWireSphere(transform.position, leashRadius);
     }
 }

@@ -38,7 +38,7 @@ public struct MonsterArchetype
     // UnitStatBlock on the spawned mob, and speed, reach and swing timing are the shared character spec's.
 
     // Senses.
-    public float aggroRadius, leashRadius, wanderRadius;
+    public float aggroRadius, wanderRadius;
 
     // Behavior style (see MonsterAI3D): 0 preferredRange = melee; fleeHpFraction 0 = never flee.
     public float preferredRange, fleeHpFraction;

@@ -679,12 +679,13 @@ static class Checks
              && CreatureLoot.InkTierFor(Quality.B) == 5 && CreatureLoot.InkTierFor(Quality.A) == 5, LootF, "worn Ink tier by grade is off");
 
         // A summon: every material held, or nothing; a boss leaves after 10 minutes with nobody hitting it.
+        That(!AggroMath.GivesUp(0f, 4.99f) && AggroMath.GivesUp(0f, 5f), LootF, "a creature should give up 5 seconds after its target left its aggro area");
+        That(AggroMath.TakesAggro(11f, 10f) && !AggroMath.TakesAggro(10f, 10f), LootF, "an attacker should take aggro only by having dealt more than the target");
         That(SummonMath.CanPay(new[] { 1, 2 }, new[] { 1, 2 }) && !SummonMath.CanPay(new[] { 1, 2 }, new[] { 1, 1 })
              && !SummonMath.CanPay(new[] { 1 }, new int[0]), LootF, "a summon must need every material in full");
         That(!SummonMath.ShouldLeave(0f, float.NegativeInfinity, 599f) && SummonMath.ShouldLeave(0f, float.NegativeInfinity, 600f)
              && !SummonMath.ShouldLeave(0f, 500f, 1000f) && SummonMath.ShouldLeave(0f, 500f, 1100f), LootF,
              "a summoned boss should leave 10 minutes after it appeared or was last hit, whichever is later");
-        That(SummonMath.TetherMetres == 15f, LootF, "a summoned boss should be tethered 15 m from where it appeared");
 
         // A rolled weapon brings a build that fits it: casters wear cloth and spend most on INT, shooters and quick
         // blades leather on AGI/DEX, everything swung for strength metal on STR — never plate on a wand.

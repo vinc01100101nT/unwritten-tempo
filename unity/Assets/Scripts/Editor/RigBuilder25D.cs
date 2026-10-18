@@ -424,7 +424,6 @@ public static class RigBuilder25D
         // attack / hit / damageSpread: same story — derived, written by UnitStatBlock. Speed, reach and swing timing
         // are the shared character spec's, read live, so none of them is stamped either.
         ai.aggroRadius    = arc.aggroRadius;
-        ai.leashRadius    = arc.leashRadius;
         if (arc.wanderRadius > 0f) ai.wanderRadius = arc.wanderRadius;
         ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
         ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded

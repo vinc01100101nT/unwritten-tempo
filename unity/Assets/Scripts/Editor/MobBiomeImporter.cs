@@ -137,7 +137,6 @@ public static class MobBiomeImporter
         def.element = BiomeElement(biome);
         def.tint = Color.white;
         def.aggroRadius = 6f;
-        def.leashRadius = 11f;
         def.wanderRadius = 3f;
 
         int b = Mathf.Clamp(band, 1, 4) - 1;

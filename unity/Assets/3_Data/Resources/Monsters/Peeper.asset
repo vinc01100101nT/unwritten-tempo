@@ -18,6 +18,7 @@ MonoBehaviour:
   size: 2.6
   flies: 0
   moveSpeed: 0.8
+  aggressive: 1
   biome: 7
   artFolder: 4887f2dab9b6a0149b941dfa607aecb9
   faceset: {fileID: 2800000, guid: b9543e8ff01009a49b150514c482f89b, type: 3}

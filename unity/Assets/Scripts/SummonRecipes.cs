@@ -59,9 +59,6 @@ public static class SummonMath
     /// <summary>The longest a summoned boss stays with nobody hitting it: 10 minutes.</summary>
     public const float IdleSecondsBeforeLeaving = 600f;
 
-    /// <summary>How far a summoned boss may be led from where it appeared before it walks back and heals: 15 m.</summary>
-    public const float TetherMetres = 15f;
-
     /// <summary>True when every need is held: <paramref name="held"/>[i] of <paramref name="needed"/>[i].</summary>
     public static bool CanPay(IReadOnlyList<int> needed, IReadOnlyList<int> held)
     {

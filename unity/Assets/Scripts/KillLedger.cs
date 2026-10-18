@@ -107,6 +107,17 @@ public sealed class KillLedger
         if (ledger.first < 0) ledger.first = i;
     }
 
+    /// <summary>The health the person behind <paramref name="unit"/> has taken off this creature and still holds a claim
+    /// to — what its aggro is decided by (<see cref="AggroMath.TakesAggro"/>). 0 for somebody with no entry.</summary>
+    public float DealtBy(ICombatUnit unit)
+    {
+        var person = PersonBehind(unit);
+        if (person == null) return 0f;
+        for (int i = 0; i < entries.Count; i++)
+            if (ReferenceEquals(entries[i].who, person)) return entries[i].dealt;
+        return 0f;
+    }
+
     /// <summary>The creature spent <paramref name="seconds"/> after <paramref name="prey"/>. Counted from the moment
     /// it gives chase, with no exception — before anybody has hurt it, and whether or not it ever lands a blow, so
     /// nobody is credited less for being hard to hurt or hard to catch.

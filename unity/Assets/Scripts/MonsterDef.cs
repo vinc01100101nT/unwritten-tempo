@@ -34,6 +34,9 @@ public class MonsterDef : ScriptableObject
     [Tooltip("Movement speed: how many times the shared pace this creature travels at, wandering and chasing alike. " +
              "1 is the pace a person travels at, 2 the fastest there is, 0 never moves from where it stands.")]
     [Range(UnitStatMath.MinCreatureMoveSpeed, UnitStatMath.MaxCreatureMoveSpeed)] public float moveSpeed = 1f;
+    [Tooltip("Aggressive: attacks anybody who walks into its aggro area. Off: never attacks first, and only fights " +
+             "whoever hits it.")]
+    public bool aggressive = true;
 
     [Header("Biome (spawn grouping)")]
     [Tooltip("Which biome this mob spawns in. The map generator spawns a map's mobs from its recipe Biome. " +
@@ -135,7 +138,6 @@ public class MonsterDef : ScriptableObject
 
     [Header("Senses")]
     public float aggroRadius = 6f;
-    public float leashRadius = 10f;
     public float wanderRadius = 3f;
 
     [Header("Behavior style")]
@@ -204,7 +206,6 @@ public class MonsterDef : ScriptableObject
             size = size,
             flies = flies,
             aggroRadius = aggroRadius,
-            leashRadius = leashRadius,
             wanderRadius = wanderRadius,
             preferredRange = preferredRange,
             fleeHpFraction = fleeHpFraction,

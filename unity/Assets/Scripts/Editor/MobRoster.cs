@@ -23,7 +23,7 @@ public static class MobRoster
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(1, wStr: 3f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // fodder bruiser
             name = "Slime", weight = 4, tint = None, size = 0.3f,
-            aggroRadius = 6f, leashRadius = 10f, wanderRadius = 3f,
+            aggroRadius = 6f, wanderRadius = 3f,
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Earth,   // Fireball melts it (Fire→Earth = Weak!)
             itemDropNames = new[]{ "Life Potion" }, itemDropChances = new[]{ 0.08f },
@@ -33,7 +33,7 @@ public static class MobRoster
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(2, wStr: 2f, wAgi: 5f, wVit: 1f, wInt: 1f, wDex: 2f, wLuk: 2f),   // fast + dodgy
             name = "Bat", weight = 4, tint = Cyan, size = 0.3f,
-            aggroRadius = 7f, leashRadius = 12f, wanderRadius = 4f,
+            aggroRadius = 7f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Wind,   // Frost (Water→Wind) is Resisted on bats
             itemDropNames = new[]{ "Silver Ring" }, itemDropChances = new[]{ 0.05f },
@@ -43,7 +43,7 @@ public static class MobRoster
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(6, wStr: 3f, wAgi: 1f, wVit: 5f, wInt: 1f, wDex: 2f, wLuk: 1f),   // tanky
             name = "Kappa", weight = 2, tint = None, size = 1f,
-            aggroRadius = 5f, leashRadius = 9f, wanderRadius = 2.5f,
+            aggroRadius = 5f, wanderRadius = 2.5f,
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Water,   // water turtle: Fire is Resisted (use melee/wind)
             itemDropNames = new[]{ "Wooden Guard", "Leather Vest" }, itemDropChances = new[]{ 0.12f, 0.08f },
@@ -55,7 +55,7 @@ public static class MobRoster
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(5, wStr: 1f, wAgi: 2f, wVit: 2f, wInt: 5f, wDex: 2f, wLuk: 1f),   // caster
             name = "Flam", weight = 2, tint = Arcane, size = 1f,
-            aggroRadius = 7f, leashRadius = 11f, wanderRadius = 3f,
+            aggroRadius = 7f, wanderRadius = 3f,
             preferredRange = 3.2f, fleeHpFraction = 0f,
             element = Element.Fire,   // flame: Frost (Water→Fire) = Weak!; its bolt BURNS
             onHitAilment = Ailment.Burn, onHitAilmentChance = 0.4f, onHitAilmentSeconds = 4f, onHitAilmentMagnitude = 2f,
@@ -66,7 +66,7 @@ public static class MobRoster
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(8, wStr: 5f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // heavy hitter
             name = "Cyclope", weight = 2, tint = None, size = 2.4f,
-            aggroRadius = 6f, leashRadius = 11f, wanderRadius = 4f,
+            aggroRadius = 6f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0.4f,
             element = Element.Neutral,   // plain baseline — but its hit-and-run bite POISONS
             onHitAilment = Ailment.Poison, onHitAilmentChance = 0.35f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 2f,
@@ -83,8 +83,8 @@ public static class MobRoster
         stats = UnitStatMath.Allocate(30, wStr: 3f, wAgi: 1f, wVit: 4f, wInt: 2f, wDex: 2f, wLuk: 1f),   // boss
         name = "Ancient Dragon", weight = 0,
         tint = new Color(1f, 0.85f, 0.85f), size = 2.4f,
-        // Relentless: wide aggro, long leash so it commits to the chase, never flees.
-        aggroRadius = 9f, leashRadius = 22f, wanderRadius = 5f,
+        // Relentless: wide aggro, never flees.
+        aggroRadius = 9f, wanderRadius = 5f,
         preferredRange = 0f, fleeHpFraction = 0f,
         // Fire dragon: resists Fire, MELTS to Frost (Water→Fire = Weak!), and its bite BURNS you.
         element = Element.Fire,

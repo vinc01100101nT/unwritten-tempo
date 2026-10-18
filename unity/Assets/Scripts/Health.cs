@@ -254,7 +254,16 @@ public class Health : MonoBehaviour, ICombatUnit
     PathAgent3D agent;
     MonsterAI3D brain;
     PathAgent3D Agent => agent != null ? agent : (agent = GetComponent<PathAgent3D>());
-    public MonsterAI3D Brain => brain != null ? brain : (brain = GetComponent<MonsterAI3D>());
+    bool brainLooked;
+    // Looked for once: a body with no brain (a person) is asked on every blow it takes, so the miss is remembered too.
+    public MonsterAI3D Brain
+    {
+        get
+        {
+            if (brain == null && !brainLooked) { brain = GetComponent<MonsterAI3D>(); brainLooked = true; }
+            return brain;
+        }
+    }
     public void TeleportTo(Vector3 dest, RelocationLook look = default)
     {
         var a = Agent;
@@ -499,6 +508,8 @@ public class Health : MonoBehaviour, ICombatUnit
         // happens, so the blow that kills has to be on the ledger already. The attacker is whoever the door recorded
         // just before it opened (CombatAuthority).
         KillLedger.NoteDealt(this, LastAttacker, before - Current);
+        // A creature answers whoever hurt it — after the ledger, which its aggro is weighed by.
+        if (Current < before && Brain != null) brain.HurtBy(LastAttacker);
     }
 
     KillLedger ledger;
