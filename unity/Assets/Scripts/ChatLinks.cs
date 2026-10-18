@@ -58,7 +58,7 @@ public static class ChatLinks
                 string title = piece != null ? ItemTooltip.CopyTitle(piece) : def.displayName;
                 int width = title.Length + 2;
                 if (shown + width > mostShown) break;
-                AppendLink(sb, title, ColorUtility.ToHtmlStringRGB(Rarities.Color(Rarities.Of(def))), def.id,
+                AppendLink(sb, title, UiKit.LightHtml(Rarities.Color(Rarities.Of(def))), def.id,
                            ItemTooltip.BodyFor(def, piece));
                 shown += width;
                 links++;
@@ -184,6 +184,7 @@ public static class ChatLinks
             if (end < 0) break;
             from = end + 1;
             if (!SplitLink(text.Substring(open + 1, end - open - 1), out var title, out var hex, out var id, out var body)) continue;
+            hex = UiKit.InActiveTheme(hex);
             ColorUtility.TryParseHtmlString("#" + hex, out var colour);
             sb.Append("<link=\"").Append(titles.Count).Append("\"><color=#").Append(hex).Append('>')
               .Append('[').Append(sanitize(title)).Append(']').Append("</color></link>");

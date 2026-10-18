@@ -27,7 +27,8 @@ long reach.
 ## 2. What a piece's base buys — the material decides, the slot scales
 
 A body or a garment is worth one sixth of a 1-second weapon's base (50, a Dagger's), priced with Ink's own exchange rate — 1 defence = 8 HP =
-4 MP = 0.5% attack speed, and evasion at double defence, since each point takes 1% off the hits that land — split
+4 MP = 0.5% attack speed, and evasion at a fifth of the attack speed's share (cut 2026-10-18: each point takes 1% off
+the hits that land, and at the full share an E +10 leather set held a same-level creature to the 5% floor) — split
 between its material's two stats. Head and shoes take half. Sized so a full metal set's defence at equal gear is 25%
 of a Dagger's attack (20% of a Sword's). The roll, the rarity, and every fold and quench multiply that base the way they do a weapon's,
 rounded half up once (attack speed to one decimal). Full table: [Crafting Tables](crafting-tables.md).
@@ -35,7 +36,7 @@ rounded half up once (attack speed to one decimal). Full table: [Crafting Tables
 | Base, Common, Raw +0, unrolled | Body, garment | Head, shoes |
 | --- | --- | --- |
 | **Metal** | 4 defence + 33 HP | 2 defence + 17 HP |
-| **Leather** | 2.1% attack speed + 2 evasion | 1% attack speed + 1 evasion |
+| **Leather** | 2.1% attack speed + 0 evasion | 1% attack speed + 0 evasion |
 | **Cloth** | 4 magic defence + 17 MP | 2 magic defence + 8 MP |
 
 **No piece gives movement speed** (decided 2026-10-14). A person moves at the shared pace, changed only by timed

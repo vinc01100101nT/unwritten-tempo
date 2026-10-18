@@ -26,7 +26,38 @@ public class Portal3D : MonoBehaviour
     // actually swapping scenes (the CharacterController can report several OnTriggerEnter ticks).
     bool fired;
 
-    void OnEnable()  { Active.Add(this); }
+    // Each visible child's own turn as placed, kept so facing the centre never piles one turn on another.
+    Quaternion[] placedTurns;
+
+    void OnEnable()
+    {
+        Active.Add(this);
+        FaceMapCentre();
+    }
+
+    /// <summary>THE DOOR'S PICTURE FACES THE MIDDLE OF ITS MAP: every visible child turns about the upright axis only
+    /// (it stays standing) so its front points at the centre of the map's ground, as the minimap list records it.
+    /// Once per door each time its map loads; nothing per frame, nothing saved. A map with no recorded ground, or a
+    /// door standing on the centre, keeps the turn it was placed with.</summary>
+    void FaceMapCentre()
+    {
+        if (!Application.isPlaying) return;
+        var catalog = MinimapCatalog.Instance;
+        var entry = catalog != null ? catalog.Find(gameObject.scene.name) : null;
+        if (entry == null) return;
+        float half = entry.worldSize * 0.5f;
+        var toCentre = new Vector3(entry.worldMin.x + half - transform.position.x, 0f,
+                                   entry.worldMin.y + half - transform.position.z);
+        if (toCentre.sqrMagnitude < 0.0001f) return;
+        var facing = Quaternion.LookRotation(toCentre, Vector3.up);
+        int n = transform.childCount;
+        if (placedTurns == null || placedTurns.Length != n)
+        {
+            placedTurns = new Quaternion[n];
+            for (int i = 0; i < n; i++) placedTurns[i] = transform.GetChild(i).localRotation;
+        }
+        for (int i = 0; i < n; i++) transform.GetChild(i).rotation = facing * placedTurns[i];
+    }
     void OnDisable() { Active.Remove(this); }
 
     // When the component is first added, make its collider a trigger.

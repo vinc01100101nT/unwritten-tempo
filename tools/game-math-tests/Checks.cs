@@ -816,8 +816,10 @@ static class Checks
         var metal = Arm(EquipSlotType.Armor, MaterialKind.Metal, 0, Quality.Raw);
         That(metal.hardDefenseTenths == 1 && metal.hp == 33, CraftF, "Raw +0 metal body armour should be 0.1% hard defence and 33 HP, got " + metal.hardDefenseTenths + " and " + metal.hp);
         var leather = Arm(EquipSlotType.Armor, MaterialKind.Leather, 0, Quality.Raw);
-        That(Math.Abs(leather.attackSpeedPercent - 2.1f) < 0.001f && leather.evasion == 2 && leather.hardDefenseTenths == 0, CraftF,
-             "Raw +0 leather body armour should be 2.1% attack speed and 2 evasion, got " + leather.attackSpeedPercent + " and " + leather.evasion);
+        That(Math.Abs(leather.attackSpeedPercent - 2.1f) < 0.001f && leather.evasion == 0 && leather.hardDefenseTenths == 0, CraftF,
+             "Raw +0 leather body armour should be 2.1% attack speed and 0 evasion, got " + leather.attackSpeedPercent + " and " + leather.evasion);
+        var leatherTop = Arm(EquipSlotType.Armor, MaterialKind.Leather, 10, Quality.A);
+        That(leatherTop.evasion == 21, CraftF, "A +10 leather body armour should be 21 evasion, got " + leatherTop.evasion);
         var cloth = Arm(EquipSlotType.Armor, MaterialKind.Cloth, 0, Quality.Raw);
         That(cloth.hardMagicDefenseTenths == 1 && cloth.mp == 17 && cloth.hardDefenseTenths == 0, CraftF, "Raw +0 cloth body armour should be 0.1% hard magic defence and 17 MP");
         var shoes = Arm(EquipSlotType.Boots, MaterialKind.Metal, 0, Quality.Raw);
@@ -1184,6 +1186,16 @@ static class Checks
     // quietly leaving regen unchecked.
     static void RegenPerSecond()
     {
+        // RAGNAROK'S NATURAL REGENERATION (rAthena status_calc_regen): VIT/5 + MaxHP/200 (at least 1) per 6 seconds;
+        // 1 + INT/6 + MaxMP/100 per 8 seconds, plus (INT-120)/2 + 4 from 120 INT.
+        const string RegenF = "unity/Assets/Scripts/UnitStatMath.cs";
+        That(UnitStatMath.HpRegenPerInterval(30, 1000) == 11, RegenF, "VIT 30, 1000 HP should restore 11 per 6s, got " + UnitStatMath.HpRegenPerInterval(30, 1000));
+        That(UnitStatMath.HpRegenPerInterval(1, 100) == 1, RegenF, "VIT 1, 100 HP should restore the least 1 per 6s, got " + UnitStatMath.HpRegenPerInterval(1, 100));
+        That(UnitStatMath.HpRegenPerInterval(99, 5000) == 44, RegenF, "VIT 99, 5000 HP should restore 44 per 6s, got " + UnitStatMath.HpRegenPerInterval(99, 5000));
+        That(UnitStatMath.MpRegenPerInterval(1, 50) == 1, RegenF, "INT 1, 50 MP should restore 1 per 8s, got " + UnitStatMath.MpRegenPerInterval(1, 50));
+        That(UnitStatMath.MpRegenPerInterval(60, 1000) == 21, RegenF, "INT 60, 1000 MP should restore 21 per 8s, got " + UnitStatMath.MpRegenPerInterval(60, 1000));
+        That(UnitStatMath.MpRegenPerInterval(130, 2000) == 51, RegenF, "INT 130, 2000 MP should restore 51 per 8s, got " + UnitStatMath.MpRegenPerInterval(130, 2000));
+
         var owed = typeof(StatusController).GetMethod("Owed", BindingFlags.NonPublic | BindingFlags.Static);
         if (owed == null)
         {

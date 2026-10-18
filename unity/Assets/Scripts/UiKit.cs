@@ -109,7 +109,7 @@ public static class UiKit
     public static void StyleItemCount(TMP_Text t)
     {
         if (t == null) return;
-        t.color = TextOnDim;
+        Paint(t, TextOnDim);
         t.fontSharedMaterial = OutlinedMaterial(t.font, 0.25f);
     }
 
@@ -170,70 +170,273 @@ public static class UiKit
         t.fontStyle = TmpStyle(style);
         t.alignment = TmpAlign(anchor);
         t.textWrappingMode = wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
-        t.color = TextMain;
+        Paint(t, TextMain);
         t.text = s;
         return t;
     }
 
     // ---- THE interface theme: the one place every window, panel, button, label and bar reads its colours from ----
-    // Light windows with a pale-blue fading title bar, a soft blue-grey edge, rounded corners and dark text. No script
-    // types an interface colour of its own: a new colour need is a new row here, named for what it paints.
+    // Two sets of the same rows: LIGHT (pale windows, a pale-blue fading title bar, dark text) and DARK (the same
+    // rows for a dark interface). No script types an interface colour of its own: a new colour need is a new row here,
+    // named for what it paints, with a value in BOTH sets. Every row is a ThemeColor — it names its row, so what is
+    // painted with it through Paint / Img / Framed is repainted when the theme switches (SetDarkMode).
     // The combat numbers (DamagePopup) are the one exception and keep their own colours.
-    // #F7F8FA — every window's body
-    public static readonly Color PanelFill = new Color(0.969f, 0.973f, 0.980f);
-    // #EDF1F7 — a sub-panel inside a window
-    public static readonly Color PanelRaise = new Color(0.929f, 0.945f, 0.969f);
-    // #FFFFFF — a text field, slot or track well
-    public static readonly Color SlotFill = new Color(1.000f, 1.000f, 1.000f);
-    // #52525E at 60% — an empty box: a hotbar slot, a bag box or an equipment slot with nothing in it
-    public static readonly Color SlotEmpty = new Color(0.32f, 0.32f, 0.37f, 0.6f);
-    // #7F97BD — the edge around every window
-    public static readonly Color WindowEdge = new Color(0.498f, 0.592f, 0.741f);
-    // #E6EEFA — the title bar fades from this…
-    public static readonly Color TitleBarTop = new Color(0.902f, 0.933f, 0.980f);
-    // #B9CCE9 — …down to this
-    public static readonly Color TitleBarBottom = new Color(0.725f, 0.800f, 0.914f);
-    // #22324D — a window's title, and headings
-    public static readonly Color TitleText = new Color(0.133f, 0.196f, 0.302f);
-    // #E9EBEF
-    public static readonly Color ButtonFill = new Color(0.914f, 0.922f, 0.937f);
-    // #B5BDC9 — also the edge of a text field or slot
-    public static readonly Color ButtonEdge = new Color(0.710f, 0.741f, 0.788f);
-    // #222222
-    public static readonly Color ButtonText = new Color(0.133f, 0.133f, 0.133f);
-    // #C9D3E2 — a divider line
-    public static readonly Color Rule = new Color(0.788f, 0.827f, 0.886f);
-    // #D6E5FB — behind whatever the pointer is over
-    public static readonly Color Hover = new Color(0.839f, 0.898f, 0.984f);
-    // #5B86C9 — hover edge, caret, tick, slider fill, a selected border
-    public static readonly Color Accent = new Color(0.357f, 0.525f, 0.788f);
-    // #D9DFE8 — the close button
-    public static readonly Color CloseFill = new Color(0.851f, 0.875f, 0.910f);
-    // #1B1B1B — all primary text
-    public static readonly Color TextMain = new Color(0.106f, 0.106f, 0.106f);
-    // #6C7380 — labels, units, secondary text
-    public static readonly Color TextDim = new Color(0.424f, 0.451f, 0.502f);
-    // #B83A3A — a stat that went down; a refusal
-    public static readonly Color Bad = new Color(0.722f, 0.227f, 0.227f);
-    // #FFFFFF — text laid straight over a darkened screen, not in a window
-    public static readonly Color TextOnDim = new Color(1.000f, 1.000f, 1.000f);
-    // #2E7D41 — a stat that went up
-    public static readonly Color Good = new Color(0.180f, 0.490f, 0.255f);
-    // #867200 — a private message in the chat: a dark gold yellow (4.47:1 against PanelFill)
-    public static readonly Color PmText = new Color(0.525f, 0.447f, 0.000f);
+
+    /// <summary>Every row of the interface palette, in the order of <see cref="LightSet"/> and <see cref="DarkSet"/>.</summary>
+    public enum Row
+    {
+        PanelFill, PanelRaise, SlotFill, SlotEmpty, WindowEdge, TitleBarTop, TitleBarBottom, TitleText,
+        ButtonFill, ButtonEdge, ButtonText, Rule, Hover, Accent, CloseFill, TextMain, TextDim, Bad, TextOnDim, Good,
+        PmText, NoticeSuccess, NoticeFailure, NoticeWarning, RarityRare, RarityEpic, RarityLegendary,
+    }
+
+    static readonly Color[] LightSet =
+    {
+        new Color(0.969f, 0.973f, 0.980f),        // PanelFill       #F7F8FA — every window's body
+        new Color(0.929f, 0.945f, 0.969f),        // PanelRaise      #EDF1F7 — a sub-panel inside a window
+        new Color(1.000f, 1.000f, 1.000f),        // SlotFill        #FFFFFF — a text field, slot or track well
+        new Color(0.32f, 0.32f, 0.37f, 0.6f),     // SlotEmpty       #52525E at 60% — an empty hotbar, bag or equipment box
+        new Color(0.498f, 0.592f, 0.741f),        // WindowEdge      #7F97BD — the edge around every window
+        new Color(0.902f, 0.933f, 0.980f),        // TitleBarTop     #E6EEFA — the title bar fades from this…
+        new Color(0.725f, 0.800f, 0.914f),        // TitleBarBottom  #B9CCE9 — …down to this
+        new Color(0.133f, 0.196f, 0.302f),        // TitleText       #22324D — a window's title, and headings
+        new Color(0.914f, 0.922f, 0.937f),        // ButtonFill      #E9EBEF
+        new Color(0.710f, 0.741f, 0.788f),        // ButtonEdge      #B5BDC9 — also the edge of a text field or slot
+        new Color(0.133f, 0.133f, 0.133f),        // ButtonText      #222222
+        new Color(0.788f, 0.827f, 0.886f),        // Rule            #C9D3E2 — a divider line
+        new Color(0.839f, 0.898f, 0.984f),        // Hover           #D6E5FB — behind whatever the pointer is over
+        new Color(0.357f, 0.525f, 0.788f),        // Accent          #5B86C9 — hover edge, caret, tick, slider fill, a selected border
+        new Color(0.851f, 0.875f, 0.910f),        // CloseFill       #D9DFE8 — the close button
+        new Color(0.106f, 0.106f, 0.106f),        // TextMain        #1B1B1B — all primary text
+        new Color(0.424f, 0.451f, 0.502f),        // TextDim         #6C7380 — labels, units, secondary text
+        new Color(0.722f, 0.227f, 0.227f),        // Bad             #B83A3A — a stat that went down; a refusal
+        new Color(1.000f, 1.000f, 1.000f),        // TextOnDim       #FFFFFF — text laid straight over a darkened screen
+        new Color(0.180f, 0.490f, 0.255f),        // Good            #2E7D41 — a stat that went up
+        new Color(0.525f, 0.447f, 0.000f),        // PmText          #867200 — a private message in the chat (4.47:1)
+        new Color(0.400f, 0.902f, 0.451f),        // NoticeSuccess   — the stacking notice, read over the world
+        new Color(1.000f, 0.373f, 0.373f),        // NoticeFailure
+        new Color(1.000f, 0.851f, 0.251f),        // NoticeWarning
+        new Color(0.165f, 0.384f, 0.722f),        // RarityRare      #2A62B8 — a Rare item's name (5.59:1)
+        new Color(0.541f, 0.247f, 0.722f),        // RarityEpic      #8A3FB8 — an Epic item's name (5.68:1)
+        new Color(0.659f, 0.329f, 0.000f),        // RarityLegendary #A85400 — a Legendary item's name (5.03:1)
+    };
+
+    // Every text row reads at 4.5:1 or better against the body it sits on, except white on the accent (4.2:1).
+    static readonly Color[] DarkSet =
+    {
+        new Color32(0x1e, 0x23, 0x2c, 0xff),      // PanelFill
+        new Color32(0x26, 0x2c, 0x37, 0xff),      // PanelRaise
+        new Color32(0x2c, 0x33, 0x40, 0xff),      // SlotFill
+        new Color(0.039f, 0.047f, 0.063f, 0.6f),  // SlotEmpty       #0A0C10 at 60%
+        new Color32(0x4a, 0x5d, 0x7c, 0xff),      // WindowEdge
+        new Color32(0x34, 0x40, 0x5a, 0xff),      // TitleBarTop
+        new Color32(0x23, 0x2c, 0x3e, 0xff),      // TitleBarBottom
+        new Color32(0xdb, 0xe5, 0xf5, 0xff),      // TitleText
+        new Color32(0x31, 0x39, 0x49, 0xff),      // ButtonFill
+        new Color32(0x4c, 0x56, 0x68, 0xff),      // ButtonEdge
+        new Color32(0xe4, 0xe8, 0xef, 0xff),      // ButtonText
+        new Color32(0x3a, 0x43, 0x52, 0xff),      // Rule
+        new Color32(0x2f, 0x44, 0x66, 0xff),      // Hover
+        new Color32(0x4f, 0x7c, 0xc4, 0xff),      // Accent
+        new Color32(0x3a, 0x44, 0x56, 0xff),      // CloseFill
+        new Color32(0xe6, 0xe9, 0xee, 0xff),      // TextMain
+        new Color32(0x9a, 0xa3, 0xb2, 0xff),      // TextDim
+        new Color32(0xef, 0x6b, 0x6b, 0xff),      // Bad
+        new Color(1.000f, 1.000f, 1.000f),        // TextOnDim
+        new Color32(0x5c, 0xc9, 0x7a, 0xff),      // Good
+        new Color32(0xd9, 0xc0, 0x4a, 0xff),      // PmText
+        new Color(0.400f, 0.902f, 0.451f),        // NoticeSuccess   — the notices are read over the world, the same in both
+        new Color(1.000f, 0.373f, 0.373f),        // NoticeFailure
+        new Color(1.000f, 0.851f, 0.251f),        // NoticeWarning
+        new Color32(0x6a, 0xa0, 0xff, 0xff),      // RarityRare
+        new Color32(0xb9, 0x8a, 0xf0, 0xff),      // RarityEpic
+        new Color32(0xf0, 0xa0, 0x40, 0xff),      // RarityLegendary
+    };
+
+    static Color[] activeSet;
+    static string[] activeHex;
+
+    static Color[] ActiveSet
+    {
+        get
+        {
+            if (activeSet == null) UseSet(GameSettings.DarkMode);
+            return activeSet;
+        }
+    }
+
+    static void UseSet(bool dark)
+    {
+        activeSet = dark ? DarkSet : LightSet;
+        activeHex = new string[activeSet.Length];
+        for (int i = 0; i < activeSet.Length; i++) activeHex[i] = "#" + ColorUtility.ToHtmlStringRGB(activeSet[i]);
+    }
+
+    /// <summary>The colour <paramref name="row"/> has in the theme in use now.</summary>
+    public static Color Current(Row row) => ActiveSet[(int)row];
+
+    /// <summary>True while the interface is drawn with the dark set.</summary>
+    public static bool IsDark => ActiveSet == DarkSet;
+
+    /// <summary>Raised after the theme switched and every painted element was repainted — for a window whose text is
+    /// put together from theme colours (rich text, a readable tint) to write it again.</summary>
+    public static event Action ThemeChanged;
+
+    /// <summary>Switch the interface to the dark or the light set, and repaint everything already on screen — open
+    /// windows, closed ones kept for later, the saved HUD. Runs once per click on the setting, never per frame.</summary>
+    public static void SetDarkMode(bool dark)
+    {
+        if (activeSet != null && IsDark == dark) return;
+        var oldHex = activeHex;
+        UseSet(dark);
+        var painted = UnityEngine.Object.FindObjectsByType<ThemePaint>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < painted.Length; i++) painted[i].Repaint();
+        if (oldHex != null) SwapRichTextColours(oldHex);
+        ThemeChanged?.Invoke();
+    }
+
+    // Text already written with a theme colour inside it ("<color=#…>", from Hex) is rewritten to the same row's new
+    // colour, so a chat line or a label built before the switch follows it too.
+    static void SwapRichTextColours(string[] oldHex)
+    {
+        var texts = UnityEngine.Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int t = 0; t < texts.Length; t++)
+        {
+            string s = texts[t].text;
+            if (string.IsNullOrEmpty(s) || s.IndexOf("<color=#", StringComparison.Ordinal) < 0) continue;
+            string swapped = s;
+            for (int i = 0; i < oldHex.Length; i++)
+                if (IsTextRow((Row)i) && oldHex[i] != activeHex[i]) swapped = swapped.Replace("<color=" + oldHex[i] + ">", "<color=" + activeHex[i] + ">");
+            if (swapped != s) texts[t].text = swapped;
+        }
+    }
+
+    public static ThemeColor PanelFill => new ThemeColor(Row.PanelFill);
+    public static ThemeColor PanelRaise => new ThemeColor(Row.PanelRaise);
+    public static ThemeColor SlotFill => new ThemeColor(Row.SlotFill);
+    public static ThemeColor SlotEmpty => new ThemeColor(Row.SlotEmpty);
+    public static ThemeColor WindowEdge => new ThemeColor(Row.WindowEdge);
+    public static ThemeColor TitleBarTop => new ThemeColor(Row.TitleBarTop);
+    public static ThemeColor TitleBarBottom => new ThemeColor(Row.TitleBarBottom);
+    public static ThemeColor TitleText => new ThemeColor(Row.TitleText);
+    public static ThemeColor ButtonFill => new ThemeColor(Row.ButtonFill);
+    public static ThemeColor ButtonEdge => new ThemeColor(Row.ButtonEdge);
+    public static ThemeColor ButtonText => new ThemeColor(Row.ButtonText);
+    public static ThemeColor Rule => new ThemeColor(Row.Rule);
+    public static ThemeColor Hover => new ThemeColor(Row.Hover);
+    public static ThemeColor Accent => new ThemeColor(Row.Accent);
+    public static ThemeColor CloseFill => new ThemeColor(Row.CloseFill);
+    public static ThemeColor TextMain => new ThemeColor(Row.TextMain);
+    public static ThemeColor TextDim => new ThemeColor(Row.TextDim);
+    public static ThemeColor Bad => new ThemeColor(Row.Bad);
+    public static ThemeColor TextOnDim => new ThemeColor(Row.TextOnDim);
+    public static ThemeColor Good => new ThemeColor(Row.Good);
+    public static ThemeColor PmText => new ThemeColor(Row.PmText);
     /// <summary>The stacking notice's three colours (<see cref="OverheadNotice"/>) — bright, because they are read over the
     /// world, on a dark edge: something done, something refused or broken, and a "you can't do that right now".</summary>
-    public static readonly Color NoticeSuccess = new Color(0.400f, 0.902f, 0.451f);
-    public static readonly Color NoticeFailure = new Color(1.000f, 0.373f, 0.373f);
-    public static readonly Color NoticeWarning = new Color(1.000f, 0.851f, 0.251f);
-    // An item's name by its rarity (Rarities.Color): Common is TextMain and Uncommon is Good; these three are the
-    // rest, each dark enough to read at 4.5:1 or better against PanelFill.
-    // #2A62B8 — a Rare item's name: blue (5.59:1)
-    public static readonly Color RarityRare = new Color(0.165f, 0.384f, 0.722f);
-    // #8A3FB8 — an Epic item's name: purple (5.68:1)
-    public static readonly Color RarityEpic = new Color(0.541f, 0.247f, 0.722f);
-    // #A85400 — a Legendary item's name: a deep orange gold (5.03:1)
-    public static readonly Color RarityLegendary = new Color(0.659f, 0.329f, 0.000f);
+    public static ThemeColor NoticeSuccess => new ThemeColor(Row.NoticeSuccess);
+    public static ThemeColor NoticeFailure => new ThemeColor(Row.NoticeFailure);
+    public static ThemeColor NoticeWarning => new ThemeColor(Row.NoticeWarning);
+    // An item's name by its rarity (Rarities.Color): Common is TextMain and Uncommon is Good; these three are the rest.
+    public static ThemeColor RarityRare => new ThemeColor(Row.RarityRare);
+    public static ThemeColor RarityEpic => new ThemeColor(Row.RarityEpic);
+    public static ThemeColor RarityLegendary => new ThemeColor(Row.RarityLegendary);
+
+    /// <summary>Paint <paramref name="g"/> with a theme row, and remember the row so a theme switch repaints it.</summary>
+    public static T Paint<T>(T g, ThemeColor c) where T : Graphic
+    {
+        if (g == null) return g;
+        if (!g.TryGetComponent(out ThemePaint p)) p = g.gameObject.AddComponent<ThemePaint>();
+        p.SetRow(g, c.Row);
+        return g;
+    }
+
+    /// <summary>Paint <paramref name="g"/> with a theme row drawn at <paramref name="alpha"/> (a faded hint, a placeholder).</summary>
+    public static T Paint<T>(T g, ThemeColor c, float alpha) where T : Graphic
+    {
+        Paint(g, c);
+        if (g != null) g.GetComponent<ThemePaint>().SetAlpha(alpha);
+        return g;
+    }
+
+    /// <summary>The caret and the selection of a text box, in the theme's colours. Every text box is styled here, so a
+    /// theme switch knows which of them to restyle.</summary>
+    public static void StyleTyping(TMP_InputField field)
+    {
+        if (field == null) return;
+        field.caretColor = Accent.Value;
+        field.selectionColor = Hover.Value;
+    }
+
+    /// <summary>Paint <paramref name="g"/> with a colour that is not a theme row (a picture's tint, a meaning colour);
+    /// a theme switch leaves it as it is.</summary>
+    public static T Paint<T>(T g, Color c) where T : Graphic
+    {
+        if (g == null) return g;
+        if (g.TryGetComponent(out ThemePaint p)) p.Forget();
+        g.color = c;
+        return g;
+    }
+
+    /// <summary>Paint text <paramref name="g"/> in a colour that MEANS something (a season, a skill's tint, a rarity on a
+    /// plate), made readable against <paramref name="background"/> — worked out again when the theme switches.</summary>
+    public static T PaintReadable<T>(T g, Color meaning, ThemeColor background) where T : Graphic
+    {
+        if (g == null) return g;
+        if (!g.TryGetComponent(out ThemePaint p)) p = g.gameObject.AddComponent<ThemePaint>();
+        p.SetReadable(g, meaning, background.Row);
+        return g;
+    }
+
+    /// <summary>The same for a theme row used as a meaning colour (a rarity's colour on a floor plate).</summary>
+    public static T PaintReadable<T>(T g, ThemeColor meaning, ThemeColor background) where T : Graphic
+    {
+        if (g == null) return g;
+        if (!g.TryGetComponent(out ThemePaint p)) p = g.gameObject.AddComponent<ThemePaint>();
+        p.SetReadable(g, meaning.Row, background.Row);
+        return g;
+    }
+
+    /// <summary>The same, against the window body.</summary>
+    public static T PaintReadable<T>(T g, Color meaning) where T : Graphic => PaintReadable(g, meaning, PanelFill);
+
+    static string[] lightHtml;
+
+    // The rows text is written in. Rich text is only ever one of these, and the slot well shares white with TextOnDim,
+    // so a colour found inside a line is matched against these rows alone.
+    static bool IsTextRow(Row r) => r == Row.TitleText || r == Row.ButtonText || r == Row.TextMain || r == Row.TextDim
+        || r == Row.Bad || r == Row.TextOnDim || r == Row.Good || r == Row.PmText || r == Row.Accent
+        || r == Row.RarityRare || r == Row.RarityEpic || r == Row.RarityLegendary;
+
+    /// <summary>The LIGHT set's colour for <paramref name="c"/>, as "RRGGBB" — what a server writes into a line it
+    /// passes on (a chat link's rarity), the same on every machine whatever theme its own screen uses.</summary>
+    public static string LightHtml(ThemeColor c)
+    {
+        if (lightHtml == null)
+        {
+            lightHtml = new string[LightSet.Length];
+            for (int i = 0; i < LightSet.Length; i++) lightHtml[i] = ColorUtility.ToHtmlStringRGB(LightSet[i]);
+        }
+        return lightHtml[(int)c.Row];
+    }
+
+    /// <summary>A colour a server wrote as "RRGGBB" (<see cref="LightHtml"/>) in the theme in use here: the same row's
+    /// colour in this set, or the colour as it came when it is no row of the light set.</summary>
+    public static string InActiveTheme(string html)
+    {
+        if (string.IsNullOrEmpty(html) || !IsDark) return html;
+        for (int i = 0; i < LightSet.Length; i++)
+            if (IsTextRow((Row)i) && string.Equals(LightHtml(new ThemeColor((Row)i)), html, StringComparison.OrdinalIgnoreCase))
+                return activeHex[i].Substring(1);
+        return html;
+    }
+
+    /// <summary>A theme colour as a rich-text tag value, "#RRGGBB", worked out once per theme — free to call.</summary>
+    public static string Hex(ThemeColor c)
+    {
+        if (activeSet == null) UseSet(GameSettings.DarkMode);
+        return activeHex[(int)c.Row];
+    }
 
     /// <summary>A theme colour as a rich-text tag value, "#RRGGBB" — for text that colours part of a line. Read it
     /// into a static field once; never call it per frame (it builds a string).</summary>
@@ -244,25 +447,32 @@ public static class UiKit
 
     /// <summary>A colour that MEANS something (a season, a weather, a skill type) made readable as TEXT on a window:
     /// returned unchanged when it already reads at <see cref="ReadableContrast"/> against <see cref="PanelFill"/>,
-    /// otherwise darkened — same hue, same alpha — just far enough to. Call it when the text is built or changes,
-    /// never per frame.</summary>
-    public static Color Readable(Color c) => Readable(c, PanelFill);
+    /// otherwise moved — same hue, same alpha — just far enough to: darkened on a light body, lightened on a dark one.
+    /// Call it when the text is built or changes, never per frame.</summary>
+    public static Color Readable(Color c) => Readable(c, PanelFill.Value);
 
     /// <summary>The same, against <paramref name="background"/> — for text whose plate changes colour, like a name on
     /// the floor turning to the hover fill under the cursor.</summary>
     public static Color Readable(Color c, Color background)
     {
         float bg = Luminance(background);
-        if ((bg + 0.05f) / (Luminance(c) + 0.05f) >= ReadableContrast) return c;
+        if (Contrast(bg, Luminance(c)) >= ReadableContrast) return c;
+        bool lighten = Contrast(bg, 1f) > Contrast(bg, 0f);
         float lo = 0f, hi = 1f;
         for (int i = 0; i < 20; i++)
         {
             float k = (lo + hi) * 0.5f;
-            var d = new Color(c.r * k, c.g * k, c.b * k, c.a);
-            if ((bg + 0.05f) / (Luminance(d) + 0.05f) >= ReadableContrast) lo = k; else hi = k;
+            if (Contrast(bg, Luminance(Shift(c, k, lighten))) >= ReadableContrast) hi = k; else lo = k;
         }
-        return new Color(c.r * lo, c.g * lo, c.b * lo, c.a);
+        return Shift(c, hi, lighten);
     }
+
+    // k = 0 is the colour itself; k = 1 is white (lighten) or black (darken).
+    static Color Shift(Color c, float k, bool lighten) => lighten
+        ? new Color(c.r + (1f - c.r) * k, c.g + (1f - c.g) * k, c.b + (1f - c.b) * k, c.a)
+        : new Color(c.r * (1f - k), c.g * (1f - k), c.b * (1f - k), c.a);
+
+    static float Contrast(float lumA, float lumB) => (Mathf.Max(lumA, lumB) + 0.05f) / (Mathf.Min(lumA, lumB) + 0.05f);
 
     // Relative luminance of an sRGB colour, as the contrast formula defines it.
     static float Luminance(Color c)
@@ -310,7 +520,8 @@ public static class UiKit
         var rim = RimSprite(radius);
         if (rim == null) return;
         edge.sprite = rim;
-        var c = body.color; c.a = alpha; body.color = c;
+        if (body.TryGetComponent(out ThemePaint paint)) paint.SetAlpha(alpha);
+        else { var c = body.color; c.a = alpha; body.color = c; }
     }
 
     /// <summary>The rim of a rounded rectangle of <paramref name="radius"/> — its one-unit edge and nothing inside, 9-sliced,
@@ -335,9 +546,9 @@ public static class UiKit
     /// <summary>Turn <paramref name="img"/> into a one-unit <paramref name="edge"/> rim around a <paramref name="body"/>,
     /// both rounded. The body is a background child that layout groups ignore, so this is safe on an element that
     /// lays out its own children.</summary>
-    public static Image Framed(Image img, Color edge, Color body, int radius)
+    public static Image Framed(Image img, ThemeColor edge, ThemeColor body, int radius)
     {
-        Round(img, radius).color = edge;
+        Paint(Round(img, radius), edge);
         var well = Round(Img("Well", img.transform, body), Mathf.Max(1, radius - 1));
         well.raycastTarget = false;
         well.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
@@ -417,11 +628,19 @@ public static class UiKit
 
     public static Image Img(string name, Transform parent, Color c)
     {
-        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        go.transform.SetParent(parent, false);
-        var img = go.GetComponent<Image>();
+        var img = NewImage(name, parent);
         img.color = c;
         return img;
+    }
+
+    /// <summary>An image painted with a theme row — it follows the theme when it switches.</summary>
+    public static Image Img(string name, Transform parent, ThemeColor c) => Paint(NewImage(name, parent), c);
+
+    static Image NewImage(string name, Transform parent)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        go.transform.SetParent(parent, false);
+        return go.GetComponent<Image>();
     }
 
     /// <summary>
@@ -453,7 +672,7 @@ public static class UiKit
         Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
         var t = Label("Text", fill.transform, label, 14, FontStyle.Normal, TextAnchor.MiddleCenter);
         Fill(t.rectTransform, Vector2.zero, Vector2.zero);
-        t.color = ButtonText; t.raycastTarget = false;
+        Paint(t, ButtonText); t.raycastTarget = false;
         var btn = border.gameObject.AddComponent<Button>();
         btn.targetGraphic = border;
         // shared hover/press feel for every HUD button (see UiButtonFx) — added once at the factory
@@ -479,18 +698,18 @@ public static class UiKit
     {
         if (button == null) return;
         var edge = button.GetComponent<Image>();
-        if (edge != null) edge.color = Accent;
+        if (edge != null) Paint(edge, Accent);
         var fill = button.transform.Find("Fill");
         var fillImg = fill != null ? fill.GetComponent<Image>() : null;
         if (fillImg != null)
         {
-            fillImg.color = Accent;
+            Paint(fillImg, Accent);
             button.targetGraphic = fillImg;
         }
         var word = fill != null ? fill.GetComponentInChildren<TMP_Text>() : null;
         if (word != null)
         {
-            word.color = TextOnDim;
+            Paint(word, TextOnDim);
             word.fontStyle = FontStyles.Bold;
         }
     }
@@ -521,14 +740,14 @@ public static class UiKit
     {
         if (tab == null) return;
         var edge = tab.GetComponent<Image>();
-        if (edge != null) edge.color = chosen ? Accent : ButtonEdge;
+        if (edge != null) Paint(edge, chosen ? Accent : ButtonEdge);
         var fill = tab.transform.Find("Fill");
         var fillImg = fill != null ? fill.GetComponent<Image>() : null;
-        if (fillImg != null) fillImg.color = chosen ? Accent : ButtonFill;
+        if (fillImg != null) Paint(fillImg, chosen ? Accent : ButtonFill);
         var word = fill != null ? fill.GetComponentInChildren<TMP_Text>() : null;
         if (word != null)
         {
-            word.color = chosen ? TextOnDim : ButtonText;
+            Paint(word, chosen ? TextOnDim : ButtonText);
             word.fontStyle = chosen ? FontStyles.Bold : FontStyles.Normal;
         }
     }
@@ -586,10 +805,10 @@ public static class UiKit
 
     /// <summary>One line of text in a list, <paramref name="rows"/> lines tall — a sentence from the server needs room
     /// to wrap.</summary>
-    public static TextMeshProUGUI ListLine(Transform list, string s, int size, Color color, int rows = 1)
+    public static TextMeshProUGUI ListLine(Transform list, string s, int size, ThemeColor color, int rows = 1)
     {
         var t = Label("Line", list, s, size, FontStyle.Normal, rows > 1 ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft);
-        t.color = color;
+        Paint(t, color);
         var le = t.gameObject.AddComponent<LayoutElement>();
         le.preferredHeight = (size + 4) * rows + 4;
         return t;
@@ -621,7 +840,7 @@ public static class UiKit
         h.childAlignment = TextAnchor.MiddleLeft;
 
         var t = Label("What", row.transform, label, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        t.color = TextMain;
+        Paint(t, TextMain);
         t.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
         var firstButton = Btn(firstWord, row.transform, first);
@@ -759,7 +978,7 @@ public static class UiKit
         int buttons = (closable ? 1 : 0) + (minimizable ? 1 : 0);
         var titleT = Label("Title", header.transform, title, 13, FontStyle.Bold, TextAnchor.MiddleLeft);
         Fill(titleT.rectTransform, new Vector2(10, 0), new Vector2(-(8 + buttons * ButtonSlot), 0));
-        titleT.color = TitleText; titleT.raycastTarget = false;
+        Paint(titleT, TitleText); titleT.raycastTarget = false;
 
         // Each button: a transparent hit area the full bar high carries the raycast; the small visible cell and its
         // glyph sit centred inside it and catch nothing, so the clickable region can never drift off the glyph.
@@ -796,7 +1015,7 @@ public static class UiKit
         vis.rectTransform.sizeDelta = new Vector2(18, 18);
         var g = Label("Glyph", vis.transform, glyph, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
         Fill(g.rectTransform, Vector2.zero, Vector2.zero); g.raycastTarget = false;
-        g.color = TitleText;
+        Paint(g, TitleText);
         return hit;
     }
 
@@ -807,7 +1026,7 @@ public static class UiKit
     public static RectTransform DressWindow(Image border, string title, bool closable = true, bool minimizable = true,
                                            bool draggable = true)
     {
-        Round(border, WindowRadius).color = WindowEdge;
+        Paint(Round(border, WindowRadius), WindowEdge);
 
         var fill = Round(Img("Fill", border.transform, PanelFill), WindowRadius - 1);
         Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));

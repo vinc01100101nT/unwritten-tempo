@@ -21,7 +21,7 @@ public class ChatLinkInput : MonoBehaviour
     {
         public int start, length;
         public string reference;
-        public Color colour;
+        public ThemeColor colour;
         public int End => start + length;
     }
 
@@ -205,7 +205,7 @@ public class ChatLinkInput : MonoBehaviour
                 if (at < spans[i].start || at >= spans[i].End) continue;
                 var colours = info.meshInfo[ch.materialReferenceIndex].colors32;
                 int v = ch.vertexIndex;
-                Color32 tint = spans[i].colour;
+                Color32 tint = spans[i].colour.Value;
                 tint.a = colours[v].a;
                 colours[v] = colours[v + 1] = colours[v + 2] = colours[v + 3] = tint;
                 any = true;

@@ -192,7 +192,7 @@ public static class LoadingScreen
         stripRT.sizeDelta = new Vector2(420f, 8f);
         stripRT.anchoredPosition = Vector2.zero;
         var strip = stripGO.GetComponent<Image>();
-        strip.color = UiKit.Rule;
+        UiKit.Paint(strip, UiKit.Rule);
         strip.raycastTarget = false;
 
         var fillGO = new GameObject("Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -203,7 +203,7 @@ public static class LoadingScreen
         fillRT.offsetMin = Vector2.zero;
         fillRT.offsetMax = Vector2.zero;
         var fill = fillGO.GetComponent<Image>();
-        fill.color = UiKit.Accent;
+        UiKit.Paint(fill, UiKit.Accent);
         fill.raycastTarget = false;
         barFill = fillRT;
 
@@ -213,7 +213,7 @@ public static class LoadingScreen
         percentRT.pivot = new Vector2(0.5f, 0.5f);
         percentRT.sizeDelta = new Vector2(120f, 28f);
         percentRT.anchoredPosition = new Vector2(0f, -86f);
-        percentLabel.color = UiKit.TextOnDim;
+        UiKit.Paint(percentLabel, UiKit.TextOnDim);
         percentLabel.raycastTarget = false;
 
         group = root.gameObject.AddComponent<CanvasGroup>();

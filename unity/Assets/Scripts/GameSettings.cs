@@ -25,6 +25,7 @@ public static class GameSettings
     const string MusicVolumeKey        = "set_volume_music";
     const string ScrollSensitivityKey  = "set_scroll_sensitivity";
     const string HideOtherCallsKey     = "set_hide_other_skill_calls";
+    const string DarkModeKey           = "set_dark_mode";
 
     public const float ScrollSensitivityMin = 0.25f;
     public const float ScrollSensitivityMax = 3f;
@@ -99,6 +100,30 @@ public static class GameSettings
             PlayerPrefs.SetInt(SmoothCameraFollowKey, value ? 1 : 0);
         }
     }
+
+    /// <summary>Draw every window with the dark palette instead of the light one (<see cref="UiKit.SetDarkMode"/>). Off
+    /// by default. Setting it repaints what is already on screen.</summary>
+    public static bool DarkMode
+    {
+        get
+        {
+            if (!darkModeLoaded)
+            {
+                darkModeValue = PlayerPrefs.GetInt(DarkModeKey, 0) != 0;
+                darkModeLoaded = true;
+            }
+            return darkModeValue;
+        }
+        set
+        {
+            if (darkModeLoaded && darkModeValue == value) return;
+            darkModeValue = value;
+            darkModeLoaded = true;
+            PlayerPrefs.SetInt(DarkModeKey, value ? 1 : 0);
+            UiKit.SetDarkMode(value);
+        }
+    }
+    static bool darkModeValue, darkModeLoaded;
 
     /// <summary>Fire a single-target skill straight at the current target instead of opening the reticle
     /// (<see cref="UnitTargeter"/>). The reticle still opens when there is no legal, in-range target to fire

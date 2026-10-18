@@ -10,13 +10,13 @@ public class CircleOutline : MaskableGraphic
     const int Segments = 72;
     float thickness = 2f;
 
-    public static CircleOutline Build(Transform parent, float diameter, float thickness, Color color)
+    public static CircleOutline Build(Transform parent, float diameter, float thickness, ThemeColor color)
     {
         var go = new GameObject("CircleOutline", typeof(RectTransform), typeof(CanvasRenderer));
         go.transform.SetParent(parent, false);
         var circle = go.AddComponent<CircleOutline>();
         circle.thickness = thickness;
-        circle.color = color;
+        UiKit.Paint(circle, color);
         circle.raycastTarget = false;
         ((RectTransform)go.transform).sizeDelta = new Vector2(diameter, diameter);
         return circle;

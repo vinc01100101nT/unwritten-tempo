@@ -55,11 +55,11 @@
         ],
         [
           "**VIT**",
-          "+1% max HP, soft DEF (VIT ÷ 2, plus the larger of VIT × 0.3 or VIT² ÷ 150 − 1), and health regeneration worth 0.02% of your max HP every second"
+          "+1% max HP, soft DEF (VIT ÷ 2, plus the larger of VIT × 0.3 or VIT² ÷ 150 − 1), and +1 health regenerated every 6 seconds per 5 points"
         ],
         [
           "**INT**",
-          "+1 M.ATK, the top of your magic attack rising by (INT ÷ 5)² and the bottom by (INT ÷ 7)², +1% max MP, +1 soft M.DEF, and mana regeneration worth 0.02% of your max MP every second"
+          "+1 M.ATK, the top of your magic attack rising by (INT ÷ 5)² and the bottom by (INT ÷ 7)², +1% max MP, +1 soft M.DEF, and +1 mana regenerated every 8 seconds per 6 points"
         ],
         [
           "**DEX**",
@@ -145,11 +145,11 @@
         ],
         [
           "**HP regen**",
-          "VIT — 0.02% of your max HP each second"
+          "every 6 seconds, VIT ÷ 5 plus your max HP ÷ 200 (at least 1), whole numbers — paid out a little at a time"
         ],
         [
           "**MP regen**",
-          "1.5 a second flat, plus 0.02% of your max MP each second from INT"
+          "every 8 seconds, 1 plus INT ÷ 6 plus your max MP ÷ 100, whole numbers (from 120 INT, another (INT − 120) ÷ 2 + 4) — paid out a little at a time"
         ],
         [
           "**Damage spread**",

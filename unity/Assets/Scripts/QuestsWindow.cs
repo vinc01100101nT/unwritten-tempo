@@ -275,7 +275,7 @@ public class QuestsWindow : MonoBehaviour
     static void ShowPathButton(Transform line, string questId, bool on)
     {
         var label = UiKit.Label("ShowPath", line, "Show path", 10, FontStyle.Normal, TextAnchor.MiddleRight);
-        label.color = UiKit.TextDim;
+        UiKit.Paint(label, UiKit.TextDim);
         label.raycastTarget = false;
         var lrt = label.rectTransform;
         lrt.anchorMin = new Vector2(1f, 0f); lrt.anchorMax = new Vector2(1f, 1f); lrt.pivot = new Vector2(1f, 0.5f);
@@ -295,10 +295,10 @@ public class QuestsWindow : MonoBehaviour
         for (int i = t.childCount - 1; i >= 0; i--) Destroy(t.GetChild(i).gameObject);
     }
 
-    static void Text(RectTransform parent, string s, int size, Color color, FontStyle style = FontStyle.Normal, int lines = 1)
+    static void Text(RectTransform parent, string s, int size, ThemeColor color, FontStyle style = FontStyle.Normal, int lines = 1)
     {
         var t = UiKit.Label("Line", parent, s, size, style, lines > 1 ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft);
-        t.color = color;
+        UiKit.Paint(t, color);
         t.textWrappingMode = TMPro.TextWrappingModes.Normal;
         t.gameObject.AddComponent<LayoutElement>().preferredHeight = (size + 6) * lines;
     }

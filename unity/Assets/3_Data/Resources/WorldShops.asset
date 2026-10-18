@@ -47,4 +47,4 @@ MonoBehaviour:
     - item.tailed-headband
     - item.chefs-hat
     buysLoot: 0
-    testPrice: 1
+    sellsGear: 1

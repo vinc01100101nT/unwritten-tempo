@@ -55,7 +55,7 @@ public class StatHexagon : MaskableGraphic, IPointerDownHandler, IDragHandler, I
             btn.onClick.AddListener(() => hex.SetValue(idx, hex.values[(int)Ring[idx]] + 1));
 
             var num = UiKit.MakeText("Value_" + stat, go.transform, "", 12, FontStyle.Bold, TextAnchor.UpperCenter, null, false);
-            num.color = UiKit.TitleText;
+            UiKit.Paint(num, UiKit.TitleText);
             num.raycastTarget = false;
             num.rectTransform.sizeDelta = new Vector2(40, 16);
             num.rectTransform.anchoredPosition = Corner(i, LabelRadius) - new Vector2(0, 8);
@@ -97,6 +97,10 @@ public class StatHexagon : MaskableGraphic, IPointerDownHandler, IDragHandler, I
         SetVerticesDirty();
     }
 
+    // The grid and the shape are drawn in theme colours baked into the mesh, so a theme switch redraws it.
+    protected override void OnEnable() { base.OnEnable(); UiKit.ThemeChanged += SetVerticesDirty; }
+    protected override void OnDisable() { UiKit.ThemeChanged -= SetVerticesDirty; base.OnDisable(); }
+
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
@@ -106,16 +110,16 @@ public class StatHexagon : MaskableGraphic, IPointerDownHandler, IDragHandler, I
         // The grid: rings at a third, two thirds and the full reach, and a spoke to every corner.
         for (int r = 3; r <= UnitStatMath.CreationMax; r += 3)
             for (int i = 0; i < 6; i++)
-                Line(vh, o + Corner(i, Radius * r / 9f), o + Corner((i + 1) % 6, Radius * r / 9f), LineWidth, UiKit.Rule);
-        for (int i = 0; i < 6; i++) Line(vh, o, o + Corner(i, Radius), LineWidth, UiKit.Rule);
+                Line(vh, o + Corner(i, Radius * r / 9f), o + Corner((i + 1) % 6, Radius * r / 9f), LineWidth, UiKit.Rule.Value);
+        for (int i = 0; i < 6; i++) Line(vh, o, o + Corner(i, Radius), LineWidth, UiKit.Rule.Value);
 
         // The chosen shape, filled, then outlined.
         int centre = vh.currentVertCount;
-        vh.AddVert(o, UiKit.Hover, Vector2.zero);
-        for (int i = 0; i < 6; i++) vh.AddVert(o + AtValue(i, values[(int)Ring[i]]), UiKit.Hover, Vector2.zero);
+        vh.AddVert(o, UiKit.Hover.Value, Vector2.zero);
+        for (int i = 0; i < 6; i++) vh.AddVert(o + AtValue(i, values[(int)Ring[i]]), UiKit.Hover.Value, Vector2.zero);
         for (int i = 0; i < 6; i++) vh.AddTriangle(centre, centre + 1 + i, centre + 1 + (i + 1) % 6);
         for (int i = 0; i < 6; i++)
-            Line(vh, o + AtValue(i, values[(int)Ring[i]]), o + AtValue((i + 1) % 6, values[(int)Ring[(i + 1) % 6]]), OutlineWidth, UiKit.Accent);
+            Line(vh, o + AtValue(i, values[(int)Ring[i]]), o + AtValue((i + 1) % 6, values[(int)Ring[(i + 1) % 6]]), OutlineWidth, UiKit.Accent.Value);
     }
 
     static void Line(VertexHelper vh, Vector2 a, Vector2 b, float width, Color c)

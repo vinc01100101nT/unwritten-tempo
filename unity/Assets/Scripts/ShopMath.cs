@@ -36,11 +36,6 @@ public static class ShopMath
     public static long BuyCost(int value, int paidCount) =>
         ((long)System.Math.Max(0, value) + TaxEach(value)) * System.Math.Max(0, paidCount);
 
-    /// <summary>What <paramref name="paidCount"/> of a thing priced <paramref name="price"/> costs where <paramref name="taxed"/>
-    /// says whether Tax is paid — a beta test shop pays none (<see cref="WorldShops.Taxes"/>).</summary>
-    public static long BuyCost(int price, int paidCount, bool taxed) =>
-        taxed ? BuyCost(price, paidCount) : (long)System.Math.Max(0, price) * System.Math.Max(0, paidCount);
-
     /// <summary>The value that makes a sale of one pay exactly <paramref name="sellPrice"/> — how a price written as
     /// "what a shop pays" becomes an item's value: the price and half of it again, rounded up.</summary>
     public static int ValueForSellPrice(int sellPrice) => sellPrice <= 0 ? 0 : sellPrice + (sellPrice + 1) / 2;

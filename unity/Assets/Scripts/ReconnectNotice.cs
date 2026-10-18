@@ -64,7 +64,7 @@ public static class ReconnectNotice
 
         var label = UiKit.Label("Message", go.transform, Message, 15,
                                 FontStyle.Normal, TextAnchor.MiddleCenter);
-        label.color = UiKit.TextOnDim;
+        UiKit.Paint(label, UiKit.TextOnDim);
         var labelRect = label.rectTransform;
         labelRect.anchorMin = new Vector2(0.5f, 0.5f);
         labelRect.anchorMax = new Vector2(0.5f, 0.5f);

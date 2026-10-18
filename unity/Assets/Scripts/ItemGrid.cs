@@ -62,7 +62,7 @@ public static class ItemDrag
 public static class ItemIcon
 {
     /// <summary>The square behind <paramref name="def"/>'s icon.</summary>
-    public static Color Back(Item def, EquipmentInstance copy)
+    public static ThemeColor Back(Item def, EquipmentInstance copy)
     {
         var r = Rarities.Of(def);
         return r == Rarity.Common ? UiKit.SlotFill : Rarities.Color(r);
@@ -97,10 +97,10 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
     const float NameMinSize = 9f, NameMaxSize = 12f;
 
     public Image edge, fill, icon;
-    public Image glow;
+    public RawImage glow;
     public TMP_Text title, count, corner;
     // The fill a shown thing's rarity gave the box, put back when a drag stops lighting it.
-    Color shownFill = UiKit.SlotFill;
+    ThemeColor shownFill = UiKit.SlotFill;
     public ItemSlot slot;
     public GuideMarker guide;
     public IItemBoxOwner owner;
@@ -127,7 +127,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         box.edge = edgeImg;
         box.fill = fillImg;
         box.icon = ItemIcon.Make(fillImg.transform, 3f);
-        box.glow = GradeGlow.MakeForSquare(fillImg.transform);
+        box.glow = GradeGlow.MakeForSquare(fillImg.transform, box.icon.transform);
 
         var t = UiKit.MakeText("Name", fillImg.transform, "", NameMaxSize, FontStyle.Bold, TextAnchor.MiddleCenter, null, true);
         t.raycastTarget = false;
@@ -171,14 +171,14 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         // In the bag a piece's hover compares it with what is worn; worn or stored, it is just itself.
         slot.previewOnHover = from == ItemBoxSource.Bag;
         slot.previewSlot = e.def.slot;
-        edge.color = UiKit.ButtonEdge;
+        UiKit.Paint(edge, UiKit.ButtonEdge);
         shownFill = ItemIcon.Back(e.def, e.instance);
-        fill.color = shownFill;
+        UiKit.Paint(fill, shownFill);
         // The picture is the box; the name is in the card on hover. A thing with no picture still writes its name.
         bool pictured = ItemIcon.Show(icon, e.def);
         GradeGlow.Show(glow, e.instance);
         Write(title, pictured ? "" : e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName);
-        title.color = Rarities.Color(Rarities.Of(e.def));
+        UiKit.Paint(title, Rarities.Color(Rarities.Of(e.def)));
         // A stack shows how many, always — as the hotbar does; a piece of gear is one of itself.
         Write(count, e.IsEquip ? "" : e.count.ToString());
         // WHAT THE TUTORIAL GUIDE MAY POINT AT: a thing in the bag. A worn or stored one, or an empty box, is not one.
@@ -191,7 +191,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         slot.boundEntry = null;
         slot.SetItem(null);
         edge.color = new Color(0, 0, 0, 0);   // still caught by the pointer, so a drop on an empty box lands
-        fill.color = UiKit.SlotEmpty;
+        UiKit.Paint(fill, UiKit.SlotEmpty);
         shownFill = UiKit.SlotFill;
         ItemIcon.Show(icon, null);
         GradeGlow.Show(glow, null);
@@ -202,18 +202,18 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
     }
 
     /// <summary>The small word at the top of the box — an equipment slot's name.</summary>
-    public void SetCorner(string word, Color colour)
+    public void SetCorner(string word, ThemeColor colour)
     {
         Write(corner, word ?? "");
-        corner.color = colour;
+        UiKit.Paint(corner, colour);
     }
 
     /// <summary>Lit while a piece that belongs here is being dragged.</summary>
     public void Light(bool on)
     {
-        if (on) { edge.color = UiKit.Accent; fill.color = UiKit.Hover; }
-        else if (Entry != null) { edge.color = UiKit.ButtonEdge; fill.color = shownFill; }
-        else { edge.color = new Color(0, 0, 0, 0); fill.color = UiKit.SlotEmpty; }
+        if (on) { UiKit.Paint(edge, UiKit.Accent); UiKit.Paint(fill, UiKit.Hover); }
+        else if (Entry != null) { UiKit.Paint(edge, UiKit.ButtonEdge); UiKit.Paint(fill, shownFill); }
+        else { UiKit.Paint(edge, new Color(0, 0, 0, 0)); UiKit.Paint(fill, UiKit.SlotEmpty); }
     }
 
     public bool TakeDrop(ItemSlot from, PointerEventData e) => owner != null && owner.Dropped(this, from);

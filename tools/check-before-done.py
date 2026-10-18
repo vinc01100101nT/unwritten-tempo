@@ -219,12 +219,13 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
-    # The material only one creature drops. Its price is saved on the item and its creature's level, gear grade and
-    # folds are saved on the creature, so either can be changed alone and the shop would pay a price the rule never gave.
+    # The material only one creature drops, and every piece of gear. Their tier and value are worked out by the editor
+    # on save (DerivedItemValues), but a file edited as text skips that, so the saved numbers are checked against the rule.
     "creature-materials": {
         "roots": [(os.path.join(DATA, "Resources", "Items"), ".asset"),
                   (os.path.join(DATA, "Resources", "Monsters"), ".asset")],
-        "files": [os.path.join(SCRIPTS, "CreatureMaterials.cs"), os.path.join(SCRIPTS, "CreaturePay.cs")],
+        "files": [os.path.join(SCRIPTS, "CreatureMaterials.cs"), os.path.join(SCRIPTS, "CreaturePay.cs"),
+                  os.path.join(SCRIPTS, "CreatureLoot.cs"), os.path.join(SCRIPTS, "CraftingMath.cs")],
         "run": [sys.executable, os.path.join(TOOLS, "check-creature-materials.py")],
         "headline": "A creature's own material is missing, shared, or sells for a price the rule does not give:",
     },

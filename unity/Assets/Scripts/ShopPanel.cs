@@ -217,7 +217,7 @@ public class ShopPanel : MonoBehaviour
         sumNumbers[2] = SumRow(sums, "Tax (33%)", 2, 12, out sumWords[2]);
         sumNumbers[3] = SumRow(sums, "You pay", 3, 14, out sumWords[3]);
         refusal = UiKit.MakeText("Refusal", sums, "", 11, FontStyle.Normal, TextAnchor.UpperLeft, null, true);
-        refusal.color = UiKit.Bad;
+        UiKit.Paint(refusal, UiKit.Bad);
         refusal.raycastTarget = false;
         UiKit.Fill(refusal.rectTransform, Vector2.zero, Vector2.zero);
 
@@ -270,7 +270,7 @@ public class ShopPanel : MonoBehaviour
         drop.edge = frame;
 
         var h = UiKit.MakeText("Heading", rt, heading, 13, FontStyle.Bold, TextAnchor.MiddleLeft, null, false);
-        h.color = UiKit.TitleText;
+        UiKit.Paint(h, UiKit.TitleText);
         h.raycastTarget = false;
         var hrt = h.rectTransform;
         hrt.anchorMin = new Vector2(0f, 1f); hrt.anchorMax = new Vector2(1f, 1f); hrt.pivot = new Vector2(0.5f, 1f);
@@ -287,11 +287,11 @@ public class ShopPanel : MonoBehaviour
     {
         float lineH = 16f, top = row * lineH;
         label = UiKit.MakeText(word, parent, word, size, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
-        label.color = row < 3 ? UiKit.TextDim : UiKit.TextMain;
+        UiKit.Paint(label, row < 3 ? UiKit.TextDim : UiKit.TextMain);
         label.raycastTarget = false;
         Place(label.rectTransform, top, lineH + (row == 3 ? 4f : 0f));
         var n = UiKit.MakeText(word + "Amount", parent, "", size, FontStyle.Bold, TextAnchor.MiddleRight, null, false);
-        n.color = UiKit.TitleText;
+        UiKit.Paint(n, UiKit.TitleText);
         n.raycastTarget = false;
         Place(n.rectTransform, top, lineH + (row == 3 ? 4f : 0f));
         // A LONG AMOUNT NEVER RUNS OVER ITS WORD: the number has the room right of the longest word, and shrinks to fit
@@ -337,7 +337,7 @@ public class ShopPanel : MonoBehaviour
                 if (!WorldShops.Sells(shop, def)) continue;
                 // perf-ok: one entry per stocked thing, made when the window redraws — never per frame
                 stock.Add(new BagEntry { def = def, count = 1 });
-                stockPrice.Add(WorldShops.PriceOf(shop, def));
+                stockPrice.Add(def.value);
             }
         // What can still be bought back, newest first — prices and moments are the server's.
         if (c != null)

@@ -48,12 +48,12 @@ public class SkillDraftPanel : MonoBehaviour
     const float DialWidth = 274f, DialHeight = 244f, NodeRadius = 106f, NodeWidth = 62f, NodeHeight = 32f;
     const float HubBarWidth = 112f, HubBarHeight = 12f;
 
-    static readonly Color CardBg     = UiKit.PanelRaise;
+    static ThemeColor CardBg     => UiKit.PanelRaise;
     // the accent = the leader
-    static readonly Color LeaderEdge = UiKit.Accent;
+    static ThemeColor LeaderEdge => UiKit.Accent;
     // purple = the gamble
     static readonly Color WildEdge   = new Color(0.85f, 0.55f, 1f);
-    static readonly Color RowDim     = UiKit.TextDim;
+    static ThemeColor RowDim     => UiKit.TextDim;
 
     bool wasOpen;
 
@@ -91,6 +91,7 @@ public class SkillDraftPanel : MonoBehaviour
         Character.Instance.Passives.OnChanged += OnWalkChanged;
         Character.Instance.OnStatsChanged += OnStatsChanged;
         Character.Instance.Ring.OnChanged += OnRingChanged;
+        UiKit.ThemeChanged += OnThemeChanged;
         bound = true;
         Refresh();
     }
@@ -110,6 +111,7 @@ public class SkillDraftPanel : MonoBehaviour
 
     void OnDestroy()
     {
+        UiKit.ThemeChanged -= OnThemeChanged;
         if (Character.Instance == null) return;
         Character.Instance.Passives.OnChanged -= OnWalkChanged;
         Character.Instance.OnStatsChanged -= OnStatsChanged;
@@ -152,15 +154,27 @@ public class SkillDraftPanel : MonoBehaviour
         // The face is white and takes its colour from the button, so hover and press are the theme's own colours.
         var btn = edge.gameObject.AddComponent<Button>();
         btn.targetGraphic = face;
-        var colors = btn.colors;
-        colors.normalColor = colors.selectedColor = colors.disabledColor = CardBg;
-        colors.highlightedColor = UiKit.Hover;
-        colors.pressedColor = UiKit.Rule;
-        btn.colors = colors;
+        TintNode(btn);
         int index = i;
         btn.onClick.AddListener(() => OnPick(index));
 
         nodeRect[i] = rt; nodeEdge[i] = edge; nodeText[i] = label; nodeButton[i] = btn;
+    }
+
+    // A node's face is white and the button tints it: the card colour at rest, the hover and press colours on use.
+    static void TintNode(Button btn)
+    {
+        var colors = btn.colors;
+        colors.normalColor = colors.selectedColor = colors.disabledColor = CardBg.Value;
+        colors.highlightedColor = UiKit.Hover.Value;
+        colors.pressedColor = UiKit.Rule.Value;
+        btn.colors = colors;
+    }
+
+    void OnThemeChanged()
+    {
+        for (int i = 0; i < nodeButton.Length; i++) if (nodeButton[i] != null) TintNode(nodeButton[i]);
+        if (panelRoot != null && UiAnim.IsOpen(panelRoot)) Refresh();
     }
 
     // The middle of the ring: its name, its own level, its XP bar, and the points banked — the ring's own
@@ -169,7 +183,7 @@ public class SkillDraftPanel : MonoBehaviour
     {
         var title = HubLine("Title", 24f, 12, FontStyle.Bold);
         title.text = "Ring of Progression";
-        title.color = UiKit.TitleText;
+        UiKit.Paint(title, UiKit.TitleText);
         levelText = HubLine("Level", 9f, 12, FontStyle.Normal);
 
         var barBg = UiKit.Img("XpBar", dial, UiKit.Rule);
@@ -188,7 +202,7 @@ public class SkillDraftPanel : MonoBehaviour
         xpText.raycastTarget = false;
 
         bankText = HubLine("Banked", -24f, 12, FontStyle.Bold);
-        bankText.color = UiKit.TitleText;
+        UiKit.Paint(bankText, UiKit.TitleText);
     }
 
     TMP_Text HubLine(string name, float y, int size, FontStyle style)
@@ -235,7 +249,8 @@ public class SkillDraftPanel : MonoBehaviour
 
             // A coloured edge tells the player a point can go here: purple = the across-the-ring wildcard;
             // every other stat (leader included) wears its native ring-region tint.
-            nodeEdge[i].color = !pick ? CardBg : nodeOption[i].isWildcard ? WildEdge : SkillRing.TintFor(stat);
+            if (!pick) UiKit.Paint(nodeEdge[i], CardBg);
+            else UiKit.Paint(nodeEdge[i], nodeOption[i].isWildcard ? WildEdge : SkillRing.TintFor(stat));
             nodeButton[i].interactable = pick;
 
             // A stat a point can go on shows what it is and what the pick would make it; the rest show what they are.
@@ -243,7 +258,7 @@ public class SkillDraftPanel : MonoBehaviour
             string value = pick ? $"{now}→{p.ShownNextPercent(stat)}%" : $"+{now}%";
             nodeText[i].text = $"<b>{SkillRing.ShortName(stat)}</b> <size=9>×{ranks}</size>\n{value}";
             nodeText[i].fontStyle = isLeader ? FontStyles.Bold : FontStyles.Normal;
-            nodeText[i].color = isLeader ? LeaderEdge : inTrio ? UiKit.TextMain : RowDim;
+            UiKit.Paint(nodeText[i], isLeader ? LeaderEdge : inTrio ? UiKit.TextMain : RowDim);
         }
 
         levelText.text = $"Lv {r.Level}";

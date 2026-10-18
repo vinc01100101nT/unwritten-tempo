@@ -86,13 +86,13 @@ public class DialogBox : MonoBehaviour
         UiKit.ClickShield(pr);
 
         speakerText = UiKit.MakeText("Speaker", fill.transform, "", 17, FontStyle.Bold, TextAnchor.UpperLeft);
-        speakerText.color = UiKit.TitleText; speakerText.raycastTarget = false;
+        UiKit.Paint(speakerText, UiKit.TitleText); speakerText.raycastTarget = false;
         var sr = speakerText.rectTransform;
         sr.anchorMin = new Vector2(0, 1); sr.anchorMax = new Vector2(1, 1); sr.pivot = new Vector2(0, 1);
         sr.sizeDelta = new Vector2(-40f, 26f); sr.anchoredPosition = new Vector2(20f, -12f);
 
         bodyText = UiKit.MakeText("Body", fill.transform, "", 19, FontStyle.Normal, TextAnchor.UpperLeft, wrap: true);
-        bodyText.color = UiKit.TextMain; bodyText.raycastTarget = false;
+        UiKit.Paint(bodyText, UiKit.TextMain); bodyText.raycastTarget = false;
         UiKit.Fill(bodyText.rectTransform, new Vector2(20f, 46f), new Vector2(-20f, -44f));
 
         // NEXT / CLOSE button, bottom-right.

@@ -90,7 +90,7 @@ public class SignInScreen : MonoBehaviour
         y -= StatusGap;
 
         status = UiKit.Label("Status", panel, "", 13, FontStyle.Normal, TextAnchor.MiddleCenter);
-        status.color = UiKit.TitleText;
+        UiKit.Paint(status, UiKit.TitleText);
         FrontScreen.Row(status.rectTransform, y, 18);
         y -= ButtonGap;
 
@@ -345,7 +345,7 @@ public static class FrontScreen
     {
         bool beside = captionWidth > 0f;
         var caption = UiKit.Label(label + "Label", panel, label, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        caption.color = UiKit.TextDim;
+        UiKit.Paint(caption, UiKit.TextDim);
         if (beside)
         {
             var c = caption.rectTransform;

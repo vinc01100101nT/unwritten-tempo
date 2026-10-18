@@ -107,12 +107,9 @@ public static class UnitStatMath
     public const float BaseCritMultiplier = 2f, MaxCritMultiplier = 3f;
     /// <summary>LUK's pull on how hard a crit lands: +0.2% crit damage per point, on top of the base.</summary>
     public const float CritDamagePerLuk = 0.002f;
-    // Natural regeneration is a PERCENT of the pool per second, not a flat amount, so it stays meaningful as the pool
-    // grows with level. VIT owns the health side and INT the mana side — the same primary that already grows each pool.
-    public const float HpRegenPercentPerVit = 0.0002f, MpRegenPercentPerInt = 0.0002f;
-    /// <summary>The flat mana trickle every unit gets before INT is counted. The player's own field defaults to it and
-    /// may be tuned per character; a mob reads it straight, so there is one number and not two.</summary>
-    public const float BaseMpRegenPerSecond = 1.5f;
+    /// <summary>Ragnarok's natural regeneration intervals (rAthena natural_healhp_interval / natural_healsp_interval):
+    /// health every 6 seconds, mana every 8.</summary>
+    public const float HpRegenSeconds = 6f, MpRegenSeconds = 8f;
     /// <summary>Pre-renewal base-stat ceiling — a primary can't be raised past this with points.</summary>
     public const int   MaxStatValue = 99;
 
@@ -456,11 +453,25 @@ public static class UnitStatMath
                                      + ringPct + eb.critDamagePercent / 100f);
 
     // ---- natural regeneration ------------------------------------------------------------------------------------
-    // Both pools regenerate on their own, from the primary that grows them. Reported as a RATE PER SECOND so the
-    // caller owns its own cadence, and derived from the pool the caller already computed rather than re-deriving it.
-    public static float HPRegenPerSecond(in UnitStatInputs u, int maxHP) => maxHP * u.vit * HpRegenPercentPerVit;
+    // RAGNAROK'S FORMULA (rAthena status_calc_regen), whole-number division as Ragnarok does it. Each is what one
+    // Ragnarok interval restores; the per-second rate is that over the interval, so the shared ticker keeps its own
+    // cadence and pays the same total. Whether peace doubles it is the ticker's business (WeaponDrawMath), not this.
 
-    public static float MPRegenPerSecond(in UnitStatInputs u, int maxMP) => maxMP * u.intel * MpRegenPercentPerInt;
+    /// <summary>Health restored per 6 seconds: VIT/5 + MaxHP/200, the second part never below 1.</summary>
+    public static int HpRegenPerInterval(int vit, int maxHP) => Mathf.Max(0, vit) / 5 + Mathf.Max(1, maxHP / 200);
+
+    /// <summary>Mana restored per 8 seconds: 1 + INT/6 + MaxMP/100, and from 120 INT another (INT−120)/2 + 4.</summary>
+    public static int MpRegenPerInterval(int intel, int maxMP)
+    {
+        int i = Mathf.Max(0, intel);
+        int v = 1 + i / 6 + Mathf.Max(0, maxMP) / 100;
+        if (i >= 120) v += (i - 120) / 2 + 4;
+        return v;
+    }
+
+    public static float HPRegenPerSecond(in UnitStatInputs u, int maxHP) => HpRegenPerInterval(u.vit, maxHP) / HpRegenSeconds;
+
+    public static float MPRegenPerSecond(in UnitStatInputs u, int maxMP) => MpRegenPerInterval(u.intel, maxMP) / MpRegenSeconds;
 
     /// <summary><paramref name="buffMult"/> is the live attack-speed buff (1 = none). Uncapped: the ceiling is on
     /// <see cref="Aspd"/>, the number a swing is actually timed by.</summary>

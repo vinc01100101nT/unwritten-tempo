@@ -25,13 +25,13 @@ public class LootCards : MonoBehaviour
     readonly int[] order = new int[Most];
     int live;
 
-    /// <summary>One more card at the top: <paramref name="count"/> of <paramref name="def"/>, refined
-    /// <paramref name="folds"/> times, in <paramref name="rarity"/>'s colour.</summary>
-    public static void Show(Item def, int count, int folds, Rarity rarity, int cardSlots = 0)
+    /// <summary>One more card at the top: <paramref name="count"/> of <paramref name="def"/>, named
+    /// <paramref name="title"/> (<see cref="ItemTooltip.Title"/>), in <paramref name="rarity"/>'s colour.</summary>
+    public static void Show(Item def, int count, string title, Rarity rarity, Quality grade)
     {
         if (def == null || count <= 0 || GameServer.IsServer) return;
         if (host == null && !Build()) return;
-        host.Push(def, count, folds, rarity, cardSlots);
+        host.Push(def, count, title, rarity, grade);
     }
 
     static bool Build()
@@ -63,7 +63,7 @@ public class LootCards : MonoBehaviour
         return true;
     }
 
-    void Push(Item def, int count, int folds, Rarity rarity, int cardSlots)
+    void Push(Item def, int count, string name, Rarity rarity, Quality grade)
     {
         // The oldest card (last in order) is the one reused, and it moves to the front.
         int c = order[Most - 1];
@@ -71,8 +71,8 @@ public class LootCards : MonoBehaviour
         order[0] = c;
         if (live < Most) live++;
 
-        string name = (folds > 0 ? "+" + folds + " " + def.displayName : def.displayName) + ItemTooltip.SlotSuffix(cardSlots);
-        cards[c].Show(def, null, rarity, name, count > 1 ? "×" + count : "", null, Color.white, null, null);
+        cards[c].Show(def, null, rarity, name, count > 1 ? "×" + count : "", null, UiKit.TextMain, null, null);
+        cards[c].ShowGrade(def, grade);
         shownAt[c] = Time.unscaledTime;
         groups[c].alpha = 1f;
         groups[c].gameObject.SetActive(true);

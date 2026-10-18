@@ -40,13 +40,13 @@ public class OverheadNotice : MonoBehaviour
     public static event System.Action<string> Warned;
 
     /// <summary>"You can't do that right now" — Silenced, No MP, out of range — in yellow.</summary>
-    public static void Warn(string message) => Show(message, UiKit.NoticeWarning);
+    public static void Warn(string message) => Show(message, UiKit.NoticeWarning.Value);
 
     /// <summary>Something done — a trade, a fold, a step of a quest — in green.</summary>
-    public static void Success(string message) => Show(message, UiKit.NoticeSuccess);
+    public static void Success(string message) => Show(message, UiKit.NoticeSuccess.Value);
 
     /// <summary>Something refused or broken — a trade the server turned down, a move that failed — in red.</summary>
-    public static void Fail(string message) => Show(message, UiKit.NoticeFailure);
+    public static void Fail(string message) => Show(message, UiKit.NoticeFailure.Value);
 
     /// <summary>What a transaction came to, as the server worded it: done in green, refused in red.</summary>
     public static void Result(string line, bool ok)

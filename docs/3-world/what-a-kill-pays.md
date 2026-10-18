@@ -68,12 +68,13 @@ tags:
 
 ## Where the numbers live, and how they stay right
 
-- **A creature's grade and folds are saved on its file.** The server reads them at the kill and at a rescue.
-- **Each material's price is saved on its item**, so a player's machine works nothing out. After changing a
-  creature's level, grade or folds, run `CreatureMaterialPriceBake.BakeAll(true)` through the live editor;
-  `BakeAll(false)` only reports. Nothing runs it by itself.
-- **`tools/check-creature-materials.py`** names every price that is not the rule's, every creature folded past
-  +10, and any creature file that carries a measured number of its own. It needs no Unity.
+- **A creature's grade is saved on its file; its folds are fixed by its kind** (0 normal, 4 elite, 7 shadow —
+  `CreatureLoot.FileFolds`). The server reads them at the kill and at a rescue.
+- **Each material's tier and price are saved on its item**, so a player's machine works nothing out — and nobody
+  types them: the editor works both out from the creature (`DerivedItemValues`) every time an item or creature file
+  is saved. `DerivedItemValues.Sync(false)` through the live editor reports anything out of step; `Sync(true)` fixes it.
+- **`tools/check-creature-materials.py`** names every tier and price that is not the rule's (a file edited as text
+  skips the save), and any creature file that carries a measured number of its own. It needs no Unity.
 - `CreaturePay` holds the rule as plain arithmetic, pinned in `tools/game-math-tests/Checks.cs`.
 
 ## Still open

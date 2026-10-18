@@ -18,8 +18,8 @@ public class Character : MonoBehaviour, ICombatUnit
 {
     public static Character Instance { get; private set; }
 
-    // NO SUB-STAT IS TYPED HERE. The level curve is the one every unit shares (UnitStatInputs.Default), the mana
-    // trickle is the one constant every unit gets (UnitStatMath.BaseMpRegenPerSecond), and lifesteal and reflect come
+    // NO SUB-STAT IS TYPED HERE. The level curve is the one every unit shares (UnitStatInputs.Default), regeneration
+    // is Ragnarok's one formula for every unit (UnitStatMath.HPRegenPerSecond / MPRegenPerSecond), and lifesteal and reflect come
     // only from what is worn and what is running — never from a number typed onto the character.
 
     /// <summary>Lifesteal fraction (0..1), read by <see cref="Health"/> when the player deals damage — whatever worn
@@ -623,7 +623,7 @@ public class Character : MonoBehaviour, ICombatUnit
         : UnitStatMath.HardDefenseTenths(PassivePercent(StatId.Def), equipBonuses.hardDefTenths, SubBonus(SubStat.Defense));
 
     public int MaxMP        => Told ? toldMaxMP : UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
-    public float MPRegenPerSecond => UnitStatMath.BaseMpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Inputs, MaxMP);
+    public float MPRegenPerSecond => UnitStatMath.MPRegenPerSecond(Inputs, MaxMP);
     public int MagicAttack  => Told ? toldCurrent.matkMax : UnitStatMath.MagicAttack(Inputs, equipBonuses, Lift(StatId.MAtk, SubStat.MagicAttack));
     public int SoftMagicDefense => Told ? toldCurrent.mdef : UnitStatMath.SoftMagicDefense(Inputs);
     // The ring has no separate M.DEF node — the Def node is dual, so hard magic defence reads the same node.
@@ -2111,16 +2111,15 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         if (def == null || count <= 0) return;
 
-        int folds = inst != null ? inst.upgrade : 0;
-        int slots = inst != null ? inst.cardSlots : 0;
         var rarity = Rarities.Of(def);
-        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, folds, rarity, slots)) return;
+        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, inst, rarity)) return;
 
         // A server holds several people and has no chat of its own; one that could not reach the owner above has
         // nobody to tell.
         if (GameServer.IsServer || this != Instance) return;
-        ChatController.ItemArrived(def, count, folds, slots);
-        LootCards.Show(def, count, folds, rarity, slots);
+        string name = inst != null ? ItemTooltip.CopyTitle(inst) : def.displayName;
+        ChatController.ItemArrived(def, count, name);
+        LootCards.Show(def, count, name, rarity, inst != null ? inst.quality : Quality.Raw);
     }
 
     // ---- HOW MUCH THE BAG HOLDS (BagRoom) -------------------------------------------------------------------

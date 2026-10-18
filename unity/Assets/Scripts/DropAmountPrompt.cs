@@ -116,7 +116,7 @@ public class DropAmountPrompt
         brt.sizeDelta = new Vector2(0, UiKit.TitleBarHeight); brt.anchoredPosition = Vector2.zero;
         title = UiKit.MakeText("Text", bar.transform, "", 12, FontStyle.Bold, TextAnchor.MiddleLeft, null, false);
         UiKit.Fill(title.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
-        title.color = UiKit.TitleText;
+        UiKit.Paint(title, UiKit.TitleText);
 
         BuildField(fill.transform);
         BuildButtons(fill.transform);
@@ -146,8 +146,7 @@ public class DropAmountPrompt
         field.lineType = TMP_InputField.LineType.SingleLine;
         field.contentType = TMP_InputField.ContentType.IntegerNumber;
         field.customCaretColor = true;
-        field.caretColor = UiKit.Accent;
-        field.selectionColor = UiKit.Hover;
+        UiKit.StyleTyping(field);
         field.onSubmit.AddListener(_ => Confirm());
     }
 

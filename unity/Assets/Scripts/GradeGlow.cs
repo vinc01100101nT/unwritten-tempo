@@ -4,14 +4,11 @@ using UnityEngine.UI;
 /// <summary>
 /// THE GRADE LOOKS. Raw shows none of them; each grows with the grade.
 ///
-/// <para><b>On an item's picture</b> (<see cref="ItemIcon"/>) — a sky-blue glow at its edge, F a faint slow pulse, then
-/// wider, brighter and quicker up the ladder, A with sparkles running round it. Never on the item's card.</para>
-///
-/// <para><b>Behind a graded piece on the floor</b> (<see cref="GroundDrop"/>) — a sky-blue sphere of light.</para>
-///
 /// <para><b>The weapon's enchant</b> (<see cref="WeaponSocket"/>) — its weapon's theme (<see cref="EnchantTheme"/>)
 /// streaming off the weapon's model: Lvl 1 at F and E, Lvl 2 at D and C, Lvl 3 at B and A. It rides the weapon, drawn
-/// or put away.</para>
+/// or put away. A graded weapon lying on the floor (<see cref="GroundDrop"/>) wears the same enchant on its picture,
+/// and a graded Body, Garment or Shoes piece lying there wears the aura below at its own grade. Every item picture
+/// in a window — the bag, a list, the hotbar, the tooltip — shows the same look, filmed (<see cref="GradeLookFilm"/>).</para>
 ///
 /// <para><b>The armour set's aura</b> — the lightning aura around the body, at the LOWEST grade among Body, Garment
 /// and Shoes (<see cref="SetGrade"/>; the hat does not count, a missing piece is Raw): the cloud grows first and is full
@@ -20,18 +17,13 @@ using UnityEngine.UI;
 /// <para>Every body gets them — a person's, someone else's, a creature's — because each one's look is built by the same
 /// <see cref="WeaponSocket"/>.</para>
 ///
-/// <para><b>Cost.</b> The picture glow and the floor sphere move in their shaders, from the clock: no code per frame.
-/// The enchant and the aura are particle effects, built once on a change and never per frame, but the engine updates
-/// every layer every frame: up to 7 layers on a weapon at Lvl 3 (both copies of a pair weapon), and 3 for the aura.</para>
+/// <para><b>Cost.</b> The enchant and the aura are particle effects, built once on a change and never per frame, but
+/// the engine updates every layer every frame: up to 7 layers on a weapon at Lvl 3 (both copies of a pair weapon), the
+/// same on every graded weapon lying on the floor in this map, and 3 for the aura. Pictures in windows: see
+/// <see cref="GradeLookFilm"/>.</para>
 /// </summary>
 public static class GradeGlow
 {
-    /// <summary>The colour of the picture glow and the floor sphere.</summary>
-    public static readonly Color SkyBlue = new Color(0.45f, 0.82f, 1f);
-
-    /// <summary>The grade's share of the ladder: 0 at Raw (nothing shown), 1 at A.</summary>
-    public static float Level(Quality grade) => Mathf.Clamp01((float)grade / (float)Quality.A);
-
     /// <summary>Does this grade show anything?</summary>
     public static bool Glows(Quality grade) => grade > Quality.Raw;
 
@@ -46,75 +38,51 @@ public static class GradeGlow
         return low;
     }
 
-    static Material ui, sphereBase;
-    static readonly Material[] spheres = new Material[(int)Quality.A + 1];
-    static Mesh quad;
+    /// <summary>Does a piece worn in <paramref name="slot"/> count toward the armour set's grade (<see cref="SetGrade"/>)?</summary>
+    public static bool InSet(EquipSlotType slot) =>
+        slot == EquipSlotType.Armor || slot == EquipSlotType.Garment || slot == EquipSlotType.Boots;
 
-    static readonly int LevelId = Shader.PropertyToID("_Level");
-    static readonly int ColorId = Shader.PropertyToID("_Color");
+    static Material ui;
 
-    /// <summary>The one material every picture glow draws with.</summary>
+    /// <summary>The one material every picture's look draws with.</summary>
     public static Material UiMaterial => ui != null ? ui : (ui = Resources.Load<Material>("Glow/GradeGlowUI"));
 
     // ---- on an item's picture -----------------------------------------------------------------------------------
 
-    /// <summary>A picture glow laid over the square <paramref name="square"/> fills, hidden until <see cref="Show"/>
-    /// lights it.</summary>
-    public static Image MakeForSquare(Transform square)
+    /// <summary>A picture's look filling the square <paramref name="square"/>, drawn just over
+    /// <paramref name="picture"/> as it is on the floor, switched off until <see cref="Show"/> gives it one.</summary>
+    public static RawImage MakeForSquare(Transform square, Transform picture)
     {
-        var img = UiKit.Img("GradeGlow", square, Color.clear);
-        img.sprite = null;
+        var go = new GameObject("GradeLook", typeof(RectTransform)) { hideFlags = HideFlags.DontSaveInEditor };
+        go.transform.SetParent(square, false);
+        var img = go.AddComponent<RawImage>();
         img.material = UiMaterial;
         img.raycastTarget = false;
         UiKit.Fill(img.rectTransform, Vector2.zero, Vector2.zero);
-        img.enabled = false;
+        go.AddComponent<GradeLookWatcher>();
+        // Over the picture: behind it, a look was hidden by every picture that fills its square (armour does).
+        if (picture != null && picture.parent == square) go.transform.SetSiblingIndex(picture.GetSiblingIndex() + 1);
+        // Square whatever its box: a look is filmed square, and a tall box would stretch it.
+        var fit = go.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        fit.aspectRatio = 1f;
+        go.SetActive(false);
         return img;
     }
 
-    /// <summary>Light <paramref name="glow"/> for <paramref name="copy"/>'s grade; nothing, or a Raw piece, puts it out.</summary>
-    public static void Show(Image glow, EquipmentInstance copy)
+    /// <summary>Show <paramref name="copy"/>'s look on <paramref name="look"/>; nothing, a Raw piece, or a piece with
+    /// no look switches it off.</summary>
+    public static void Show(RawImage look, EquipmentInstance copy)
     {
-        if (glow == null) return;
-        bool on = copy != null && Glows(copy.quality);
-        if (glow.enabled != on) glow.enabled = on;
-        if (!on) return;
-        var c = SkyBlue;
-        c.a = Level(copy.quality);
-        if (glow.color != c) glow.color = c;
+        if (look == null) return;
+        look.GetComponent<GradeLookWatcher>().Set(GradeLookFilm.LookOf(copy));
     }
 
-    // ---- behind a piece on the floor ----------------------------------------------------------------------------
-
-    /// <summary>A sphere <paramref name="size"/> metres across, under <paramref name="parent"/> at
-    /// <paramref name="localPosition"/>, for <paramref name="grade"/>. Null for Raw.</summary>
-    public static MeshRenderer MakeSphere(Transform parent, Vector3 localPosition, float size, Quality grade)
+    /// <summary>The same, for a piece known only by its item and its <paramref name="grade"/>.</summary>
+    public static void Show(RawImage look, Item def, Quality grade)
     {
-        if (!Glows(grade) || parent == null) return null;
-        int g = (int)grade;
-        if (spheres[g] == null)
-        {
-            if (sphereBase == null) sphereBase = Resources.Load<Material>("Glow/GradeGlowWorld");
-            if (sphereBase == null) return null;
-            spheres[g] = new Material(sphereBase) { name = sphereBase.name + " " + grade };
-            spheres[g].SetFloat(LevelId, Level(grade));
-            spheres[g].SetColor(ColorId, SkyBlue);
-        }
-        if (quad == null) quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
-        var go = new GameObject("GradeSphere") { hideFlags = HideFlags.DontSaveInEditor };
-        go.transform.SetParent(parent, false);
-        go.transform.localPosition = localPosition;
-        go.transform.localRotation = Quaternion.identity;
-        // The shader reads its size off the object's scale; the parent's own scale is undone so the size is in metres.
-        float s = Mathf.Max(1e-4f, Mathf.Abs(parent.lossyScale.x));
-        go.transform.localScale = Vector3.one * (size / s);
-        go.AddComponent<MeshFilter>().sharedMesh = quad;
-        var r = go.AddComponent<MeshRenderer>();
-        r.sharedMaterial = spheres[g];
-        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        r.receiveShadows = false;
-        r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-        r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-        return r;
+        if (look == null) return;
+        look.GetComponent<GradeLookWatcher>().Set(GradeLookFilm.LookOf(def, grade));
     }
 
     // ---- the weapon's enchant -----------------------------------------------------------------------------------
@@ -146,26 +114,58 @@ public static class GradeGlow
     /// model, at its size. Null when the weapon has no theme, no model, or the grade is Raw.</summary>
     public static GameObject MakeWeaponEnchant(GameObject weapon, WeaponType type, Quality grade)
     {
-        var theme = EnchantTheme(type);
-        int level = EnchantLevel(grade);
-        if (weapon == null || theme == Enchant.None || level == 0) return null;
-        var def = EffectCatalog.Get("weaponenchant." + theme.ToString().ToLowerInvariant() + "-lvl-" + level);
+        if (weapon == null) return null;
         var model = weapon.GetComponentInChildren<MeshFilter>(true);   // perf-ok: on a weapon or grade change only
-        if (def == null || def.prefab == null || model == null || model.sharedMesh == null) return null;
-
+        if (model == null || model.sharedMesh == null) return null;
         // On the model's own transform, so its shape is the model's box in the model's own units. The effects were
         // made for a sword about one unit long, and every weapon model is about one unit long too, so their sizes carry.
-        var look = Object.Instantiate(def.prefab, model.transform, false);
+        return MakeThemeEnchant(model.transform, model.sharedMesh.bounds, 1f, EnchantTheme(type), EnchantLevel(grade));
+    }
+
+    /// <summary>The same enchant on <paramref name="icon"/>, a graded weapon's picture lying on the floor — streaming
+    /// off the picture, its longest side standing in for the weapon's length. Null as for <see cref="MakeWeaponEnchant"/>.</summary>
+    public static GameObject MakeIconEnchant(SpriteRenderer icon, WeaponType type, Quality grade)
+    {
+        if (icon == null || icon.sprite == null) return null;
+        var box = icon.sprite.bounds;
+        float length = Mathf.Max(box.size.x, box.size.y);
+        if (length <= 0f) return null;
+        var look = MakeThemeEnchant(icon.transform, box, length, EnchantTheme(type), EnchantLevel(grade));
+        DrawOverIcon(look, icon);
+        return look;
+    }
+
+    // A look on a floor picture is drawn over it, in its sorting layer, so the picture never hides it.
+    static void DrawOverIcon(GameObject look, SpriteRenderer icon)
+    {
+        if (look == null) return;
+        foreach (var r in look.GetComponentsInChildren<ParticleSystemRenderer>(true))   // perf-ok: once per graded drop shown
+        {
+            r.sortingLayerID = icon.sortingLayerID;
+            r.sortingOrder = icon.sortingOrder + 1;
+        }
+    }
+
+    /// <summary>THE ONE ENCHANT BUILDER: <paramref name="theme"/>'s effect at <paramref name="level"/> on
+    /// <paramref name="on"/>, streaming from <paramref name="box"/> (in its own units), made <paramref name="length"/>
+    /// times the one-unit sword it was made for. Null for no theme or level 0.</summary>
+    public static GameObject MakeThemeEnchant(Transform on, Bounds box, float length, Enchant theme, int level)
+    {
+        if (on == null || theme == Enchant.None || level == 0) return null;
+        var def = EffectCatalog.Get("weaponenchant." + theme.ToString().ToLowerInvariant() + "-lvl-" + level);
+        if (def == null || def.prefab == null) return null;
+
+        var look = Object.Instantiate(def.prefab, on, false);
         look.name = LookName;
         look.hideFlags = HideFlags.DontSaveInEditor;
-        var box = model.sharedMesh.bounds;
         // A MIRRORED model (a pair weapon's other-hand copy carries a negative x scale) would mirror every particle
         // too, turning each one back to front, and the enchant materials cull back faces — so the whole effect
         // vanished from the second hand. Mirroring the effect again cancels it; the box centre flips with it.
-        var s = model.transform.lossyScale;
+        var s = on.lossyScale;
         bool mirrored = s.x * s.y * s.z < 0f;
-        if (mirrored) look.transform.localScale = new Vector3(-1f, 1f, 1f);
-        var boxCentre = mirrored ? new Vector3(-box.center.x, box.center.y, box.center.z) : box.center;
+        look.transform.localScale = new Vector3(mirrored ? -length : length, length, length);
+        var boxCentre = (mirrored ? new Vector3(-box.center.x, box.center.y, box.center.z) : box.center) / length;
+        var boxSize = box.size / length;
         foreach (var ps in look.GetComponentsInChildren<ParticleSystem>(true))   // perf-ok: on a weapon or grade change only
         {
             var main = ps.main;
@@ -178,7 +178,7 @@ public static class GradeGlow
                 shape.shapeType = ParticleSystemShapeType.Box;
                 shape.position = boxCentre;
                 shape.rotation = Vector3.zero;
-                shape.scale = box.size;
+                shape.scale = boxSize;
             }
             HideIfUnpainted(ps);
         }
@@ -246,6 +246,19 @@ public static class GradeGlow
             if (share <= 0f) { em.enabled = false; ps.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear); }
             HideIfUnpainted(ps);
         }
+        return look;
+    }
+
+    /// <summary>The same aura on <paramref name="icon"/>, a graded Body, Garment or Shoes piece's picture lying on the
+    /// floor — at the strength of the piece's own <paramref name="grade"/>, standing on the picture's bottom edge and
+    /// as tall as the picture. Null for Raw.</summary>
+    public static GameObject MakeIconAura(SpriteRenderer icon, Quality grade)
+    {
+        if (icon == null || icon.sprite == null) return null;
+        var box = icon.sprite.bounds;
+        var t = icon.transform;
+        var look = MakeSetAura(t, new Vector3(box.center.x, box.min.y, 0f), box.size.y * Mathf.Abs(t.lossyScale.y), grade);
+        DrawOverIcon(look, icon);
         return look;
     }
 }

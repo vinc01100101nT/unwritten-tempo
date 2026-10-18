@@ -22,18 +22,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 129938,
-            "materialStep": 3,
+            "sellsFor": 336000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Abyss Maw",
                     "level": 70,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -50,18 +50,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1596,
-            "materialStep": 1,
+            "sellsFor": 42750,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Adder",
                     "level": 57,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -83,7 +83,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -125,7 +125,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -141,18 +141,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Legendary",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 472500,
-            "materialStep": 5,
+            "sellsFor": 254400,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Autumn Stalk",
                     "level": 53,
-                    "chance": "10%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -174,7 +174,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 120,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -232,7 +232,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 127600,
+            "sellsFor": 264000,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -255,18 +255,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2040,
-            "materialStep": 1,
+            "sellsFor": 51000,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Bittersweet",
                     "level": 68,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -283,18 +283,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 76950,
-            "materialStep": 3,
+            "sellsFor": 266000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Blazeskull",
                     "level": 76,
-                    "chance": "2%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -311,18 +311,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Common",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 8100,
-            "materialStep": 3,
+            "sellsFor": 160,
+            "materialStep": 1,
             "droppedBy": [
                 {
                     "name": "Blinkbat",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -339,18 +339,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Legendary",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 78750,
-            "materialStep": 3,
+            "sellsFor": 2160000,
+            "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Blood Ronin",
                     "level": 80,
-                    "chance": "100%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -367,18 +367,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1624,
-            "materialStep": 1,
+            "sellsFor": 43500,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Bloodshot",
                     "level": 58,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -400,7 +400,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 60,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -453,18 +453,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 650,
-            "materialStep": 1,
+            "sellsFor": 3125,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Burrowbo",
                     "level": 25,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -502,18 +502,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 41325,
-            "materialStep": 3,
+            "sellsFor": 4750,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Canewick",
                     "level": 38,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -535,7 +535,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 150,
+            "sellsFor": 100,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -563,7 +563,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 40,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -753,7 +753,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 100,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -943,7 +943,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -959,18 +959,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Epic",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 235200,
-            "materialStep": 4,
+            "sellsFor": 6000,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Chomper",
                     "level": 48,
-                    "chance": "0.5%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -987,18 +987,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1876,
-            "materialStep": 1,
+            "sellsFor": 50250,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Cinder",
                     "level": 67,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -1497,18 +1497,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1290,
-            "materialStep": 1,
+            "sellsFor": 5375,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Coily",
                     "level": 43,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -1530,7 +1530,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -1574,18 +1574,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1794,
-            "materialStep": 1,
+            "sellsFor": 51750,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Cyclo",
                     "level": 69,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -1607,7 +1607,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 40,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -1672,18 +1672,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 31500,
-            "materialStep": 3,
+            "sellsFor": 268800,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Deep Maw",
                     "level": 56,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -1700,18 +1700,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1170,
-            "materialStep": 1,
+            "sellsFor": 4875,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Dewdrop",
                     "level": 39,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -1728,18 +1728,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1080,
-            "materialStep": 1,
+            "sellsFor": 4500,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Digger",
                     "level": 36,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -1756,18 +1756,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1924,
-            "materialStep": 1,
+            "sellsFor": 55500,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Drizzle",
                     "level": 74,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -1784,18 +1784,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 61688,
-            "materialStep": 3,
+            "sellsFor": 292800,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Elder Stalk",
                     "level": 61,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -1812,18 +1812,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1170,
-            "materialStep": 1,
+            "sellsFor": 5625,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Emberhoot",
                     "level": 45,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -1840,18 +1840,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Legendary",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1988000,
-            "materialStep": 5,
+            "sellsFor": 53250,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Emberlurk",
                     "level": 71,
-                    "chance": "0.1%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -1868,18 +1868,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1380,
-            "materialStep": 1,
+            "sellsFor": 5750,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Emberwyrm",
                     "level": 46,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -2449,7 +2449,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 30,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -2975,18 +2975,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Legendary",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 43313,
-            "materialStep": 3,
+            "sellsFor": 2160000,
+            "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Frost Ronin",
                     "level": 80,
-                    "chance": "100%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -3003,18 +3003,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2418,
-            "materialStep": 1,
+            "sellsFor": 325500,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Frostcap",
                     "level": 93,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -3031,18 +3031,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 92138,
-            "materialStep": 3,
+            "sellsFor": 318500,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Frostskull",
                     "level": 91,
-                    "chance": "2%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -3059,18 +3059,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2660,
-            "materialStep": 1,
+            "sellsFor": 332500,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Frostwick",
                     "level": 95,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -3092,7 +3092,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 510,
+            "sellsFor": 340,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3120,7 +3120,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 46400,
+            "sellsFor": 240000,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3148,7 +3148,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 431200,
+            "sellsFor": 308000,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3176,7 +3176,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 70688,
+            "sellsFor": 48750,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3204,7 +3204,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 255200,
+            "sellsFor": 283200,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3232,7 +3232,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3248,18 +3248,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2068,
-            "materialStep": 1,
+            "sellsFor": 329000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Goopie",
                     "level": 94,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -3318,18 +3318,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 86625,
-            "materialStep": 3,
+            "sellsFor": 307200,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Great Croak",
                     "level": 64,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -3393,7 +3393,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 160,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -3510,18 +3510,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Legendary",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2520000,
-            "materialStep": 5,
+            "sellsFor": 315000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Grubble",
                     "level": 90,
-                    "chance": "0.1%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -3538,18 +3538,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Epic",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 151900,
-            "materialStep": 4,
+            "sellsFor": 3875,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Grumbear",
                     "level": 31,
-                    "chance": "0.5%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -3677,7 +3677,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3698,7 +3698,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3740,7 +3740,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 40,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -4042,7 +4042,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 364,
+            "sellsFor": 260,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4070,7 +4070,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -4086,18 +4086,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Epic",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 357700,
-            "materialStep": 4,
+            "sellsFor": 54750,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Horngore",
                     "level": 73,
-                    "chance": "0.5%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -4114,18 +4114,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Uncommon",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 10325,
-            "materialStep": 2,
+            "sellsFor": 44250,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Hornscale",
                     "level": 59,
-                    "chance": "10%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -4142,18 +4142,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Epic",
+            "rarity": "Legendary",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 464000,
-            "materialStep": 4,
+            "sellsFor": 2160000,
+            "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Inferno Mask",
                     "level": 80,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -4170,18 +4170,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Uncommon",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 13475,
-            "materialStep": 2,
+            "sellsFor": 269500,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Inky",
                     "level": 77,
-                    "chance": "10%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -4198,18 +4198,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1792,
-            "materialStep": 1,
+            "sellsFor": 48000,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Iris",
                     "level": 64,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -4231,7 +4231,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 30,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -4416,18 +4416,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Uncommon",
+            "rarity": "Common",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2719,
-            "materialStep": 2,
+            "sellsFor": 300,
+            "materialStep": 1,
             "droppedBy": [
                 {
                     "name": "Kappi",
                     "level": 15,
-                    "chance": "10%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -4444,18 +4444,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 76125,
-            "materialStep": 3,
+            "sellsFor": 297600,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Karasu",
                     "level": 62,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -4477,7 +4477,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 80,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -4553,7 +4553,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 30,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -4827,7 +4827,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 100,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -5241,7 +5241,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 470400,
+            "sellsFor": 336000,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -5385,18 +5385,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2160,
-            "materialStep": 1,
+            "sellsFor": 54000,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Moldy",
                     "level": 72,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -5418,7 +5418,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 5950,
+            "sellsFor": 4250,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -5441,18 +5441,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 45938,
-            "materialStep": 3,
+            "sellsFor": 278400,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Mossmaw",
                     "level": 58,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -5474,7 +5474,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 300,
+            "sellsFor": 200,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -5497,18 +5497,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Common",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 25013,
-            "materialStep": 3,
+            "sellsFor": 460,
+            "materialStep": 1,
             "droppedBy": [
                 {
                     "name": "Mudpup",
                     "level": 23,
-                    "chance": "2%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -5551,7 +5551,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 560,
+            "sellsFor": 400,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -5574,18 +5574,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2392,
-            "materialStep": 1,
+            "sellsFor": 322000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Nightsqueak",
                     "level": 92,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -5607,7 +5607,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -5623,18 +5623,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Uncommon",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 11025,
-            "materialStep": 2,
+            "sellsFor": 47250,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Octi",
                     "level": 63,
-                    "chance": "10%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -5651,18 +5651,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 18375,
-            "materialStep": 3,
+            "sellsFor": 249600,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Oculord",
                     "level": 52,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -5679,18 +5679,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 120750,
-            "materialStep": 3,
+            "sellsFor": 321600,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Oni Tengu",
                     "level": 67,
-                    "chance": "100%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -5712,7 +5712,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -5733,7 +5733,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 100,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -5923,7 +5923,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 588,
+            "sellsFor": 420,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -5946,18 +5946,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1230,
-            "materialStep": 1,
+            "sellsFor": 5125,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Peeper",
                     "level": 41,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -5974,18 +5974,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Epic",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 137200,
-            "materialStep": 4,
+            "sellsFor": 3500,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Pilfer",
                     "level": 28,
-                    "chance": "0.5%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -6007,7 +6007,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6056,7 +6056,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6077,7 +6077,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6952,7 +6952,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 308,
+            "sellsFor": 280,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6980,7 +6980,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6996,18 +6996,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1560,
-            "materialStep": 1,
+            "sellsFor": 45000,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Rivershell",
                     "level": 60,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -7076,18 +7076,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1036,
-            "materialStep": 1,
+            "sellsFor": 4625,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Scaly",
                     "level": 37,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -7109,7 +7109,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 140,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -7569,7 +7569,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 540,
+            "sellsFor": 360,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7597,7 +7597,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 448,
+            "sellsFor": 320,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7625,7 +7625,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 40,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -7684,18 +7684,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2436,
-            "materialStep": 1,
+            "sellsFor": 304500,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Skywing",
                     "level": 87,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -7712,18 +7712,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1736,
-            "materialStep": 1,
+            "sellsFor": 46500,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Snapper",
                     "level": 62,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -7745,7 +7745,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 110,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -7809,7 +7809,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 110,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -7960,18 +7960,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1738,
-            "materialStep": 1,
+            "sellsFor": 276500,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Squirt",
                     "level": 79,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -7993,7 +7993,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 80,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -8046,18 +8046,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2028,
-            "materialStep": 1,
+            "sellsFor": 273000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Sucker",
                     "level": 78,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -8074,18 +8074,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1400,
-            "materialStep": 1,
+            "sellsFor": 37500,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Sunscale",
                     "level": 50,
-                    "chance": "50%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -8144,18 +8144,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2080,
-            "materialStep": 1,
+            "sellsFor": 280000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Swampfang",
                     "level": 80,
-                    "chance": "50%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -8177,7 +8177,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 90,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -8247,7 +8247,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -8268,7 +8268,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 242,
+            "sellsFor": 220,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9139,18 +9139,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Legendary",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2544750,
-            "materialStep": 5,
+            "sellsFor": 312000,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Toadmaw",
                     "level": 65,
-                    "chance": "10%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -9172,7 +9172,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -9193,7 +9193,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 40,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -9424,18 +9424,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Legendary",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 3099375,
-            "materialStep": 5,
+            "sellsFor": 326400,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Venom Gloop",
                     "level": 68,
-                    "chance": "10%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -9452,18 +9452,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1260,
-            "materialStep": 1,
+            "sellsFor": 5250,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Viper",
                     "level": 42,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -9485,7 +9485,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 50,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -9543,7 +9543,7 @@
             "materialKindOrder": 0,
             "cardSlots": 4,
             "weight": 130,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -9960,18 +9960,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Legendary",
+            "rarity": "Common",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 532000,
-            "materialStep": 5,
+            "sellsFor": 380,
+            "materialStep": 1,
             "droppedBy": [
                 {
                     "name": "Webber",
                     "level": 19,
-                    "chance": "0.1%",
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -9988,18 +9988,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Legendary",
+            "rarity": "Rare",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1512000,
-            "materialStep": 5,
+            "sellsFor": 40500,
+            "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Willo",
                     "level": 54,
-                    "chance": "0.1%",
+                    "chance": "2%",
                     "count": "1"
                 }
             ]
@@ -10016,18 +10016,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 92438,
-            "materialStep": 3,
+            "sellsFor": 297500,
+            "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Wisp",
                     "level": 85,
-                    "chance": "2%",
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -10049,7 +10049,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "sellsFor": 0,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -10070,7 +10070,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 30,
-            "sellsFor": 5,
+            "sellsFor": 104,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -10255,18 +10255,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Rare",
+            "rarity": "Legendary",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 118125,
-            "materialStep": 3,
+            "sellsFor": 2160000,
+            "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Wraithmother",
                     "level": 80,
-                    "chance": "100%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -10283,18 +10283,18 @@
             "reach": "",
             "materialKind": "Creature",
             "mergesInto": "",
-            "rarity": "Common",
+            "rarity": "Uncommon",
             "slotOrder": 99,
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 884,
-            "materialStep": 1,
+            "sellsFor": 4250,
+            "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Wyrmlet",
                     "level": 34,
-                    "chance": "50%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]

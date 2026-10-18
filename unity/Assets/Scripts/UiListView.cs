@@ -62,7 +62,7 @@ public sealed class UiListView
         /// <summary>A thing: <paramref name="entry"/>'s name in its rarity's colour, <paramref name="count"/> beside it
         /// (empty for none), a tag before the name and one after it (null for none), and <paramref name="price"/> at the
         /// right. Right-clicking shows its card; dragging it hands <paramref name="entry"/> to whatever it is let go over.</summary>
-        public void ShowItem(BagEntry entry, string count, string before, Color beforeColour, string after, string price)
+        public void ShowItem(BagEntry entry, string count, string before, ThemeColor beforeColour, string after, string price)
         {
             label.gameObject.SetActive(false);
             wide.gameObject.SetActive(false);
@@ -108,7 +108,7 @@ public sealed class UiListView
         }
 
         /// <summary>A line of text, <paramref name="rows"/> lines tall.</summary>
-        public void ShowLine(string text, int size, Color color, int rows = 1)
+        public void ShowLine(string text, int size, ThemeColor color, int rows = 1)
         {
             HideItem();
             wide.gameObject.SetActive(false);
@@ -117,7 +117,7 @@ public sealed class UiListView
             label.gameObject.SetActive(true);
             label.text = text;
             label.fontSize = size;
-            label.color = color;
+            UiKit.Paint(label, color);
             label.alignment = UiKit.TmpAlign(rows > 1 ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft);
             label.rectTransform.offsetMax = Vector2.zero;
         }
@@ -131,7 +131,7 @@ public sealed class UiListView
             second.gameObject.SetActive(false);
             wide.gameObject.SetActive(true);
             wideText.text = text;
-            wideText.color = dim ? UiKit.TextDim : UiKit.ButtonText;
+            UiKit.Paint(wideText, dim ? UiKit.TextDim : UiKit.ButtonText);
         }
 
         /// <summary>A deal: what it is on the left, one press (or two, when <paramref name="secondWord"/> is given) on
@@ -143,7 +143,7 @@ public sealed class UiListView
             label.gameObject.SetActive(true);
             label.text = text;
             label.fontSize = 13;
-            label.color = UiKit.TextMain;
+            UiKit.Paint(label, UiKit.TextMain);
             label.alignment = UiKit.TmpAlign(TextAnchor.MiddleLeft);
             first.gameObject.SetActive(true);
             firstText.text = firstWord;

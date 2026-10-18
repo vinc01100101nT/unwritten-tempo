@@ -75,7 +75,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
     static readonly string[] Buttons = { "Save Point", "Storage", "Teleport", "← Back" };
     const int ButtonSavePoint = 0, ButtonStorage = 1, ButtonTeleport = 2, ButtonBack = 3;
 
-    static readonly Color Sub = UiKit.TextDim;
+    static ThemeColor Sub => UiKit.TextDim;
 
     void Awake() => Instance = this;
 
@@ -227,7 +227,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
     static TMP_Text Caption(RectTransform parent, float x)
     {
         var t = UiKit.MakeText("Caption", parent, "", 15, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
-        t.color = UiKit.TitleText;
+        UiKit.Paint(t, UiKit.TitleText);
         t.raycastTarget = false;
         var rt = t.rectTransform;
         rt.anchorMin = rt.anchorMax = new Vector2(0, 1);

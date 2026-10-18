@@ -805,7 +805,7 @@ public class MapWindow : MonoBehaviour
         whereLabel = NewText("Where", panel.transform, "", 14, TextAnchor.LowerCenter);
         Bottom(whereLabel.rectTransform, 43f, 420f);
         var hint = NewText("Hint", panel.transform, $"[{GameKeys.Label(GameKeys.Map)}] / [Esc] to close", 11, TextAnchor.LowerCenter);
-        hint.color = new Color(UiKit.TextOnDim.r, UiKit.TextOnDim.g, UiKit.TextOnDim.b, 0.6f);
+        UiKit.Paint(hint, UiKit.TextOnDim, 0.6f);
         Bottom(hint.rectTransform, 23f, 420f);
 
         // between the zone and the world map
@@ -840,7 +840,7 @@ public class MapWindow : MonoBehaviour
         mobCard = card.rectTransform;
         mobCard.anchorMin = mobCard.anchorMax = new Vector2(0.5f, 0.5f);
         mobCardText = UiKit.MakeText("Text", mobCard, "", 12, FontStyle.Normal, TextAnchor.UpperLeft);
-        mobCardText.color = UiKit.TextMain;
+        UiKit.Paint(mobCardText, UiKit.TextMain);
         mobCardText.richText = true;
         mobCardText.textWrappingMode = TextWrappingModes.Normal;
         var crt = mobCardText.rectTransform;
@@ -894,7 +894,7 @@ public class MapWindow : MonoBehaviour
             foreach (var g in card.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
             Root = card.rectTransform;
             title = UiKit.MakeText("Map", Root, "", HeadSize, FontStyle.Bold, TextAnchor.UpperLeft);
-            title.color = UiKit.TitleText;
+            UiKit.Paint(title, UiKit.TitleText);
             title.raycastTarget = false;
             Corner(title.rectTransform);
             headOpen = "<b><color=" + UiKit.Hex(UiKit.TitleText) + ">";
@@ -1011,7 +1011,7 @@ public class MapWindow : MonoBehaviour
             while (columns.Count <= i)
             {
                 var t = UiKit.MakeText("Column", Root, "", EntrySize, FontStyle.Normal, TextAnchor.UpperLeft);
-                t.color = UiKit.TextMain;
+                UiKit.Paint(t, UiKit.TextMain);
                 t.raycastTarget = false;
                 t.richText = true;
                 t.textWrappingMode = TextWrappingModes.NoWrap;
@@ -1103,11 +1103,11 @@ public class MapWindow : MonoBehaviour
 
     // A map pin — a round head with a hole, narrowing to a point — baked once when the map is built.
     // ── tiny uGUI helpers ─────────────────────────────────────────────────────────────────────────────────────────
-    static Image NewImage(string name, Transform parent, Color c)
+    static Image NewImage(string name, Transform parent, Color c) => NoClicks(UiKit.Img(name, parent, c));
+    static Image NewImage(string name, Transform parent, ThemeColor c) => NoClicks(UiKit.Img(name, parent, c));
+
+    static Image NoClicks(Image img)
     {
-        var img = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
-        img.transform.SetParent(parent, false);
-        img.color = c;
         img.raycastTarget = false;
         return img;
     }
@@ -1115,7 +1115,7 @@ public class MapWindow : MonoBehaviour
     static TMP_Text NewText(string name, Transform parent, string s, int size, TextAnchor anchor)
     {
         var t = UiKit.MakeText(name, parent, s, size, FontStyle.Normal, anchor);
-        t.color = UiKit.TextOnDim;
+        UiKit.Paint(t, UiKit.TextOnDim);
         t.raycastTarget = false;
         return t;
     }

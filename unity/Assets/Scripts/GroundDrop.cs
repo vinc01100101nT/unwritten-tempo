@@ -52,6 +52,10 @@ public class GroundDrop : MonoBehaviour
     public int upgrade;
     /// <summary>How many card slots the piece has — named at the end, " [3]".</summary>
     public int cardSlots;
+    /// <summary>The piece's word and its trademark skill's id, which name it (<see cref="ItemTooltip.Title"/>). Sent
+    /// like the grade, because a watcher never holds the copy.</summary>
+    public ArmourWord word;
+    public string trademarkSkillId = "";
 
     /// <summary>How rare it is (<see cref="Rarities.Of"/>), which colours its name. Worked out where the copy is and
     /// sent like the grade, because a weapon's rarity is its trademark's and a watcher never holds the copy.</summary>
@@ -255,7 +259,7 @@ public class GroundDrop : MonoBehaviour
     /// machine puts its plate and icon up with <see cref="ShowOnScreen"/>, and the server never does.</summary>
     public static GroundDrop Place(Vector3 worldPos, Item def, int count, EquipmentInstance instance,
                                    Quality quality, int upgrade, string mapName, uint netId, Rarity? rarity = null,
-                                   int cardSlots = 0)
+                                   int cardSlots = 0, ArmourWord word = ArmourWord.None, string trademarkSkillId = "")
     {
         if (def == null || count <= 0) return null;
 
@@ -278,6 +282,8 @@ public class GroundDrop : MonoBehaviour
         drop.quality = instance != null ? instance.quality : quality;
         drop.upgrade = instance != null ? instance.upgrade : upgrade;
         drop.cardSlots = instance != null ? instance.cardSlots : cardSlots;
+        drop.word = instance != null ? instance.word : word;
+        drop.trademarkSkillId = (instance != null ? instance.trademarkSkillId : trademarkSkillId) ?? "";
         drop.rarity = rarity ?? Rarities.Of(def);
         drop.mapName = mapName;
         drop.netId = netId;
@@ -400,14 +406,14 @@ public class GroundDrop : MonoBehaviour
         if (plate != null) Destroy(plate.gameObject);
     }
 
-    /// <summary>What is written on the floor: the refine, the name, and how many when there is more than one —
-    /// the same three pieces the bag list writes, in the same order.</summary>
+    /// <summary>What is written on the floor: its name (<see cref="ItemTooltip.Title"/>, the same the bag writes),
+    /// and how many when there is more than one.</summary>
     public string Text
     {
         get
         {
             if (def == null) return "";
-            string s = (upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName) + ItemTooltip.SlotSuffix(cardSlots);
+            string s = ItemTooltip.Title(def, quality, upgrade, word, trademarkSkillId, cardSlots);
             return count > 1 ? s + " ×" + count : s;
         }
     }
@@ -422,10 +428,10 @@ public class GroundDrop : MonoBehaviour
 
     /// <summary>THE one way a name's plate changes colour — resting or pointed at — and its words with it: the rarity's
     /// colour, darkened only as far as it must be to read on that plate.</summary>
-    public void SetPlateFill(Color fill)
+    public void SetPlateFill(ThemeColor fill)
     {
-        if (plateFill != null) plateFill.color = fill;
-        if (label != null) label.color = UiKit.Readable(Rarities.Color(rarity), fill);
+        if (plateFill != null) UiKit.Paint(plateFill, fill);
+        if (label != null) UiKit.PaintReadable(label, Rarities.Color(rarity), fill);
     }
 
     // Can this machine reach for it: false while its map is not the one this player is standing in. The icon
@@ -466,9 +472,9 @@ public class GroundDrop : MonoBehaviour
     static float iconSize;
 
     SpriteRenderer icon;
-    // The grade glow just behind a graded piece's icon (GradeGlow), a little wider than the icon. Null at Raw.
-    MeshRenderer iconGlow;
-    const float GlowWidthOfIcon = 1.5f;
+    // A graded piece's worn look on its icon (GradeGlow): a weapon's enchant, or a Body, Garment or Shoes piece's aura.
+    // Null at Raw and on anything else.
+    GameObject iconEnchant;
     Transform iconTransform;
     // The scale that makes the icon one head tall.
     float restScale = 1f;
@@ -499,17 +505,8 @@ public class GroundDrop : MonoBehaviour
         iconTransform.SetParent(transform, false);
         icon = go.AddComponent<SpriteRenderer>();
         icon.sprite = def.icon;
-        if (GradeGlow.Glows(quality))
-        {
-            // Sized against the picture in its own units, so it scales with the icon; drawn before it, so it sits behind.
-            float wide = Mathf.Max(icon.sprite.bounds.size.x, icon.sprite.bounds.size.y) * GlowWidthOfIcon;
-            iconGlow = GradeGlow.MakeSphere(iconTransform, Vector3.zero, wide * Mathf.Abs(iconTransform.lossyScale.x), quality);
-            if (iconGlow != null)
-            {
-                iconGlow.sortingLayerID = icon.sortingLayerID;
-                iconGlow.sortingOrder = icon.sortingOrder - 1;
-            }
-        }
+        iconEnchant = GradeGlow.InSet(def.slot) ? GradeGlow.MakeIconAura(icon, quality)
+                                                : GradeGlow.MakeIconEnchant(icon, def.weaponType, quality);
         SizeIcon();
         RestIcon();
     }
@@ -522,7 +519,7 @@ public class GroundDrop : MonoBehaviour
         if (size > 0f && tall > 0f) restScale = size / tall;
         iconTransform.localScale = Vector3.one * restScale;
         icon.enabled = size > 0f && readable;
-        if (iconGlow != null) iconGlow.enabled = icon.enabled;
+        if (iconEnchant != null && iconEnchant.activeSelf != icon.enabled) iconEnchant.SetActive(icon.enabled);
     }
 
     // Lying on its spot: the bottom of the picture on the ground.
@@ -622,7 +619,7 @@ public class GroundDrop : MonoBehaviour
                                TextAnchor.MiddleCenter, null, false);
         // Dark text on the light plate in its rarity's colour, like the same item's name in the bag; the font's own
         // shared material, so a floor covered in them is still one draw call.
-        label.color = UiKit.Readable(Rarities.Color(rarity));
+        UiKit.PaintReadable(label, Rarities.Color(rarity), UiKit.PanelFill);
         label.raycastTarget = false;
 
         // SIZED NOW, while it can be. A box that is switched off does no layout, so one measured only when Alt is
@@ -662,7 +659,7 @@ public class GroundDrop : MonoBehaviour
         if (NobodyToShowItTo) return;
 
         if (icon != null) icon.enabled = on && iconSize > 0f;
-        if (iconGlow != null) iconGlow.enabled = icon.enabled;
+        if (iconEnchant != null && iconEnchant.activeSelf != icon.enabled) iconEnchant.SetActive(icon.enabled);
         // The name follows whether Alt is being held as well, so walking back into the map does not put a name up
         // that nobody asked for.
         ShowName(on && (namesWanted || hovered == this));
@@ -789,14 +786,14 @@ public class GroundDropLabelPointer : MonoBehaviour, IPointerEnterHandler, IPoin
     public void OnPointerEnter(PointerEventData e)
     {
         if (drop != null) drop.SetPlateFill(UiKit.Hover);
-        else if (fill != null) fill.color = UiKit.Hover;
+        else if (fill != null) UiKit.Paint(fill, UiKit.Hover);
         GroundDrop.nameUnderPointer = drop;
     }
 
     public void OnPointerExit(PointerEventData e)
     {
         if (drop != null) drop.SetPlateFill(UiKit.PanelFill);
-        else if (fill != null) fill.color = UiKit.PanelFill;
+        else if (fill != null) UiKit.Paint(fill, UiKit.PanelFill);
         if (GroundDrop.nameUnderPointer == drop) GroundDrop.nameUnderPointer = null;
     }
 

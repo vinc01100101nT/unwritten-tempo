@@ -94,12 +94,11 @@ public class ChatController : MonoBehaviour
     /// it came from, because WHERE it came from is not what a player needs to be told; WHAT they now have is.
     ///
     /// <para>Built here rather than by each caller so there is one sentence and one word order.</para></summary>
-    public static void ItemArrived(Item def, int count, int upgrade, int cardSlots = 0)
+    public static void ItemArrived(Item def, int count, string title)
     {
         if (instance == null || def == null || count <= 0) return;
 
-        string name = (upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName) + ItemTooltip.SlotSuffix(cardSlots);
-        if (count > 1) name += " ×" + count;
+        string name = count > 1 ? title + " ×" + count : title;
         instance.AddLine($"<color=#{ObtainedHex}>Obtained</color>  {Sanitize(name)}");
         // And in the combat log, beside what the kill paid.
         instance.AddCombat(new CombatEntry { line = CombatLine.Obtained, name = name });
@@ -351,7 +350,7 @@ public class ChatController : MonoBehaviour
         text.richText = false;   // typed text is literal, never markup
 
         var placeholder = UiKit.Label("Placeholder", bg.transform, hint, 14, FontStyle.Italic, TextAnchor.MiddleLeft);
-        placeholder.color = UiKit.TextDim;
+        UiKit.Paint(placeholder, UiKit.TextDim);
 
         var box = bg.gameObject.AddComponent<TMP_InputField>();
         box.targetGraphic = bg;
@@ -472,7 +471,7 @@ public class ChatController : MonoBehaviour
         if (logContent == null) return null;
 
         var t = UiKit.MakeText("Line", logContent, message, 14, FontStyle.Normal, TextAnchor.UpperLeft);
-        t.color = UiKit.TextMain;
+        UiKit.Paint(t, UiKit.TextMain);
         // A typed "\n" or "<" stays the characters it is, never a line break or a tag: one row is one line from
         // one person, and nothing typed can draw a second row that looks like it came from somebody else.
         t.parseCtrlCharacters = false;
@@ -637,12 +636,12 @@ public class ChatController : MonoBehaviour
             combatRows.Enqueue(t);
             WriteCombat(e);
             t.SetCharArray(lineChars, 0, lineLength);
-            t.color = ColourOf(e.line);
+            UiKit.Paint(t, ColourOf(e.line));
         }
         wantsScrollToNewest = true;
     }
 
-    static Color ColourOf(CombatLine line)
+    static ThemeColor ColourOf(CombatLine line)
     {
         switch (line)
         {

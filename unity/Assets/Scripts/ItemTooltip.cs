@@ -38,6 +38,8 @@ public class ItemTooltip : MonoBehaviour
 
     [Tooltip("The item's picture, in the panel at the card's left.")]
     public Image icon;
+    [Tooltip("The picture's grade look, over it (GradeGlow).")]
+    public RawImage look;
 
     [Tooltip("The scrolling part holding the details.")]
     public ScrollRect detailsScroll;
@@ -168,7 +170,7 @@ public class ItemTooltip : MonoBehaviour
         if (Instance == null || def == null) return;
         Suppressed = false;
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
-        ShowText(name, UiKit.TextMain, SkillTooltip.Build(def));
+        ShowText(name, UiKit.TextMain.Value, SkillTooltip.Build(def));
         Instance.ShowBadge(def);
         Instance.PinHere();
     }
@@ -193,6 +195,7 @@ public class ItemTooltip : MonoBehaviour
         if (Instance == null) return;
         Instance.pinned = false;
         Instance.group.alpha = 0f;
+        GradeGlow.Show(Instance.look, null);
         Instance.group.blocksRaycasts = false;
         Instance.group.interactable = false;
     }
@@ -212,7 +215,10 @@ public class ItemTooltip : MonoBehaviour
     {
         if (Instance == null) return;
         HideName();
-        if (!Instance.pinned) Instance.group.alpha = 0f;
+        if (Instance.pinned) return;
+        Instance.group.alpha = 0f;
+        // A hidden card's look stops being filmed.
+        GradeGlow.Show(Instance.look, null);
     }
 
     void Show(Item item)
@@ -220,7 +226,7 @@ public class ItemTooltip : MonoBehaviour
         previewing = null;
         if (item == null) { group.alpha = 0f; return; }
         titleText.text = item.displayName;
-        titleText.color = Rarities.Color(Rarities.Of(item));
+        UiKit.Paint(titleText, Rarities.Color(Rarities.Of(item)));
         bodyText.text = Describe(item);
         ShowSkillIcons(null);   // a kit belongs to a COPY, not the shared def — nothing to show without an instance
         ShowPicture(item, null);
@@ -236,7 +242,7 @@ public class ItemTooltip : MonoBehaviour
         if (inst == null || inst.def == null) { group.alpha = 0f; return; }
         var def = inst.def;
         titleText.text = CopyTitle(inst);
-        titleText.color = Rarities.Color(Rarities.Of(def));
+        UiKit.Paint(titleText, Rarities.Color(Rarities.Of(def)));
         bodyText.text = DescribeInstance(inst);
         ShowSkillIcons(null);
         ShowPicture(def, inst);
@@ -256,7 +262,7 @@ public class ItemTooltip : MonoBehaviour
     {
         if (inst == null || inst.def == null) { group.alpha = 0f; previewing = null; return; }
         titleText.text = CopyTitle(inst);
-        titleText.color = Rarities.Color(Rarities.Of(inst.def));
+        UiKit.Paint(titleText, Rarities.Color(Rarities.Of(inst.def)));
         previewing = inst;
         previewingSlot = previewSlot;
         DrawPreviewBody();
@@ -271,6 +277,7 @@ public class ItemTooltip : MonoBehaviour
     void ShowPicture(Item def, EquipmentInstance copy)
     {
         if (icon != null) ItemIcon.Show(icon, def);
+        GradeGlow.Show(look, copy);
         if (badge != null && badge.gameObject.activeSelf) badge.gameObject.SetActive(false);
     }
 
@@ -287,7 +294,7 @@ public class ItemTooltip : MonoBehaviour
             if (d.gameObject.activeSelf != on) d.gameObject.SetActive(on);
             if (!on) continue;
             var card = copy != null && copy.cards != null && i < copy.cards.Count ? copy.cards[i] : null;
-            d.color = card != null ? UiKit.Accent : UiKit.ButtonEdge;
+            UiKit.Paint(d, card != null ? UiKit.Accent : UiKit.ButtonEdge);
             string cardName = card != null ? card.displayName : null;
             HoverRelay.Set(d.gameObject, cardName != null ? () => ShowName(cardName) : (System.Action)null, HideName);
         }
@@ -399,7 +406,7 @@ public class ItemTooltip : MonoBehaviour
         AppendAttackKind(sb, item);
         AppendHeadgear(sb, item);
         AppendUseEffect(sb, item);
-        AppendFooter(sb, item);
+        AppendFooter(sb, item, item.value);
         AppendMaterialUse(sb, item);
         return sb.ToString();
     }
@@ -473,7 +480,7 @@ public class ItemTooltip : MonoBehaviour
                         sb.Append("\n  " + CardTag + "◇ ").Append(card.displayName).Append("</color>");
         }
         sb.Append('\n');
-        AppendFooter(sb, def);
+        AppendFooter(sb, def, inst.worth);
         return sb.ToString();
     }
 
@@ -506,23 +513,28 @@ public class ItemTooltip : MonoBehaviour
     static readonly string GoodTag = "<color=" + GoodHex + ">";
     static readonly string BadTag = "<color=" + BadHex + ">";
 
-    /// <summary>How a copy is named on screen. A weapon with a trademark goes by its trademark skill's own name — a
-    /// form of its weapon's style: its folds, the name, then its grade — "+15 Petal Storm [C]". Anything else: its
-    /// grade, then its folds, then the piece — "B +12 Sword". A copy with card slots ends with their count, Ragnarok
-    /// style: "B +12 Sword [3]"; none shows nothing.</summary>
+    /// <summary>How a copy is named on screen — <see cref="Title"/> with the copy's own parts.</summary>
     public static string CopyTitle(EquipmentInstance inst)
     {
         if (inst == null || inst.def == null) return "";
-        string grade = inst.quality == Quality.Raw ? "Raw" : inst.quality.ToString();
-        string slots = SlotSuffix(inst.cardSlots);
-        var trademark = Trademarks.SkillOf(inst);
-        if (trademark != null && !string.IsNullOrEmpty(trademark.displayName))
-            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.displayName + " [" + grade + "]" + slots;
-        // AN ARMOUR PIECE WITH A WORD reads the same way, the word before the design: "+15 Tireless Iron Sabatons [C]".
-        if (inst.word != ArmourWord.None)
-            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + inst.word + " " + inst.def.displayName + " [" + grade + "]" + slots;
-        string folds = inst.upgrade > 0 ? " +" + inst.upgrade : "";
-        return grade + folds + " " + inst.def.displayName + slots;
+        return Title(inst.def, inst.quality, inst.upgrade, inst.word, inst.trademarkSkillId, inst.cardSlots);
+    }
+
+    /// <summary>THE ONE WAY A THING IS NAMED, wherever it is written — the bag, a tooltip, the floor, the chat, a loot
+    /// card. A piece of gear, in this order: its folds, its word, the piece, its grade, its card slots —
+    /// "+15 Tireless Iron Sabatons [C] [3]", "Leather [Raw]". A weapon with a trademark goes by its trademark skill's
+    /// own name in place of the piece and carries no word: "+15 Petal Storm [C]". No folds and no slots show nothing.
+    /// Anything that is not gear: its name.</summary>
+    public static string Title(Item def, Quality grade, int folds, ArmourWord word, string trademarkSkillId, int cardSlots)
+    {
+        if (def == null) return "";
+        if (def.slot == EquipSlotType.None) return def.displayName;
+        var trademark = Trademarks.SkillOf(trademarkSkillId);
+        bool byTrademark = trademark != null && !string.IsNullOrEmpty(trademark.displayName);
+        string s = folds > 0 ? "+" + folds + " " : "";
+        if (!byTrademark && word != ArmourWord.None) s += word + " ";
+        s += byTrademark ? trademark.displayName : def.displayName;
+        return s + " [" + (grade == Quality.Raw ? "Raw" : grade.ToString()) + "]" + SlotSuffix(cardSlots);
     }
 
     /// <summary>A name's card-slot ending: " [3]" for three slots, nothing for none.</summary>
@@ -637,18 +649,10 @@ public class ItemTooltip : MonoBehaviour
         if (sb.Length == opened) sb.Length = before;
     }
 
-    // The piece's base as the server wrote it — base × roll, before folds and quenches: "Base 54 (108%)" for a
-    // piece that rolled, "Base 50" for one that never did. An armour piece shows its first stat. Nothing is worked out.
+    // The piece's base roll as the server wrote it: "Quality: 108%". A piece that never rolled counts as 100%.
     static void AppendBase(StringBuilder sb, EquipmentInstance inst)
     {
-        var b = inst.baseStats;
-        float first = b.attack != 0 ? b.attack : b.magicAttack != 0 ? b.magicAttack
-                    : b.hardDefenseTenths != 0 ? b.hardDefenseTenths / 10f
-                    : b.hardMagicDefenseTenths != 0 ? b.hardMagicDefenseTenths / 10f : b.hp != 0 ? b.hp : b.mp != 0 ? b.mp
-                    : b.evasion != 0 ? b.evasion : b.attackSpeedPercent;
-        if (Mathf.Approximately(first, 0f)) return;
-        sb.Append('\n').Append("Base ").Append(first.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
-        if (inst.basePercent > 0) sb.Append(" (").Append(inst.basePercent).Append("%)");
+        sb.Append('\n').Append("Quality: ").Append(inst.basePercent > 0 ? inst.basePercent : 100).Append('%');
     }
 
     static void AppendStatList(StringBuilder sb, in EquipBonuses eb)
@@ -720,14 +724,16 @@ public class ItemTooltip : MonoBehaviour
         sb.Append("\n" + DimTag + "Written ").Append(used).Append('/').Append(slots).Append("</color>");
     }
 
-    static void AppendFooter(StringBuilder sb, Item item)
+    // A piece of gear is worth its own copy's worth (server-written, what a shop prices it at), never its item's
+    // typed value — the same number a sale reads (BagEntry.Value).
+    static void AppendFooter(StringBuilder sb, Item item, int value)
     {
         // Weight and value on their own lines — packed on one row they read as cramped.
         if (item.weight > 0)
             sb.Append("\n" + DimTag + "Weight ").Append(item.weight).Append("</color>");
         // A SELL VALUE OF 0 IS NOT SHOWN AS A 0: it means no shop will buy it, and it says so.
         if (item.CanBeSold)
-            sb.Append("\n" + DimTag + "Value ").Append(Wallet.Amount(item.value)).Append("</color>");
+            sb.Append("\n" + DimTag + "Value ").Append(Wallet.Amount(value)).Append("</color>");
         // EVERY RESTRICTION ITS TAGS PUT ON IT, one per line.
         if (!item.CanBeDropped) sb.Append("\n" + DimTag).Append(Item.CannotBeDroppedText).Append("</color>");
         if (!item.CanBeSold)    sb.Append("\n" + DimTag).Append(Item.CannotBeSoldText).Append("</color>");

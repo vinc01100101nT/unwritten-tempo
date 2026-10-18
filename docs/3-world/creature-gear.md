@@ -1,5 +1,5 @@
 ---
-status: "BUILT 2026-10-13 on all 84 normal creatures and elites: weapon, armour, stat build, grade, folds and what they pay; and on the 14 shadows: weapon, armour and stat build. Weapons re-spread 2026-10-14 so no two creatures on one map share one. 2026-10-16: grade decides the material, newbie maps are Raw +0 only, no creature wears headgear. Not play-tested."
+status: "BUILT 2026-10-13 on all 84 normal creatures and elites: weapon, armour, stat build, grade, folds and what they pay; and on the 14 shadows: weapon, armour and stat build. Weapons re-spread 2026-10-14 so no two creatures on one map share one. 2026-10-16: grade decides the material, newbie maps' own creatures are Raw +0 only (elites roam every map, 2026-10-18), no creature wears headgear. Not play-tested."
 owner: vince
 last-updated: 2026-10-16
 tags:
@@ -24,9 +24,10 @@ tags:
   Legendary; a normal creature never wears B or A. An elite is never below D — it hits hard, it is tough, and it is
   meant for a party — and wears D for a Rare, C for an Epic, B for a Legendary. Any creature can be given any grade
   its kind allows, and its drop follows ([Creature Materials](creature-materials.md)).
-- **The newbie maps hold only Raw +0 normal creatures**: Lastline Field 1 and Parley Field 1. A level 1 player in
-  the starting armour takes at least 5 blows from anything there; an F +0 creature would kill them in 2, because F
-  carries everything Raw +10 gives plus the quench that reached F.
+- **The newbie maps' own creatures are Raw +0 normals**: Lastline Field 1 and Parley Field 1. A level 1 player in
+  the starting armour takes at least 5 blows from any of them; an F +0 creature would kill them in 2, because F
+  carries everything Raw +10 gives plus the quench that reached F. **Elites are the exception: they roam every map,
+  whatever its level** (decided 2026-10-18), so an elite may turn up on a newbie map too.
 - **Its Ink follows its grade**: F Watery, E Thin, D Faint, C Clear, B Sharp. Raw writes nothing.
 - **Its folds run up to the +10 every grade stops at.** The Raw creatures off the newbie maps wear +2 to +10, the
   ones on them +0, and every higher grade
@@ -207,8 +208,8 @@ armour pieces.
   folds being hard to find adds. The folds each creature wears were set on a smaller limit per grade and scaled to
   +10; a rule of their own for the +10 limit is to be decided.
 - **A low-level creature in high-grade gear is far harder for its level than a high-level one in the same gear**,
-  because a piece's base and its folds give the same amount at every level. Gloop King, level 8, wears C +9 —
-  which is why it no longer lives on a newbie map.
+  because a piece's base and its folds give the same amount at every level. Gloop King, level 8, is an elite in
+  C gear — and, like every elite, it roams the newbie maps too.
 - **A weapon's skill is rolled fresh each life**, and what a creature pays does not count it.
 - **Each armour material is a first reading of the creature's portrait, and each build's shares are first guesses.**
 

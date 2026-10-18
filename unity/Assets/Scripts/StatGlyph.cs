@@ -28,8 +28,8 @@ public static class StatGlyph
     // The emblems below are drawn for a box this size; any other box shows the same emblem scaled to fit it.
     const float DrawnBox = 18f;
 
-    static Color Ink     => UiKit.Accent;
-    static Color InkSoft => new Color(UiKit.Accent.r, UiKit.Accent.g, UiKit.Accent.b, 0.55f);
+    static Color Ink     => UiKit.Accent.Value;
+    static Color InkSoft { get { var c = UiKit.Accent.Value; c.a = 0.55f; return c; } }
 
     /// <summary>Build the glyph for <paramref name="stat"/> into a fixed <paramref name="box"/>-sized,
     /// centre-anchored holder under <paramref name="parent"/>. The holder is transparent and carries a

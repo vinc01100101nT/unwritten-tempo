@@ -123,7 +123,7 @@ public static class CraftingMath
     //
     // AN ARMOUR PIECE'S MATERIAL DECIDES WHAT ITS BASE BUYS, AND ITS SLOT HOW MUCH: metal gives hard defence and HP,
     // leather attack speed and evasion, cloth hard magic defence and MP. HP, MP, attack speed and evasion are a
-    // numerator over 12, head and shoes half: metal 400 HP, leather 25 attack speed + 25 evasion, cloth 200 MP. HARD
+    // numerator over 12, head and shoes half: metal 400 HP, leather 25 attack speed + 5 evasion, cloth 200 MP. HARD
     // DEFENCE is the same on every piece, in tenths of a percent: 7.0% at A +10 (roll 115), so body, shoes and garment
     // give 21%, the armour's share of the 90% budget. Every number scales by the roll alike; the budget is set at the
     // best ordinary roll, 115%, so a 100% piece gives 6.1%.
@@ -133,7 +133,9 @@ public static class CraftingMath
     const int WeaponBase = 50;
     const int Twelfths = 12;
     const int MetalHP12 = 400;
-    const int LeatherAttackSpeed12 = 25, LeatherEvasion12 = 25;
+    // Evasion is 5, not 25 (decided 2026-10-18): at 25 a full grade E +10 leather set (+83) already held a same-level
+    // creature to the 5% floor. At 5 the floor takes level 99, AGI 99, a best-roll A +10 set (+96) and a full ring.
+    const int LeatherAttackSpeed12 = 25, LeatherEvasion12 = 5;
     const int ClothMP12 = 200;
     // hard defence per piece at A +10 (100 + 4,900 percent) at the best ordinary roll, 115%: 70 tenths = 7.0%
     const int HardDefenseTenthsAtTop = 70;
@@ -440,6 +442,14 @@ public static class CraftingMath
     /// worth — what a shop prices it at — is this plus its Inks at theirs (<see cref="EquipmentInstance.worth"/>).</summary>
     public static long WorthOf(int gold, int dust, int dustValue, int oil, int oilValue) =>
         (long)gold + (long)dust * dustValue + (long)oil * oilValue;
+
+    /// <summary>What a brand-new piece — Raw +0, nothing written — is worth: the value every piece of gear carries
+    /// before it is made into a copy of its own, worked out by the same rule as every copy's worth.</summary>
+    public static long NewPieceWorth(int dustValue, int oilValue)
+    {
+        RecycleYield(Quality.Raw, 0, out int dust, out int oil, out int gold);
+        return WorthOf(gold, dust, dustValue, oil, oilValue);
+    }
 
     // Scratch for AddRecycleYield's Inks — a recycle is never run from two threads.
     static readonly int[] addInkScratch = new int[6];

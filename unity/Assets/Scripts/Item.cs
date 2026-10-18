@@ -137,7 +137,9 @@ public class Item : ScriptableObject
              "weapon's two hands carry half each).")]
     public int weight;
     [Tooltip("What one is worth, in Unsigned — the ONE price of this item. A shop sells it for this plus Tax, and buys " +
-             "it for this less Tax (ShopMath). Whether a shop buys it at all is the Unsellable tag, never this price.")]
+             "it for this less Tax (ShopMath). Whether a shop buys it at all is the Unsellable tag, never this price. " +
+             "GEAR AND CREATURE MATERIALS ARE NEVER TYPED: the editor works theirs out from the rule whenever an item or " +
+             "creature is saved (DerivedItemValues) — a new piece's worth, and the creature's level, grade and folds.")]
     public int value;
 
     // THE TAGS ARE THE ONE RULE for each thing a player may do with an item (decided 2026-10-16): nothing else —
@@ -196,7 +198,8 @@ public class Item : ScriptableObject
     [Tooltip("What kind of crafting material this is. None = not a material at all (every non-material item).")]
     public MaterialKind materialKind = MaterialKind.None;
     [Tooltip("Which step of its kind this is. An Ink: its tier, 1 (Watery) to 5 (Sharp). A Salt: its tier, 1 " +
-             "(Coarse) to 3 (Pure). A Creature material: its rarity, 1 (Common) to 5 (Legendary). Temper Dust and " +
+             "(Coarse) to 3 (Pure). A Creature material: its rarity, 1 (Common) to 5 (Legendary), never typed — worked " +
+             "out from its creature's kind and grade whenever it is saved (DerivedItemValues). Temper Dust and " +
              "Quench Oil have no steps. Ignored when Material Kind is None; 0 there means nothing was chosen.")]
     public int materialStep;
     [Tooltip("The material ten of this one merge into — the next tier up. Only Ink and Salt merge; every other " +

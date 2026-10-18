@@ -2095,13 +2095,16 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// say so. Called from the ONE place a thing enters any bag, never from whatever caused it — a kill, a
     /// command, a thing picked up and anything written later all reach the player through this one line.
     ///
-    /// <para>The ITEM'S NAME is not sent: what crosses is its id and the two numbers that decide how the line
-    /// reads, and the other machine looks the rest up in the catalog it already has — the same way it builds the
-    /// words for a thing lying on the ground.</para></summary>
-    public void TellOwnerTheyGot(string itemId, int count, int folds, Rarity rarity, int cardSlots)
+    /// <para>The ITEM'S NAME is not sent: what crosses is its id and the copy's parts that name it (grade, folds,
+    /// word, trademark, card slots), and the other machine names it with <see cref="ItemTooltip.Title"/> from the
+    /// catalog it already has — the same way it names a thing lying on the ground.</para></summary>
+    public void TellOwnerTheyGot(string itemId, int count, EquipmentInstance copy, Rarity rarity)
     {
         if (!isServer || connectionToClient == null) return;
-        TargetGotItem(connectionToClient, itemId, count, folds, (int)rarity, cardSlots);
+        TargetGotItem(connectionToClient, itemId, count, (int)rarity,
+                      copy != null ? (int)copy.quality : 0, copy != null ? copy.upgrade : 0,
+                      copy != null ? (int)copy.word : 0, copy != null ? copy.trademarkSkillId ?? "" : "",
+                      copy != null ? copy.cardSlots : 0);
     }
 
     /// <summary>Server-only: a sentence from the game to the person playing here, in their chat log, in red — why a
@@ -2133,12 +2136,14 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         new System.Collections.Generic.Dictionary<string, float>();
 
     [TargetRpc]
-    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds, int rarity, int cardSlots)
+    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int rarity,
+                       int grade, int folds, int word, string trademarkSkillId, int cardSlots)
     {
         var def = ItemCatalog.Resolve(itemId);
         if (def == null) return;
-        ChatController.ItemArrived(def, count, folds, cardSlots);
-        LootCards.Show(def, count, folds, (Rarity)rarity, cardSlots);
+        string name = ItemTooltip.Title(def, (Quality)grade, folds, (ArmourWord)word, trademarkSkillId, cardSlots);
+        ChatController.ItemArrived(def, count, name);
+        LootCards.Show(def, count, name, (Rarity)rarity, (Quality)grade);
     }
 
     /// <summary>The server's copy of whoever is playing here, or null when this connection has no fighter
@@ -3165,7 +3170,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             var b = plan.buys[i];
             if (b.free > 0) c.Quests.TakeFreeBuys(b.def.id, b.free);
             c.TakeIntoBag(b.def, b.count);
-            long cost = ShopMath.BuyCost(b.price, b.count - b.free, b.taxed);
+            long cost = ShopMath.BuyCost(b.price, b.count - b.free);
             GameLog.Info(LogCat.Server, playerName + " bought " + b.count + " " + b.def.id + " from '" + shopId + "' for " + cost + " gold"
                          + (b.free > 0 ? " (" + b.free + " free, a tutorial's first run)" : ""));
             // A STEP TO BUY IT counts the purchase; the bag push below judges every step on what they now hold.

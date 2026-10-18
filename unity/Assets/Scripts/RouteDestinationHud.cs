@@ -48,7 +48,7 @@ public class RouteDestinationHud : MonoBehaviour
         t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.Font, 0.25f);
         t.fontSize = size;
         t.fontStyle = style;
-        t.color = UiKit.TextOnDim;
+        UiKit.Paint(t, UiKit.TextOnDim);
         t.alignment = TextAlignmentOptions.Left;
         t.textWrappingMode = TextWrappingModes.NoWrap;
         t.overflowMode = TextOverflowModes.Ellipsis;

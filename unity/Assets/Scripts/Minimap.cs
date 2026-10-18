@@ -124,7 +124,7 @@ public class Minimap : MonoBehaviour
         var strip = new GameObject("Coords", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         strip.transform.SetParent(Panel.transform, false);
         var bg = strip.GetComponent<Image>();
-        bg.color = UiKit.PanelFill;
+        UiKit.Paint(bg, UiKit.PanelFill);
         bg.raycastTarget = false;
         var srt = bg.rectTransform;
         var vrt = view.rectTransform;

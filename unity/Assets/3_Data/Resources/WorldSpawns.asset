@@ -1009,7 +1009,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 13
+    population: 17
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2759,7 +2759,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3702,26 +3702,6 @@ MonoBehaviour:
     population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 10
-    playerClearRadius: 6
-  - map: lst_fild01
-    creature: mob.pilfer
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 4
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: prl_fild01
-    creature: mob.pilfer
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 4
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
     playerClearRadius: 6
   - map: olk_fild01
     creature: mob.mossgore

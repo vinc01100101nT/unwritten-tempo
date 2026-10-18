@@ -110,7 +110,7 @@ public class StateInfoCard : MonoBehaviour
             body = UiKit.MakeText("Body", root, "", 12, FontStyle.Normal, TextAnchor.UpperLeft);
             body.richText = true; body.raycastTarget = false;
             time = UiKit.MakeText("Time", root, "", 11, FontStyle.Bold, TextAnchor.UpperLeft);
-            time.color = UiKit.TextDim; time.raycastTarget = false;
+            UiKit.Paint(time, UiKit.TextDim); time.raycastTarget = false;
 
             root.gameObject.SetActive(false);
         }

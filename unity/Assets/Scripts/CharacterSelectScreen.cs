@@ -15,7 +15,7 @@ using UnityEngine.UI;
 public class CharacterSelectScreen : MonoBehaviour
 {
     // Selection wears the accent the rest of the UI already uses for "this one"; everything else the plain edge.
-    static readonly Color RowIdle = UiKit.SlotFill;
+    static ThemeColor RowIdle => UiKit.SlotFill;
 
     Transform panel;
     GameObject selectWindow;
@@ -87,7 +87,7 @@ public class CharacterSelectScreen : MonoBehaviour
         listRoot = listBox.transform;
 
         status = UiKit.Label("Status", panel, "", 13, FontStyle.Normal, TextAnchor.MiddleCenter);
-        status.color = UiKit.TitleText;
+        UiKit.Paint(status, UiKit.TitleText);
         FrontScreen.Row(status.rectTransform, -462, 18);
 
         enterButton = UiKit.PrimaryBtn("Enter World", panel, OnEnter);
@@ -145,14 +145,14 @@ public class CharacterSelectScreen : MonoBehaviour
             UiKit.Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
 
             var name = UiKit.Label("Name", fill.transform, info.name, 18, FontStyle.Normal, TextAnchor.MiddleLeft);
-            name.color = UiKit.TextMain;
+            UiKit.Paint(name, UiKit.TextMain);
             name.raycastTarget = false;
             UiKit.Fill(name.rectTransform, new Vector2(14, 22), new Vector2(-14, -6));
 
             // A level of 0 is the service saying nobody has played this character yet — not a level-zero hero.
             string line = info.level > 0 ? "Level " + info.level : "Unplayed";
             var detail = UiKit.Label("Detail", fill.transform, line, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-            detail.color = UiKit.TextDim;
+            UiKit.Paint(detail, UiKit.TextDim);
             detail.raycastTarget = false;
             UiKit.Fill(detail.rectTransform, new Vector2(14, 6), new Vector2(-14, -26));
 
@@ -173,7 +173,7 @@ public class CharacterSelectScreen : MonoBehaviour
     void PaintSelection()
     {
         for (int i = 0; i < rowBorders.Count; i++)
-            if (rowBorders[i] != null) rowBorders[i].color = i == selected ? UiKit.Accent : UiKit.ButtonEdge;
+            if (rowBorders[i] != null) UiKit.Paint(rowBorders[i], i == selected ? UiKit.Accent : UiKit.ButtonEdge);
 
         bool has = selected >= 0 && selected < characters.Count;
         if (enterButton != null) enterButton.interactable = has;
@@ -259,7 +259,7 @@ public class CharacterSelectScreen : MonoBehaviour
 
         // The six stats, pulled on the hexagon.
         var statsCaption = UiKit.Label("StatsLabel", inner, "Stats", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        statsCaption.color = UiKit.TextDim;
+        UiKit.Paint(statsCaption, UiKit.TextDim);
         FrontScreen.Row(statsCaption.rectTransform, -60, 18, 356, 294);
         hexagon = StatHexagon.Build(inner);
         FrontScreen.Place(hexagon.rectTransform, new Vector2(31, -80), hexagon.rectTransform.sizeDelta);
@@ -272,7 +272,7 @@ public class CharacterSelectScreen : MonoBehaviour
         FrontScreen.Place((RectTransform)bodyTab.transform, new Vector2(367.5f, -60), new Vector2(125, 30));
 
         choiceLabel = UiKit.Label("Choice", inner, "…", 15, FontStyle.Normal, TextAnchor.MiddleCenter);
-        choiceLabel.color = UiKit.TextMain;
+        UiKit.Paint(choiceLabel, UiKit.TextMain);
         FrontScreen.Row(choiceLabel.rectTransform, -98, 22, Left, Right);
         var prev = UiKit.Btn("<", inner, () => Step(-1));
         FrontScreen.Place((RectTransform)prev.transform, new Vector2(191, -126), new Vector2(30, 30));
@@ -285,7 +285,7 @@ public class CharacterSelectScreen : MonoBehaviour
         picker.OnChanged += PaintSelectedPart;
 
         createStatus = UiKit.Label("Status", inner, "", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        createStatus.color = UiKit.TitleText;
+        UiKit.Paint(createStatus, UiKit.TitleText);
         FrontScreen.Row(createStatus.rectTransform, -514, 18, 20, 340);
         var back = UiKit.Btn("Back", inner, CloseCreate);
         FrontScreen.Place(back.GetComponent<RectTransform>(), new Vector2(208, -506), new Vector2(140, 34));
@@ -408,7 +408,7 @@ public class CharacterSelectScreen : MonoBehaviour
         for (int i = 0; i < partSwatches.Count; i++)
         {
             var border = partSwatches[i] != null ? partSwatches[i].transform.parent.GetComponent<Image>() : null;
-            if (border != null) border.color = i == selectedPart ? UiKit.Accent : UiKit.ButtonEdge;
+            if (border != null) UiKit.Paint(border, i == selectedPart ? UiKit.Accent : UiKit.ButtonEdge);
         }
     }
 

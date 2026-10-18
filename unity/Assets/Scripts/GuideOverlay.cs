@@ -76,7 +76,7 @@ public class GuideOverlay : MonoBehaviour
         fill.raycastTarget = false;
         UiKit.Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
         tipText = UiKit.Label("Text", fill.transform, "", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        tipText.color = UiKit.TextMain;
+        UiKit.Paint(tipText, UiKit.TextMain);
         tipText.raycastTarget = false;
         tipText.textWrappingMode = TMPro.TextWrappingModes.Normal;
         UiKit.Fill(tipText.rectTransform, new Vector2(10, 6), new Vector2(-10, -6));

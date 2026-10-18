@@ -67,7 +67,7 @@ public class AutoCombatWindow : MonoBehaviour
         onOffLabel = onOff.GetComponentInChildren<TMPro.TMP_Text>();
         stateLabel = UiKit.Label("State", hunt, "", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
         stateLabel.gameObject.AddComponent<LayoutElement>().preferredHeight = 18;
-        stateLabel.color = UiKit.TextDim;
+        UiKit.Paint(stateLabel, UiKit.TextDim);
         stateLabel.raycastTarget = false;
 
         var modeRow = Row(hunt, "Hunt", 0.25f);
@@ -114,7 +114,7 @@ public class AutoCombatWindow : MonoBehaviour
         var note = UiKit.Label("Note", potions, "The first one in your bag is drunk first. 0% = never.", 12, FontStyle.Italic,
                                TextAnchor.MiddleLeft);
         note.gameObject.AddComponent<LayoutElement>().preferredHeight = 20;
-        note.color = UiKit.TextDim;
+        UiKit.Paint(note, UiKit.TextDim);
         note.raycastTarget = false;
 
         BuildPicker(body.transform);

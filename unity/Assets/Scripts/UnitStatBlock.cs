@@ -139,10 +139,8 @@ public class UnitStatBlock : MonoBehaviour
     UnitStatInputs Effective => inputs.WithGear(Bonuses);
     public int CurrentMP { get; private set; }
 
-    /// <summary>Mana refilled per second with no skill running — the mob's half of the same INT rule the player uses,
-    /// on top of the shared flat base every unit gets.</summary>
-    public float MPRegenPerSecond =>
-        UnitStatMath.BaseMpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Effective, MaxMP);
+    /// <summary>Mana refilled per second with no skill running — the mob's half of the same rule the player uses.</summary>
+    public float MPRegenPerSecond => UnitStatMath.MPRegenPerSecond(Effective, MaxMP);
 
     public void GainMana(int amount)
     {

@@ -43,8 +43,9 @@ exactly the old sell price for every item. Buying one moved by 1u on four items:
 rounded up — and always at least 1u more than you were paid, so a shop is never free storage
 (`ShopMath.BuybackPrice`). A Healing Potion sold for 112u comes back for 150u; a new one costs 224u.
 
-A creature material's price rule still names what a shop PAYS; the baked value is that price through the same
-formula (`CreatureMaterialPriceBake`, checked by `tools/check-creature-materials.py`).
+A creature material's price rule still names what a shop PAYS; its value is that price through the same formula,
+written by the editor on every save (`DerivedItemValues`, checked by `tools/check-creature-materials.py`). Gear's
+value is what a brand-new piece is worth, and a piece's own worth is what every sale and tooltip of it uses.
 
 ## 2. The trade: one cart, checked once
 

@@ -171,11 +171,11 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | Crit chance | LUK 0.3%/pt, gear, the Critical ring node, a timed CritChance change; capped 95% |
 | Crit damage | 1.4 base + **LUK 0.2%/pt** + LUK's jump as percentage points, the same Critical ring node, a timed CritDamage change |
 | Crit resistance | the DEFENDER's LUK, 0.3%/pt off the attacker's crit chance |
-| HP regen | **VIT 0.02% of MaxHP per second per point**, plus a timed HPRegen change |
-| Mana regen | 1.5/s base + **INT 0.02% of MaxMP per second per point**, plus a timed MPRegen change |
+| HP regen | **Ragnarok's: VIT/5 + MaxHP/200 (at least 1) every 6 s**, paid as that ÷ 6 per second, plus a timed HPRegen change |
+| Mana regen | **Ragnarok's: 1 + INT/6 + MaxMP/100 every 8 s, plus (INT−120)/2 + 4 from 120 INT**, paid as that ÷ 8 per second, plus a timed MPRegen change |
 | Minimum damage floor | 55% of max, closed toward 1.0 by DEX (physical) / INT (magic) at 1.2%/pt |
 
-**The three bold lines were added 2026-08-23.** Before that, crit damage read the ring alone, HP regen had no source at all (it existed only while a skill granted it), and mana regen was a flat 1.5/s.
+Both regen lines are Ragnarok pre-renewal's formula (rAthena `status_calc_regen`), with whole-number division. Moving never stops them; peace doubles them (below).
 
 ### Misc — nothing here reads a primary
 

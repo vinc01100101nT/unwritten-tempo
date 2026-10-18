@@ -55,9 +55,8 @@ public static class ShopCart
     /// <summary>The most of one thing one line may buy — the same guard the "how many?" box holds to.</summary>
     public const int MostInOneLine = DropAmountPrompt.MostEverTyped;
 
-    /// <summary>One thing bought: <see cref="price"/> is one of it before Tax at this shop, and <see cref="taxed"/> says
-    /// whether Tax is paid on it (<see cref="WorldShops.PriceOf"/>, <see cref="WorldShops.Taxes"/>).</summary>
-    public struct BuyLine { public Item def; public int count, free, price; public bool taxed; }
+    /// <summary>One thing bought: <see cref="price"/> is one of it before Tax — the item's one value, at every shop.</summary>
+    public struct BuyLine { public Item def; public int count, free, price; }
     public struct SellLine { public int bagIndex; public BagEntry entry; public int count; public long pay; }
 
     /// <summary>A checked cart, ready to carry out. Reused: the server holds one per check, and a check never runs
@@ -123,7 +122,7 @@ public static class ShopCart
         // A TUTORIAL'S FIRST RUN TAKES NOTHING it has you buy: the free ones are counted first, once for the item.
         int free = System.Math.Min(line.count, c.Quests.FreeBuysOf(def.id));
         plan.buys.Add(new BuyLine { def = def, count = line.count, free = free,
-                                    price = WorldShops.PriceOf(shop, def), taxed = WorldShops.Taxes(shop) });
+                                    price = def.value });
         return null;
     }
 
@@ -166,7 +165,7 @@ public static class ShopCart
             var b = plan.buys[i];
             int paid = b.count - b.free;
             plan.buying += (long)b.price * paid;
-            if (b.taxed) plan.buyTax += ShopMath.TaxOn(b.price, paid);
+            plan.buyTax += ShopMath.TaxOn(b.price, paid);
         }
         for (int i = 0; i < plan.backs.Count; i++) plan.backsCost += ShopMath.BuybackPrice(plan.backs[i].paid, plan.backs[i].count);
         plan.buying += plan.backsCost;

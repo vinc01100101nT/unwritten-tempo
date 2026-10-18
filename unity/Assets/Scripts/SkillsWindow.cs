@@ -25,10 +25,10 @@ public class SkillsWindow : MonoBehaviour
     const float Px = 20f, Left = 14f, NodeW = 92f, NodeH = 44f, Lane = 50f, RulerH = 34f, TileSize = 22f;
     const float Unreached = 0.3f;
 
-    static readonly Color LineBg     = UiKit.Rule;
-    static readonly Color LockedTile = UiKit.Rule;
-    static readonly Color LockedText = UiKit.TextDim;
-    static readonly Color NodeBg     = UiKit.PanelRaise;
+    static ThemeColor LineBg     => UiKit.Rule;
+    static ThemeColor LockedTile => UiKit.Rule;
+    static ThemeColor LockedText => UiKit.TextDim;
+    static ThemeColor NodeBg     => UiKit.PanelRaise;
 
     GameObject root;
     RectTransform content;          // the window's fixed Content node; each view is rebuilt into it
@@ -170,7 +170,7 @@ public class SkillsWindow : MonoBehaviour
                               : "  ·  " + into.ToString("0.00") + " / " + size.ToString("0") + " exp";
         var head = UiKit.Label("Mastery", bar, heading, 15, FontStyle.Bold, TextAnchor.MiddleRight);
         UiKit.Fill(head.rectTransform, new Vector2(310, 0), Vector2.zero);
-        head.color = UiKit.TitleText; head.raycastTarget = false;
+        UiKit.Paint(head, UiKit.TitleText); head.raycastTarget = false;
 
         // This weapon's skills, and the row each sits on.
         var skills = new List<SkillDef>();
@@ -207,7 +207,7 @@ public class SkillsWindow : MonoBehaviour
         {
             Box(rulerTrack, "Notch", LineBg, X(lv), 18, 1, 12);
             var t = UiKit.Label("Tick", rulerTrack, lv.ToString(), 11, FontStyle.Bold, TextAnchor.UpperCenter);
-            t.color = level >= lv ? UiKit.TitleText : LockedText; t.raycastTarget = false;
+            UiKit.Paint(t, level >= lv ? UiKit.TitleText : LockedText); t.raycastTarget = false;
             TopLeft(t.rectTransform, X(lv) - 20, 2, 40, 14);
         }
 
@@ -241,13 +241,12 @@ public class SkillsWindow : MonoBehaviour
             int p = parent[i];
             if (p < 0) continue;
             bool on = mastery != null && mastery.HasLearned(skills[p].id);
-            Color c = on ? weaponColor : LineBg;
             float px = X(opens[p]) + NodeW, py = RowY(rows[p]) + NodeH * 0.5f;
             float cx = X(opens[i]), cy = RowY(rows[i]) + NodeH * 0.5f;
             float elbow = px + 4f;
-            Box(track, "Wire", c, px, py - 1, elbow - px + 1, 3);
-            if (!Mathf.Approximately(cy, py)) Box(track, "Wire", c, elbow - 1, Mathf.Min(py, cy) - 1, 3, Mathf.Abs(cy - py) + 3);
-            Box(track, "Wire", c, elbow, cy - 1, Mathf.Max(0f, cx - elbow), 3);
+            Wire(track, on, weaponColor, px, py - 1, elbow - px + 1, 3);
+            if (!Mathf.Approximately(cy, py)) Wire(track, on, weaponColor, elbow - 1, Mathf.Min(py, cy) - 1, 3, Mathf.Abs(cy - py) + 3);
+            Wire(track, on, weaponColor, elbow, cy - 1, Mathf.Max(0f, cx - elbow), 3);
         }
 
         for (int i = 0; i < n; i++)
@@ -283,23 +282,25 @@ public class SkillsWindow : MonoBehaviour
         node.raycastTarget = true;
         if (!reached) node.gameObject.AddComponent<CanvasGroup>().alpha = Unreached;
 
-        var tile = UiKit.Round(UiKit.Img("Tile", node.transform, learned ? SkillSymbol.ColorFor(def) : LockedTile), 3);
+        var tile = UiKit.Round(learned ? UiKit.Img("Tile", node.transform, SkillSymbol.ColorFor(def))
+                                       : UiKit.Img("Tile", node.transform, LockedTile), 3);
         tile.raycastTarget = false;
         TopLeft(tile.rectTransform, 4, 3, TileSize, TileSize);
         tile.gameObject.AddComponent<DragFace>();   // dragging this skill carries its badge, not the whole card
         var sym = UiKit.Label("Symbol", tile.transform, def.Symbol, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
         UiKit.Fill(sym.rectTransform, Vector2.zero, Vector2.zero);
-        sym.color = learned ? UiKit.TextOnDim : LockedText; sym.raycastTarget = false;
+        UiKit.Paint(sym, learned ? UiKit.TextOnDim : LockedText); sym.raycastTarget = false;
 
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         var title = UiKit.Label("Name", node.transform, name, 11, FontStyle.Bold, TextAnchor.UpperLeft);
         title.lineSpacing = -12f;
-        title.color = learned ? (def.tint == default ? UiKit.TextMain : UiKit.Readable(def.tint)) : LockedText;
+        if (learned && def.tint != default) UiKit.PaintReadable(title, def.tint);
+        else UiKit.Paint(title, learned ? UiKit.TextMain : LockedText);
         title.raycastTarget = false;
         TopLeft(title.rectTransform, 4 + TileSize + 4, 3, NodeW - TileSize - 12, 24);
 
         var lvl = UiKit.Label("Level", node.transform, bought + "/" + top, 11, FontStyle.Bold, TextAnchor.MiddleRight);
-        lvl.color = learned ? UiKit.TextMain : LockedText; lvl.raycastTarget = false;
+        UiKit.Paint(lvl, learned ? UiKit.TextMain : LockedText); lvl.raycastTarget = false;
         TopLeft(lvl.rectTransform, 4, 27, NodeW - 8 - 19, 14);
 
         string id = def.id;
@@ -312,7 +313,7 @@ public class SkillsWindow : MonoBehaviour
         });
         TopLeft((RectTransform)plus.transform, NodeW - 4 - 15, 27, 15, 15);
         var plusText = plus.GetComponentInChildren<TextMeshProUGUI>();
-        if (plusText != null) { plusText.fontSize = 12; plusText.fontStyle = FontStyles.Bold; if (!canRaise) plusText.color = LockedText; }
+        if (plusText != null) { plusText.fontSize = 12; plusText.fontStyle = FontStyles.Bold; if (!canRaise) UiKit.Paint(plusText, LockedText); }
         plus.interactable = canRaise;
 
         SkillHoverCard.Attach(node.transform, def, beside: true);
@@ -333,8 +334,17 @@ public class SkillsWindow : MonoBehaviour
 
     // A plain coloured box, placed from the top-left of its parent in pixels.
     static Image Box(RectTransform parent, string name, Color color, float x, float y, float w, float h)
+        => Placed(UiKit.Img(name, parent, color), x, y, w, h);
+
+    static Image Box(RectTransform parent, string name, ThemeColor color, float x, float y, float w, float h)
+        => Placed(UiKit.Img(name, parent, color), x, y, w, h);
+
+    // A wire between two skills: the weapon's colour once learned, the plain line colour until then.
+    static Image Wire(RectTransform parent, bool on, Color weaponColor, float x, float y, float w, float h)
+        => on ? Box(parent, "Wire", weaponColor, x, y, w, h) : Box(parent, "Wire", LineBg, x, y, w, h);
+
+    static Image Placed(Image img, float x, float y, float w, float h)
     {
-        var img = UiKit.Img(name, parent, color);
         img.raycastTarget = false;
         TopLeft(img.rectTransform, x, y, w, h);
         return img;

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dark Mode Sample</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  /* LIGHT = the game's palette exactly as ui-tokens.css carries it. DARK = the SAME token names given new values.
+     Every dark value below is a PROPOSAL — none of it exists in the game yet. The notice colours are not redefined:
+     they are drawn over the world, not on a window, so they stay the same in both modes. */
+  :root[data-theme="dark"] {
+    --panel-fill: #1e232c;
+    --panel-raise: #262c37;
+    --slot-fill: #2c3340;
+    --slot-empty: rgba(10, 12, 16, 0.6);
+    --window-edge: #4a5d7c;
+    --title-bar-top: #34405a;
+    --title-bar-bottom: #232c3e;
+    --title-text: #dbe5f5;
+    --button-fill: #313949;
+    --button-edge: #4c5668;
+    --button-text: #e4e8ef;
+    --rule: #3a4352;
+    --hover: #2f4466;
+    --accent: #4f7cc4;
+    --close-fill: #3a4456;
+    --text-main: #e6e9ee;
+    --text-dim: #9aa3b2;
+    --text-on-dim: #ffffff;
+    --good: #5cc97a;
+    --bad: #ef6b6b;
+    --pm-text: #d9c04a;
+    --rarity-rare: #6aa0ff;
+    --rarity-epic: #b98af0;
+    --rarity-legendary: #f0a040;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #2b3140; font-family: var(--font-ui), sans-serif; }
+  .stage { display: flex; flex-direction: column; gap: 20px; align-items: flex-start; padding: 32px; }
+  .switch { color: #c8cfdc; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+  .switch button { font: 13px var(--font-ui); padding: 4px 12px; cursor: pointer; }
+
+  /* ---- the shared window frame, same rules as bag-grid.html ---- */
+  .win { border: 1px solid var(--window-edge); border-radius: 5px; background: var(--panel-fill);
+         color: var(--text-main); font-size: 12px; overflow: hidden; user-select: none; width: 340px; }
+  .bar { height: 24px; display: flex; align-items: center; padding: 0 2px 0 10px;
+         background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); }
+  .bar b { flex: 1; font-size: 13px; color: var(--title-text); }
+  .bar i { width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
+           color: var(--title-text); font: bold 12px/18px var(--font-ui); text-align: center; font-style: normal; }
+  .btn { border: 1px solid var(--button-edge); border-radius: 3px; background: var(--button-fill);
+         color: var(--button-text); font-family: inherit; padding: 0; cursor: pointer; }
+  .btn:hover { background: var(--hover); }
+  .btn.chosen { background: var(--accent); border-color: var(--accent); color: var(--text-on-dim); font-weight: bold; }
+  .dim { color: var(--text-dim); }
+
+  .body { padding: 8px 15px 15px; display: flex; flex-direction: column; gap: 8px; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+  .tabs .btn { height: 20px; font-size: 11px; }
+
+  .grid { display: grid; grid-template-columns: repeat(6, 48px); grid-auto-rows: 48px; }
+  .cell { position: relative; width: 48px; height: 48px; border-radius: 3px; border: 1px solid var(--button-edge);
+          background: var(--slot-fill); font-size: 9px; padding: 3px; line-height: 1.15; overflow: hidden; }
+  .cell:hover { background: var(--hover); }
+  .cell.empty { background: var(--slot-empty); border-color: transparent; }
+  .rare { color: var(--rarity-rare); } .epic { color: var(--rarity-epic); } .legendary { color: var(--rarity-legendary); }
+
+  .card { border: 1px solid var(--rule); border-radius: 3px; background: var(--panel-raise); padding: 6px 8px; }
+  .card .name { font-size: 13px; font-weight: bold; }
+  .line { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid var(--rule); }
+  .line:last-child { border-bottom: 0; }
+  .good { color: var(--good); } .bad { color: var(--bad); } .pm { color: var(--pm-text); }
+  .buttons { display: flex; gap: 6px; justify-content: flex-end; }
+  .buttons .btn { height: 22px; padding: 0 12px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="switch">Theme:
+    <button id="toLight">Light</button><button id="toDark">Dark</button>
+  </div>
+
+  <div class="win" data-mocks="Inventory">
+    <div class="bar"><b>Inventory</b><i>×</i></div>
+    <div class="body">
+      <div class="tabs">
+        <button class="btn chosen">All</button><button class="btn">Gear</button>
+        <button class="btn">Items</button><button class="btn">Etc</button>
+      </div>
+      <div class="grid">
+        <div class="cell">Axe</div>
+        <div class="cell rare">Bow</div>
+        <div class="cell epic">Chain Mantle</div>
+        <div class="cell legendary">Abyss Maw Heart</div>
+        <div class="cell">Adder Fang</div>
+        <div class="cell rare">Army Helmet</div>
+        <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+        <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+      </div>
+      <div class="card">
+        <div class="name epic">Chain Mantle</div>
+        <div class="dim">Garment · Level 20</div>
+        <div class="line"><span>Defence</span><span class="good">+12</span></div>
+        <div class="line"><span>Movement speed</span><span class="bad">−3%</span></div>
+      </div>
+      <div class="card"><span class="pm">[From Mira] want to trade that mantle?</span></div>
+      <div class="buttons"><button class="btn">Sell</button><button class="btn chosen">Equip</button></div>
+    </div>
+  </div>
+</div>
+<script>
+  const root = document.documentElement;
+  const set = t => { if (t === "dark") root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme"); };
+  document.getElementById("toLight").onclick = () => set("light");
+  document.getElementById("toDark").onclick = () => set("dark");
+  if (new URLSearchParams(location.search).get("theme") === "dark") set("dark");
+</script>
+</body>
+</html>

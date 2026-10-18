@@ -3,9 +3,12 @@
 names exactly ONE material, whose tier is the one its gear grade gives (CreatureMaterials.TierOfGrade: a normal Raw..C
 gives Common..Legendary, an elite only D/C/B, giving Rare/Epic/Legendary), no material belongs to two creatures, every
 material sells for exactly what the rule says for its creature's level, its tier and the grade and folds of the
-creature's gear, and the NEWBIE MAPS hold only Raw +0 normal creatures. The tier tables and the price multiples are read
-out of CreatureMaterials.cs, the two gear percents out of CreaturePay.cs and the fold caps out of CraftingMath.cs, so
-the rule has one owner and this only proves the saved files still agree with it.
+creature's gear (folds fixed by its kind, CreatureLoot.FileFolds), every piece of gear is worth what a brand-new piece
+is (CraftingMath.NewPieceWorth), and the NEWBIE MAPS hold only Raw +0 normal creatures (elites, which roam every map,
+excepted). The tier tables and the price
+multiples are read out of CreatureMaterials.cs, the two gear percents out of CreaturePay.cs, the folds out of
+CreatureLoot.cs and the new-piece worth out of CraftingMath.cs, so the rule has one owner and this only proves the saved
+files still agree with it. The editor writes these numbers itself on every save (DerivedItemValues); nobody types them.
 Design: docs/3-world/creature-materials.md, docs/3-world/what-a-kill-pays.md.
 
 USAGE:   tools/check-creature-materials.py [--root <repo>]
@@ -21,8 +24,9 @@ TIER = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary"}
 CREATURE_KIND = "6"
 ETC_TAB = "3"
 WEIGHT = "10"
-# The maps a brand-new player starts on: only Raw +0 normal creatures live there, so a level 1 player in the starter
-# armour survives at least 5 blows from anything on them (docs/3-world/creature-gear.md, decided 2026-10-16).
+# The maps a brand-new player starts on: the creatures that live there are Raw +0 normals, so a level 1 player in the
+# starter armour survives at least 5 blows from them (docs/3-world/creature-gear.md, decided 2026-10-16). Elites roam
+# every map whatever its level and are not held to it (decided 2026-10-18).
 NEWBIE_MAPS = ("lst_fild01", "prl_fild01")
 
 
@@ -40,7 +44,7 @@ def multiples(root):
     """Gold per creature level for each tier, read from the one function that decides it."""
     path = os.path.join(root, "unity", "Assets", "Scripts", "CreatureMaterials.cs")
     src = open(path, encoding="utf-8").read()
-    body = re.search(r"static int SellValue\(.*?\n    \}", src, re.S)
+    body = re.search(r"static int SellValue\(int level, Rarity tier\).*?\n    \}", src, re.S)
     gold = re.search(r"const int GoldPerLevel = (\d+);", src)
     if body is None or gold is None:
         return None
@@ -68,17 +72,23 @@ def tier_tables(root):
 
 
 def gear_rule(root):
-    """(percent per grade, percent per fold, fold cap per grade), read from the functions that decide them."""
+    """(percent per grade, percent per fold, fold cap per grade, folds by kind "0"/"1"/"2", least recycled dust), read
+    from the functions that decide them."""
     scripts = os.path.join(root, "unity", "Assets", "Scripts")
     pay = open(os.path.join(scripts, "CreaturePay.cs"), encoding="utf-8").read()
     craft = open(os.path.join(scripts, "CraftingMath.cs"), encoding="utf-8").read()
+    loot = open(os.path.join(scripts, "CreatureLoot.cs"), encoding="utf-8").read()
     grade = re.search(r"const int PercentPerGrade = (\d+);", pay)
     fold = re.search(r"const int PercentPerFold = (\d+);", pay)
     caps = re.search(r"int\[\] FoldCaps\s*=\s*\{([^}]*)\}", craft)
-    if grade is None or fold is None or caps is None:
+    least = re.search(r"const int RecycleLeastDust = (\d+);", craft)
+    kinds = re.search(r"FileFolds\(CreatureKind kind\) =>\s*kind == CreatureKind\.Shadow \? (\d+) : "
+                      r"kind == CreatureKind\.Elite \? (\d+) : (\d+);", loot)
+    if grade is None or fold is None or caps is None or least is None or kinds is None:
         return None
     caps = [int(c) for c in caps.group(1).split(",")]
-    return (int(grade.group(1)), int(fold.group(1)), caps) if len(caps) == 7 else None
+    by_kind = {"2": int(kinds.group(1)), "1": int(kinds.group(2)), "0": int(kinds.group(3))}
+    return (int(grade.group(1)), int(fold.group(1)), caps, by_kind, int(least.group(1))) if len(caps) == 7 else None
 
 
 def main():
@@ -92,10 +102,10 @@ def main():
         return 1
     rule = gear_rule(root)
     if rule is None:
-        print("could not read the gear percents out of CreaturePay.cs or the fold caps out of CraftingMath.cs, "
-              "so nothing can be checked")
+        print("could not read the gear percents out of CreaturePay.cs, the fold caps or least recycled dust out of "
+              "CraftingMath.cs, or the folds by kind out of CreatureLoot.cs, so nothing can be checked")
         return 1
-    per_grade, per_fold, fold_caps = rule
+    per_grade, per_fold, fold_caps, folds_by_kind, least_dust = rule
     tables = tier_tables(root)
     if tables is None:
         print("could not read the two grade-to-tier tables out of CreatureMaterials.cs, so nothing can be checked")
@@ -123,13 +133,11 @@ def main():
         # No creature carries a measured number of its own: what its gear pays is read off its grade and folds.
         if re.search(r"^  toughnessPercent:", text, re.M):
             faults.append("%s still carries a saved toughness, which nothing reads" % name)
-        grade, folds = field(text, "gearQuality"), field(text, "gearFolds")
-        if not re.fullmatch(r"[0-6]", grade) or not re.fullmatch(r"\d+", folds):
-            faults.append("%s has no gear grade or no fold count" % name)
-            grade, folds = "0", "0"
-        grade, folds = int(grade), int(folds)
-        if folds > fold_caps[grade]:
-            faults.append("%s has %d folds, past its grade's cap of %d" % (name, folds, fold_caps[grade]))
+        grade = field(text, "gearQuality")
+        if not re.fullmatch(r"[0-6]", grade):
+            faults.append("%s has no gear grade" % name)
+            grade = "0"
+        grade, folds = int(grade), folds_by_kind.get(kind, 0)
         grade_percent = 100 + per_grade * grade
         fold_percent = 100 + per_fold * min(folds, fold_caps[grade])
         creature_rows[field(text, "id")] = (name, kind, grade, folds)
@@ -181,20 +189,33 @@ def main():
         if row is None:
             continue
         name, kind, grade, folds = row
+        # ELITES ROAM EVERY MAP, whatever its level (decided 2026-10-18), so the rule is for the creatures that live there.
+        if kind == "1":
+            continue
         if kind != "0" or grade != 0 or folds != 0:
-            faults.append("%s spawns on newbie map %s but is %s %s +%d; a newbie map holds only Raw +0 normal creatures"
+            faults.append("%s spawns on newbie map %s but is %s %s +%d; a newbie map's own creatures are Raw +0 normals"
                           % (name, m.group(1), {"0": "a normal", "1": "an elite", "2": "a shadow"}.get(kind, "?"),
                              grades[grade], folds))
     for guid, (item_name, _) in sorted(creature_items.items(), key=lambda kv: kv[1][0]):
         if guid not in owner:
             faults.append("%s is a creature material that no creature drops" % item_name)
 
+    # EVERY PIECE OF GEAR IS WORTH WHAT A BRAND-NEW PIECE IS: Raw +0 recycles to the least dust and nothing else.
+    dust = [v[1] for v in items.values() if field(v[1], "materialKind") == "7"]
+    if len(dust) != 1:
+        faults.append("there is not exactly one Temper Dust item, so a new piece's worth cannot be worked out")
+    else:
+        new_piece = least_dust * int(field(dust[0], "value") or 0)
+        for item_name, text in sorted(items.values()):
+            if field(text, "slot") not in ("", "0") and field(text, "value") != str(new_piece):
+                faults.append("%s is gear worth %s but a new piece is worth %d" % (item_name, field(text, "value"), new_piece))
+
     if faults:
         print("%d creature material fault(s):" % len(faults))
         for f in faults:
             print("  " + f)
         return 1
-    print("creature materials: %d creatures, %d materials, every price agrees with the rule" % (creatures, len(owner)))
+    print("creature materials: %d creatures, %d materials, every price agrees with the rule, and every piece of gear is worth a new piece" % (creatures, len(owner)))
     return 0
 
 

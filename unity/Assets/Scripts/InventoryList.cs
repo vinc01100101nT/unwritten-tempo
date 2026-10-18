@@ -78,7 +78,7 @@ public class InventoryList : IItemBoxOwner
         h.childAlignment = TextAnchor.MiddleLeft;
 
         var label = UiKit.MakeText("Label", bar.transform, "FIND", 10, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
-        label.color = UiKit.TextDim;
+        UiKit.Paint(label, UiKit.TextDim);
         var ll = label.gameObject.AddComponent<LayoutElement>();
         ll.minWidth = ll.preferredWidth = 26f;
 
@@ -89,7 +89,7 @@ public class InventoryList : IItemBoxOwner
         var placeholder = UiKit.MakeText("Placeholder", fieldGo.transform, "name, slot, tier, weapon type, or a skill",
                                          11, FontStyle.Italic, TextAnchor.MiddleLeft, null, false);
         UiKit.Fill(placeholder.rectTransform, new Vector2(2, 0), new Vector2(-2, 0));
-        placeholder.color = new Color(UiKit.TextDim.r, UiKit.TextDim.g, UiKit.TextDim.b, 0.55f);
+        UiKit.Paint(placeholder, UiKit.TextDim, 0.55f);
 
         search = fieldGo.gameObject.AddComponent<TMP_InputField>();
         search.textViewport = fieldGo.rectTransform;
@@ -97,8 +97,7 @@ public class InventoryList : IItemBoxOwner
         search.placeholder = placeholder;
         search.lineType = TMP_InputField.LineType.SingleLine;
         search.customCaretColor = true;
-        search.caretColor = UiKit.Accent;
-        search.selectionColor = UiKit.Hover;
+        UiKit.StyleTyping(search);
         search.onValueChanged.AddListener(s =>
         {
             query = (s ?? "").Trim().ToLowerInvariant();
@@ -107,7 +106,7 @@ public class InventoryList : IItemBoxOwner
         });
 
         hits = UiKit.MakeText("Hits", bar.transform, "", 10, FontStyle.Normal, TextAnchor.MiddleRight, null, false);
-        hits.color = UiKit.TextDim;
+        UiKit.Paint(hits, UiKit.TextDim);
         var hl = hits.gameObject.AddComponent<LayoutElement>();
         hl.minWidth = hl.preferredWidth = 40f;
     }
@@ -126,7 +125,7 @@ public class InventoryList : IItemBoxOwner
         h.childAlignment = TextAnchor.MiddleLeft;
 
         var label = UiKit.MakeText("Label", row.transform, "Sort by :", SortTextSize, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
-        label.color = UiKit.TextDim;
+        UiKit.Paint(label, UiKit.TextDim);
         var ll = label.gameObject.AddComponent<LayoutElement>();
         ll.minWidth = ll.preferredWidth = 46f;
 

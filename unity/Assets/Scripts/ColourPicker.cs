@@ -78,7 +78,7 @@ public sealed class ColourPicker
         rrt.anchorMin = new Vector2(0, 0); rrt.anchorMax = new Vector2(1, 0); rrt.pivot = new Vector2(0.5f, 0);
         rrt.offsetMin = new Vector2(14, 10); rrt.offsetMax = new Vector2(-14, 10 + HexRowHeight);
         var label = UiKit.MakeText("Label", row.transform, "HEX", 12, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
-        label.color = UiKit.TextDim;
+        UiKit.Paint(label, UiKit.TextDim);
         Place(label.rectTransform, new Vector2(0, 0), new Vector2(34, HexRowHeight), stretchRight: false, fromBottom: true);
 
         var box = UiKit.Field(UiKit.Img("Hex", row.transform, UiKit.SlotFill));
@@ -93,8 +93,7 @@ public sealed class ColourPicker
         p.hexField.lineType = TMP_InputField.LineType.SingleLine;
         p.hexField.characterLimit = 7;
         p.hexField.customCaretColor = true;
-        p.hexField.caretColor = UiKit.Accent;
-        p.hexField.selectionColor = UiKit.Hover;
+        UiKit.StyleTyping(p.hexField);
         p.hexField.onValueChanged.AddListener(p.OnHexTyped);
 
         var copy = UiKit.Btn("Copy", row.transform, () => GUIUtility.systemCopyBuffer = p.hexField.text);

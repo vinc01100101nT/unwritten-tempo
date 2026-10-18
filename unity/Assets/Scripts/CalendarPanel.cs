@@ -85,7 +85,7 @@ public class CalendarPanel : MonoBehaviour
         UiKit.ClickShield(panel.transform as RectTransform);   // catch clicks over the whole window (no leak to world)
 
         // Header: [<]  Season · Year  [Today]  [>]
-        var header = NewImage(content, new Color(0, 0, 0, 0)).rectTransform;
+        var header = UiKit.Img("Image", content, new Color(0, 0, 0, 0)).rectTransform;
         header.name = "Header";
         header.anchorMin = new Vector2(0, 1); header.anchorMax = new Vector2(1, 1);
         header.pivot = new Vector2(0.5f, 1);
@@ -103,7 +103,7 @@ public class CalendarPanel : MonoBehaviour
         nextBtn = NewButton(header, ">", 40, () => Shift(Days));
 
         // Grid: 4×3 day-cells filling the area under the header.
-        var gridGo = NewImage(content, new Color(0, 0, 0, 0)).rectTransform;
+        var gridGo = UiKit.Img("Image", content, new Color(0, 0, 0, 0)).rectTransform;
         gridGo.name = "Grid";
         gridGo.anchorMin = Vector2.zero; gridGo.anchorMax = Vector2.one;
         gridGo.offsetMin = new Vector2(0, 0); gridGo.offsetMax = new Vector2(0, -42);   // sit below the header
@@ -146,7 +146,7 @@ public class CalendarPanel : MonoBehaviour
 
     void BuildCell(Transform parent, int i)
     {
-        var bg = NewImage(parent, UiKit.PanelRaise);
+        var bg = UiKit.Img("Image", parent, UiKit.PanelRaise);
         bg.name = "Cell" + i;
         // A coloured ring we light up only for "today" (kept transparent otherwise — no per-refresh add/remove).
         var ring = bg.gameObject.AddComponent<Outline>();
@@ -159,7 +159,7 @@ public class CalendarPanel : MonoBehaviour
         drt.sizeDelta = new Vector2(0, 18); drt.anchoredPosition = new Vector2(0, -6);
 
         // The weather icon sits in the cell centre (sprite + tint set per day in Refresh).
-        var icon = NewImage(bg.transform, Color.white);
+        var icon = UiKit.Img("Image", bg.transform, Color.white);
         icon.preserveAspect = true; icon.raycastTarget = false;
         var irt = icon.rectTransform;
         irt.anchorMin = irt.anchorMax = irt.pivot = new Vector2(0.5f, 0.5f);
@@ -214,7 +214,7 @@ public class CalendarPanel : MonoBehaviour
 
             cellDay[i].text  = isToday ? $"Day {i + 1}  ★" : $"Day {i + 1}";
             cellTag[i].text  = WeatherDirector.TagOf(p);
-            cellTag[i].color = UiKit.Readable(c);
+            UiKit.PaintReadable(cellTag[i], c);
             // Weather icon (sprite + tint). Hide gracefully if the art wasn't assigned (e.g. pre-rebake).
             var (sprite, iconTint) = IconFor(p);
             if (sprite != null) { cellIcon[i].sprite = sprite; cellIcon[i].color = iconTint; cellIcon[i].enabled = true; }
@@ -222,7 +222,7 @@ public class CalendarPanel : MonoBehaviour
             // Tinted background; today gets a brighter wash + a coloured ring so it pops.
             cellBg[i].color    = new Color(c.r, c.g, c.b, isToday ? 0.28f : 0.10f);
             cellRing[i].effectColor = isToday ? new Color(c.r, c.g, c.b, 0.95f) : new Color(0, 0, 0, 0);
-            cellDay[i].color   = isToday ? UiKit.TitleText : UiKit.TextMain;
+            UiKit.Paint(cellDay[i], isToday ? UiKit.TitleText : UiKit.TextMain);
         }
     }
 
@@ -262,16 +262,7 @@ public class CalendarPanel : MonoBehaviour
     TMP_Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
     {
         var t = UiKit.MakeText("Text", parent, str, size, style, anchor, wrap: false);
-        t.color = UiKit.TextMain;
+        UiKit.Paint(t, UiKit.TextMain);
         return t;
-    }
-
-    Image NewImage(Transform parent, Color color)
-    {
-        var go = new GameObject("Image", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        go.transform.SetParent(parent, false);
-        var img = go.GetComponent<Image>();
-        img.color = color;
-        return img;
     }
 }

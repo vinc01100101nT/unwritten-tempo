@@ -86,14 +86,14 @@ weight a hand carries — a pair weapon's two hands carry half its weight each.
 Staff, Wand and Scythe give Magic Attack; every other weapon gives Attack.
 
 **An armour piece's MATERIAL decides what its base buys, and its SLOT how much.** A body or a garment is worth one
-sixth of a 1-second weapon's base (50, a Dagger's) on Ink's exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double
-defence — split between its material's two stats; head and shoes half. Sized so a full metal set's defence at
+sixth of a 1-second weapon's base (50, a Dagger's) on Ink's exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at a fifth
+of the attack speed's share (cut 2026-10-18) — split between its material's two stats; head and shoes half. Sized so a full metal set's defence at
 equal gear is 25% of a Dagger's attack (20% of a Sword's). No piece gives movement speed.
 
 | Material | Body or garment | Head or shoes |
 | --- | --- | --- |
 | Metal | 4 Defence and 33 HP | 2 Defence and 17 HP |
-| Leather | 2.1% Attack Speed and 2 Evasion | 1% Attack Speed and 1 Evasion |
+| Leather | 2.1% Attack Speed and 0 Evasion | 1% Attack Speed and 0 Evasion |
 | Cloth | 4 Magic Defence and 17 MP | 2 Magic Defence and 8 MP |
 
 ### The roll
@@ -122,7 +122,7 @@ sale) has no Base line.
 | B | 60% | 500% | 3,000% | 3,600% | 2,313 | 5 |
 | A | 70% | 600% | 4,200% | 4,900% | **3,125** | 6 |
 
-Common body armour at A +10: **208 Defence and 1,667 HP** (metal), **104.2% Attack Speed and 104 Evasion**
+Common body armour at A +10: **208 Defence and 1,667 HP** (metal), **104.2% Attack Speed and 21 Evasion**
 (leather), **208 Magic Defence and 833 MP** (cloth). A full Common A +10 metal set is **624 Defence**, 20% of the
 Sword's 3,125. A Legendary A +10 Sword at a 115% roll is 62.5 × 1.15 × 1.50 × 50 = 5,390.6 → **5,391 Attack**.
 

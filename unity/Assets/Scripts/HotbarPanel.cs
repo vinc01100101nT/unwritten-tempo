@@ -47,8 +47,8 @@ public class HotbarPanel : MonoBehaviour
     /// <summary>A cell you cannot afford: its OWN colour, darkened. Dimming rather than replacing is what keeps the
     /// weapon readable when the skill is greyed out.</summary>
     static Color Dim(Color c) => new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.5f, c.a);
-    static readonly Color CellEmpty  = UiKit.SlotEmpty;   // unbound slot
-    static readonly Color KeyColor   = UiKit.TextOnDim;
+    static ThemeColor CellEmpty  => UiKit.SlotEmpty;   // unbound slot
+    static ThemeColor KeyColor   => UiKit.TextOnDim;
     static readonly Color MpColor     = new Color(0.6f, 0.78f, 1f);
     static readonly Color MpNoColor   = new Color(1f, 0.5f, 0.45f);
     static readonly Color CdShade     = new Color(0f, 0f, 0f, 0.55f);
@@ -281,7 +281,7 @@ public class HotbarPanel : MonoBehaviour
 
         if (s.kind == Kind.Empty)
         {
-            cell.color = CellEmpty;   // dim, nothing drawable on it → reads as an open slot
+            UiKit.Paint(cell, CellEmpty);   // dim, nothing drawable on it → reads as an open slot
             // SOMETHING THAT CANNOT BE DRAWN YET still sits in the slot, so it can still be dragged off; only a truly
             // empty cell has nothing to drag.
             var staleDrag = cell.gameObject.GetComponent<HotbarSlotDragSource>();
@@ -298,7 +298,7 @@ public class HotbarPanel : MonoBehaviour
         var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
         drag.slotIndex = index;
         // An item or a piece sits on a white tile, where the white key letter would vanish; it takes the name's colour.
-        if (s.kind == Kind.Item || s.kind == Kind.Gear) key.color = s.itemNoneLeft ? UiKit.TextOnDim : UiKit.TextMain;
+        if (s.kind == Kind.Item || s.kind == Kind.Gear) UiKit.Paint(key, s.itemNoneLeft ? UiKit.TextOnDim : UiKit.TextMain);
         key.transform.SetAsLastSibling();
         return s;
     }
@@ -354,12 +354,12 @@ public class HotbarPanel : MonoBehaviour
         s.kind = Kind.Item;
         s.itemId = itemId;
         s.itemNoneLeft = stack == null;
-        s.cell.color = s.itemNoneLeft ? UiKit.Bad : ItemIcon.Back(def, null);
+        UiKit.Paint(s.cell, s.itemNoneLeft ? UiKit.Bad : ItemIcon.Back(def, null));
         // Its picture, as the bag draws it; only a thing with no picture writes its name.
         if (!ItemIcon.Show(ItemIcon.Make(s.cell.transform, 3f), def))
         {
             var name = NameOnTile(s.cell.transform, def.displayName);
-            if (s.itemNoneLeft) name.color = UiKit.TextOnDim;
+            if (s.itemNoneLeft) UiKit.Paint(name, UiKit.TextOnDim);
         }
         // How many are carried (bottom-right), exactly as the bag the server sent says.
         var count = NewText("Count", s.cell.transform, s.itemNoneLeft ? "0" : stack.count.ToString(), 11, FontStyle.Bold,
@@ -385,11 +385,12 @@ public class HotbarPanel : MonoBehaviour
         if (inst == null || inst.def == null) return;
         s.kind = Kind.Gear;
         s.copyId = copyId;
-        s.cell.color = ItemIcon.Back(inst.def, inst);
+        UiKit.Paint(s.cell, ItemIcon.Back(inst.def, inst));
         // Its picture, as the bag draws it; with none, the copy's own name ("+15 Petal Storm [C]"), not the bare design's.
-        if (!ItemIcon.Show(ItemIcon.Make(s.cell.transform, 3f), inst.def))
+        var picture = ItemIcon.Make(s.cell.transform, 3f);
+        if (!ItemIcon.Show(picture, inst.def))
             NameOnTile(s.cell.transform, ItemTooltip.CopyTitle(inst));
-        GradeGlow.Show(GradeGlow.MakeForSquare(s.cell.transform), inst);
+        GradeGlow.Show(GradeGlow.MakeForSquare(s.cell.transform, picture.transform), inst);
         // The same tooltip its row shows: in the bag, the equip preview; worn, the plain card.
         // Hover: its name. Right-click: its card — in the bag, with the "if equipped" lines; worn, the plain card.
         var box = ItemBoxOn(s.cell.gameObject);
@@ -410,7 +411,7 @@ public class HotbarPanel : MonoBehaviour
     TMP_Text NameOnTile(Transform cell, string name)
     {
         var t = UiKit.MakeText("Name", cell, name, NameMaxSize, FontStyle.Bold, TextAnchor.MiddleCenter, wrap: true);
-        t.color = UiKit.TextMain;
+        UiKit.Paint(t, UiKit.TextMain);
         t.raycastTarget = false;
         t.richText = false;
         t.enableAutoSizing = true;
@@ -479,20 +480,19 @@ public class HotbarPanel : MonoBehaviour
 
     // ---- UI primitives (match StatPanel's style) ----
     TMP_Text NewText(string name, Transform parent, string str, int size, FontStyle style, TextAnchor anchor, Color color)
+        => Plain(UiKit.Paint(UiKit.MakeText(name, parent, str, size, style, anchor, wrap: false), color));
+
+    TMP_Text NewText(string name, Transform parent, string str, int size, FontStyle style, TextAnchor anchor, ThemeColor color)
+        => Plain(UiKit.Paint(UiKit.MakeText(name, parent, str, size, style, anchor, wrap: false), color));
+
+    static TMP_Text Plain(TMP_Text t)
     {
-        var t = UiKit.MakeText(name, parent, str, size, style, anchor, wrap: false);
-        t.color = color; t.raycastTarget = false; t.richText = false;
+        t.raycastTarget = false; t.richText = false;
         return t;
     }
 
-    static Image NewImage(string name, Transform parent, Color color)
-    {
-        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        go.transform.SetParent(parent, false);
-        var img = go.GetComponent<Image>();
-        img.color = color;
-        return img;
-    }
+    static Image NewImage(string name, Transform parent, Color color) => UiKit.Img(name, parent, color);
+    static Image NewImage(string name, Transform parent, ThemeColor color) => UiKit.Img(name, parent, color);
 
     static void Stretch(RectTransform rt, float padX, float padY)
     {

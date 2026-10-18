@@ -57,7 +57,7 @@ public static class Rarities
 
     /// <summary>The colour an item of <paramref name="rarity"/> has its name written in, on a window or a floor plate.
     /// Common is the ordinary text colour; the rest are the interface theme's own rarity colours.</summary>
-    public static Color Color(Rarity rarity)
+    public static ThemeColor Color(Rarity rarity)
     {
         switch (rarity)
         {
@@ -72,6 +72,7 @@ public static class Rarities
     // Rich-text opening tags, one per rarity, built on first use and kept — a tooltip line is coloured with these,
     // never with a string put together per hover. Built late so asking a rarity never wakes the interface theme.
     static string[] tags;
+    static bool tagsDark;
 
     /// <summary><paramref name="name"/> — a thing's name as a row writes it — in the colour of <paramref name="def"/>'s
     /// rarity, as rich text. Only the name: a price or a count beside it is left in the row's own colour.</summary>
@@ -80,8 +81,9 @@ public static class Rarities
     /// <summary>The rich-text tag that opens text in <paramref name="rarity"/>'s colour — close it with "&lt;/color&gt;".</summary>
     public static string Tag(Rarity rarity)
     {
-        if (tags == null)
+        if (tags == null || tagsDark != UiKit.IsDark)
         {
+            tagsDark = UiKit.IsDark;
             tags = new string[(int)Rarity.Legendary + 1];
             for (int r = 0; r < tags.Length; r++) tags[r] = "<color=" + UiKit.Hex(Color((Rarity)r)) + ">";
         }

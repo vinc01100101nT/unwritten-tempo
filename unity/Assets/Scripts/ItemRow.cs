@@ -16,7 +16,7 @@ public sealed class ItemRow
 
     TextMeshProUGUI name, count, price, tagBefore, tagAfter;
     Image back, icon;
-    Image glow;
+    RawImage glow;
     GameObject tagBeforeBox, tagAfterBox;
     // False: the picture stands on nothing, and only the name carries the rarity's colour.
     bool square;
@@ -48,7 +48,7 @@ public sealed class ItemRow
         var square = r.back.gameObject.AddComponent<LayoutElement>();
         square.minWidth = square.preferredWidth = square.minHeight = square.preferredHeight = height - 6f;
         r.icon = ItemIcon.Make(r.back.transform, 1f);
-        r.glow = GradeGlow.MakeForSquare(r.back.transform);
+        r.glow = GradeGlow.MakeForSquare(r.back.transform, r.icon.transform);
         r.back.gameObject.SetActive(false);
         r.tagBeforeBox = MakeTag(fill.transform, "Before", out r.tagBefore);
         r.name = Part(fill.transform, "Name", 13, FontStyles.Bold);
@@ -60,10 +60,10 @@ public sealed class ItemRow
         // below their own widths, so their words ran into each other; it is cut with "…" instead.
         grow.preferredWidth = 0f;
         r.count = Part(fill.transform, "Count", 12, FontStyles.Normal);
-        r.count.color = UiKit.TextDim;
+        UiKit.Paint(r.count, UiKit.TextDim);
         r.tagAfterBox = MakeTag(fill.transform, "After", out r.tagAfter);
         r.price = Part(fill.transform, "Price", 13, FontStyles.Bold);
-        r.price.color = UiKit.TitleText;
+        UiKit.Paint(r.price, UiKit.TitleText);
 
         if (interactive)
         {
@@ -79,28 +79,36 @@ public sealed class ItemRow
     /// <summary>Show <paramref name="def"/> — <paramref name="copy"/> for a piece of gear — called
     /// <paramref name="title"/>, in <paramref name="rarity"/>'s colour, with <paramref name="countText"/> beside it, a tag
     /// before and after (null for none) and <paramref name="priceText"/> at the right.</summary>
+    /// <summary>Put <paramref name="def"/>'s grade look on the picture for <paramref name="grade"/> — for a row that
+    /// shows a piece without holding its copy.</summary>
+    public void ShowGrade(Item def, Quality grade) => GradeGlow.Show(glow, def, grade);
+
     public void Show(Item def, EquipmentInstance copy, Rarity rarity, string title, string countText,
-                     string before, Color beforeColour, string after, string priceText)
+                     string before, ThemeColor beforeColour, string after, string priceText)
     {
         Write(name, title ?? "");
-        name.color = Rarities.Color(rarity);
+        UiKit.Paint(name, Rarities.Color(rarity));
         bool pictured = ItemIcon.Show(icon, def);
         GradeGlow.Show(glow, copy);
         if (back.gameObject.activeSelf != pictured) back.gameObject.SetActive(pictured);
-        if (pictured) back.color = !square ? Color.clear : rarity == Rarity.Common ? UiKit.SlotFill : Rarities.Color(rarity);
+        if (pictured)
+        {
+            if (square) UiKit.Paint(back, rarity == Rarity.Common ? UiKit.SlotFill : Rarities.Color(rarity));
+            else UiKit.Paint(back, Color.clear);
+        }
         Write(count, countText ?? "");
         Write(price, priceText ?? "");
         Tag(tagBeforeBox, tagBefore, before, beforeColour);
         Tag(tagAfterBox, tagAfter, after, UiKit.TextDim);
     }
 
-    static void Tag(GameObject box, TextMeshProUGUI text, string word, Color colour)
+    static void Tag(GameObject box, TextMeshProUGUI text, string word, ThemeColor colour)
     {
         bool on = !string.IsNullOrEmpty(word);
         if (box.activeSelf != on) box.SetActive(on);
         if (!on) return;
         Write(text, word);
-        text.color = colour;
+        UiKit.Paint(text, colour);
     }
 
     // A text write rebuilds its mesh; written only when the words change.

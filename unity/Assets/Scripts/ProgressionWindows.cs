@@ -186,7 +186,7 @@ public class ProgressionWindows : MonoBehaviour
         invFooter.rectTransform.anchorMax = new Vector2(1, 0);
         invFooter.rectTransform.pivot = new Vector2(0.5f, 0);
         invFooter.rectTransform.sizeDelta = new Vector2(0, FooterHeight);
-        invFooter.color = UiKit.TextMain;
+        UiKit.Paint(invFooter, UiKit.TextMain);
     }
 
     void AddTab(Transform parent, string label, bool filtered, ItemCategory cat)
@@ -320,7 +320,7 @@ public class ProgressionWindows : MonoBehaviour
         var t = UiKit.MakeText(values ? "Values" : "Labels", parent, s, DerivedTextSize, FontStyle.Normal,
                                values ? TextAnchor.UpperRight : TextAnchor.UpperLeft, null, false);
         t.raycastTarget = false;
-        if (!values) t.color = UiKit.TextDim;
+        if (!values) UiKit.Paint(t, UiKit.TextDim);
         var rt = t.rectTransform;
         rt.anchorMin = new Vector2(xMin, 0); rt.anchorMax = new Vector2(xMax, 1);
         rt.offsetMin = new Vector2(insetLeft, 0); rt.offsetMax = new Vector2(-insetRight, 0);
@@ -385,9 +385,9 @@ public class ProgressionWindows : MonoBehaviour
             bool capped = cost < 0;
             bool can = c.CanRaise(s);
             statCost[i].text = capped ? "MAX" : "(" + cost + ")";
-            statCost[i].color = capped ? UiKit.TitleText
+            UiKit.Paint(statCost[i], capped ? UiKit.TitleText
                               : can    ? UiKit.Good
-                                       : UiKit.Bad;
+                                       : UiKit.Bad);
             statPlus[i].interactable = can;
         }
 
@@ -514,6 +514,7 @@ public class ProgressionWindows : MonoBehaviour
         picture.raycastTarget = false;
         Place(picture.rectTransform, Pad, Pad, PicW - Pad, TopH - Pad);
         var icon = ItemIcon.Make(picture.transform, 8f);
+        var look = GradeGlow.MakeForSquare(picture.transform, icon.transform);
         // A skill has no picture: its badge — its colour, its letters — stands in the panel instead.
         var badge = UiKit.Round(UiKit.Img("Badge", picture.transform, Color.white), 6);
         badge.raycastTarget = false;
@@ -522,7 +523,7 @@ public class ProgressionWindows : MonoBehaviour
         badgeRt.sizeDelta = new Vector2(64f, 64f);
         var badgeText = UiKit.Label("Letters", badge.transform, "", 26, FontStyle.Bold, TextAnchor.MiddleCenter);
         badgeText.raycastTarget = false;
-        badgeText.color = UiKit.TextOnDim;
+        UiKit.Paint(badgeText, UiKit.TextOnDim);
         UiKit.Fill(badgeText.rectTransform, Vector2.zero, Vector2.zero);
         badge.gameObject.SetActive(false);
 
@@ -613,6 +614,7 @@ public class ProgressionWindows : MonoBehaviour
         var tip = border.gameObject.AddComponent<ItemTooltip>();
         tip.panel = rt; tip.titleText = title; tip.bodyText = body; tip.skillRow = skillRow;
         tip.icon = icon;
+        tip.look = look;
         tip.badge = badge; tip.badgeText = badgeText;
         tip.detailsScroll = scroll;
         tip.slotDiamonds = diamonds;

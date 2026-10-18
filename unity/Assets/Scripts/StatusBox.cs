@@ -17,7 +17,7 @@ public class StatusBox : MonoBehaviour
     const float ButtonHeight = 24f, ButtonGap = 4f, Pad = 10f;
 
     // Every bar fills in the theme's blue.
-    static readonly Color BarFill = UiKit.Accent;
+    static ThemeColor BarFill => UiKit.Accent;
 
     // Every HUD window, by the name it carries, and the key that already opens it. Settings has no key of its own
     // and is opened directly.
@@ -129,7 +129,7 @@ public class StatusBox : MonoBehaviour
 
     // A labelled bar: its name on the left ("Lv 12"), the bar filling the rest with how full it is, as a percentage,
     // written on it. Returns the fill, left-anchored, whose width is the progress.
-    RectTransform Row(Transform parent, float top, Color fillColor, out TMP_Text name, out TMP_Text numbers, out GameObject row)
+    RectTransform Row(Transform parent, float top, ThemeColor fillColor, out TMP_Text name, out TMP_Text numbers, out GameObject row)
     {
         row = new GameObject("Row", typeof(RectTransform));
         row.transform.SetParent(parent, false);

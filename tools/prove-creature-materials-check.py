@@ -125,8 +125,11 @@ def main():
                 "never wears")
     bad += case("a normal creature at grade B", graded[0], line(graded[1], "gearQuality"), "  gearQuality: 5",
                 "never wears")
-    bad += case("an elite spawning on a newbie map", spawns_rel, newbie.group(0),
-                "  - map: lst_fild01\n    creature: " + elite_id, "a newbie map holds only Raw +0 normal creatures")
+    bad += case("an elite spawning on a newbie map passes (elites roam every map)", spawns_rel, newbie.group(0),
+                "  - map: lst_fild01\n    creature: " + elite_id, None, must_pass=True)
+    graded_id = line(graded[1], "id").split(":", 1)[1].strip()
+    bad += case("a graded normal creature spawning on a newbie map", spawns_rel, newbie.group(0),
+                "  - map: lst_fild01\n    creature: " + graded_id, "a newbie map's own creatures are Raw +0 normals")
     geared = None
     for path in sorted(glob.glob(os.path.join(REPO, RES, "Monsters", "*.asset"))):
         rel = os.path.relpath(path, REPO)
@@ -138,18 +141,27 @@ def main():
     if geared is None:
         print(RED + "no shadow to plant other folds into, so that rule is not proved" + OFF)
         return 1
-    folds_now = int(line(graded[1], "gearFolds").split(":")[1])
-    bad += case("a creature whose folds changed and whose prices did not follow", graded[0], line(graded[1], "gearFolds"),
-                "  gearFolds: %d" % (folds_now - 1 if folds_now > 0 else 1), "but the rule says")
-    bad += case("a creature with its fold count removed", graded[0], line(graded[1], "gearFolds"),
-                "  gearFoldsGone: 0", "has no gear grade or no fold count")
-    bad += case("a creature folded past its grade's cap", graded[0], line(graded[1], "gearFolds"),
-                "  gearFolds: 99", "past its grade's cap")
-    bad += case("a creature carrying a saved toughness again", geared[0], line(geared[1], "gearFolds"),
-                line(geared[1], "gearFolds") + "\n  toughnessPercent: 235", "still carries a saved toughness")
-    shadow_folds = int(line(geared[1], "gearFolds").split(":")[1])
-    bad += case("a creature with no material given other folds passes", geared[0], line(geared[1], "gearFolds"),
-                "  gearFolds: %d" % (shadow_folds - 1 if shadow_folds > 0 else 1), None, must_pass=True)
+    level_now = int(line(graded[1], "level").split(":")[1])
+    bad += case("a creature whose level changed and whose prices did not follow", graded[0], line(graded[1], "level"),
+                "  level: %d" % (level_now + 1), "but the rule says")
+    bad += case("a creature with its gear grade removed", graded[0], line(graded[1], "gearQuality"),
+                "  gearQualityGone: 0", "has no gear grade")
+    bad += case("a creature carrying a saved toughness again", geared[0], line(geared[1], "level"),
+                line(geared[1], "level") + "\n  toughnessPercent: 235", "still carries a saved toughness")
+    shadow_level = int(line(geared[1], "level").split(":")[1])
+    bad += case("a creature with no material given another level passes", geared[0], line(geared[1], "level"),
+                "  level: %d" % (shadow_level + 1), None, must_pass=True)
+    gear_rel = None
+    for path in sorted(glob.glob(os.path.join(REPO, RES, "Items", "*.asset"))):
+        rel = os.path.relpath(path, REPO)
+        if re.search(r"(?m)^  slot: [1-9]", read(rel)):
+            gear_rel = rel
+            break
+    if gear_rel is None:
+        print(RED + "no piece of gear to plant a typed value into, so that rule is not proved" + OFF)
+        return 1
+    bad += case("a piece of gear with a typed value", gear_rel, line(read(gear_rel), "value"), "  value: 8",
+                "but a new piece is worth")
     bad += case("a material moved out of the Etc tab", ord_rel, line(ord_text, "category"), "  category: 2",
                 "is not in the Etc tab")
     bad += case("a material with another weight", ord_rel, line(ord_text, "weight"), "  weight: 1", "weighs 1")

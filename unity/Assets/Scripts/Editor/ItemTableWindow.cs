@@ -271,12 +271,19 @@ public class ItemTableWindow : EditorWindow
                     if (it.materialKind != MaterialKind.None)
                     {
                         var rest = half; rest.x += half.width + 2f; rest.width = half.width * 0.7f;
-                        it.materialStep = EditorGUI.IntField(rest, it.materialStep);
+                        // A creature material's tier is worked out from its creature, never typed (DerivedItemValues).
+                        if (it.materialKind == MaterialKind.Creature) EditorGUI.LabelField(rest, it.materialStep.ToString());
+                        else it.materialStep = EditorGUI.IntField(rest, it.materialStep);
                     }
                     break;
                 case ColId.Reach:   it.attackRange = EditorGUI.FloatField(Field(), it.attackRange); break;
                 case ColId.Weight:  it.weight = EditorGUI.IntField(Field(), it.weight); break;
-                case ColId.Value:    it.value = EditorGUI.IntField(Field(), it.value); break;
+                // Gear's and a creature material's value are worked out from the rule, never typed (DerivedItemValues).
+                case ColId.Value:
+                    if (it.slot != EquipSlotType.None || it.materialKind == MaterialKind.Creature)
+                        EditorGUI.LabelField(Field(), it.value.ToString());
+                    else it.value = EditorGUI.IntField(Field(), it.value);
+                    break;
                 case ColId.UseSkill: DrawUseSkill(Field(), it); break;
 
                 case ColId.Select:

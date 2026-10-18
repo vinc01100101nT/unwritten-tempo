@@ -101,7 +101,7 @@ public class SpeechBubble : MonoBehaviour
 
         b.bg = go.GetComponent<Image>();
         UiKit.Round(b.bg, BubbleRadius);
-        b.bg.color = UiKit.PanelFill;
+        UiKit.Paint(b.bg, UiKit.PanelFill);
 
         // Downward tail (classic speech-bubble pointer): hangs just below the bubble's bottom edge, pointing at
         // the owner's head. Anchored to bottom-centre, pivot at its top so it dangles below.
@@ -109,7 +109,7 @@ public class SpeechBubble : MonoBehaviour
         tg.transform.SetParent(go.transform, false);
         b.tail = tg.GetComponent<Image>();
         b.tail.sprite = TailSprite();
-        b.tail.color = UiKit.PanelFill;
+        UiKit.Paint(b.tail, UiKit.PanelFill);
         b.tail.raycastTarget = false;
         var tlrt = (RectTransform)tg.transform;
         tlrt.anchorMin = tlrt.anchorMax = new Vector2(0.5f, 0f);   // bottom-centre of the bubble
@@ -119,7 +119,7 @@ public class SpeechBubble : MonoBehaviour
 
         // Dark text, parented to the bubble and inset by the padding.
         b.text = UiKit.MakeText("Text", go.transform, "", FontSize, FontStyle.Bold, TextAnchor.MiddleCenter, wrap: false);
-        b.text.color = UiKit.TextMain;
+        UiKit.Paint(b.text, UiKit.TextMain);
         b.text.raycastTarget = false;
         b.text.richText = false;   // player chat is arbitrary text — a stray '<' must stay literal, never markup
         var trt = b.text.rectTransform;

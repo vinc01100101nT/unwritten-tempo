@@ -123,7 +123,7 @@ public class QuestArrows : MonoBehaviour
         pinGo.transform.SetParent(host, false);
         pin = pinGo.AddComponent<SpriteRenderer>();
         pin.sprite = GuidePin.Sprite;
-        pin.color = UiKit.Accent;
+        pin.color = UiKit.Accent.Value;
         pinGo.transform.localScale = Vector3.one * PinHeight / pin.sprite.bounds.size.y;
         pinGo.SetActive(false);
 

@@ -204,8 +204,9 @@ It does nothing outside Play or on the map server.
   ring and the weapon mastery all get the bonus.
 - **The card** (`ItemTooltip.AppendHeadgear`) lists the stats, then the effect in the skill card's own words
   (`SkillTooltip.TriggerLine` / `EffectLines`).
-- **The beta Hatter** is a townsfolk row in Lastline whose shop row `beta-headgear` sets `testPrice: 1`
-  (`WorldShops.PriceOf` / `Taxes`): a test shop sells gear and charges its one price with no Tax. Beta testing only.
+- **The beta Hatter** is a townsfolk row in Lastline whose shop row `beta-headgear` sets `sellsGear: 1`
+  (`WorldShops.Sells`): a test shop sells the gear on its list too, at its value plus Tax like everything else. Beta
+  testing only.
 
 ### Checks
 

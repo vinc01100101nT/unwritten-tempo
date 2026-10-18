@@ -69,7 +69,7 @@ public class EmblemWindow : MonoBehaviour
         else OverheadNotice.Fail("Emblem refused");
         if (instance == null || instance.status == null) return;
         instance.status.text = accepted ? "Uploaded. It shows on the back of a worn cape." : "Refused: " + reason;
-        instance.status.color = accepted ? UiKit.NoticeSuccess : UiKit.NoticeFailure;
+        UiKit.Paint(instance.status, accepted ? UiKit.NoticeSuccess : UiKit.NoticeFailure);
     }
 
     void Start()
@@ -255,7 +255,7 @@ public class EmblemWindow : MonoBehaviour
         preview.enabled = previewTexture != null;
         upload.interactable = rgba != null && NetPlayer.Mine != null;
         status.text = rgba != null ? Path.GetFileName(path) + " — ready to upload." : Path.GetFileName(path) + ": " + refusal;
-        status.color = rgba != null ? UiKit.TextDim : UiKit.NoticeFailure;
+        UiKit.Paint(status, rgba != null ? UiKit.TextDim : UiKit.NoticeFailure);
     }
 
     // Never more than one byte past the limit is read: that is enough for the server to say "too big".
@@ -286,7 +286,7 @@ public class EmblemWindow : MonoBehaviour
         if (pickedBytes == null || NetPlayer.Mine == null) return;
         NetPlayer.Mine.UploadEmblem(pickedBytes);
         status.text = "Sending " + Path.GetFileName(picked) + "…";
-        status.color = UiKit.TextDim;
+        UiKit.Paint(status, UiKit.TextDim);
     }
 
     static void OpenFolder()

@@ -143,8 +143,8 @@ Levels is the range the map was laid out for; creatures are listed with their ow
 
 | Map | Biome | Levels | Creatures | Elite |
 | --- | --- | --- | --- | --- |
-| Lastline Field 1 (`lst_fild01`) | Grassland | 1–3 | Plopling 1, Flutterby 2, Squeak 3, Crawlet 4, Hisser 6 | — (a newbie map: Raw +0 creatures only) |
-| Parley Field 1 (`prl_fild01`) | Grassland | 4–6 | Crawlet 4, Hisser 6, Squeak 3, Flutterby 2, Plopling 1 | — (a newbie map: Raw +0 creatures only) |
+| Lastline Field 1 (`lst_fild01`) | Grassland | 1–3 | Plopling 1, Flutterby 2, Squeak 3, Crawlet 4, Hisser 6 | — (a newbie map: its own creatures are Raw +0) |
+| Parley Field 1 (`prl_fild01`) | Grassland | 4–6 | Crawlet 4, Hisser 6, Squeak 3, Flutterby 2, Plopling 1 | Gloop King (a newbie map: its own creatures are Raw +0; elites roam every map) |
 | Old Oak Field 1 (`olk_fild01`) | Forest | 6–8 | Hisser 6, Blinkbat 8, Capling 5, Crawlet 4, Mossnail 10, Flutterby 2 | Autumn Stalk |
 | Old Oak Dungeon 1 (`olk_dun01`) | Highland | 8–11 | Blinkbat 8, Tarantix 11, Squeak 3, Plopling 1 | — |
 | Old Oak Dungeon 2 (`olk_dun02`) | Highland | 12–15 | Tarantix 11, Blinkbat 8, Webber 19, Squeak 3, Burrowbo 25 | Oculord |

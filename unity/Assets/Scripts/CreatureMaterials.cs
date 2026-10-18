@@ -80,6 +80,19 @@ public static class CreatureMaterials
     public static int SellValue(int level, Rarity tier, Quality gearGrade, int gearFolds)
         => (int)System.Math.Min(int.MaxValue, CreaturePay.Scaled(SellValue(level, tier), gearGrade, gearFolds));
 
+    /// <summary>THE TIER AND VALUE <paramref name="d"/>'s own material must have — both worked out from the creature
+    /// (its kind and grade give the tier, then its level, tier, grade and folds give what a shop pays), never typed.
+    /// The value is what pays exactly that once the Tax is taken. False when the creature has no material of its own
+    /// or wears a grade its kind never wears.</summary>
+    public static bool Derive(MonsterDef d, out int step, out int value)
+    {
+        step = 0; value = 0;
+        if (d == null || !TierOfGrade(d.kind, d.gearQuality, out Rarity tier)) return false;
+        step = StepOfTier(tier);
+        value = ShopMath.ValueForSellPrice(SellValue(d.level, tier, d.gearQuality, d.FileFolds));
+        return true;
+    }
+
     /// <summary>The same for a creature in Raw gear with no folds — the price before gear.</summary>
     public static int SellValue(int level, Rarity tier)
     {

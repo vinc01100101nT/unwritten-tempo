@@ -109,6 +109,7 @@
   .picker button { padding: 0; border: 2px solid var(--rule); border-radius: 4px; background: var(--slot-fill); cursor: pointer;
                    font: 11px var(--font-ui); color: var(--text-main); }
   .picker button .art { height: 56px; border: 0; border-radius: 0; padding: 2px; }
+  .picker button .art.filled { background-size: contain; background-repeat: no-repeat; background-color: transparent; background-origin: content-box; }
   .picker button span { display: block; padding: 3px 0; }
   .picker button.on, .picker button:hover { border-color: var(--accent); background: var(--hover); }
 
@@ -415,8 +416,7 @@
         <div class="win"><div class="fill">
           <div class="head">What is Unwritten?</div>
           <div class="body doc">
-            <div class="art doc-art" data-kind="Story illustration" data-size="1200 × 500"
-                 data-desc="The artist's open book: one page drawn and peaceful, the facing page torn and twisted by Chaos into monsters."></div>
+            <div class="art doc-art" data-kind="Story illustration" data-src="assets/storybook-ink-monsters.jpg"></div>
             <div id="home-what"></div>
             <p><a href="#guide/world">Read the full story &rarr;</a></p>
           </div>
@@ -1011,6 +1011,15 @@ async function buildHome() {
       const b = document.createElement('button');
       b.innerHTML = `<div class="art tiny" data-kind="Weapon icon"></div><span>${esc(strip(r[0]))}</span>`;
       b.onclick = () => pick(n);
+      // a weapon with no picture in assets/weapon-icons/ keeps its placeholder
+      const icon = `assets/weapon-icons/${strip(r[0]).toLowerCase()}.png`;
+      const probe = new Image();
+      probe.onload = () => {
+        const a = b.querySelector('.art');
+        a.innerHTML = ''; a.dataset.src = icon; a.dataset.done = '';
+        fillArt(b);
+      };
+      probe.src = icon;
       picker.append(b);
     });
     fillArt(picker);

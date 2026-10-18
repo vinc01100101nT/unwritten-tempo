@@ -87,10 +87,13 @@ public static class Trademarks
 
     /// <summary>The trademark skill of <paramref name="weapon"/> as it stands now, or null — none rolled, the skill
     /// gone from the game, or no longer a skill with a main number.</summary>
-    public static SkillDef SkillOf(EquipmentInstance weapon)
+    public static SkillDef SkillOf(EquipmentInstance weapon) => weapon == null ? null : SkillOf(weapon.trademarkSkillId);
+
+    /// <summary>The trademark skill named <paramref name="skillId"/>, or null — none, gone, or no longer a trademark.</summary>
+    public static SkillDef SkillOf(string skillId)
     {
-        if (weapon == null || string.IsNullOrEmpty(weapon.trademarkSkillId)) return null;
-        var def = SkillCatalog.Get(weapon.trademarkSkillId);
+        if (string.IsNullOrEmpty(skillId)) return null;
+        var def = SkillCatalog.Get(skillId);
         return Qualifies(def) ? def : null;
     }
 
