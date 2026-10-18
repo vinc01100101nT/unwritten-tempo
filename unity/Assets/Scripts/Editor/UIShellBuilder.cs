@@ -206,6 +206,9 @@ public static class UIShellBuilder
         return img;
     }
 
+    static Image NewColor(string name, Transform parent, ThemeColor color)
+        => UiKit.Paint(NewColor(name, parent, Color.clear), color);
+
     // Delegates to the one central TMP factory, in the theme's primary text colour.
     static TextMeshProUGUI NewText(string name, Transform parent, string content, int size, FontStyle style, TextAnchor anchor)
         => UiKit.MakeText(name, parent, content, size, style, anchor);

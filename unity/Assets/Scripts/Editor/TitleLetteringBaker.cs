@@ -42,8 +42,8 @@ public static class TitleLetteringBaker
         var px = new Color[w4 * h4];
         for (int i = 0; i < px.Length; i++)
         {
-            var c = Solid(UiKit.WindowEdge, edge[i]);
-            c = Over(Solid(UiKit.PanelFill, rim[i]), c);
+            var c = Solid(UiKit.Light(UiKit.WindowEdge), edge[i]);
+            c = Over(Solid(UiKit.Light(UiKit.PanelFill), rim[i]), c);
             int x = i % w4 - dx, y = i / w4 - dy;
             if (x >= 0 && x < aw && y >= 0 && y < ah) c = Over(src[y * aw + x], c);
             px[i] = c;

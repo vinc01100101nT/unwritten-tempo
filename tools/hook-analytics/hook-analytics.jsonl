@@ -6781,3 +6781,9 @@
 {"ts": "2026-10-19T00:37:54+08:00", "session_id": "393ad7d2-0b1f-4617-a40b-06b913f862f4", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\SkillsWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-19T00:38:04+08:00", "session_id": "393ad7d2-0b1f-4617-a40b-06b913f862f4", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\StatHexagon.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-19T00:38:29+08:00", "session_id": "393ad7d2-0b1f-4617-a40b-06b913f862f4", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\SkillDraftPanel.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-18T16:43:30+00:00", "session_id": "d76ba2fa-fecb-593c-87c5-0f78b1ff9cc7", "file": "Program.cs", "outcome": "blocked", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-18T16:43:40+00:00", "session_id": "d76ba2fa-fecb-593c-87c5-0f78b1ff9cc7", "file": "Program.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-18T16:44:45+00:00", "session_id": "d76ba2fa-fecb-593c-87c5-0f78b1ff9cc7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/UiKit.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-18T16:46:53+00:00", "session_id": "d76ba2fa-fecb-593c-87c5-0f78b1ff9cc7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/SettingsWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-18T16:47:23+00:00", "session_id": "d76ba2fa-fecb-593c-87c5-0f78b1ff9cc7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/StatGlyph.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-18T16:47:39+00:00", "session_id": "d76ba2fa-fecb-593c-87c5-0f78b1ff9cc7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/CalendarWeatherHUD.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}

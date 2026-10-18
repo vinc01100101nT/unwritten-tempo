@@ -254,7 +254,7 @@ public static class UiKit
     };
 
     static Color[] activeSet;
-    static string[] activeHex;
+    static string[] activeHex, activeTag;
 
     static Color[] ActiveSet
     {
@@ -269,7 +269,12 @@ public static class UiKit
     {
         activeSet = dark ? DarkSet : LightSet;
         activeHex = new string[activeSet.Length];
-        for (int i = 0; i < activeSet.Length; i++) activeHex[i] = "#" + ColorUtility.ToHtmlStringRGB(activeSet[i]);
+        activeTag = new string[activeSet.Length];
+        for (int i = 0; i < activeSet.Length; i++)
+        {
+            activeHex[i] = "#" + ColorUtility.ToHtmlStringRGB(activeSet[i]);
+            activeTag[i] = "<color=" + activeHex[i] + ">";
+        }
     }
 
     /// <summary>The colour <paramref name="row"/> has in the theme in use now.</summary>
@@ -408,6 +413,10 @@ public static class UiKit
         || r == Row.Bad || r == Row.TextOnDim || r == Row.Good || r == Row.PmText || r == Row.Accent
         || r == Row.RarityRare || r == Row.RarityEpic || r == Row.RarityLegendary;
 
+    /// <summary>The LIGHT set's colour for <paramref name="c"/> — for a picture baked once in the launcher's look, which
+    /// cannot follow a theme switch.</summary>
+    public static Color Light(ThemeColor c) => LightSet[(int)c.Row];
+
     /// <summary>The LIGHT set's colour for <paramref name="c"/>, as "RRGGBB" — what a server writes into a line it
     /// passes on (a chat link's rarity), the same on every machine whatever theme its own screen uses.</summary>
     public static string LightHtml(ThemeColor c)
@@ -436,6 +445,14 @@ public static class UiKit
     {
         if (activeSet == null) UseSet(GameSettings.DarkMode);
         return activeHex[(int)c.Row];
+    }
+
+    /// <summary>The rich-text tag that opens text in a theme colour, "&lt;color=#RRGGBB&gt;", worked out once per theme —
+    /// free to call. Close it with "&lt;/color&gt;".</summary>
+    public static string Tag(ThemeColor c)
+    {
+        if (activeSet == null) UseSet(GameSettings.DarkMode);
+        return activeTag[(int)c.Row];
     }
 
     /// <summary>A theme colour as a rich-text tag value, "#RRGGBB" — for text that colours part of a line. Read it

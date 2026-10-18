@@ -15,9 +15,9 @@ public static class GmCommands
     static readonly List<GmCommand> all = new List<GmCommand>();
     static readonly Dictionary<string, GmCommand> byName = new Dictionary<string, GmCommand>(StringComparer.OrdinalIgnoreCase);
 
-    // Rich-text tints for command replies, read from the interface theme once: a failure, and a name or command.
-    static readonly string FailHex = UiKit.Hex(UiKit.Bad);
-    static readonly string NameHex = UiKit.Hex(UiKit.Accent);
+    // Rich-text tints for command replies, in the interface theme in use now: a failure, and a name or command.
+    static string FailHex => UiKit.Hex(UiKit.Bad);
+    static string NameHex => UiKit.Hex(UiKit.Accent);
     static bool bootstrapped;
 
     /// <summary>Every registered command, in registration order (for <c>/help</c>).</summary>

@@ -440,11 +440,11 @@ public class ProgressionWindows : MonoBehaviour
     }
 
     // green = a buff is helping, red = a debuff is hurting; the rest are the theme's dim and accent text
-    static readonly string BonusHex = UiKit.Hex(UiKit.Good);
-    static readonly string MalusHex = UiKit.Hex(UiKit.Bad);
-    static readonly string DimHex = UiKit.Hex(UiKit.TextDim);
-    static readonly string AccentHex = UiKit.Hex(UiKit.Accent);
-    static readonly string TitleHex = UiKit.Hex(UiKit.TitleText);
+    static string BonusHex => UiKit.Hex(UiKit.Good);
+    static string MalusHex => UiKit.Hex(UiKit.Bad);
+    static string DimHex => UiKit.Hex(UiKit.TextDim);
+    static string AccentHex => UiKit.Hex(UiKit.Accent);
+    static string TitleHex => UiKit.Hex(UiKit.TitleText);
 
     // " (+3)" / " (−2)", coloured; empty when nothing is modifying the stat (no parentheses noise on a clean sheet).
     static string Delta(int diff) => diff == 0 ? "" : $" <color={(diff > 0 ? BonusHex : MalusHex)}>({(diff > 0 ? "+" : "−")}{Mathf.Abs(diff)})</color>";

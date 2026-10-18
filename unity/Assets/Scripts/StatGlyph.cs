@@ -28,8 +28,8 @@ public static class StatGlyph
     // The emblems below are drawn for a box this size; any other box shows the same emblem scaled to fit it.
     const float DrawnBox = 18f;
 
-    static Color Ink     => UiKit.Accent.Value;
-    static Color InkSoft { get { var c = UiKit.Accent.Value; c.a = 0.55f; return c; } }
+    // Every glyph is drawn in the theme's accent; a faded part (a motion trail) at this much of it.
+    const float SoftInk = 0.55f;
 
     /// <summary>Build the glyph for <paramref name="stat"/> into a fixed <paramref name="box"/>-sized,
     /// centre-anchored holder under <paramref name="parent"/>. The holder is transparent and carries a
@@ -85,14 +85,14 @@ public static class StatGlyph
     static void Agi(RectTransform p)
     {
         Chevron(p, -2.5f, 1f);
-        Chevron(p,  3.5f, 1f, InkSoft);       // trailing chevron faded = motion trail
+        Chevron(p,  3.5f, 1f, SoftInk);       // trailing chevron faded = motion trail
     }
 
     // a ">" chevron (peak at right) centred at (cx,cy).
-    static void Chevron(RectTransform p, float cx, float cy, Color? c = null)
+    static void Chevron(RectTransform p, float cx, float cy, float ink = 1f)
     {
-        Bar(p, cx - 1.5f, cy + 3f, 2.2f, 8f,  45f, c);   // top arm "\"
-        Bar(p, cx - 1.5f, cy - 3f, 2.2f, 8f, -45f, c);   // bottom arm "/"
+        Bar(p, cx - 1.5f, cy + 3f, 2.2f, 8f,  45f, ink);   // top arm "\"
+        Bar(p, cx - 1.5f, cy - 3f, 2.2f, 8f, -45f, ink);   // bottom arm "/"
     }
 
     // VIT — a compact, THICK cross ✚ (health). Short + heavy so it never reads as LUK's thin sparkle.
@@ -109,7 +109,7 @@ public static class StatGlyph
         Bar(p,  3.4f, -3.4f, 1.7f, 10f, -45f);   // bottom-right edge "/"
         Bar(p, -3.4f, -3.4f, 1.7f, 10f,  45f);   // bottom-left edge "\"
         Bar(p, -3.4f,  3.4f, 1.7f, 10f, -45f);   // top-left edge "/"
-        Diamond(p, 0f, 0f, 3.4f, Ink);          // centre stud
+        Diamond(p, 0f, 0f, 3.4f);          // centre stud
     }
 
     // DEX — an aim arrow ↗ (precision). A "/" shaft + an L-shaped head at the upper-right tip.
@@ -128,14 +128,14 @@ public static class StatGlyph
         Bar(p, 0f, 0f, 15f, 1.6f);            // horizontal ray
         Bar(p, 0f, 0f, 1.5f, 12f,  45f);      // diagonal ray "\"
         Bar(p, 0f, 0f, 1.5f, 12f, -45f);      // diagonal ray "/"
-        Diamond(p, 0f, 0f, 5f, Ink);          // bright centre
+        Diamond(p, 0f, 0f, 5f);          // bright centre
     }
 
     // ---- primitives (bars and diamonds, centre-anchored for a self-contained glyph) ----
 
-    static Image Bar(RectTransform p, float x, float y, float w, float h, float angle = 0f, Color? c = null)
+    static Image Bar(RectTransform p, float x, float y, float w, float h, float angle = 0f, float ink = 1f)
     {
-        var img = UiKit.Img("g", p, c ?? Ink);
+        var img = ink < 1f ? UiKit.Paint(UiKit.Img("g", p, UiKit.Accent), UiKit.Accent, ink) : UiKit.Img("g", p, UiKit.Accent);
         img.raycastTarget = false;
         var rt = img.rectTransform;
         rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
@@ -145,12 +145,12 @@ public static class StatGlyph
         return img;
     }
 
-    static Image Diamond(RectTransform p, float x, float y, float size, Color c)
-        => Bar(p, x, y, size, size, 45f, c);
+    static Image Diamond(RectTransform p, float x, float y, float size)
+        => Bar(p, x, y, size, size, 45f);
 
     static void Sprite(RectTransform holder, Sprite s, float box)
     {
-        var img = UiKit.Img("Art", holder, Ink);
+        var img = UiKit.Img("Art", holder, UiKit.Accent);
         img.sprite = s; img.preserveAspect = true; img.raycastTarget = false;
         var rt = img.rectTransform;
         rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);

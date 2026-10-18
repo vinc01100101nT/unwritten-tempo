@@ -46,7 +46,7 @@ public class CalendarWeatherHUD : MonoBehaviour
         // Only runs on a real change, so the alloc here (string join) is not a hot path. Same "Sunny/Rainy/Snow"
         // tag vocabulary the full calendar panel uses, so the glanceable widget and the panel always agree.
         label.text = cal.DateString + "\n" + WeatherDirector.TagOf(weather);
-        label.color = UiKit.Readable(SeasonTint(cal.CurrentSeason));
+        UiKit.PaintReadable(label, SeasonTint(cal.CurrentSeason));
     }
 
     // A gentle per-season tint so the date reads at a glance (spring green … winter ice-blue).

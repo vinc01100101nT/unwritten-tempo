@@ -10,11 +10,13 @@ using UnityEngine;
 public static class SkillTooltip
 {
     // Rich-text tints from the interface theme: highlighted variable numbers, the description, category text.
-    static readonly string Num = UiKit.Hex(UiKit.Accent);
-    static readonly string Desc = UiKit.Hex(UiKit.TextMain);
-    static readonly string Chip = UiKit.Hex(UiKit.TextDim);
-    // The ultimate's pink, darkened only as far as it must be to read on a window.
-    static readonly string UltimateHex = UiKit.Hex(UiKit.Readable(new Color(1f, 0.549f, 0.878f)));
+    static string Num => UiKit.Hex(UiKit.Accent);
+    static string Desc => UiKit.Hex(UiKit.TextMain);
+    static string Chip => UiKit.Hex(UiKit.TextDim);
+    // The ultimate's pink, moved only as far as it must be to read on a window — worked out once per theme.
+    static string ultimateLight, ultimateDark;
+    static string UltimateHex => UiKit.IsDark ? ultimateDark ??= UltimateHexNow() : ultimateLight ??= UltimateHexNow();
+    static string UltimateHexNow() => UiKit.Hex(UiKit.Readable(new Color(1f, 0.549f, 0.878f)));
 
     static readonly StringBuilder sb = new StringBuilder(512);
 

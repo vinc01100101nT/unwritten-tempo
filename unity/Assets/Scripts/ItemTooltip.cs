@@ -502,16 +502,16 @@ public class ItemTooltip : MonoBehaviour
     }
 
 
-    // Rich-text tints, read from the interface theme once: labels, values, a use effect, a slotted card, and a stat
+    // Rich-text tints in the interface theme in use now: labels, values, a use effect, a slotted card, and a stat
     // going up or down.
-    internal static readonly string GoodHex = UiKit.Hex(UiKit.Good);
-    internal static readonly string BadHex = UiKit.Hex(UiKit.Bad);
-    internal static readonly string DimTag = "<color=" + UiKit.Hex(UiKit.TextDim) + ">";
-    internal static readonly string MainTag = "<color=" + UiKit.Hex(UiKit.TextMain) + ">";
-    static readonly string UseTag = "<color=" + UiKit.Hex(UiKit.Accent) + ">";
-    static readonly string CardTag = "<color=" + UiKit.Hex(UiKit.Accent) + ">";
-    static readonly string GoodTag = "<color=" + GoodHex + ">";
-    static readonly string BadTag = "<color=" + BadHex + ">";
+    internal static string GoodHex => UiKit.Hex(UiKit.Good);
+    internal static string BadHex => UiKit.Hex(UiKit.Bad);
+    internal static string DimTag => UiKit.Tag(UiKit.TextDim);
+    internal static string MainTag => UiKit.Tag(UiKit.TextMain);
+    static string UseTag => UiKit.Tag(UiKit.Accent);
+    static string CardTag => UiKit.Tag(UiKit.Accent);
+    static string GoodTag => UiKit.Tag(UiKit.Good);
+    static string BadTag => UiKit.Tag(UiKit.Bad);
 
     /// <summary>How a copy is named on screen — <see cref="Title"/> with the copy's own parts.</summary>
     public static string CopyTitle(EquipmentInstance inst)

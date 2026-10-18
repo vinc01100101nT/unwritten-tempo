@@ -71,10 +71,10 @@ public class CraftStationPanel : MonoBehaviour
     readonly List<int> shownBagIndex = new List<int>();
     readonly List<EquipSlotType> shownWorn = new List<EquipSlotType>();
 
-    static readonly string DimTag = "<color=" + UiKit.Hex(UiKit.TextDim) + ">";
-    static readonly string GoodTag = "<color=" + UiKit.Hex(UiKit.Good) + ">";
-    static readonly string BadTag = "<color=" + UiKit.Hex(UiKit.Bad) + ">";
-    static readonly string NumTag = "<color=" + UiKit.Hex(UiKit.TitleText) + ">";
+    static string DimTag => UiKit.Tag(UiKit.TextDim);
+    static string GoodTag => UiKit.Tag(UiKit.Good);
+    static string BadTag => UiKit.Tag(UiKit.Bad);
+    static string NumTag => UiKit.Tag(UiKit.TitleText);
 
     void Awake()
     {

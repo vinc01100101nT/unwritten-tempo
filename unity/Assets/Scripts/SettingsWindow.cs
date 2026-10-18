@@ -80,6 +80,9 @@ public class SettingsWindow : MonoBehaviour
         var musicVol = UiKit.MakeSlider(Row(sound, "Music volume"), GameSettings.MusicVolume);
         musicVol.onValueChanged.AddListener(v => GameSettings.MusicVolume = v);
 
+        var dark = UiKit.Checkbox(Row(graphics, "Dark mode"), GameSettings.DarkMode);
+        dark.onValueChanged.AddListener(v => GameSettings.DarkMode = v);
+
         var smooth = UiKit.Checkbox(Row(graphics, "Smooth camera follow"), GameSettings.SmoothCameraFollow);
         smooth.onValueChanged.AddListener(v => GameSettings.SmoothCameraFollow = v);
 

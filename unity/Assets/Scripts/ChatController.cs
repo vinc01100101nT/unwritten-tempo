@@ -23,10 +23,10 @@ public class ChatController : MonoBehaviour
 {
     const int MaxLines = 200;   // per kind of line; oldest are trimmed past this so the log can't grow unbounded
 
-    // Rich-text tints read from the theme once: the speaker's name, a command you typed (echoed back), the hint line.
-    static readonly string SpeakerHex = UiKit.Hex(UiKit.TitleText);
-    static readonly string EchoHex = UiKit.Hex(UiKit.Accent);
-    static readonly string HintHex = UiKit.Hex(UiKit.TextDim);
+    // Rich-text tints in the theme in use now: the speaker's name, a command you typed (echoed back), the hint line.
+    static string SpeakerHex => UiKit.Hex(UiKit.TitleText);
+    static string EchoHex => UiKit.Hex(UiKit.Accent);
+    static string HintHex => UiKit.Hex(UiKit.TextDim);
 
     const float BubbleLife = 4f;   // seconds a said line floats over the player's head
     const float BodyAlpha = 0.5f;  // how solid the window's body is — everything below its title bar
@@ -64,8 +64,7 @@ public class ChatController : MonoBehaviour
     readonly List<string> pmPartners = new List<string>();
     int partnerStep = -1;
 
-    static string pmHex;
-    static string PmHex => pmHex ??= UiKit.Hex(UiKit.PmText);
+    static string PmHex => UiKit.Hex(UiKit.PmText);
 
     static ChatController instance;   // the one live chat, so the game can post a line without a lookup
 
@@ -99,7 +98,7 @@ public class ChatController : MonoBehaviour
         if (instance == null || def == null || count <= 0) return;
 
         string name = count > 1 ? title + " ×" + count : title;
-        instance.AddLine($"<color=#{ObtainedHex}>Obtained</color>  {Sanitize(name)}");
+        instance.AddLine($"<color={ObtainedHex}>Obtained</color>  {Sanitize(name)}");
         // And in the combat log, beside what the kill paid.
         instance.AddCombat(new CombatEntry { line = CombatLine.Obtained, name = name });
     }
@@ -109,15 +108,13 @@ public class ChatController : MonoBehaviour
     public static void GameSaid(string line, bool ok = true)
     {
         if (instance == null || string.IsNullOrEmpty(line)) return;
-        instance.AddLine($"<color=#{(ok ? ObtainedHex : BadHex)}>{Sanitize(line)}</color>");
+        instance.AddLine($"<color={(ok ? ObtainedHex : BadHex)}>{Sanitize(line)}</color>");
     }
 
-    static string badHex;
-    static string BadHex => badHex ??= ColorUtility.ToHtmlStringRGB(UiKit.Bad);
+    static string BadHex => UiKit.Hex(UiKit.Bad);
 
     // The dim tint the word in front of an arrival is written in, taken from the palette rather than typed here.
-    static string obtainedHex;
-    static string ObtainedHex => obtainedHex ??= ColorUtility.ToHtmlStringRGB(UiKit.TextDim);
+    static string ObtainedHex => UiKit.Hex(UiKit.TextDim);
 
     /// <summary>SOMEBODY ELSE speaking — a line they said, or the skill they just called out. It lands exactly as
     /// one of your own does: the same log row, the same white bubble over their head for the same time, only their
@@ -158,7 +155,7 @@ public class ChatController : MonoBehaviour
     {
         if (instance == null || string.IsNullOrEmpty(text)) return;
         if (isSkillCall)
-            instance.AddLine($"{SpeakerPrefix(speaker)} <color=#{CallHex}>{Sanitize(text)}</color>");
+            instance.AddLine($"{SpeakerPrefix(speaker)} <color={CallHex}>{Sanitize(text)}</color>");
         else
             instance.AddLinkedLine(SpeakerPrefix(speaker) + " ", text, LineKind.General);
         // A bubble draws no colours: each linked item is its bare "[name]" there.
@@ -220,8 +217,7 @@ public class ChatController : MonoBehaviour
     }
 
     // The tint a call is logged in, taken from the palette's own colour rather than typed here as a second copy.
-    static string callHex;
-    static string CallHex => callHex ??= ColorUtility.ToHtmlStringRGB(UiKit.Accent);
+    static string CallHex => UiKit.Hex(UiKit.Accent);
 
     void Update()
     {
