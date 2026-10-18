@@ -88,15 +88,18 @@ public class PassiveRanks
     public void RollWildcard(Random rng)
     {
         HasWildcard = HasLeader;
-        if (HasLeader) Wildcard = DraftService.RollWildcard(Leader, rng);
+        if (HasLeader) Wildcard = DraftService.RollWildcard(Leader, this, rng);
         Version++;
     }
 
     /// <summary>SERVER: may <paramref name="stat"/> be picked right now — a point to spend, and the stat is one of the
-    /// cards the draft is showing (any stat for the opening pick; else the leader, a neighbour, or the wildcard).</summary>
+    /// cards the draft is showing (any stat for the opening pick; else the leader, a neighbour, or the wildcard), and
+    /// the stat is not already at <see cref="SkillRing.NodeCap"/> ranks.</summary>
     public bool MayPick(StatId stat)
     {
         if (BankedPoints <= 0) return false;
+        // a node stops at its cap
+        if (RanksIn(stat) >= SkillRing.NodeCap) return false;
         if (!HasLeader) return true;
         return stat == Leader || stat == SkillRing.LeftOf(Leader) || stat == SkillRing.RightOf(Leader)
                || (HasWildcard && stat == Wildcard);

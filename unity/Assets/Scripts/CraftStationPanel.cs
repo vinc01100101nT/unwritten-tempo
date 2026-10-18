@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// THE STATION WINDOW — what opens when you press F on a smith, a loom or a tannery. Four tabs (Fold, Quench, Ink,
+/// THE STATION WINDOW — what opens when you press F on a smith. Four tabs (Fold, Quench, Ink,
 /// Recycle) over the bag's own grid of what this station works on — what you carry, then what you wear, each worn piece
 /// with its slot's word on its box. Picking a box lights it and fills the section under the grid with what the tab's work
 /// costs and does; the one button for that work sits fixed at the bottom of the window.
@@ -25,6 +25,7 @@ public class CraftStationPanel : MonoBehaviour
 
     // The window's measures. The body is exactly the grid's width with its scroll lane, so the grid fills it edge to edge.
     const float TabHeight = 20f, Gap = 6f, DetailHeight = 132f, ActionHeight = 30f, ChipHeight = 22f, ChipGap = 3f;
+    const float InfoSize = 16f;
     static readonly Vector2 Size = new Vector2(ItemGrid.WidthWithLane + 32f,
                                                UiKit.TitleBarHeight + 8f + TabHeight + Gap + ItemGrid.Height + 8f
                                                + DetailHeight + Gap + ActionHeight + 24f);
@@ -46,13 +47,17 @@ public class CraftStationPanel : MonoBehaviour
     int batchAsk;
     bool haveOffer;
 
-    enum Page { Fold, Quench, Ink, Recycle }
+    enum Page { Fold, Quench, Ink, Slot, Recycle }
     Page page = Page.Fold;
 
-    readonly Button[] tabs = new Button[4];
+    readonly Button[] tabs = new Button[5];
     readonly ItemGrid grid = new ItemGrid();
     PieceBoxes boxes;
     TextMeshProUGUI head, lines, after;
+    // THE "i" BESIDE THE INK'S NAME: hovering it shows what that Ink can write (inkTip) on the hover strip, built when
+    // the tab redraws.
+    GameObject inkInfo;
+    string inkTip = "";
     RectTransform chipRow;
     readonly List<Button> chips = new List<Button>(6);
     Toggle salt;
@@ -256,6 +261,19 @@ public class CraftStationPanel : MonoBehaviour
         UiKit.Fill(saltWords.rectTransform, new Vector2(26f, 0f), Vector2.zero);
         saltWords.raycastTarget = false;
 
+        // THE "i" at the right end of the Ink tab's "Using …" line. It rides the line, so it hides with it.
+        var info = UiKit.Btn("i", lines.transform, null);
+        info.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        var irt = (RectTransform)info.transform;
+        irt.anchorMin = irt.anchorMax = irt.pivot = new Vector2(1f, 0.5f);
+        irt.sizeDelta = new Vector2(InfoSize, InfoSize);
+        irt.anchoredPosition = Vector2.zero;
+        var iword = info.GetComponentInChildren<TMP_Text>();
+        if (iword != null) { iword.fontSize = 11; iword.fontStyle = FontStyles.Bold; }
+        inkInfo = info.gameObject;
+        HoverRelay.Set(inkInfo, () => ItemTooltip.ShowName(inkTip), ItemTooltip.HideTip);
+        inkInfo.SetActive(false);
+
         // THE INK SLOTS: one small button per slot, three to a row — six slots, the most any grade has, are two rows.
         chipRow = new GameObject("Slots", typeof(RectTransform)).GetComponent<RectTransform>();
         chipRow.SetParent(detail, false);
@@ -376,6 +394,7 @@ public class CraftStationPanel : MonoBehaviour
         var c = Character.Instance;
         SetSaltShown(false);
         SetChipsShown(0);
+        SetInkInfoShown(false);
         Write(after, "");
         SetAction(null);
 
@@ -397,7 +416,7 @@ public class CraftStationPanel : MonoBehaviour
         }
 
         sb.Clear();
-        sb.Append("<b>").Append(Rarities.Tag(Rarities.Of(inst.def, inst))).Append(ItemTooltip.CopyTitle(inst)).Append("</color></b>")
+        sb.Append("<b>").Append(Rarities.Tag(Rarities.Of(inst.def))).Append(ItemTooltip.CopyTitle(inst)).Append("</color></b>")
           .Append(" <size=11>").Append(DimTag).Append(offer.folds).Append(" of ").Append(offer.foldCap).Append(" folds</color></size>");
         Write(head, sb.ToString());
 
@@ -406,6 +425,7 @@ public class CraftStationPanel : MonoBehaviour
             case Page.Fold:    DrawFold(c, inst); break;
             case Page.Quench:  DrawQuench(c); break;
             case Page.Ink:     DrawInk(c, inst); break;
+            case Page.Slot:    DrawSlot(c); break;
             case Page.Recycle: DrawRecycle(); break;
         }
     }
@@ -434,14 +454,43 @@ public class CraftStationPanel : MonoBehaviour
         var next = offer.pieceNext;
         AfterRow("ATK", now.attack, next.attack);
         AfterRow("M.ATK", now.magicAttack, next.magicAttack);
-        AfterRow("DEF", now.defense, next.defense);
-        AfterRow("M.DEF", now.magicDefense, next.magicDefense);
+        AfterRow("DEF %", now.hardDefenseTenths / 10f, next.hardDefenseTenths / 10f);
+        AfterRow("M.DEF %", now.hardMagicDefenseTenths / 10f, next.hardMagicDefenseTenths / 10f);
         AfterRow("Max HP", now.hp, next.hp);
         AfterRow("Max MP", now.mp, next.mp);
         AfterRow("EVA", now.evasion, next.evasion);
         AfterRow("ASPD", now.attackSpeedPercent, next.attackSpeedPercent, "%");
         Write(after, sb.ToString());
         SetAction("Fold", GuideSpot.StationFoldButton, inst.def.id);
+    }
+
+    // The server's slot numbers only: how many the piece has, the chance one more lands and what a press costs.
+    void DrawSlot(Character c)
+    {
+        if (offer.slotCap <= 0)
+        {
+            Write(lines, DimTag + "This piece cannot take card slots.</color>");
+            Write(after, "");
+            return;
+        }
+        if (!offer.canSlot)
+        {
+            Write(lines, DimTag + "Every card slot it can have is there (" + offer.slotCap + ").</color>");
+            Write(after, "");
+            return;
+        }
+        sb.Clear();
+        Costs(offer.slotMaterialCost, offer.quenchMaterialId, offer.slotGoldCost);
+        YouHave(c, offer.quenchMaterialId, offer.quenchMaterialHeld);
+        sb.Append("\n<size=13>").Append(DimTag).Append("Chance:</color> <b>").Append(NumTag).Append(offer.slotChance)
+          .Append("%</color></b>  ").Append(DimTag).Append("· If it fails: the slots stay</color></size>");
+        Write(lines, sb.ToString());
+        sb.Clear();
+        sb.Append(DimTag).Append("Slots</color><pos=64>").Append(offer.cardSlots).Append("<pos=104>").Append(DimTag)
+          .Append("→</color><pos=124><b>").Append(GoodTag).Append("one more").Append("</color></b>  ")
+          .Append(DimTag).Append("of ").Append(offer.slotCap).Append("</color>");
+        Write(after, sb.ToString());
+        SetAction("Slot");
     }
 
     void AfterRow(string label, float now, float next, string suffix = "")
@@ -475,7 +524,7 @@ public class CraftStationPanel : MonoBehaviour
 
         // THE SALT IS A CHOICE, spent whatever the quench does. Ticking it asks the server again; the odds above are the
         // ones it sends back, with that Salt in.
-        int best = BestOfKind(c, MaterialKind.Salt);
+        int best = CraftStations.StrongestOfKind(c.Bag, MaterialKind.Salt);
         if (best >= 0)
         {
             SetSaltShown(true);
@@ -509,9 +558,9 @@ public class CraftStationPanel : MonoBehaviour
                          + " piece has no stat slot. Quench it first.</color>");
             return;
         }
-        int ink = BestOfKind(c, MaterialKind.Ink);
-        if (ink < 0) { Write(lines, DimTag + "No Ink to write with.</color>"); return; }
-        Write(lines, DimTag + "Using</color> <b>" + NumTag + c.Bag[ink].def.displayName + "</color></b>");
+        if (string.IsNullOrEmpty(offer.inkName) || offer.inkWrites == null || offer.inkWrites.Length == 0)
+        { Write(lines, DimTag + "No Ink to write with.</color>"); return; }
+        Write(lines, DimTag + "Using</color> <b>" + NumTag + offer.inkName + "</color></b>");
 
         // THE PLAYER PICKS THE SLOT: one button per stat already written (its line, as the item card writes it), and one
         // for the next empty slot while the grade still has room.
@@ -519,6 +568,23 @@ public class CraftStationPanel : MonoBehaviour
         written = Mathf.Min(written, offer.inkSlots);
         int count = written + (written < offer.inkSlots ? 1 : 0);
         if (inkSlotPicked < 0 || inkSlotPicked >= count) inkSlotPicked = count - 1;
+
+        // WHAT THE INK WRITES, one stat a line, every number the server's — the "i"'s hover strip, the same one every hover uses. A stat already written in
+        // another slot cannot land again, so it is greyed; the one in the slot being replaced can.
+        sb.Clear().Append(offer.inkName).Append(" writes one of these, at random:");
+        int n = Mathf.Min(offer.inkWrites.Length, CraftingMath.All.Length);
+        for (int s = 0; s < n; s++)
+        {
+            var stat = CraftingMath.All[s];
+            bool taken = false;
+            for (int w = 0; w < written; w++) if (w != inkSlotPicked && inst.inkStats[w] == stat) { taken = true; break; }
+            sb.Append('\n');
+            if (taken) sb.Append(ItemTooltip.DimTag);
+            sb.Append(ItemTooltip.InkStatLine(stat, offer.inkWrites[s]));
+            if (taken) sb.Append("</color>");
+        }
+        inkTip = sb.ToString();
+        SetInkInfoShown(true);
         SetChipsShown(count);
         for (int i = 0; i < count; i++)
         {
@@ -623,6 +689,13 @@ public class CraftStationPanel : MonoBehaviour
         if (go.activeSelf != on) go.SetActive(on);
     }
 
+    void SetInkInfoShown(bool on)
+    {
+        if (inkInfo.activeSelf == on) return;
+        inkInfo.SetActive(on);
+        if (!on) ItemTooltip.HideTip();
+    }
+
     void SetChipsShown(int count)
     {
         bool any = count > 0;
@@ -676,11 +749,14 @@ public class CraftStationPanel : MonoBehaviour
                 break;
             case Page.Ink:
             {
-                int ink = BestOfKind(c, MaterialKind.Ink);
+                int ink = CraftStations.StrongestOfKind(c.Bag, MaterialKind.Ink);
                 if (ink < 0) return;
                 if (worn) me.AskToInkWorn(pickedWorn, itemId, ink, inkSlotPicked); else me.AskToInk(picked, itemId, ink, inkSlotPicked);
                 break;
             }
+            case Page.Slot:
+                if (worn) me.AskToSlotWorn(pickedWorn, itemId); else me.AskToSlot(picked, itemId);
+                break;
             case Page.Recycle:
                 if (worn) me.AskToRecycleWorn(pickedWorn, itemId); else me.AskToRecycle(picked, itemId);
                 break;
@@ -690,7 +766,7 @@ public class CraftStationPanel : MonoBehaviour
     void SaltToggled(bool on)
     {
         var c = Character.Instance;
-        saltPicked = on && c != null ? BestOfKind(c, MaterialKind.Salt) : -1;
+        saltPicked = on && c != null ? CraftStations.StrongestOfKind(c.Bag, MaterialKind.Salt) : -1;
         AskForOffer();
     }
 
@@ -747,18 +823,6 @@ public class CraftStationPanel : MonoBehaviour
         else if (picked >= 0) me.AskForOffer(picked, saltPicked);
     }
 
-    // The strongest Salt or Ink being carried, or -1 — what a quench puts in and what an Ink press writes with.
-    static int BestOfKind(Character c, MaterialKind kind)
-    {
-        int best = -1, bestTier = 0;
-        for (int i = 0; i < c.Bag.Count; i++)
-        {
-            var e = c.Bag[i];
-            if (e == null || e.def == null || e.def.materialKind != kind) continue;
-            if (e.def.materialStep > bestTier) { bestTier = e.def.materialStep; best = i; }
-        }
-        return best;
-    }
 
     // THE GRID'S BOXES: the pieces this station works on, the picked one lit, a worn one with its slot's word on top.
     sealed class PieceBoxes : IItemBoxOwner

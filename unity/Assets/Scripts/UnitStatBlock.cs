@@ -61,11 +61,10 @@ public class UnitStatBlock : MonoBehaviour
     /// <summary>The whole percentage lift on one stat: ring investment plus any live sub-stat buff or debuff — the
     /// mob-side twin of <c>Character.Lift</c>, so a window that raises a player's evasion raises a mob's by the same
     /// rule. Without this a sub-stat effect would work on the player and quietly do nothing to a mob.</summary>
-    float Lift(StatId ringNode, SubStat stat)
-    {
-        float sub = health != null && health.States != null ? health.States.SubStatBonus(stat) : 0f;
-        return RingAndMastery(ringNode) + sub;
-    }
+    float Lift(StatId ringNode, SubStat stat) => RingAndMastery(ringNode) + SubBonus(stat);
+
+    /// <summary>The live signed bonus a timed sub-stat effect is putting on <paramref name="stat"/>, 0 when none.</summary>
+    float SubBonus(SubStat stat) => health != null && health.States != null ? health.States.SubStatBonus(stat) : 0f;
 
     /// <summary>Ring investment plus weapon mastery on one ring stat — the mob-side twin of
     /// <c>Character.RingAndMastery</c>, read directly by attack speed and cast speed, whose sub-stat window is a
@@ -198,9 +197,12 @@ public class UnitStatBlock : MonoBehaviour
         var eb = Bonuses;
         var u = inputs.WithGear(eb);
 
-        health.maxHealth    = UnitStatMath.MaxHP(u, eb, Lift(StatId.HP, SubStat.MaxHP));
-        health.defense      = UnitStatMath.Defense(u, eb, Lift(StatId.Def, SubStat.Defense));
-        health.magicDefense = UnitStatMath.MagicDefense(u, eb, Lift(StatId.Def, SubStat.MagicDefense));
+        health.maxHealth    = UnitStatMath.MaxHP(u, eb, Lift(StatId.HP, SubStat.MaxHP))
+                              * CreatureKinds.HealthMultiplier(health.kind, inputs.level);
+        health.softDefense      = UnitStatMath.SoftDefense(u);
+        health.softMagicDefense = UnitStatMath.SoftMagicDefense(u);
+        health.hardDefenseTenths      = UnitStatMath.HardDefenseTenths(RingPercent(StatId.Def), eb.hardDefTenths, SubBonus(SubStat.Defense));
+        health.hardMagicDefenseTenths = UnitStatMath.HardDefenseTenths(RingPercent(StatId.Def), eb.hardMdefTenths, SubBonus(SubStat.MagicDefense));
         health.flee         = UnitStatMath.Flee(u, eb, Lift(StatId.Evasion, SubStat.Evasion));
         health.luk          = u.luk;   // pre-renewal crit shield — the attacker reads this off the target
         health.hpRegenPerSecond = UnitStatMath.HPRegenPerSecond(u, health.maxHealth);
@@ -209,7 +211,8 @@ public class UnitStatBlock : MonoBehaviour
         {
             ai.level        = inputs.level;
             var held        = Gear != null ? Gear.WeaponType : WeaponType.None;
-            ai.attack       = UnitStatMath.PhysicalAttack(held, u, eb, Lift(StatId.Atk, SubStat.Attack));
+            float kindAttack = CreatureKinds.AttackMultiplier(health.kind, inputs.level);
+            ai.attack       = Mathf.RoundToInt(UnitStatMath.PhysicalAttack(held, u, eb, Lift(StatId.Atk, SubStat.Attack)) * kindAttack);
             ai.swingsRanged = WeaponTypes.SwingsRanged(held, u.str, u.dex);
             ai.hit          = UnitStatMath.Hit(u, eb, Lift(StatId.Accuracy, SubStat.Accuracy));
             ai.critChance     = UnitStatMath.CritChance01(u, eb, Lift(StatId.Critical, SubStat.CritChance));
@@ -218,8 +221,9 @@ public class UnitStatBlock : MonoBehaviour
             // formula, cap included, so a creature's gear and agility speed its swings exactly as a player's do.
             ai.attackSpeedMult = UnitStatMath.AttackSpeedMult(u, eb, RingAndMastery(StatId.AttackSpeed),
                                                               health.States != null ? health.States.AttackSpeedBuffMult : 1f);
-            ai.magicAttack       = UnitStatMath.MagicAttack(u, eb, Lift(StatId.MAtk, SubStat.MagicAttack));
-            ai.magicDamageSpread = 1f - UnitStatMath.MinFraction(u.intel);
+            ai.magicAttack       = Mathf.RoundToInt(UnitStatMath.MagicAttack(u, eb, Lift(StatId.MAtk, SubStat.MagicAttack)) * kindAttack);
+            ai.magicDamageSpread = ai.magicAttack > 0
+                ? 1f - UnitStatMath.MinMagicAttack(ai.magicAttack, u.intel) / (float)ai.magicAttack : 0f;
             // Spread is DEX-driven for everyone: high DEX both lifts and STABILISES damage.
             ai.damageSpread = 1f - UnitStatMath.MinFraction(u.dex);
         }

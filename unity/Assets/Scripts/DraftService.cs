@@ -57,19 +57,22 @@ public static class DraftService
         return new Draft { isOpening = false, options = opts };
     }
 
-    /// <summary>SERVER: roll the wildcard — uniform over the 7 stats outside the Trio (doc §11 default —
-    /// distance-weighting is a possible later tuning dial).</summary>
-    public static StatId RollWildcard(StatId leader, Random rng)
+    /// <summary>SERVER: roll the wildcard — uniform over the 7 stats outside the Trio that still take a rank (a node
+    /// at <see cref="SkillRing.NodeCap"/> is left out). At most 3 nodes can be full, so the pool is never empty.</summary>
+    public static StatId RollWildcard(StatId leader, PassiveRanks ranks, Random rng)
     {
         rng = rng ?? shared;
         var left = SkillRing.LeftOf(leader);
         var right = SkillRing.RightOf(leader);
-        var pool = new List<StatId>(SkillRing.Count - 3);
+        pool.Clear();
         foreach (var stat in SkillRing.Ring)
-            if (stat != leader && stat != left && stat != right)
+            if (stat != leader && stat != left && stat != right && ranks.RanksIn(stat) < SkillRing.NodeCap)
                 pool.Add(stat);
-        return pool[rng.Next(pool.Count)];
+        return pool.Count > 0 ? pool[rng.Next(pool.Count)] : leader;
     }
+
+    // Reused by every wildcard roll — rolled on the server only, one pick at a time.
+    static readonly List<StatId> pool = new List<StatId>(SkillRing.Count);
 
     static readonly Random shared = new Random();
 }

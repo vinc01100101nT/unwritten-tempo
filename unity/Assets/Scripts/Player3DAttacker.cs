@@ -38,13 +38,14 @@ public class Player3DAttacker : MonoBehaviour
     public bool Swinging => swing != null;
 
     /// <summary>
-    /// Time-scale of the attack MOTION — 1 / attack-speed, so a faster ASPD shrinks every part of
+    /// Time-scale of the attack MOTION — the swing time now ÷ the swing time at speed 1 (ASPD cap and floor
+    /// included), so a faster ASPD shrinks every part of
     /// the swing (windup, slash FX, the held pose) the same way it shrinks the cooldown. &lt;1 means
     /// the animation plays quicker. The pose hold in <see cref="Player3DController"/> reads this too,
     /// so the whole attack stays in sync with the swing rate.
     /// </summary>
     public static float MotionScale =>
-        Character.Instance != null ? 1f / Mathf.Max(0.01f, Character.Instance.AttackSpeedMult) : 1f;
+        Character.Instance != null ? Character.Instance.SwingTime / Mathf.Max(0.01f, Character.Instance.BaseSwingTime) : 1f;
 
     /// <summary>How long one whole swing lasts (start → next swing can begin), scaled by attack-speed. The attack
     /// animation is sped to play fully within this window (see Character3DPose); the hit lands partway through at
@@ -126,10 +127,26 @@ public class Player3DAttacker : MonoBehaviour
     /// paced by its own dash rather than by attack speed.</para></summary>
     public void AnnounceAttackIntent(Health t)
     {
-        if (t == null || t.IsDead || swing != null || attemptOpen || Time.time < nextSwing) return;
+        if (t == null || t.IsDead || swing != null || Time.time < nextSwing) return;
+        TellTheServerOfTheAttack(t);
+        if (attemptOpen) return;
         attemptOpen = true;
         // The person at this keyboard — this component only ever exists on their own avatar.
         PassiveEvents.Fire(Character.Instance, SkillTrigger.OnBasicAttackStart, null, t.transform);
+    }
+
+    // When the server may next be told about this attack. The server raises "about to swing" on its own only when it
+    // accepts a swing, which needs the target in reach; a skill that answers that moment by closing the gap (Crossed
+    // Branches' lunge) needs it raised while still out of reach. So, while such a skill is ready and the target is
+    // not yet in reach, the server is told which target — once a swing interval, never per frame.
+    float nextIntentTold;
+
+    void TellTheServerOfTheAttack(Health t)
+    {
+        var me = Character.Instance;
+        if (me == null || !me.IsWatchedCopy || Time.time < nextIntentTold || InRange(t)) return;
+        if (!PassiveEvents.AnyReady(me, SkillTrigger.OnBasicAttackStart)) return;
+        if (GameNetwork.TellAttackIntent(t)) nextIntentTold = Time.time + SwingTime;
     }
 
     // WAS THE LAST SWING REFUSED FOR REACH. Remembered so the line below prints once when the target goes out of

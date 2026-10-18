@@ -25,7 +25,7 @@ MonoBehaviour:
   description: 'Go faster, fragile.
 
     +30% Attack Speed for 8 seconds, but you
-    take double damage for the first 3.'
+    lose 6% defence and magic defence for the first 3.'
   archetype: 3
   family: 0
   shape: 3
@@ -259,7 +259,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 1
+        value: 0.06
         useStacks: 0
         op: 0
         read: 0
@@ -345,7 +345,142 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      subStat: 19
+      subStat: 11
+      affinity: []
+      chanceAffinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+    - kind: 19
+      useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      element: 0
+      converts: 3
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      ailment: 2
+      seconds:
+        value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      magnitude:
+        value: 0.06
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      side: 0
+      subStat: 12
       affinity: []
       chanceAffinity: []
       durationAffinity: []

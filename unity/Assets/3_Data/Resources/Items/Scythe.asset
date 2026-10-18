@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 6304900973460265720, guid: d3ec39b8136b27645aab21470c9bec59, type: 3}
   element: 0
   category: 0
-  cardSlots: 2
   weight: 140
   value: 8
   undroppable: 0
   unsellable: 0
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 1
   materialKind: 0
   materialStep: 0
@@ -47,4 +56,6 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 49d119a83e396134fa07af4f5855130c, type: 3}
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: 'Only Morwen saw what the others missed: her curse on the dark never
+    took hold, because nothing was inside it, and Veyra''s petals had stopped falling.
+    Telling no one yet, she laid a second, slower curse on Veyra.'

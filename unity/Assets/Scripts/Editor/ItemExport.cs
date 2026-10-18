@@ -81,7 +81,7 @@ public static class ItemExport
                 reach = ReachText(it),
                 element = it.element.ToString(),
                 madeOf = it.madeOf == MaterialKind.None ? "" : it.madeOf.ToString(),
-                cardSlots = it.cardSlots,
+                cardSlots = CraftingMath.CardSlotCap(it.slot),
                 weight = it.weight,
                 sellsFor = (int)ShopMath.SalePay(it.value, 1),
                 materialKind = it.materialKind == MaterialKind.None ? "" : it.materialKind.ToString(),
@@ -89,7 +89,7 @@ public static class ItemExport
                 materialStep = it.materialStep,
                 mergesInto = it.mergesInto != null ? it.mergesInto.displayName : "",
                 // A piece of gear's rarity is its copy's, which the design alone does not have — so none here.
-                rarity = it.slot != EquipSlotType.None ? "" : Rarities.Label(Rarities.Of(it, null)),
+                rarity = it.slot != EquipSlotType.None ? "" : Rarities.Label(Rarities.Of(it)),
                 droppedBy = by,
             });
         }

@@ -15,13 +15,13 @@ public struct DerivedSnapshot
     public static bool Same(in DerivedSnapshot a, in DerivedSnapshot b) =>
         a.atkMin == b.atkMin && a.atkMax == b.atkMax && a.matkMin == b.matkMin && a.matkMax == b.matkMax &&
         a.meleeMin == b.meleeMin && a.meleeMax == b.meleeMax && a.rangedMin == b.rangedMin && a.rangedMax == b.rangedMax &&
-        a.def == b.def && a.mdef == b.mdef && a.hit == b.hit && a.flee == b.flee &&
+        a.def == b.def && a.mdef == b.mdef && a.hardDef == b.hardDef && a.hardMdef == b.hardMdef &&
+        a.guardHardDef == b.guardHardDef && a.aspd == b.aspd && a.hit == b.hit && a.flee == b.flee &&
         a.maxHP == b.maxHP && a.maxMP == b.maxMP && a.moveSpeed == b.moveSpeed &&
         a.barrierHP == b.barrierHP &&
         UnityEngine.Mathf.Approximately(a.critChance, b.critChance) && UnityEngine.Mathf.Approximately(a.critMult, b.critMult) &&
         UnityEngine.Mathf.Approximately(a.aspdMult, b.aspdMult) && UnityEngine.Mathf.Approximately(a.castTimeMult, b.castTimeMult) &&
         UnityEngine.Mathf.Approximately(a.swingsPerSecond, b.swingsPerSecond) &&
-        UnityEngine.Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
         UnityEngine.Mathf.Approximately(a.lifeStealPct, b.lifeStealPct) && UnityEngine.Mathf.Approximately(a.reflectPct, b.reflectPct) &&
         UnityEngine.Mathf.Approximately(a.manaLeechPct, b.manaLeechPct) &&
         UnityEngine.Mathf.Approximately(a.basicAttackRange, b.basicAttackRange);
@@ -30,16 +30,18 @@ public struct DerivedSnapshot
     public int meleeMin, meleeMax;     // what any non-ranged weapon, or bare hands, swings with
     public int rangedMin, rangedMax;   // what a ranged weapon swings with
     public int matkMin, matkMax;
-    public int def, mdef;
+    public int def, mdef;              // SOFT defence: the flat part, from VIT / INT and level
+    public int hardDef, hardMdef;      // HARD defence in tenths of a percent, already held inside the 90% ceiling
+    public int guardHardDef;           // tenths of hard defence a timed Defence effect is adding right now (0 at rest)
+    public int aspd;                   // Ragnarok ASPD of the weapon in hand, 0..190
     public int hit, flee;
     public int maxHP, maxMP;
     public int moveSpeed;
     public float critChance;   // 0..1
-    public float critMult;     // e.g. 1.4 = 140%
+    public float critMult;     // e.g. 2 = 200%
     public float aspdMult;     // >1 = faster
     public float swingsPerSecond;   // basic attacks a second with the weapon in hand — its own pace and aspdMult together
     public float castTimeMult; // the one cast-speed value: 1 = full wind-up, 0 = instant cast. LOWER is faster.
-    public float guardCutPct;  // 0..1 incoming-damage cut while Guard is up (a state; 0 at rest)
     public float lifeStealPct; // fraction of damage dealt returned as HP
     public float reflectPct;   // worn words + any timed reflect window
     public float manaLeechPct; // fraction of damage dealt returned as MP (a state; 0 at rest)

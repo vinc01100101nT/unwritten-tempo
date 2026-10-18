@@ -32,8 +32,8 @@ base. **Not yet play-tested.**
   rolled by the creature's kind (§4). There is no way to make a piece from materials.
 - **A new character starts wearing a Sword, a Chainmail and Iron Sabatons** — Raw, +0, Common, unrolled (§2), with
   no trademark and no word.
-- **Players make their gear worth more with materials.** A piece is worked where its material is worked: **metal
-  at a smith, cloth at a loom, leather at a tannery**. The actions below are the same at all three.
+- **Players make their gear worth more with materials.** Every piece — **metal, cloth or leather** — is worked
+  at the smith, with the actions below.
 - **The work happens at a station in town.** Never from the bag.
 - **There is no level requirement to wear gear.** Anyone can equip anything.
 - **Weapons and armour scale the same way**: what a piece is worth is its **base**, times its **roll** and its
@@ -130,7 +130,7 @@ A Raw piece caps mastery **below F**.
 
 **No Potential.** The folds are the budget, and they refill through work.
 
-**Recycle (take it apart).** At the station of its craft, any piece can be recycled: it is destroyed, and
+**Recycle (take it apart).** At the smith, any piece can be recycled: it is destroyed, and
 **half** of what it provably consumed comes back — for each rung it climbed, that grade's ten folds and one
 quench (priced at the grade it was made from, which the gate above makes provable); the folds standing on it now
 (at its own grade's price); and the Inks whose stats are written on it. That is Temper Dust, Quench Oil, Unsigned and
@@ -463,7 +463,7 @@ least one point first.
 | 1 | Piercing Gust, Bending Reed | — | 10 / 1 |
 | 3 | Rising Breeze | — | 10 |
 | 5 | Still Air | — | 5 |
-| 7 | Crossed Branches | Piercing Gust | 5 |
+| 7 | Crossed Branches | Piercing Gust | 1 |
 | 9 | Held Breath | — | 1 |
 | 11 | Eye of the Storm | Bending Reed | 5 |
 | 13 | Howling Wind | — | 1 |
@@ -483,8 +483,8 @@ least one point first.
 | 65 | Second Bloom | Thousand Petals | 5 |
 
 By grade: a Raw sword (cap 10) reaches six skills; F adds five; E adds four and the first ultimate; D three;
-C the second ultimate; B the third; only an A-grade sword reaches Second Bloom. The max levels add up to **129**
-(seven skills at 10, eleven at 5, four at 1) against at most **70** points, so a fully mastered swordsman still
+C the second ultimate; B the third; only an A-grade sword reaches Second Bloom. The max levels add up to **125**
+(seven skills at 10, ten at 5, five at 1) against at most **70** points, so a fully mastered swordsman still
 chooses. The other thirteen weapons get their trees when their pools are authored, by the rules in the `skill-tree`
 skill.
 
@@ -497,9 +497,8 @@ skill.
 - **Skill trees for the other thirteen weapons** — written when each pool is authored. Only the Sword's 22 skills
   carry a mastery level today, and only the sword's have trademark names; the other weapons roll no trademark
   until their pools exist.
-- **Which townspeople are stations** — Lastline has one of each, standing at the doors of the four houses around
-  the fountain: Gunnar the Smith, Odette the Weaver (loom), Rook the Tanner (tannery), beside Fenwick the Tool Dealer's
-  shop. They are rows of the townsfolk list (`WorldTownsfolk`), not objects in the scene. Which stations other towns get
+- **Which townspeople are stations** — Lastline has one, Gunnar the Smith, standing at a house door by the fountain
+  near Fenwick the Tool Dealer's shop. They are rows of the townsfolk list (`WorldTownsfolk`), not objects in the scene. Which stations other towns get
   is to be planned.
 - **Which weapon each creature carries, how much mastery it has in it, and which skills it buys** — to be planned.
 

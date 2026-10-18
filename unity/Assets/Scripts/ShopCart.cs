@@ -145,7 +145,7 @@ public static class ShopCart
         var owing = c.Quests.FirstRunOwing(e.def.id);
         if (owing != null) return "Your " + e.def.displayName + " is still needed for " + owing + " — finish it first.";
         plan.sells.Add(new SellLine { bagIndex = at, entry = e, count = line.count,
-                                      pay = ShopMath.SalePay(e.def.value, line.count) });
+                                      pay = ShopMath.SalePay(e.Value, line.count) });
         return null;
     }
 
@@ -173,8 +173,8 @@ public static class ShopCart
         for (int i = 0; i < plan.sells.Count; i++)
         {
             var s = plan.sells[i];
-            plan.selling += (long)s.entry.def.value * s.count;
-            plan.sellTax += ShopMath.TaxOn(s.entry.def.value, s.count);
+            plan.selling += (long)s.entry.Value * s.count;
+            plan.sellTax += ShopMath.TaxOn(s.entry.Value, s.count);
         }
         plan.tax = plan.buyTax + plan.sellTax;
         plan.net = plan.buying - plan.selling + plan.tax;

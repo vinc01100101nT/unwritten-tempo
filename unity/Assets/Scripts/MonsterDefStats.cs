@@ -12,7 +12,7 @@
 /// </summary>
 public static class MonsterDefStats
 {
-    public enum Stat { HP, Atk, Def, Flee }
+    public enum Stat { HP, Atk, Def, HardDef, Flee }
 
     // Scratch reused by every call: the Mob Table asks four times per row per draw and twice per comparison while
     // sorting, so nothing in here may allocate. Every caller runs on the main thread.
@@ -44,7 +44,7 @@ public static class MonsterDefStats
             // A creature wears what it was given at ITS OWN grade and folds, so the piece's attack or defence counts
             // here exactly as it will in the world.
             pieceScratch.quality = def.gearQuality;
-            pieceScratch.upgrade = UnityEngine.Mathf.Clamp(def.gearFolds, 0, CraftingMath.FoldCap(def.gearQuality));
+            pieceScratch.upgrade = UnityEngine.Mathf.Clamp(def.FileFolds, 0, CraftingMath.FoldCap(def.gearQuality));
             pieceScratch.Recompute();
             pieceScratch.AccumulateInto(ref gear);
         }
@@ -54,6 +54,11 @@ public static class MonsterDefStats
     }
 
     /// <summary><paramref name="which"/> of <paramref name="def"/>'s combat numbers, as it spawns.</summary>
+    /// <summary>A creature's defence as the sheet writes it: hard defence as a percentage, then soft — "6.0% + 12".</summary>
+    public static string DefenseLabel(MonsterDef def) =>
+        (Derived(def, Stat.HardDef) / 10f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "% + "
+        + Derived(def, Stat.Def);
+
     public static int Derived(MonsterDef def, Stat which)
     {
         Worn(def, out var gear, out var held);
@@ -68,9 +73,12 @@ public static class MonsterDefStats
         var u = def.StatInputs.WithGear(gear);
         switch (which)
         {
-            case Stat.HP:   return UnitStatMath.MaxHP(u, gear, Ring(StatId.HP));
-            case Stat.Atk:  return UnitStatMath.PhysicalAttack(held, u, gear, Ring(StatId.Atk));
-            case Stat.Def:  return UnitStatMath.Defense(u, gear, Ring(StatId.Def));
+            case Stat.HP:   return UnitStatMath.MaxHP(u, gear, Ring(StatId.HP)) * CreatureKinds.HealthMultiplier(def.kind, def.level);
+            case Stat.Atk:  return UnityEngine.Mathf.RoundToInt(UnitStatMath.PhysicalAttack(held, u, gear, Ring(StatId.Atk))
+                                                    * CreatureKinds.AttackMultiplier(def.kind, def.level));
+            case Stat.Def:  return UnitStatMath.SoftDefense(u);
+            case Stat.HardDef: return UnitStatMath.CappedHardDefenseTenths(UnitStatMath.HardDefenseTenths(
+                                   hasRanks ? ringScratch.Percent(StatId.Def) : 0f, gear.hardDefTenths, 0f));
             default:        return UnitStatMath.Flee(u, gear, Ring(StatId.Evasion));
         }
     }

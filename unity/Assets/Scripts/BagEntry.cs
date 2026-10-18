@@ -35,4 +35,8 @@ public class BagEntry
 
     /// <summary>Is this something that can be worn.</summary>
     public bool IsEquip => def != null && def.slot != EquipSlotType.None;
+
+    /// <summary>What one of this is worth to a shop: a piece of gear its own copy's worth (what recycling it gives back,
+    /// written by the server), anything else its item's value.</summary>
+    public int Value => instance != null ? instance.worth : def != null ? def.value : 0;
 }

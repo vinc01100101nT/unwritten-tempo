@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 0}
   element: 0
   category: 2
-  cardSlots: 0
   weight: 1
   value: 37500
   undroppable: 0
   unsellable: 0
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 0
   materialKind: 4
   materialStep: 2
@@ -41,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: It marks the page, faintly, and asks to be gone over twice.
+  description: Writes lightly, like your commitment to keeping a journal.

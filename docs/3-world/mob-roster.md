@@ -13,13 +13,16 @@ tags:
 
 Every creature in the game is one of three kinds: **normal**, **elite** or **shadow**. The kind decides what it
 wears, how many summons it may keep out, where it lives and what it drops. How strong it is still comes from its
-**level** and its stats through the same formulas a player's do — the kind never carries a stat multiplier.
+**level** and its stats through the same formulas a player's do, with one multiplier the kind carries: an elite has
+**30 times** the health, and a shadow **20 times**, of a normal creature with the same level, stats and gear,
+applied after everything else is worked out (decided 2026-10-17).
 
 **A creature's weapon mastery and skills live in the same store as a player's and follow the same rules** (decided
 2026-10-04): mastery in ONE weapon only, and only the skills it has bought with that mastery's points. Nothing is
 opened for free or drawn at random. Its weapon and its mastery in it are set per creature in the **Mob Table**
 (the weapon with the rest of its gear under ▸, the mastery in its own column) and put on it when it is made; **every creature's mastery is 0 today**. Nothing
-spends a creature's points yet, so **no creature casts a skill**, summoning included.
+spends a creature's points yet, so no creature casts a weapon skill. **Summoning is the one exception**: every elite
+and shadow holds the summon skill from birth, whatever weapon it wields or none (decided 2026-10-17).
 
 This is decided before the world shape on purpose: the world is laid out around the creatures' level ladder, and
 the ladder is set here.
@@ -40,7 +43,7 @@ map, and the map generator no longer puts any there.
 | Wears | a full set, **Raw to C**, its grade deciding the tier of what it drops, folded by how hard it is to find (Raw +0 on the newbie maps) | a full set, **D to B**, its grade deciding the tier of what it drops, folded by how few maps it lives on | a complete set at **A +9**, plus ring ranks |
 | Element level | **1** | **2** | **3** |
 | Weapon mastery | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today |
-| Summons, once it has bought the summon skill | nothing | normals | elites |
+| Summons | nothing | normals | elites |
 | Lives | every map it belongs in, from one end of the world to the other | the fields of its home biome near its level, and one on each dungeon's bottom floor | each at its own place, a special map away from where players level |
 | Comes back after | **5 seconds** plus up to 3 | **30 minutes to 3 hours** | **4 to 6 hours** |
 | Looks | flat | flat | a 3D character |
@@ -116,7 +119,7 @@ map, and the map generator no longer puts any there.
 - **Each elite has its own home biome, element and level** (8 to 99), and at least one elite calls each biome home;
   the table is [Creatures and Where They Live](biome-mob-families.md).
 - Whatever pieces are authored for them — **D** with a Rare material, **C** with an Epic one, **B** with a Legendary one (see Gear state) — and,
-  once they have bought the summon skill, they **summon normals**: the three nearest their level at or below it, from their own home
+  they **summon normals**: the three nearest their level at or below it, from their own home
   biome first.
 - **They drop ten times the Temper Dust and Quench Oil of a normal creature, and the rarer Inks and Salts** (see Drops).
 
@@ -205,7 +208,8 @@ map, and the map generator no longer puts any there.
 
 ## Summoning
 
-- **Summoning is a skill**, so a creature summons only once it has bought it — none has yet. It has a cooldown like
+- **Summoning is a skill that belongs to the kind, not to a weapon**: every elite and shadow holds it from birth,
+  whatever it wields, and no normal creature has it. It has a cooldown like
   any other, and the summoner uses it **every time it is ready**.
 - **Each summoner has a fixed maximum number of summons.** When it is at its maximum, it does not summon, even
   with the skill ready.

@@ -73,6 +73,9 @@ public class NetNpc : NetworkBehaviour
     /// F on is a copy, and a copy that did not know would open a conversation instead of the Keeper's window.</summary>
     [SyncVar] public bool keeper;
 
+    /// <summary>THE BOSS THIS PERSON SUMMONS, or empty — crosses for the same reason the Keeper flag does.</summary>
+    [SyncVar] public string summons = "";
+
     /// <summary>WHO THIS PERSON IS TO A QUEST — their stable id in the townsfolk list. It crosses so a player's machine
     /// can draw the quest mark over the right head and offer the right quest when F is pressed on them.</summary>
     [SyncVar] public string personId = "";
@@ -89,7 +92,7 @@ public class NetNpc : NetworkBehaviour
     /// <summary>The body this machine drew for this person, or null while it has none.</summary>
     public GameObject View => view;
 
-    /// <summary>WHAT THIS PERSON WORKS AT, as the server says — a smith, a loom, a tannery, or nothing. It has to
+    /// <summary>WHAT THIS PERSON WORKS AT, as the server says — a smith, or nothing. It has to
     /// cross, because the body a player presses F on is a copy this machine built, and a copy that did not know
     /// would open a conversation with a smith. Written when the shell is bound and whenever the role changes.</summary>
     [SyncVar(hook = nameof(OnStationChanged))] public int stationKind;
@@ -177,6 +180,7 @@ public class NetNpc : NetworkBehaviour
         personDescription = serverBrain != null ? serverBrain.Description ?? "" : "";
         shopId = serverBrain != null ? serverBrain.Shop ?? "" : "";
         keeper = serverBrain != null && serverBrain.Keeper;
+        summons = serverBrain != null ? serverBrain.Summons ?? "" : "";
         personId = serverBrain != null ? serverBrain.PersonId ?? "" : "";
         hair = serverBrain != null ? serverBrain.Hair ?? "" : "";
         headgear = serverBrain != null ? serverBrain.Headgear ?? "" : "";
@@ -375,6 +379,7 @@ public class NetNpc : NetworkBehaviour
             brain.Description = personDescription;
             brain.Shop = shopId;
             brain.Keeper = keeper;
+            brain.Summons = summons;
             brain.PersonId = personId;
         }
 

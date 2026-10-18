@@ -89,6 +89,11 @@ public class MonsterAI3D : MonoBehaviour
     Vector3 home;
     float nextWander;
 
+    /// <summary>How far this creature may be led from <see cref="Home"/> before it gives up the chase, walks back and
+    /// heals to full. 0 = no tether (every ordinary creature). A summoned boss is tethered to where it appeared.</summary>
+    [System.NonSerialized] public float tetherRadius;
+    bool returningHome;
+
     // The world's floor, asked for once and shared. LayerMask.GetMask is a string lookup; a creature must not pay
     // for it every time it decides where to stroll.
     static int wanderGroundMask = -1;
@@ -378,7 +383,32 @@ public class MonsterAI3D : MonoBehaviour
     }
     // A swing still on its way in dies with the life that began it — a body switched off for death or the pool must not
     // land it when it comes back.
-    void OnDisable() { Active.Remove(this); Unfile(); swingAt = null; offSwingAt = null; ownMoveSpeed = -1f; }
+    void OnDisable() { Active.Remove(this); Unfile(); Engage(null); swingAt = null; offSwingAt = null; ownMoveSpeed = -1f; }
+
+    // HOW MANY CREATURES ARE ON EACH UNIT — Ragnarok cuts a unit's FLEE for every attacker past the second. Counted as
+    // each creature starts or stops chasing somebody, so a blow reads one number instead of walking every creature.
+    static readonly System.Collections.Generic.Dictionary<ICombatUnit, int> attackersOn =
+        new System.Collections.Generic.Dictionary<ICombatUnit, int>();
+    ICombatUnit engagedOn;
+
+    /// <summary>How many creatures are chasing <paramref name="unit"/> right now.</summary>
+    public static int AttackersOn(ICombatUnit unit) =>
+        unit != null && attackersOn.TryGetValue(unit, out int n) ? n : 0;
+
+    void Engage(ICombatUnit target)
+    {
+        if (ReferenceEquals(engagedOn, target)) return;
+        // only the server counts: a watching machine never rolls a hit
+        if (target != null && GameNetwork.TheWorldIsElsewhere) return;
+        if (engagedOn != null && attackersOn.TryGetValue(engagedOn, out int n))
+        {
+            // server-math: counted where blows are rolled, the server; a watching machine returned above
+            if (n <= 1) attackersOn.Remove(engagedOn); else attackersOn[engagedOn] = n - 1;
+        }
+        engagedOn = target;
+        // server-math: the same server-only count
+        if (target != null) attackersOn[target] = AttackersOn(target) + 1;
+    }
 
     // ITS OWN MOVEMENT SPEED, from its catalog entry, asked once per life: a body is used again for the next life, and
     // the entry may have been edited in between. A creature with no entry (a hand-placed one) travels at the shared pace.
@@ -420,7 +450,7 @@ public class MonsterAI3D : MonoBehaviour
                     int level = Health.Level;
                     Rewards.PayKill(Health, CreatureKinds.KillExperience(Health.kind, level, file != null ? file.level : level,
                                                                          file != null ? file.gearQuality : Quality.Raw,
-                                                                         file != null ? file.gearFolds : 0));
+                                                                         file != null ? file.FileFolds : 0));
                 }
             });
 
@@ -566,6 +596,21 @@ public class MonsterAI3D : MonoBehaviour
         if (Taunted && playerAlive) chasing = true;   // taunt overrides leash — locked onto the player
         else if (chasing && toPlayerSqr > leashRadius * leashRadius) chasing = false;
         else if (!chasing && toPlayerSqr <= NoticeSqr()) chasing = true;
+        // TETHERED: led too far from home, it drops everything, walks back and heals once there — so a summoned boss
+        // can never be dragged into a town square.
+        if (tetherRadius > 0f && Health != null && !Health.IsWatchedCopy)
+        {
+            float fromHomeSqr = PlanarSqr(pos, home);
+            if (!returningHome && fromHomeSqr > tetherRadius * tetherRadius) { returningHome = true; nextWander = 0f; }
+            if (returningHome)
+            {
+                chasing = false;
+                float near = wanderRadius + 1f;
+                if (fromHomeSqr <= near * near) { returningHome = false; Health.RefillToMax(); }
+            }
+        }
+
+        Engage(chasing && playerAlive ? Prey : null);
 
         // THE TIME IT SPENDS AFTER SOMEBODY counts for them when it dies (KillLedger), from the moment it gives chase:
         // holding a creature's attention is work, whether or not it ever lands a blow.

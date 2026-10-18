@@ -80,6 +80,7 @@ public class SkillEffectCatalogWindow : EditorWindow
         [SkillEffectKind.Knockback]     = E("mobs", "no", "shove_speed, duration", "duration only", "MonsterAI3D.Knockback", "Shoves the mob AWAY from the caster (speed = raw magnitude)."),
         [SkillEffectKind.Pull]          = E("mobs", "no", "shove_speed, duration", "duration only", "MonsterAI3D.Knockback", "Drags the mob TOWARD the caster (mirrored origin)."),
         [SkillEffectKind.Shield]        = E("self", "no", "shield_amount, duration", "shield_amount, duration", "Character.BeginShield", "NEW. A finite HP barrier that soaks HITS until drained; DoT bypasses it (like Guard)."),
+        [SkillEffectKind.Charges]       = E("self", "no", "duration, charges (stacks-per-apply)", "duration only", "UnitStates.BeginCharges", "Charges that change no stat; another skill's trigger spends them through its stack gate."),
         [SkillEffectKind.Parry]         = E("self", "no", "duration, charges (stacks-per-apply)", "duration only", "Character.BeginParry", "NEW. Charges that ERASE one incoming hit each (0 damage, pre-defence) and are spent by it — not a % cut like Guard. Binary, so no magnitude. Fires OnParry."),
     };
     static Eff E(string target, string dmg, string channels, string scales, string sink, string details)

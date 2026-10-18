@@ -212,7 +212,11 @@ public class PathAgent3D : MonoBehaviour
                 Vector3 g = toDest / left;
                 Facing = Facing3D.FromWorldDir(g);
                 Heading = new Vector2(g.x, g.z);
-                cc.Move((g * GlideSpeed(left) + Vector3.down * gravity) * Time.deltaTime);
+                float step = GlideSpeed(left) * Time.deltaTime;
+                cc.Move(g * step + Vector3.down * gravity * Time.deltaTime);
+                // A GLIDE THAT HITS SOMETHING STOPS THERE (GlideEase.Blocked) — never carried on, never sent back.
+                Vector3 after = glideDest - transform.position; after.y = 0f;
+                if (GlideEase.Blocked(left, after.magnitude, step)) { gliding = false; Moving = false; GlideFaceAt = null; return; }
                 Moving = true;
                 return;
             }

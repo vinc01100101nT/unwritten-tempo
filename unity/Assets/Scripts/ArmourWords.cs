@@ -46,9 +46,11 @@ public static class ArmourWords
 
     // What one word is worth, by the piece's grade (Raw, F, E, D, C, B, A) — first guesses, to be tuned in play. Sized
     // for ONE piece, since a word can never appear twice on a character. Percentages are whole percent (8 = 8%).
-    static readonly float[] Small      = { 1f, 2f, 3f, 4f, 5f, 6.5f, 8f };       // damage cut, damage up
+    static readonly float[] Small      = { 1f, 2f, 3f, 4f, 5f, 6.5f, 8f };       // damage up
+    // hard defence points (Bulwark) — the armour words' 6-point share of the 90% hard-defence budget
+    static readonly float[] Bulwark    = { 1f, 1.5f, 2f, 3f, 4f, 5f, 6f };
     static readonly float[] Leech      = { 1f, 1.5f, 2f, 2.5f, 3f, 4f, 5f };     // life steal
-    static readonly float[] CritShield = { 0.9f, 1.8f, 2.7f, 3.6f, 4.5f, 6f, 7.5f }; // multiples of LUK's 0.3% each
+    static readonly float[] CritShield = { 0.9f, 1.8f, 2.7f, 3.6f, 4.5f, 6f, 7.5f }; // whole percent off an attacker's crit chance
     static readonly float[] Shorter    = { 5f, 8f, 11f, 14f, 17f, 21f, 25f };    // disables shorter, sprint longer
     static readonly float[] Ward       = { 3f, 5f, 7f, 9f, 11f, 13f, 15f };      // one element's damage cut
     static readonly float[] ManaPerSec = { 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f, 2.5f };
@@ -64,7 +66,7 @@ public static class ArmourWords
             case ArmourWord.Ironblood:  return CritShield[i];
             case ArmourWord.Steadfast:  return Shorter[i];
             case ArmourWord.Wellspring: return ManaPerSec[i];
-            case ArmourWord.Bulwark:    return Small[i];
+            case ArmourWord.Bulwark:    return Bulwark[i];
             case ArmourWord.Sanguine:   return Leech[i];
             case ArmourWord.Fierce:     return Small[i];
             case ArmourWord.Emberward:
@@ -86,7 +88,12 @@ public static class ArmourWords
             case ArmourWord.Ironblood:  eb.wordCritShieldPercent += amount; break;
             case ArmourWord.Steadfast:  eb.wordDisableCutPercent += amount; break;
             case ArmourWord.Wellspring: eb.wordMPRegen += amount; break;
-            case ArmourWord.Bulwark:    eb.wordDamageCutPercent += amount; break;
+            case ArmourWord.Bulwark:
+                // hard defence, physical and magic alike: whole points in, tenths of a percent stored
+                int tenths = Mathf.RoundToInt(amount * 10f);
+                eb.hardDefTenths += tenths;
+                eb.hardMdefTenths += tenths;
+                break;
             case ArmourWord.Sanguine:   eb.wordLifeStealPercent += amount; break;
             case ArmourWord.Fierce:     eb.wordDamagePercent += amount; break;
             case ArmourWord.Emberward:  eb.wardFirePercent += amount; break;
@@ -106,7 +113,6 @@ public static class ArmourWords
     public static void FoldIntoSubStats(in EquipBonuses eb, float[] table)
     {
         table[(int)SubStat.Damage]           += eb.wordDamagePercent / 100f;
-        table[(int)SubStat.DamageReduction]  += eb.wordDamageCutPercent / 100f;
         table[(int)SubStat.LifeSteal]        += eb.wordLifeStealPercent / 100f;
         table[(int)SubStat.MPRegen]          += eb.wordMPRegen;
         table[(int)SubStat.HPRegen]          += eb.wordHPRegen;

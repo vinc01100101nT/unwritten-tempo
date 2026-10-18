@@ -437,8 +437,6 @@ public static class RigBuilder25D
         // A MIRROR of the creature's catalog entry, which owns these three. MobSpawner re-reads them off the entry as
         // each creature is made, so a prefab baked before an edit corrects itself rather than serving a stale grade.
         equip.gearQuality = arc.gearQuality;
-        equip.gearFolds = arc.gearFolds;
-        equip.gearInkTier = arc.gearInkTier;
         var block = go.AddComponent<UnitStatBlock>();
         block.inputs = arc.stats.level > 0 ? arc.stats : UnitStatInputs.Default(1);
         block.ringRankStats  = arc.ringRankStats  ?? System.Array.Empty<StatId>();

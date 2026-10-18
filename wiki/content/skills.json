@@ -41,7 +41,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**You cannot have everything.** A weapon's mastery stops at **70**, so you get at most 70 points for it — and the sword's skills can take **129** levels between them. So two people holding the same sword need not play alike at all: they have the skills they each chose. Every skill in a weapon's pool reinforces that weapon's identity, so however far you take it, it still plays like that weapon."
+      "text": "**You cannot have everything.** A weapon's mastery stops at **70**, so you get at most 70 points for it — and the sword's skills can take **125** levels between them. So two people holding the same sword need not play alike at all: they have the skills they each chose. Every skill in a weapon's pool reinforces that weapon's identity, so however far you take it, it still plays like that weapon."
     },
     {
       "type": "heading",
@@ -117,7 +117,7 @@
         "**Damage** — direct harm. A multi-hit strike splits one total across its hits.",
         "**Heal** — restore health now.",
         "**Shield** — raise an absorbing barrier that soaks a set amount of damage, then lapses.",
-        "**Raise a stat / lower a stat** — the workhorse. One effect moves one number on the sheet for a while: your damage, attack speed, cast speed, move speed, health or mana regeneration, accuracy, evasion, attack, defense, crit, max health or mana, life steal, mana leech, reflect, or how much damage you take. Everything that used to be a separate Haste, Guard, Regen or Buff is this one effect now.",
+        "**Raise a stat / lower a stat** — the workhorse. One effect moves one number on the sheet for a while: your damage, attack speed, cast speed, move speed, health or mana regeneration, accuracy, evasion, attack, defense, crit, max health or mana, life steal, mana leech or reflect. Everything that used to be a separate Haste, Guard, Regen or Buff is this one effect now.",
         "**Status ailments** — Burn, Poison, and Bleed (damage over time), plus Stun, Freeze, and Silence.",
         "**Parry charges** — each charge erases one incoming hit outright, then is spent.",
         "**Brace charges** — each charge holds back one incoming hit and banks the damage instead; the whole debt lands when the window ends.",

@@ -56,6 +56,29 @@ public static class CreatureKinds
         }
     }
 
+    /// <summary>The lowest and highest level a shadow stands at; a shadow's toughness climbs evenly between them.</summary>
+    public const int LowestShadowLevel = 105, HighestShadowLevel = 170;
+    /// <summary>A shadow's health multiple at the lowest and the highest shadow level.</summary>
+    public const int LeastShadowHealth = 90, MostShadowHealth = 150;
+    public const int EliteHealth = 30;
+
+    /// <summary>How many times the health of a normal creature with the same level, stats and gear this kind has,
+    /// applied after everything else is worked out: 30 for an elite (decided 2026-10-17); a shadow ×90 at level 105
+    /// up to ×150 at level 170, evenly by level and held inside that range (decided 2026-10-18).</summary>
+    public static int HealthMultiplier(CreatureKind k, int level)
+    {
+        if (k == CreatureKind.Elite) return EliteHealth;
+        if (k != CreatureKind.Shadow) return 1;
+        float t = Mathf.Clamp01((level - LowestShadowLevel) / (float)(HighestShadowLevel - LowestShadowLevel));
+        return Mathf.FloorToInt(LeastShadowHealth + (MostShadowHealth - LeastShadowHealth) * t + 0.5f);
+    }
+
+    /// <summary>How many times harder this kind hits than a normal creature of the same level, stats and gear: the cube
+    /// root of its health multiple, as Ragnarok's bosses do (an elite about 3.1×, a shadow 4.5× to 5.3×). Applied to
+    /// attack and magic attack only; every other stat is the same as a normal creature's.</summary>
+    public static float AttackMultiplier(CreatureKind k, int level) =>
+        k == CreatureKind.Normal ? 1f : Mathf.Pow(HealthMultiplier(k, level), 1f / 3f);
+
     /// <summary>How many kills of a normal creature of the same level one kill of this kind is worth: 10 for an elite,
     /// 20 for a shadow (decided 2026-09-30 — Ragnarok's bosses pay 5 to 10 times a normal creature of their level).</summary>
     public static int ExperienceMultiplier(CreatureKind k) =>
@@ -77,7 +100,7 @@ public static class CreatureKinds
 
     /// <summary>The experience a kill of <paramref name="def"/> pays as it spawns.</summary>
     public static int KillExperience(MonsterDef def)
-        => def != null ? KillExperience(def.kind, def.level, def.level, def.gearQuality, def.gearFolds) : 0;
+        => def != null ? KillExperience(def.kind, def.level, def.level, def.gearQuality, def.FileFolds) : 0;
 
     /// <summary>A shadow is a 3D character; the other two kinds are flat.</summary>
     public static bool Is3D(CreatureKind k) => k == CreatureKind.Shadow;

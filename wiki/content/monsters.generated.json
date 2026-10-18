@@ -13,7 +13,7 @@
             "gear": "Raw +0",
             "level": 1,
             "elementLevel": 1,
-            "hp": 189,
+            "hp": 295,
             "atk": 86,
             "def": 4,
             "flee": 4,
@@ -24,6 +24,7 @@
             "intel": 3,
             "dex": 5,
             "luk": 3,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild01",
@@ -54,7 +55,7 @@
             "gear": "Raw +0",
             "level": 2,
             "elementLevel": 1,
-            "hp": 189,
+            "hp": 308,
             "atk": 101,
             "def": 4,
             "flee": 11,
@@ -65,6 +66,7 @@
             "intel": 3,
             "dex": 3,
             "luk": 5,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild01",
@@ -95,7 +97,7 @@
             "gear": "Raw +0",
             "level": 3,
             "elementLevel": 1,
-            "hp": 189,
+            "hp": 319,
             "atk": 72,
             "def": 4,
             "flee": 16,
@@ -106,6 +108,7 @@
             "intel": 3,
             "dex": 10,
             "luk": 3,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild01",
@@ -151,9 +154,9 @@
             "gear": "Raw +0",
             "level": 4,
             "elementLevel": 1,
-            "hp": 275,
+            "hp": 418,
             "atk": 68,
-            "def": 15,
+            "def": 5,
             "flee": 18,
             "xp": 5,
             "str": 8,
@@ -162,6 +165,7 @@
             "intel": 3,
             "dex": 6,
             "luk": 3,
+            "hardDef": 0.30000001192092898,
             "homes": [
                 {
                     "map": "lst_fild01",
@@ -192,22 +196,23 @@
             "element": "Earth",
             "size": "Medium",
             "biome": "Forest",
-            "drops": "Capling Spore 50%, Temper Dust 90%, Quench Oil 9%, Sniper 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Capling Spore 50%, Temper Dust 60%, Quench Oil 6%, Sniper 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Sniper",
-            "gear": "Raw +10",
+            "gear": "Raw +0",
             "level": 5,
             "elementLevel": 1,
-            "hp": 195,
-            "atk": 154,
+            "hp": 350,
+            "atk": 87,
             "def": 6,
             "flee": 10,
-            "xp": 14,
+            "xp": 9,
             "str": 4,
             "agi": 4,
             "vit": 3,
             "intel": 11,
             "dex": 8,
             "luk": 6,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "olk_fild01",
@@ -228,7 +233,7 @@
             "gear": "Raw +0",
             "level": 6,
             "elementLevel": 1,
-            "hp": 213,
+            "hp": 392,
             "atk": 85,
             "def": 8,
             "flee": 20,
@@ -239,6 +244,7 @@
             "intel": 4,
             "dex": 6,
             "luk": 4,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild01",
@@ -274,22 +280,23 @@
             "element": "Neutral",
             "size": "Small",
             "biome": "Highland",
-            "drops": "Blinkbat Eye 2%, Temper Dust 100% ×1–2, Quench Oil 12%, Katar 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
+            "drops": "Blinkbat Eye 2%, Temper Dust 60%, Quench Oil 6%, Katar 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
             "weapon": "Katar",
-            "gear": "E +7",
+            "gear": "Raw +0",
             "level": 8,
             "elementLevel": 1,
-            "hp": 218,
-            "atk": 332,
+            "hp": 421,
+            "atk": 62,
             "def": 9,
-            "flee": 71,
-            "xp": 47,
+            "flee": 29,
+            "xp": 23,
             "str": 10,
             "agi": 10,
             "vit": 4,
             "intel": 4,
             "dex": 4,
             "luk": 10,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "olk_fild01",
@@ -319,59 +326,29 @@
             ]
         },
         {
-            "id": "mob.gloop-king",
-            "name": "Gloop King",
-            "kind": "Elite",
-            "element": "Neutral",
-            "size": "Large",
-            "biome": "Grassland",
-            "drops": "Gloop King's Eye 50%, Temper Dust 100% ×17–18, Quench Oil 100% ×1–2, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Hard Bread 50%",
-            "weapon": "Scythe",
-            "gear": "C +9",
-            "level": 8,
-            "elementLevel": 2,
-            "hp": 242,
-            "atk": 21,
-            "def": 15,
-            "flee": 12,
-            "xp": 670,
-            "str": 7,
-            "agi": 4,
-            "vit": 10,
-            "intel": 12,
-            "dex": 4,
-            "luk": 4,
-            "homes": [
-                {
-                    "map": "lst_fild04",
-                    "name": "Lastline Field 4",
-                    "count": 1
-                }
-            ]
-        },
-        {
             "id": "mob.mossnail",
             "name": "Mossnail",
             "kind": "Normal",
             "element": "Earth",
             "size": "Small",
             "biome": "Forest",
-            "drops": "Mossnail Shell 50%, Temper Dust 90%, Quench Oil 9%, Staff 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Mossnail Shell 50%, Temper Dust 60%, Quench Oil 6%, Staff 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Staff",
-            "gear": "Raw +10",
+            "gear": "Raw +0",
             "level": 10,
             "elementLevel": 1,
-            "hp": 415,
+            "hp": 582,
             "atk": 23,
-            "def": 32,
+            "def": 12,
             "flee": 14,
-            "xp": 57,
+            "xp": 38,
             "str": 5,
             "agi": 4,
             "vit": 8,
             "intel": 15,
             "dex": 8,
             "luk": 4,
+            "hardDef": 0.30000001192092898,
             "homes": [
                 {
                     "map": "olk_fild01",
@@ -407,22 +384,23 @@
             "element": "Earth",
             "size": "Small",
             "biome": "Highland",
-            "drops": "Tarantix Leg 50%, Temper Dust 66%, Quench Oil 7%, Fist 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Tarantix Leg 50%, Temper Dust 60%, Quench Oil 6%, Fist 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Fist",
-            "gear": "Raw +2",
+            "gear": "Raw +0",
             "level": 11,
             "elementLevel": 1,
-            "hp": 242,
-            "atk": 93,
+            "hp": 495,
+            "atk": 84,
             "def": 12,
-            "flee": 28,
-            "xp": 52,
+            "flee": 26,
+            "xp": 47,
             "str": 13,
             "agi": 9,
             "vit": 5,
             "intel": 8,
             "dex": 8,
             "luk": 5,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "olk_dun01",
@@ -463,22 +441,23 @@
             "element": "Neutral",
             "size": "Small",
             "biome": "Forest",
-            "drops": "Hootie Feather 50%, Temper Dust 84%, Quench Oil 8%, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
+            "drops": "Hootie Feather 50%, Temper Dust 60%, Quench Oil 6%, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
             "weapon": "Dagger",
-            "gear": "Raw +8",
+            "gear": "Raw +0",
             "level": 13,
             "elementLevel": 1,
-            "hp": 255,
-            "atk": 127,
+            "hp": 539,
+            "atk": 87,
             "def": 14,
-            "flee": 43,
-            "xp": 95,
+            "flee": 38,
+            "xp": 68,
             "str": 12,
             "agi": 15,
             "vit": 5,
             "intel": 5,
             "dex": 9,
             "luk": 5,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild02",
@@ -508,64 +487,29 @@
             ]
         },
         {
-            "id": "mob.oculord",
-            "name": "Oculord",
-            "kind": "Elite",
-            "element": "Earth",
-            "size": "Large",
-            "biome": "Highland",
-            "drops": "Oculord Iris 100% in 2 piles, Temper Dust 100% ×15–16, Quench Oil 100% ×1–2, Bow 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
-            "weapon": "Bow",
-            "gear": "D +10",
-            "level": 14,
-            "elementLevel": 2,
-            "hp": 262,
-            "atk": 977,
-            "def": 15,
-            "flee": 32,
-            "xp": 2100,
-            "str": 5,
-            "agi": 13,
-            "vit": 5,
-            "intel": 5,
-            "dex": 18,
-            "luk": 5,
-            "homes": [
-                {
-                    "map": "olk_dun02",
-                    "name": "Old Oak Dungeon 2",
-                    "count": 1
-                },
-                {
-                    "map": "gmr_fild01",
-                    "name": "Gemmara Field 1",
-                    "count": 1
-                }
-            ]
-        },
-        {
             "id": "mob.rascal",
             "name": "Rascal",
             "kind": "Normal",
             "element": "Neutral",
             "size": "Small",
             "biome": "Forest",
-            "drops": "Rascal Tail 50%, Temper Dust 66%, Quench Oil 7%, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
+            "drops": "Rascal Tail 50%, Temper Dust 60%, Quench Oil 6%, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
             "weapon": "Spear",
-            "gear": "Raw +2",
+            "gear": "Raw +0",
             "level": 14,
             "elementLevel": 1,
-            "hp": 300,
-            "atk": 122,
+            "hp": 643,
+            "atk": 109,
             "def": 22,
-            "flee": 27,
-            "xp": 88,
+            "flee": 25,
+            "xp": 80,
             "str": 13,
             "agi": 5,
             "vit": 13,
             "intel": 5,
             "dex": 12,
             "luk": 5,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild02",
@@ -600,79 +544,29 @@
             ]
         },
         {
-            "id": "mob.autumn-stalk",
-            "name": "Autumn Stalk",
-            "kind": "Elite",
-            "element": "Earth",
-            "size": "Large",
-            "biome": "Forest",
-            "drops": "Autumn Stalk Seed 10%, Temper Dust 100% ×37–38, Quench Oil 100% ×3–4, Axe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
-            "weapon": "Axe",
-            "gear": "B +8",
-            "level": 15,
-            "elementLevel": 2,
-            "hp": 273,
-            "atk": 1355,
-            "def": 17,
-            "flee": 34,
-            "xp": 2960,
-            "str": 16,
-            "agi": 13,
-            "vit": 6,
-            "intel": 5,
-            "dex": 5,
-            "luk": 10,
-            "homes": [
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "hrw_fild01",
-                    "name": "Harrowen Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "hrw_fild02",
-                    "name": "Harrowen Field 2",
-                    "count": 1
-                }
-            ]
-        },
-        {
             "id": "mob.kappi",
             "name": "Kappi",
             "kind": "Normal",
             "element": "Water",
             "size": "Medium",
             "biome": "Coast",
-            "drops": "Kappi Beak 10%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 22%, Scythe 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Kappi Beak 10%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Scythe 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Scythe",
-            "gear": "F +9",
+            "gear": "Raw +0",
             "level": 15,
             "elementLevel": 1,
-            "hp": 707,
+            "hp": 751,
             "atk": 35,
-            "def": 73,
+            "def": 23,
             "flee": 22,
-            "xp": 170,
+            "xp": 94,
             "str": 10,
             "agi": 6,
             "vit": 13,
             "intel": 16,
             "dex": 5,
             "luk": 5,
+            "hardDef": 0.30000001192092898,
             "homes": [
                 {
                     "map": "plv_fild01",
@@ -693,22 +587,23 @@
             "element": "Earth",
             "size": "Medium",
             "biome": "Forest",
-            "drops": "Shootling Sprout 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 17%, Sniper 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Shootling Sprout 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Sniper 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Sniper",
-            "gear": "Raw +8",
+            "gear": "Raw +0",
             "level": 16,
             "elementLevel": 1,
-            "hp": 280,
-            "atk": 163,
+            "hp": 616,
+            "atk": 109,
             "def": 18,
             "flee": 24,
-            "xp": 153,
+            "xp": 109,
             "str": 6,
             "agi": 6,
             "vit": 6,
             "intel": 17,
             "dex": 13,
             "luk": 10,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild02",
@@ -734,22 +629,23 @@
             "element": "Water",
             "size": "Small",
             "biome": "Coast",
-            "drops": "Gillie Fin 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 18%, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Gillie Fin 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Spear",
-            "gear": "Raw +10",
+            "gear": "Raw +0",
             "level": 17,
             "elementLevel": 1,
-            "hp": 328,
-            "atk": 181,
+            "hp": 730,
+            "atk": 114,
             "def": 25,
-            "flee": 34,
-            "xp": 189,
+            "flee": 29,
+            "xp": 126,
             "str": 14,
             "agi": 6,
             "vit": 14,
             "intel": 6,
             "dex": 14,
             "luk": 6,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "plv_fild01",
@@ -770,22 +666,23 @@
             "element": "Water",
             "size": "Small",
             "biome": "Coast",
-            "drops": "Shellby Spiral 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 18%, Shuriken 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Shellby Spiral 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Shuriken 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Shuriken",
-            "gear": "Raw +10",
+            "gear": "Raw +0",
             "level": 18,
             "elementLevel": 1,
-            "hp": 487,
-            "atk": 147,
-            "def": 45,
+            "hp": 803,
+            "atk": 97,
+            "def": 25,
             "flee": 38,
-            "xp": 216,
+            "xp": 144,
             "str": 18,
             "agi": 15,
             "vit": 11,
             "intel": 6,
             "dex": 6,
             "luk": 6,
+            "hardDef": 0.30000001192092898,
             "homes": [
                 {
                     "map": "plv_fild01",
@@ -806,22 +703,23 @@
             "element": "Neutral",
             "size": "Small",
             "biome": "Highland",
-            "drops": "Webber Spinneret 0.1%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 34%, Wand 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
+            "drops": "Webber Spinneret 0.1%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Wand 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
             "weapon": "Wand",
-            "gear": "C +8",
+            "gear": "Raw +0",
             "level": 19,
             "elementLevel": 1,
-            "hp": 348,
+            "hp": 793,
             "atk": 35,
             "def": 28,
-            "flee": 157,
-            "xp": 459,
+            "flee": 32,
+            "xp": 164,
             "str": 7,
             "agi": 7,
             "vit": 15,
             "intel": 18,
             "dex": 11,
             "luk": 7,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "olk_dun02",
@@ -877,22 +775,23 @@
             "element": "Water",
             "size": "Small",
             "biome": "Coast",
-            "drops": "Newtie Tail 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 17%, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Newtie Tail 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Axe",
-            "gear": "Raw +8",
+            "gear": "Raw +0",
             "level": 20,
             "elementLevel": 1,
-            "hp": 312,
-            "atk": 118,
+            "hp": 718,
+            "atk": 89,
             "def": 22,
-            "flee": 51,
-            "xp": 259,
+            "flee": 46,
+            "xp": 185,
             "str": 19,
             "agi": 15,
             "vit": 7,
             "intel": 7,
             "dex": 7,
             "luk": 12,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "plv_fild01",
@@ -913,22 +812,23 @@
             "element": "Neutral",
             "size": "Medium",
             "biome": "Forest",
-            "drops": "Pando Fur 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 17%, Warhammer 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
+            "drops": "Pando Fur 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Warhammer 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
             "weapon": "Warhammer",
-            "gear": "Raw +8",
+            "gear": "Raw +0",
             "level": 21,
             "elementLevel": 1,
-            "hp": 392,
-            "atk": 182,
+            "hp": 910,
+            "atk": 124,
             "def": 37,
-            "flee": 40,
-            "xp": 291,
+            "flee": 35,
+            "xp": 208,
             "str": 16,
             "agi": 8,
             "vit": 20,
             "intel": 7,
             "dex": 12,
             "luk": 7,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hrw_fild01",
@@ -953,69 +853,29 @@
             ]
         },
         {
-            "id": "mob.bandit-boss",
-            "name": "Bandit Boss",
-            "kind": "Elite",
-            "element": "Neutral",
-            "size": "Large",
-            "biome": "Grassland",
-            "drops": "Bandit Boss's Loot Sack 50%, Temper Dust 100% ×34–35, Quench Oil 100% ×3–4, Wand 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 50%",
-            "weapon": "Wand",
-            "gear": "C +9",
-            "level": 22,
-            "elementLevel": 2,
-            "hp": 383,
-            "atk": 40,
-            "def": 31,
-            "flee": 163,
-            "xp": 6760,
-            "str": 8,
-            "agi": 7,
-            "vit": 17,
-            "intel": 21,
-            "dex": 12,
-            "luk": 7,
-            "homes": [
-                {
-                    "map": "lst_fild03",
-                    "name": "Lastline Field 3",
-                    "count": 1
-                },
-                {
-                    "map": "prl_fild02",
-                    "name": "Parley Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "lst_fild04",
-                    "name": "Lastline Field 4",
-                    "count": 1
-                }
-            ]
-        },
-        {
             "id": "mob.mudpup",
             "name": "Mudpup",
             "kind": "Normal",
             "element": "Water",
             "size": "Small",
             "biome": "Snow",
-            "drops": "Mudpup Crest 2%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 26%, Bow 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Mudpup Crest 2%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 12%, Bow 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Bow",
-            "gear": "E +9",
+            "gear": "Raw +0",
             "level": 23,
             "elementLevel": 1,
-            "hp": 339,
-            "atk": 600,
+            "hp": 800,
+            "atk": 121,
             "def": 25,
-            "flee": 95,
-            "xp": 566,
+            "flee": 50,
+            "xp": 260,
             "str": 8,
             "agi": 17,
             "vit": 8,
             "intel": 8,
             "dex": 24,
             "luk": 8,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "plv_fild01",
@@ -1040,64 +900,29 @@
             ]
         },
         {
-            "id": "mob.deep-maw",
-            "name": "Deep Maw",
-            "kind": "Elite",
-            "element": "Water",
-            "size": "Large",
-            "biome": "Coast",
-            "drops": "Deep Maw Pearl 100% in 2 piles, Temper Dust 100% ×31–32, Quench Oil 100% ×3–4, Fist 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 25%, Frost Elemental Converter 25%",
-            "weapon": "Fist",
-            "gear": "D +10",
-            "level": 24,
-            "elementLevel": 2,
-            "hp": 1864,
-            "atk": 861,
-            "def": 219,
-            "flee": 33,
-            "xp": 7590,
-            "str": 14,
-            "agi": 8,
-            "vit": 25,
-            "intel": 8,
-            "dex": 13,
-            "luk": 8,
-            "homes": [
-                {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
-                    "count": 1
-                }
-            ]
-        },
-        {
             "id": "mob.burrowbo",
             "name": "Burrowbo",
             "kind": "Normal",
             "element": "Earth",
             "size": "Small",
             "biome": "Snow",
-            "drops": "Burrowbo Claw 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 16%, Scythe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Burrowbo Claw 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 15%, Scythe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Scythe",
-            "gear": "Raw +6",
+            "gear": "F +0",
             "level": 25,
             "elementLevel": 1,
-            "hp": 413,
+            "hp": 993,
             "atk": 52,
             "def": 35,
-            "flee": 42,
-            "xp": 415,
+            "flee": 49,
+            "xp": 399,
             "str": 14,
             "agi": 8,
             "vit": 18,
             "intel": 23,
             "dex": 8,
             "luk": 8,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "olk_dun02",
@@ -1112,27 +937,37 @@
                 {
                     "map": "hlt_fild02",
                     "name": "Hilt Field 2",
-                    "count": 5
+                    "count": 4
                 },
                 {
                     "map": "hlt_fild01",
                     "name": "Hilt Field 1",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "hlt_dun01",
                     "name": "Hilt Dungeon 1",
-                    "count": 5
+                    "count": 4
                 },
                 {
                     "map": "hlt_dun02",
                     "name": "Hilt Dungeon 2",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "hlt_dun03",
                     "name": "Hilt Dungeon 3",
                     "count": 1
+                },
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 3
                 }
             ]
         },
@@ -1143,32 +978,33 @@
             "element": "Neutral",
             "size": "Small",
             "biome": "Grassland",
-            "drops": "Pilfer Lucky Coin 0.5%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 29%, Sniper 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
+            "drops": "Pilfer Lucky Coin 0.5%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×1–2, Quench Oil 15%, Sniper 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
             "weapon": "Sniper",
-            "gear": "D +8",
+            "gear": "F +0",
             "level": 28,
             "elementLevel": 1,
-            "hp": 380,
-            "atk": 1163,
+            "hp": 932,
+            "atk": 272,
             "def": 31,
-            "flee": 125,
-            "xp": 1041,
+            "flee": 55,
+            "xp": 531,
             "str": 10,
             "agi": 9,
             "vit": 9,
             "intel": 25,
             "dex": 20,
             "luk": 15,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild03",
                     "name": "Lastline Field 3",
-                    "count": 14
+                    "count": 11
                 },
                 {
                     "map": "prl_fild02",
                     "name": "Parley Field 2",
-                    "count": 16
+                    "count": 13
                 },
                 {
                     "map": "vlm_fild01",
@@ -1178,12 +1014,22 @@
                 {
                     "map": "lst_fild04",
                     "name": "Lastline Field 4",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "pnr_fild02",
                     "name": "Pennaryl Field 2",
                     "count": 2
+                },
+                {
+                    "map": "lst_fild01",
+                    "name": "Lastline Field 1",
+                    "count": 4
+                },
+                {
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
+                    "count": 4
                 }
             ]
         },
@@ -1194,98 +1040,63 @@
             "element": "Earth",
             "size": "Large",
             "biome": "Snow",
-            "drops": "Grumbear Claw 0.5%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×4–5, Quench Oil 44%, Katar 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Grumbear Claw 0.5%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Katar 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Katar",
-            "gear": "D +8",
+            "gear": "F +0",
             "level": 31,
             "elementLevel": 1,
-            "hp": 415,
-            "atk": 616,
+            "hp": 1037,
+            "atk": 176,
             "def": 38,
-            "flee": 152,
-            "xp": 1357,
+            "flee": 82,
+            "xp": 693,
             "str": 22,
             "agi": 22,
             "vit": 11,
             "intel": 10,
             "dex": 10,
             "luk": 22,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hlt_fild02",
                     "name": "Hilt Field 2",
-                    "count": 8
+                    "count": 6
                 },
                 {
                     "map": "hlt_fild01",
                     "name": "Hilt Field 1",
-                    "count": 7
+                    "count": 6
                 },
                 {
                     "map": "hlt_dun01",
                     "name": "Hilt Dungeon 1",
-                    "count": 7
+                    "count": 6
                 },
                 {
                     "map": "hlt_dun02",
                     "name": "Hilt Dungeon 2",
-                    "count": 6
+                    "count": 5
                 },
                 {
                     "map": "hlt_dun03",
                     "name": "Hilt Dungeon 3",
-                    "count": 6
+                    "count": 5
                 },
                 {
                     "map": "hrw_fild01",
                     "name": "Harrowen Field 1",
-                    "count": 10
+                    "count": 8
                 },
                 {
                     "map": "pnr_fild01",
                     "name": "Pennaryl Field 1",
-                    "count": 8
+                    "count": 6
                 },
                 {
                     "map": "hrw_fild02",
                     "name": "Harrowen Field 2",
                     "count": 2
-                }
-            ]
-        },
-        {
-            "id": "mob.frost-ronin",
-            "name": "Frost Ronin",
-            "kind": "Elite",
-            "element": "Water",
-            "size": "Large",
-            "biome": "Snow",
-            "drops": "Frost Ronin Crest 100% in 2 piles, Temper Dust 100% ×47–48, Quench Oil 100% ×4–5, Sword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 25%, Frost Elemental Converter 25%",
-            "weapon": "Sword",
-            "gear": "D +10",
-            "level": 33,
-            "elementLevel": 2,
-            "hp": 1896,
-            "atk": 1142,
-            "def": 220,
-            "flee": 68,
-            "xp": 17140,
-            "str": 23,
-            "agi": 23,
-            "vit": 18,
-            "intel": 11,
-            "dex": 17,
-            "luk": 11,
-            "homes": [
-                {
-                    "map": "hlt_fild02",
-                    "name": "Hilt Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 1
                 }
             ]
         },
@@ -1296,32 +1107,33 @@
             "element": "Earth",
             "size": "Large",
             "biome": "Highland",
-            "drops": "Mossgore Moss Tuft 10%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 32%, Warhammer 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Mossgore Moss Tuft 10%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Warhammer 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Warhammer",
-            "gear": "F +8",
+            "gear": "F +0",
             "level": 34,
             "elementLevel": 1,
-            "hp": 949,
-            "atk": 415,
-            "def": 101,
+            "hp": 1688,
+            "atk": 299,
+            "def": 53,
             "flee": 52,
-            "xp": 1237,
+            "xp": 884,
             "str": 23,
             "agi": 12,
             "vit": 29,
             "intel": 11,
             "dex": 18,
             "luk": 11,
+            "hardDef": 1.2000000476837159,
             "homes": [
                 {
                     "map": "hlt_fild02",
                     "name": "Hilt Field 2",
-                    "count": 7
+                    "count": 6
                 },
                 {
                     "map": "hlt_fild01",
                     "name": "Hilt Field 1",
-                    "count": 7
+                    "count": 6
                 },
                 {
                     "map": "hlt_dun01",
@@ -1331,12 +1143,42 @@
                 {
                     "map": "hlt_dun02",
                     "name": "Hilt Dungeon 2",
-                    "count": 5
+                    "count": 4
                 },
                 {
                     "map": "hlt_dun03",
                     "name": "Hilt Dungeon 3",
-                    "count": 7
+                    "count": 6
+                },
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 5
+                },
+                {
+                    "map": "olk_dun01",
+                    "name": "Old Oak Dungeon 1",
+                    "count": 4
+                },
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild02",
+                    "name": "Kharnel Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "khn_fild01",
+                    "name": "Kharnel Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 3
                 }
             ]
         },
@@ -1347,73 +1189,43 @@
             "element": "Earth",
             "size": "Large",
             "biome": "Grassland",
-            "drops": "Wyrmlet Skin 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Fist 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
-            "weapon": "Fist",
-            "gear": "Raw +6",
+            "drops": "Wyrmlet Skin 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "weapon": "Dagger",
+            "gear": "F +0",
             "level": 34,
             "elementLevel": 1,
-            "hp": 437,
-            "atk": 163,
+            "hp": 1110,
+            "atk": 237,
             "def": 41,
-            "flee": 66,
-            "xp": 919,
+            "flee": 73,
+            "xp": 884,
             "str": 29,
             "agi": 18,
             "vit": 11,
             "intel": 18,
             "dex": 18,
             "luk": 11,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lst_fild03",
                     "name": "Lastline Field 3",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "hrw_fild01",
                     "name": "Harrowen Field 1",
-                    "count": 6
+                    "count": 5
                 },
                 {
                     "map": "prl_fild02",
                     "name": "Parley Field 2",
-                    "count": 11
+                    "count": 9
                 },
                 {
                     "map": "pnr_fild01",
                     "name": "Pennaryl Field 1",
-                    "count": 5
-                }
-            ]
-        },
-        {
-            "id": "mob.mossmaw",
-            "name": "Mossmaw",
-            "kind": "Elite",
-            "element": "Earth",
-            "size": "Large",
-            "biome": "Highland",
-            "drops": "Mossmaw Eye 100% in 2 piles, Temper Dust 100% ×47–48, Quench Oil 100% ×4–5, Sniper 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
-            "weapon": "Sniper",
-            "gear": "D +10",
-            "level": 35,
-            "elementLevel": 2,
-            "hp": 1861,
-            "atk": 1229,
-            "def": 219,
-            "flee": 53,
-            "xp": 20080,
-            "str": 11,
-            "agi": 11,
-            "vit": 11,
-            "intel": 30,
-            "dex": 24,
-            "luk": 19,
-            "homes": [
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 1
+                    "count": 4
                 }
             ]
         },
@@ -1424,32 +1236,33 @@
             "element": "Neutral",
             "size": "Small",
             "biome": "Highland",
-            "drops": "Digger Snout 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 27%, Shuriken 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
+            "drops": "Digger Snout 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Shuriken 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 5%",
             "weapon": "Shuriken",
-            "gear": "Raw +10",
+            "gear": "F +0",
             "level": 36,
             "elementLevel": 1,
-            "hp": 511,
-            "atk": 195,
+            "hp": 1311,
+            "atk": 245,
             "def": 46,
-            "flee": 83,
-            "xp": 1238,
+            "flee": 88,
+            "xp": 1031,
             "str": 12,
             "agi": 25,
             "vit": 19,
             "intel": 12,
             "dex": 30,
             "luk": 11,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hlt_dun02",
                     "name": "Hilt Dungeon 2",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "hlt_dun03",
                     "name": "Hilt Dungeon 3",
-                    "count": 4
+                    "count": 3
                 }
             ]
         },
@@ -1460,42 +1273,43 @@
             "element": "Earth",
             "size": "Small",
             "biome": "Highland",
-            "drops": "Scaly Shed Skin 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 25%, Greatsword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Scaly Shed Skin 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Greatsword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Greatsword",
-            "gear": "Raw +8",
+            "gear": "F +0",
             "level": 37,
             "elementLevel": 1,
-            "hp": 722,
-            "atk": 243,
-            "def": 75,
+            "hp": 1724,
+            "atk": 339,
+            "def": 55,
             "flee": 56,
-            "xp": 1245,
+            "xp": 1111,
             "str": 31,
             "agi": 12,
             "vit": 26,
             "intel": 12,
             "dex": 12,
             "luk": 19,
+            "hardDef": 1.2000000476837159,
             "homes": [
                 {
                     "map": "hlt_dun02",
                     "name": "Hilt Dungeon 2",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "hlt_dun03",
                     "name": "Hilt Dungeon 3",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "vlm_fild01",
                     "name": "Velmora Field 1",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "pnr_fild02",
                     "name": "Pennaryl Field 2",
-                    "count": 6
+                    "count": 5
                 }
             ]
         },
@@ -1506,22 +1320,23 @@
             "element": "Earth",
             "size": "Medium",
             "biome": "Forest",
-            "drops": "Canewick Blossom 2%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 39%, Bow 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Canewick Blossom 2%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Bow 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Bow",
-            "gear": "E +9",
+            "gear": "F +0",
             "level": 38,
             "elementLevel": 1,
-            "hp": 474,
-            "atk": 639,
+            "hp": 1228,
+            "atk": 270,
             "def": 46,
             "flee": 76,
-            "xp": 2081,
+            "xp": 1196,
             "str": 12,
             "agi": 26,
             "vit": 12,
             "intel": 12,
             "dex": 37,
             "luk": 12,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hrw_fild01",
@@ -1531,22 +1346,22 @@
                 {
                     "map": "pnr_fild01",
                     "name": "Pennaryl Field 1",
-                    "count": 8
+                    "count": 6
                 },
                 {
                     "map": "vlm_fild01",
                     "name": "Velmora Field 1",
-                    "count": 7
+                    "count": 6
                 },
                 {
                     "map": "trn_fild01",
                     "name": "Tornel Field 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "pnr_fild02",
                     "name": "Pennaryl Field 2",
-                    "count": 9
+                    "count": 7
                 }
             ]
         },
@@ -1557,22 +1372,23 @@
             "element": "Water",
             "size": "Small",
             "biome": "Snow",
-            "drops": "Dewdrop Bead 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 27%, Wand 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Dewdrop Bead 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Wand 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Wand",
-            "gear": "Raw +10",
+            "gear": "F +0",
             "level": 39,
             "elementLevel": 1,
-            "hp": 598,
+            "hp": 1555,
             "atk": 72,
             "def": 58,
             "flee": 57,
-            "xp": 1544,
+            "xp": 1286,
             "str": 13,
             "agi": 12,
             "vit": 27,
             "intel": 32,
             "dex": 21,
             "luk": 12,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hlt_fild02",
@@ -1582,7 +1398,7 @@
                 {
                     "map": "hlt_fild01",
                     "name": "Hilt Field 1",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "lmh_fild01",
@@ -1608,22 +1424,23 @@
             "element": "Earth",
             "size": "Large",
             "biome": "Highland",
-            "drops": "Peeper Horn 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 27%, Axe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Peeper Horn 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Axe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Axe",
-            "gear": "Raw +10",
+            "gear": "F +0",
             "level": 41,
             "elementLevel": 1,
-            "hp": 512,
-            "atk": 180,
+            "hp": 1344,
+            "atk": 217,
             "def": 49,
             "flee": 83,
-            "xp": 1775,
+            "xp": 1479,
             "str": 34,
             "agi": 28,
             "vit": 14,
             "intel": 13,
             "dex": 13,
             "luk": 21,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hlt_dun02",
@@ -1633,12 +1450,12 @@
                 {
                     "map": "hlt_dun03",
                     "name": "Hilt Dungeon 3",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "pnr_fild01",
                     "name": "Pennaryl Field 1",
-                    "count": 5
+                    "count": 4
                 }
             ]
         },
@@ -1649,22 +1466,23 @@
             "element": "Wind",
             "size": "Small",
             "biome": "Steppe",
-            "drops": "Viper Venom Sac 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 27%, Wand 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
-            "weapon": "Wand",
-            "gear": "Raw +10",
+            "drops": "Viper Venom Sac 50%, Watery Ink 4%, Coarse Salt 10%, Temper Dust 100% ×2–3, Quench Oil 23%, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
+            "weapon": "Spear",
+            "gear": "F +0",
             "level": 42,
             "elementLevel": 1,
-            "hp": 641,
-            "atk": 76,
+            "hp": 1691,
+            "atk": 279,
             "def": 61,
-            "flee": 71,
-            "xp": 1901,
+            "flee": 76,
+            "xp": 1584,
             "str": 13,
             "agi": 13,
             "vit": 29,
             "intel": 35,
             "dex": 22,
             "luk": 13,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "vlm_fild01",
@@ -1674,7 +1492,7 @@
                 {
                     "map": "trn_fild01",
                     "name": "Tornel Field 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "vlm_fild02",
@@ -1689,7 +1507,7 @@
                 {
                     "map": "pnr_fild02",
                     "name": "Pennaryl Field 2",
-                    "count": 3
+                    "count": 2
                 }
             ]
         },
@@ -1700,68 +1518,28 @@
             "element": "Earth",
             "size": "Small",
             "biome": "Forest",
-            "drops": "Coily Scale 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 36%, Staff 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Coily Scale 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3, Quench Oil 30%, Staff 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Staff",
-            "gear": "Raw +10",
+            "gear": "F +0",
             "level": 43,
             "elementLevel": 1,
-            "hp": 593,
+            "hp": 1570,
             "atk": 78,
             "def": 60,
-            "flee": 73,
-            "xp": 2033,
+            "flee": 78,
+            "xp": 1694,
             "str": 14,
             "agi": 14,
             "vit": 22,
             "intel": 41,
             "dex": 22,
             "luk": 14,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "pnr_fild01",
                     "name": "Pennaryl Field 1",
-                    "count": 3
-                }
-            ]
-        },
-        {
-            "id": "mob.golden-bandit",
-            "name": "Golden Bandit",
-            "kind": "Elite",
-            "element": "Neutral",
-            "size": "Large",
-            "biome": "Steppe",
-            "drops": "Golden Bandit's Gold Tooth 50%, Temper Dust 100% ×69–70, Quench Oil 100% ×6–7, Scythe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 50%",
-            "weapon": "Scythe",
-            "gear": "C +9",
-            "level": 44,
-            "elementLevel": 2,
-            "hp": 669,
-            "atk": 90,
-            "def": 72,
-            "flee": 197,
-            "xp": 41960,
-            "str": 23,
-            "agi": 14,
-            "vit": 30,
-            "intel": 36,
-            "dex": 14,
-            "luk": 14,
-            "homes": [
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "trn_fild01",
-                    "name": "Tornel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 1
+                    "count": 2
                 }
             ]
         },
@@ -1772,22 +1550,117 @@
             "element": "Wind",
             "size": "Small",
             "biome": "Steppe",
-            "drops": "Emberhoot Plume 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 31%, Sword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
+            "drops": "Emberhoot Plume 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3, Quench Oil 30%, Sword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
             "weapon": "Sword",
-            "gear": "Raw +6",
+            "gear": "F +0",
             "level": 45,
             "elementLevel": 1,
-            "hp": 619,
-            "atk": 211,
+            "hp": 1650,
+            "atk": 299,
             "def": 62,
-            "flee": 104,
-            "xp": 2007,
+            "flee": 111,
+            "xp": 1930,
             "str": 31,
             "agi": 31,
             "vit": 23,
             "intel": 15,
             "dex": 23,
             "luk": 14,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 6
+                },
+                {
+                    "map": "trn_fild01",
+                    "name": "Tornel Field 1",
+                    "count": 9
+                },
+                {
+                    "map": "brm_fild02",
+                    "name": "Brimstone Field 2",
+                    "count": 2
+                },
+                {
+                    "map": "vlm_fild03",
+                    "name": "Velmora Field 3",
+                    "count": 2
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "id": "mob.emberwyrm",
+            "name": "Emberwyrm",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Large",
+            "biome": "Desert",
+            "drops": "Emberwyrm Hide 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3, Quench Oil 30%, Fist 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "weapon": "Fist",
+            "gear": "F +0",
+            "level": 46,
+            "elementLevel": 1,
+            "hp": 1472,
+            "atk": 263,
+            "def": 54,
+            "flee": 97,
+            "xp": 2058,
+            "str": 38,
+            "agi": 24,
+            "vit": 14,
+            "intel": 24,
+            "dex": 24,
+            "luk": 14,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 4
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 3
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.chomper",
+            "name": "Chomper",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Steppe",
+            "drops": "Chomper Golden Tooth 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3, Quench Oil 30%, Katar 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "weapon": "Katar",
+            "gear": "F +0",
+            "level": 48,
+            "elementLevel": 1,
+            "hp": 1797,
+            "atk": 217,
+            "def": 57,
+            "flee": 105,
+            "xp": 2331,
+            "str": 33,
+            "agi": 33,
+            "vit": 15,
+            "intel": 15,
+            "dex": 15,
+            "luk": 32,
+            "hardDef": 1.2000000476837159,
             "homes": [
                 {
                     "map": "vlm_fild01",
@@ -1800,147 +1673,56 @@
                     "count": 11
                 },
                 {
-                    "map": "brm_fild02",
-                    "name": "Brimstone Field 2",
-                    "count": 3
-                },
-                {
-                    "map": "vlm_fild03",
-                    "name": "Velmora Field 3",
-                    "count": 3
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 8
-                }
-            ]
-        },
-        {
-            "id": "mob.emberwyrm",
-            "name": "Emberwyrm",
-            "kind": "Normal",
-            "element": "Fire",
-            "size": "Large",
-            "biome": "Desert",
-            "drops": "Emberwyrm Hide 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 36%, Fist 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
-            "weapon": "Fist",
-            "gear": "Raw +10",
-            "level": 46,
-            "elementLevel": 1,
-            "hp": 550,
-            "atk": 215,
-            "def": 54,
-            "flee": 92,
-            "xp": 2469,
-            "str": 38,
-            "agi": 24,
-            "vit": 14,
-            "intel": 24,
-            "dex": 24,
-            "luk": 14,
-            "homes": [
-                {
                     "map": "vlm_fild02",
                     "name": "Velmora Field 2",
-                    "count": 5
+                    "count": 7
                 },
                 {
                     "map": "vlm_dun01",
                     "name": "Velmora Dungeon 1",
-                    "count": 4
+                    "count": 6
                 },
                 {
                     "map": "vlm_dun02",
                     "name": "Velmora Dungeon 2",
-                    "count": 1
+                    "count": 6
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 2
                 }
             ]
         },
         {
-            "id": "mob.elder-stalk",
-            "name": "Elder Stalk",
+            "id": "mob.gloop-king",
+            "name": "Gloop King",
             "kind": "Elite",
-            "element": "Earth",
+            "element": "Neutral",
             "size": "Large",
-            "biome": "Forest",
-            "drops": "Elder Stalk Heartwood 100% in 2 piles, Temper Dust 100% ×63, Quench Oil 100% ×6–7, Shuriken 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
-            "weapon": "Shuriken",
-            "gear": "D +10",
-            "level": 47,
+            "biome": "Grassland",
+            "drops": "Gloop King's Eye 50%, Temper Dust 100% ×57–58, Quench Oil 100% ×5–6, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Hard Bread 50%",
+            "weapon": "Scythe",
+            "gear": "C +4",
+            "level": 50,
             "elementLevel": 2,
-            "hp": 2071,
-            "atk": 966,
-            "def": 242,
-            "flee": 100,
-            "xp": 46020,
-            "str": 38,
-            "agi": 32,
-            "vit": 25,
-            "intel": 15,
-            "dex": 15,
-            "luk": 15,
+            "hp": 44280,
+            "atk": 196,
+            "def": 57,
+            "flee": 54,
+            "xp": 50570,
+            "str": 7,
+            "agi": 4,
+            "vit": 10,
+            "intel": 12,
+            "dex": 4,
+            "luk": 4,
+            "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
                     "count": 1
-                }
-            ]
-        },
-        {
-            "id": "mob.chomper",
-            "name": "Chomper",
-            "kind": "Normal",
-            "element": "Earth",
-            "size": "Large",
-            "biome": "Steppe",
-            "drops": "Chomper Golden Tooth 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×5–6, Quench Oil 59%, Katar 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
-            "weapon": "Katar",
-            "gear": "D +8",
-            "level": 48,
-            "elementLevel": 1,
-            "hp": 1925,
-            "atk": 657,
-            "def": 227,
-            "flee": 105,
-            "xp": 4569,
-            "str": 33,
-            "agi": 33,
-            "vit": 15,
-            "intel": 15,
-            "dex": 15,
-            "luk": 32,
-            "homes": [
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 9
-                },
-                {
-                    "map": "trn_fild01",
-                    "name": "Tornel Field 1",
-                    "count": 14
-                },
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 9
-                },
-                {
-                    "map": "vlm_dun01",
-                    "name": "Velmora Dungeon 1",
-                    "count": 8
-                },
-                {
-                    "map": "vlm_dun02",
-                    "name": "Velmora Dungeon 2",
-                    "count": 8
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 3
                 }
             ]
         },
@@ -1951,22 +1733,139 @@
             "element": "Fire",
             "size": "Small",
             "biome": "Desert",
-            "drops": "Sunscale Plate 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 34%, Greatsword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "drops": "Sunscale Plate 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 36%, Greatsword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
             "weapon": "Greatsword",
-            "gear": "Raw +8",
+            "gear": "E +0",
             "level": 50,
             "elementLevel": 1,
-            "hp": 904,
-            "atk": 280,
-            "def": 99,
+            "hp": 2625,
+            "atk": 696,
+            "def": 79,
             "flee": 76,
-            "xp": 2950,
+            "xp": 3161,
             "str": 41,
             "agi": 17,
             "vit": 33,
             "intel": 16,
             "dex": 16,
             "luk": 26,
+            "hardDef": 2.700000047683716,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 3
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 3
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 3
+                },
+                {
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
+                    "count": 1
+                },
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.oculord",
+            "name": "Oculord",
+            "kind": "Elite",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Highland",
+            "drops": "Oculord Iris 100% in 2 piles, Temper Dust 100% ×57–58, Quench Oil 100% ×5–6, Bow 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
+            "weapon": "Bow",
+            "gear": "C +4",
+            "level": 52,
+            "elementLevel": 2,
+            "hp": 41910,
+            "atk": 4179,
+            "def": 53,
+            "flee": 70,
+            "xp": 56930,
+            "str": 5,
+            "agi": 13,
+            "vit": 5,
+            "intel": 5,
+            "dex": 18,
+            "luk": 5,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "olk_dun02",
+                    "name": "Old Oak Dungeon 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.autumn-stalk",
+            "name": "Autumn Stalk",
+            "kind": "Elite",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Forest",
+            "drops": "Autumn Stalk Seed 10%, Temper Dust 100% ×57–58, Quench Oil 100% ×5–6, Axe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
+            "weapon": "Axe",
+            "gear": "C +4",
+            "level": 53,
+            "elementLevel": 2,
+            "hp": 43350,
+            "atk": 2868,
+            "def": 55,
+            "flee": 72,
+            "xp": 60310,
+            "str": 16,
+            "agi": 13,
+            "vit": 6,
+            "intel": 5,
+            "dex": 5,
+            "luk": 10,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.willo",
+            "name": "Willo",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Medium",
+            "biome": "Desert",
+            "drops": "Willo Heartflame 0.1%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×3–4, Quench Oil 36%, Sword 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "weapon": "Sword",
+            "gear": "E +0",
+            "level": 54,
+            "elementLevel": 1,
+            "hp": 2044,
+            "atk": 568,
+            "def": 73,
+            "flee": 111,
+            "xp": 3993,
+            "str": 37,
+            "agi": 36,
+            "vit": 28,
+            "intel": 18,
+            "dex": 28,
+            "luk": 17,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "vlm_fild02",
@@ -1981,73 +1880,86 @@
                 {
                     "map": "vlm_dun02",
                     "name": "Velmora Dungeon 2",
-                    "count": 4
+                    "count": 5
                 },
                 {
                     "map": "vlm_dun03",
                     "name": "Velmora Dungeon 3",
-                    "count": 2
+                    "count": 10
                 },
                 {
                     "map": "brm_fild01",
                     "name": "Brimstone Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
                     "count": 2
                 }
             ]
         },
         {
-            "id": "mob.willo",
-            "name": "Willo",
-            "kind": "Normal",
-            "element": "Fire",
-            "size": "Medium",
-            "biome": "Desert",
-            "drops": "Willo Heartflame 0.1%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Temper Dust 100% ×6–7, Quench Oil 67%, Sword 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "id": "mob.bandit-boss",
+            "name": "Bandit Boss",
+            "kind": "Elite",
+            "element": "Neutral",
+            "size": "Large",
+            "biome": "Grassland",
+            "drops": "Bandit Boss's Loot Sack 50%, Temper Dust 100% ×57–58, Quench Oil 100% ×5–6, Sword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 50%",
             "weapon": "Sword",
-            "gear": "C +8",
-            "level": 54,
-            "elementLevel": 1,
-            "hp": 746,
-            "atk": 1693,
-            "def": 73,
-            "flee": 111,
-            "xp": 7454,
-            "str": 37,
-            "agi": 36,
-            "vit": 28,
-            "intel": 18,
-            "dex": 28,
-            "luk": 17,
+            "gear": "C +4",
+            "level": 55,
+            "elementLevel": 2,
+            "hp": 53460,
+            "atk": 4695,
+            "def": 64,
+            "flee": 183,
+            "xp": 67610,
+            "str": 8,
+            "agi": 7,
+            "vit": 17,
+            "intel": 21,
+            "dex": 12,
+            "luk": 7,
+            "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 8
-                },
+                    "map": "lst_fild03",
+                    "name": "Lastline Field 3",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.deep-maw",
+            "name": "Deep Maw",
+            "kind": "Elite",
+            "element": "Water",
+            "size": "Large",
+            "biome": "Coast",
+            "drops": "Deep Maw Pearl 100% in 2 piles, Temper Dust 100% ×57–58, Quench Oil 100% ×5–6, Fist 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 25%, Frost Elemental Converter 25%",
+            "weapon": "Fist",
+            "gear": "C +4",
+            "level": 56,
+            "elementLevel": 2,
+            "hp": 118260,
+            "atk": 3660,
+            "def": 74,
+            "flee": 65,
+            "xp": 71520,
+            "str": 14,
+            "agi": 8,
+            "vit": 25,
+            "intel": 8,
+            "dex": 13,
+            "luk": 8,
+            "hardDef": 8.399999618530274,
+            "homes": [
                 {
-                    "map": "vlm_dun01",
-                    "name": "Velmora Dungeon 1",
-                    "count": 6
-                },
-                {
-                    "map": "vlm_dun02",
-                    "name": "Velmora Dungeon 2",
-                    "count": 8
-                },
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 15
-                },
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 12
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 3
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 1
                 }
             ]
         },
@@ -2058,52 +1970,53 @@
             "element": "Earth",
             "size": "Small",
             "biome": "Desert",
-            "drops": "Adder Fang 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 42%, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
+            "drops": "Adder Fang 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Seismic Armor Converter 2.5%, Seismic Elemental Converter 2.5%",
             "weapon": "Axe",
-            "gear": "Raw +8",
+            "gear": "E +0",
             "level": 57,
             "elementLevel": 1,
-            "hp": 684,
-            "atk": 216,
+            "hp": 1891,
+            "atk": 407,
             "def": 67,
-            "flee": 130,
-            "xp": 4409,
+            "flee": 157,
+            "xp": 4724,
             "str": 46,
             "agi": 39,
             "vit": 19,
             "intel": 18,
             "dex": 18,
             "luk": 30,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "vlm_fild02",
                     "name": "Velmora Field 2",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "vlm_dun01",
                     "name": "Velmora Dungeon 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "vlm_dun02",
                     "name": "Velmora Dungeon 2",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "vlm_dun03",
                     "name": "Velmora Dungeon 3",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "brm_fild01",
                     "name": "Brimstone Field 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "brm_fild03",
                     "name": "Brimstone Field 3",
-                    "count": 3
+                    "count": 2
                 }
             ]
         },
@@ -2114,22 +2027,23 @@
             "element": "Fire",
             "size": "Small",
             "biome": "Volcanic",
-            "drops": "Bloodshot Eye 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 42%, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "drops": "Bloodshot Eye 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
             "weapon": "Staff",
-            "gear": "Raw +8",
+            "gear": "E +0",
             "level": 58,
             "elementLevel": 1,
-            "hp": 803,
+            "hp": 2224,
             "atk": 103,
             "def": 86,
             "flee": 84,
-            "xp": 4658,
+            "xp": 4991,
             "str": 19,
             "agi": 19,
             "vit": 30,
             "intel": 54,
             "dex": 30,
             "luk": 19,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "vlm_fild02",
@@ -2144,17 +2058,17 @@
                 {
                     "map": "vlm_dun02",
                     "name": "Velmora Dungeon 2",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "vlm_dun03",
                     "name": "Velmora Dungeon 3",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "brm_fild01",
                     "name": "Brimstone Field 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "cdl_fild01",
@@ -2169,42 +2083,70 @@
                 {
                     "map": "brm_fild03",
                     "name": "Brimstone Field 3",
-                    "count": 3
+                    "count": 2
                 }
             ]
         },
         {
-            "id": "mob.karasu",
-            "name": "Karasu",
+            "id": "mob.mossmaw",
+            "name": "Mossmaw",
             "kind": "Elite",
-            "element": "Wind",
-            "size": "Medium",
-            "biome": "Peaks",
-            "drops": "Karasu Black Plume 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×78–79, Quench Oil 100% ×7–8, Warhammer 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 25%, Lightning Elemental Converter 25%",
-            "weapon": "Warhammer",
-            "gear": "D +10",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Highland",
+            "drops": "Mossmaw Eye 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Sniper 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
+            "weapon": "Sniper",
+            "gear": "C +4",
             "level": 58,
             "elementLevel": 2,
-            "hp": 974,
-            "atk": 1370,
-            "def": 101,
-            "flee": 172,
-            "xp": 87330,
-            "str": 39,
-            "agi": 19,
-            "vit": 47,
-            "intel": 19,
-            "dex": 30,
+            "hp": 108390,
+            "atk": 5149,
+            "def": 65,
+            "flee": 76,
+            "xp": 79850,
+            "str": 11,
+            "agi": 11,
+            "vit": 11,
+            "intel": 30,
+            "dex": 24,
             "luk": 19,
+            "hardDef": 8.399999618530274,
             "homes": [
                 {
-                    "map": "brm_fild02",
-                    "name": "Brimstone Field 2",
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
                     "count": 1
-                },
+                }
+            ]
+        },
+        {
+            "id": "mob.golden-bandit",
+            "name": "Golden Bandit",
+            "kind": "Elite",
+            "element": "Neutral",
+            "size": "Large",
+            "biome": "Steppe",
+            "drops": "Golden Bandit's Gold Tooth 50%, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Hard Bread 50%",
+            "weapon": "Dagger",
+            "gear": "C +4",
+            "level": 59,
+            "elementLevel": 2,
+            "hp": 67680,
+            "atk": 3900,
+            "def": 87,
+            "flee": 199,
+            "xp": 84290,
+            "str": 23,
+            "agi": 14,
+            "vit": 30,
+            "intel": 36,
+            "dex": 14,
+            "luk": 14,
+            "hardDef": 0.0,
+            "homes": [
                 {
-                    "map": "vlm_fild03",
-                    "name": "Velmora Field 3",
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
                     "count": 1
                 }
             ]
@@ -2216,68 +2158,33 @@
             "element": "Water",
             "size": "Medium",
             "biome": "Peaks",
-            "drops": "Hornscale Scale 10%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×5–6, Quench Oil 53%, Dagger 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Hornscale Scale 10%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Dagger 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Dagger",
-            "gear": "F +8",
+            "gear": "E +0",
             "level": 59,
             "elementLevel": 1,
-            "hp": 1084,
-            "atk": 379,
-            "def": 117,
+            "hp": 2529,
+            "atk": 499,
+            "def": 69,
             "flee": 138,
-            "xp": 6146,
+            "xp": 5268,
             "str": 40,
             "agi": 48,
             "vit": 19,
             "intel": 19,
             "dex": 31,
             "luk": 19,
+            "hardDef": 2.700000047683716,
             "homes": [
                 {
                     "map": "brm_fild02",
                     "name": "Brimstone Field 2",
-                    "count": 14
+                    "count": 9
                 },
                 {
                     "map": "vlm_fild03",
                     "name": "Velmora Field 3",
-                    "count": 14
-                }
-            ]
-        },
-        {
-            "id": "mob.blood-ronin",
-            "name": "Blood Ronin",
-            "kind": "Elite",
-            "element": "Fire",
-            "size": "Large",
-            "biome": "Desert",
-            "drops": "Blood Ronin Crest 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×78–79, Quench Oil 100% ×7–8, Dagger 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 25%, Flame Elemental Converter 25%",
-            "weapon": "Dagger",
-            "gear": "D +10",
-            "level": 60,
-            "elementLevel": 2,
-            "hp": 2137,
-            "atk": 1002,
-            "def": 253,
-            "flee": 140,
-            "xp": 97260,
-            "str": 41,
-            "agi": 48,
-            "vit": 20,
-            "intel": 20,
-            "dex": 31,
-            "luk": 20,
-            "homes": [
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 1
+                    "count": 9
                 }
             ]
         },
@@ -2288,41 +2195,106 @@
             "element": "Water",
             "size": "Medium",
             "biome": "Coast",
-            "drops": "Rivershell Carapace 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×3–4, Quench Oil 39%, Sword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Rivershell Carapace 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Sword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Sword",
-            "gear": "Raw +6",
+            "gear": "E +0",
             "level": 60,
             "elementLevel": 1,
-            "hp": 966,
-            "atk": 252,
-            "def": 105,
+            "hp": 2900,
+            "atk": 590,
+            "def": 88,
             "flee": 132,
-            "xp": 4817,
+            "xp": 5558,
             "str": 41,
             "agi": 40,
             "vit": 31,
             "intel": 20,
             "dex": 31,
             "luk": 20,
+            "hardDef": 2.700000047683716,
             "homes": [
                 {
                     "map": "lmh_fild01",
                     "name": "Luminhal Field 1",
-                    "count": 8
+                    "count": 5
                 },
                 {
                     "map": "lst_dun01",
                     "name": "Lastline Dungeon 1",
-                    "count": 8
+                    "count": 5
                 },
                 {
                     "map": "lst_dun02",
                     "name": "Lastline Dungeon 2",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "khn_dun05",
                     "name": "Kharnel Dungeon 5",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.elder-stalk",
+            "name": "Elder Stalk",
+            "kind": "Elite",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Forest",
+            "drops": "Elder Stalk Heartwood 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Shuriken 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 25%, Seismic Elemental Converter 25%",
+            "weapon": "Shuriken",
+            "gear": "C +4",
+            "level": 61,
+            "elementLevel": 2,
+            "hp": 122760,
+            "atk": 3977,
+            "def": 79,
+            "flee": 114,
+            "xp": 93770,
+            "str": 38,
+            "agi": 32,
+            "vit": 25,
+            "intel": 15,
+            "dex": 15,
+            "luk": 15,
+            "hardDef": 8.399999618530274,
+            "homes": [
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.karasu",
+            "name": "Karasu",
+            "kind": "Elite",
+            "element": "Wind",
+            "size": "Medium",
+            "biome": "Peaks",
+            "drops": "Karasu Black Plume 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Warhammer 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 25%, Lightning Elemental Converter 25%",
+            "weapon": "Warhammer",
+            "gear": "C +4",
+            "level": 62,
+            "elementLevel": 2,
+            "hp": 85560,
+            "atk": 5621,
+            "def": 105,
+            "flee": 208,
+            "xp": 98830,
+            "str": 39,
+            "agi": 19,
+            "vit": 47,
+            "intel": 19,
+            "dex": 30,
+            "luk": 19,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "cdl_dun03",
+                    "name": "Cindrel Dungeon 3",
                     "count": 1
                 }
             ]
@@ -2334,47 +2306,48 @@
             "element": "Wind",
             "size": "Small",
             "biome": "Coast",
-            "drops": "Snapper Lid 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 42%, Katar 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
+            "drops": "Snapper Lid 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Katar 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
             "weapon": "Katar",
-            "gear": "Raw +8",
+            "gear": "E +0",
             "level": 62,
             "elementLevel": 1,
-            "hp": 736,
-            "atk": 215,
+            "hp": 2058,
+            "atk": 388,
             "def": 78,
             "flee": 140,
-            "xp": 5765,
+            "xp": 6177,
             "str": 42,
             "agi": 42,
             "vit": 20,
             "intel": 20,
             "dex": 20,
             "luk": 42,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "brm_fild02",
                     "name": "Brimstone Field 2",
-                    "count": 5
+                    "count": 3
                 },
                 {
                     "map": "vlm_fild03",
                     "name": "Velmora Field 3",
-                    "count": 5
+                    "count": 3
                 },
                 {
                     "map": "lmh_fild01",
                     "name": "Luminhal Field 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "lst_dun01",
                     "name": "Lastline Dungeon 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "lst_dun02",
                     "name": "Lastline Dungeon 2",
-                    "count": 2
+                    "count": 1
                 }
             ]
         },
@@ -2385,37 +2358,70 @@
             "element": "Water",
             "size": "Medium",
             "biome": "Coast",
-            "drops": "Octi Beak 10%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×5–6, Quench Oil 53%, Greatsword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Octi Beak 10%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Greatsword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Greatsword",
-            "gear": "F +8",
+            "gear": "E +0",
             "level": 63,
             "elementLevel": 1,
-            "hp": 979,
-            "atk": 543,
+            "hp": 2742,
+            "atk": 735,
             "def": 105,
-            "flee": 125,
-            "xp": 7592,
+            "flee": 137,
+            "xp": 6507,
             "str": 51,
             "agi": 21,
             "vit": 42,
             "intel": 21,
             "dex": 21,
             "luk": 32,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lmh_fild01",
                     "name": "Luminhal Field 1",
-                    "count": 8
+                    "count": 5
                 },
                 {
                     "map": "lst_dun01",
                     "name": "Lastline Dungeon 1",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "lst_dun02",
                     "name": "Lastline Dungeon 2",
-                    "count": 7
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "id": "mob.great-croak",
+            "name": "Great Croak",
+            "kind": "Elite",
+            "element": "Water",
+            "size": "Large",
+            "biome": "Coast",
+            "drops": "Great Croak Throat Sac 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 25%, Frost Elemental Converter 25%",
+            "weapon": "Spear",
+            "gear": "C +4",
+            "level": 64,
+            "elementLevel": 2,
+            "hp": 85170,
+            "atk": 5341,
+            "def": 106,
+            "flee": 221,
+            "xp": 109610,
+            "str": 44,
+            "agi": 23,
+            "vit": 44,
+            "intel": 22,
+            "dex": 44,
+            "luk": 22,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 1
                 }
             ]
         },
@@ -2426,32 +2432,33 @@
             "element": "Wind",
             "size": "Small",
             "biome": "Peaks",
-            "drops": "Iris Lens 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 42%, Shuriken 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
+            "drops": "Iris Lens 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Shuriken 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lightning Armor Converter 2.5%, Lightning Elemental Converter 2.5%",
             "weapon": "Shuriken",
-            "gear": "Raw +8",
+            "gear": "E +0",
             "level": 64,
             "elementLevel": 1,
-            "hp": 893,
-            "atk": 264,
+            "hp": 2507,
+            "atk": 524,
             "def": 93,
             "flee": 139,
-            "xp": 6394,
+            "xp": 6851,
             "str": 21,
             "agi": 43,
             "vit": 33,
             "intel": 21,
             "dex": 52,
             "luk": 21,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "brm_fild02",
                     "name": "Brimstone Field 2",
-                    "count": 9
+                    "count": 6
                 },
                 {
                     "map": "vlm_fild03",
                     "name": "Velmora Field 3",
-                    "count": 9
+                    "count": 6
                 },
                 {
                     "map": "hcr_fild01",
@@ -2472,72 +2479,69 @@
             "element": "Water",
             "size": "Large",
             "biome": "Coast",
-            "drops": "Gnasher Jaw 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×6–7, Quench Oil 65%, Bow 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Gnasher Jaw 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Bow 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Bow",
-            "gear": "E +9",
+            "gear": "E +0",
             "level": 65,
             "elementLevel": 1,
-            "hp": 1580,
-            "atk": 732,
-            "def": 182,
+            "hp": 2756,
+            "atk": 583,
+            "def": 82,
             "flee": 141,
-            "xp": 10453,
+            "xp": 7209,
             "str": 22,
             "agi": 44,
             "vit": 21,
             "intel": 21,
             "dex": 60,
             "luk": 21,
+            "hardDef": 2.700000047683716,
             "homes": [
                 {
                     "map": "lmh_fild01",
                     "name": "Luminhal Field 1",
-                    "count": 8
+                    "count": 5
                 },
                 {
                     "map": "lst_dun01",
                     "name": "Lastline Dungeon 1",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "lst_dun02",
                     "name": "Lastline Dungeon 2",
-                    "count": 7
+                    "count": 5
                 }
             ]
         },
         {
-            "id": "mob.great-croak",
-            "name": "Great Croak",
+            "id": "mob.toadmaw",
+            "name": "Toadmaw",
             "kind": "Elite",
-            "element": "Water",
+            "element": "Poison",
             "size": "Large",
-            "biome": "Coast",
-            "drops": "Great Croak Throat Sac 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×78–79, Quench Oil 100% ×7–8, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 25%, Frost Elemental Converter 25%",
-            "weapon": "Spear",
-            "gear": "D +10",
-            "level": 66,
+            "biome": "Swamp",
+            "drops": "Toadmaw Toadstone 10%, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Greatsword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Spiced Broth 50%",
+            "weapon": "Greatsword",
+            "gear": "C +4",
+            "level": 65,
             "elementLevel": 2,
-            "hp": 1034,
-            "atk": 1316,
-            "def": 108,
-            "flee": 191,
-            "xp": 132690,
-            "str": 44,
-            "agi": 23,
-            "vit": 44,
-            "intel": 22,
-            "dex": 44,
-            "luk": 22,
+            "hp": 83550,
+            "atk": 6121,
+            "def": 106,
+            "flee": 226,
+            "xp": 115340,
+            "str": 26,
+            "agi": 26,
+            "vit": 41,
+            "intel": 71,
+            "dex": 41,
+            "luk": 26,
+            "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
                     "count": 1
                 }
             ]
@@ -2549,32 +2553,33 @@
             "element": "Fire",
             "size": "Medium",
             "biome": "Volcanic",
-            "drops": "Cinder Ash 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 42%, Wand 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "drops": "Cinder Ash 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Wand 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
             "weapon": "Wand",
-            "gear": "Raw +8",
+            "gear": "E +0",
             "level": 67,
             "elementLevel": 1,
-            "hp": 1056,
+            "hp": 2983,
             "atk": 124,
             "def": 110,
             "flee": 103,
-            "xp": 7441,
+            "xp": 7973,
             "str": 22,
             "agi": 22,
             "vit": 45,
             "intel": 54,
             "dex": 35,
             "luk": 22,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "brm_fild01",
                     "name": "Brimstone Field 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "cdl_fild01",
                     "name": "Cindrel Field 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "cdl_fild02",
@@ -2584,7 +2589,7 @@
                 {
                     "map": "cdl_dun01",
                     "name": "Cindrel Dungeon 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "cdl_dun02",
@@ -2594,7 +2599,39 @@
                 {
                     "map": "brm_fild03",
                     "name": "Brimstone Field 3",
-                    "count": 3
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.oni-tengu",
+            "name": "Oni Tengu",
+            "kind": "Elite",
+            "element": "Holy",
+            "size": "Medium",
+            "biome": "Sacred",
+            "drops": "Oni Tengu Horn 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Katar 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Traveller's Tea 50%",
+            "weapon": "Katar",
+            "gear": "C +4",
+            "level": 67,
+            "elementLevel": 2,
+            "hp": 76290,
+            "atk": 2887,
+            "def": 95,
+            "flee": 245,
+            "xp": 127560,
+            "str": 31,
+            "agi": 31,
+            "vit": 31,
+            "intel": 74,
+            "dex": 62,
+            "luk": 49,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "hcr_fild01",
+                    "name": "Halcyra Field 1",
+                    "count": 1
                 }
             ]
         },
@@ -2607,11 +2644,11 @@
             "biome": "Swamp",
             "drops": "Bittersweet Seed 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Fist 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Spiced Broth 5%",
             "weapon": "Fist",
-            "gear": "Raw +10",
+            "gear": "E +0",
             "level": 68,
             "elementLevel": 1,
-            "hp": 821,
-            "atk": 283,
+            "hp": 2321,
+            "atk": 521,
             "def": 85,
             "flee": 125,
             "xp": 8378,
@@ -2621,21 +2658,54 @@
             "intel": 35,
             "dex": 35,
             "luk": 22,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_fild03",
                     "name": "Kharnel Field 3",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun05",
                     "name": "Kharnel Dungeon 5",
-                    "count": 6
+                    "count": 4
                 },
                 {
                     "map": "khn_dun06",
                     "name": "Kharnel Dungeon 6",
-                    "count": 2
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.venom-gloop",
+            "name": "Venom Gloop",
+            "kind": "Elite",
+            "element": "Dark",
+            "size": "Large",
+            "biome": "Corrupted",
+            "drops": "Venom Gloop Eye 10%, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 50%",
+            "weapon": "Staff",
+            "gear": "C +4",
+            "level": 68,
+            "elementLevel": 2,
+            "hp": 95400,
+            "atk": 482,
+            "def": 124,
+            "flee": 125,
+            "xp": 134040,
+            "str": 33,
+            "agi": 33,
+            "vit": 50,
+            "intel": 86,
+            "dex": 50,
+            "luk": 33,
+            "hardDef": 0.0,
+            "homes": [
+                {
+                    "map": "khn_dun09",
+                    "name": "Kharnel Dungeon 9",
+                    "count": 1
                 }
             ]
         },
@@ -2646,22 +2716,23 @@
             "element": "Fire",
             "size": "Large",
             "biome": "Volcanic",
-            "drops": "Cyclo Horn 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×3–4, Quench Oil 39%, Spear 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "drops": "Cyclo Horn 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Temper Dust 100% ×4–5, Quench Oil 45%, Spear 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
             "weapon": "Spear",
-            "gear": "Raw +6",
+            "gear": "E +0",
             "level": 69,
             "elementLevel": 1,
-            "hp": 1224,
-            "atk": 282,
-            "def": 129,
+            "hp": 3674,
+            "atk": 647,
+            "def": 112,
             "flee": 107,
-            "xp": 7627,
+            "xp": 8801,
             "str": 46,
             "agi": 24,
             "vit": 46,
             "intel": 23,
             "dex": 46,
             "luk": 23,
+            "hardDef": 2.700000047683716,
             "homes": [
                 {
                     "map": "vlm_dun02",
@@ -2671,32 +2742,32 @@
                 {
                     "map": "vlm_dun03",
                     "name": "Velmora Dungeon 3",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "brm_fild01",
                     "name": "Brimstone Field 1",
-                    "count": 6
+                    "count": 4
                 },
                 {
                     "map": "cdl_fild01",
                     "name": "Cindrel Field 1",
-                    "count": 5
+                    "count": 3
                 },
                 {
                     "map": "cdl_fild02",
                     "name": "Cindrel Field 2",
-                    "count": 5
+                    "count": 3
                 },
                 {
                     "map": "cdl_dun01",
                     "name": "Cindrel Dungeon 1",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "cdl_dun02",
                     "name": "Cindrel Dungeon 2",
-                    "count": 4
+                    "count": 3
                 },
                 {
                     "map": "cdl_dun03",
@@ -2706,7 +2777,39 @@
                 {
                     "map": "brm_fild03",
                     "name": "Brimstone Field 3",
-                    "count": 6
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "id": "mob.abyss-maw",
+            "name": "Abyss Maw",
+            "kind": "Elite",
+            "element": "Undead",
+            "size": "Large",
+            "biome": "Haunted",
+            "drops": "Abyss Maw Heart 100% in 2 piles, Faint Ink 30%, Fine Salt 20%, Temper Dust 100% ×72, Quench Oil 100% ×7–8, Wand 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Grilled Fish 50%",
+            "weapon": "Wand",
+            "gear": "C +4",
+            "level": 70,
+            "elementLevel": 2,
+            "hp": 171930,
+            "atk": 494,
+            "def": 146,
+            "flee": 128,
+            "xp": 147840,
+            "str": 34,
+            "agi": 34,
+            "vit": 67,
+            "intel": 79,
+            "dex": 52,
+            "luk": 34,
+            "hardDef": 8.399999618530274,
+            "homes": [
+                {
+                    "map": "khn_dun04",
+                    "name": "Kharnel Dungeon 4",
+                    "count": 1
                 }
             ]
         },
@@ -2717,72 +2820,73 @@
             "element": "Undead",
             "size": "Small",
             "biome": "Haunted",
-            "drops": "Emberlurk Golden Eye 0.1%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×10–11, Quench Oil 100% ×1–2, Fist 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Grilled Fish 5%",
-            "weapon": "Fist",
-            "gear": "C +8",
+            "drops": "Emberlurk Golden Eye 0.1%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 54%, Warhammer 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Grilled Fish 5%",
+            "weapon": "Warhammer",
+            "gear": "E +0",
             "level": 71,
             "elementLevel": 1,
-            "hp": 3417,
-            "atk": 1340,
-            "def": 406,
+            "hp": 4378,
+            "atk": 660,
+            "def": 146,
             "flee": 109,
-            "xp": 18102,
+            "xp": 9698,
             "str": 37,
             "agi": 24,
             "vit": 65,
             "intel": 23,
             "dex": 37,
             "luk": 23,
+            "hardDef": 2.700000047683716,
             "homes": [
                 {
                     "map": "brm_fild01",
                     "name": "Brimstone Field 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "cdl_fild01",
                     "name": "Cindrel Field 1",
-                    "count": 8
+                    "count": 5
                 },
                 {
                     "map": "cdl_fild02",
                     "name": "Cindrel Field 2",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "cdl_dun01",
                     "name": "Cindrel Dungeon 1",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "cdl_dun02",
                     "name": "Cindrel Dungeon 2",
-                    "count": 6
+                    "count": 4
                 },
                 {
                     "map": "cdl_dun03",
                     "name": "Cindrel Dungeon 3",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "khn_fild02",
                     "name": "Kharnel Field 2",
-                    "count": 10
+                    "count": 6
                 },
                 {
                     "map": "khn_fild01",
                     "name": "Kharnel Field 1",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "brm_fild03",
                     "name": "Brimstone Field 3",
-                    "count": 10
+                    "count": 6
                 },
                 {
                     "map": "khn_fild08",
                     "name": "Kharnel Field 8",
-                    "count": 2
+                    "count": 1
                 }
             ]
         },
@@ -2793,13 +2897,13 @@
             "element": "Poison",
             "size": "Small",
             "biome": "Swamp",
-            "drops": "Moldy Slime 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 54%, Spear 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Spiced Broth 5%",
-            "weapon": "Spear",
-            "gear": "Raw +10",
+            "drops": "Moldy Slime 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 54%, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Spiced Broth 5%",
+            "weapon": "Scythe",
+            "gear": "E +0",
             "level": 72,
             "elementLevel": 1,
-            "hp": 1149,
-            "atk": 317,
+            "hp": 3273,
+            "atk": 182,
             "def": 116,
             "flee": 110,
             "xp": 10175,
@@ -2809,11 +2913,12 @@
             "intel": 24,
             "dex": 48,
             "luk": 24,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_fild03",
                     "name": "Kharnel Field 3",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild04",
@@ -2823,12 +2928,12 @@
                 {
                     "map": "khn_dun05",
                     "name": "Kharnel Dungeon 5",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun06",
                     "name": "Kharnel Dungeon 6",
-                    "count": 2
+                    "count": 1
                 }
             ]
         },
@@ -2839,82 +2944,83 @@
             "element": "Fire",
             "size": "Large",
             "biome": "Volcanic",
-            "drops": "Horngore Crown Horn 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×8–9, Quench Oil 88%, Bow 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
-            "weapon": "Bow",
-            "gear": "D +8",
+            "drops": "Horngore Crown Horn 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 54%, Sniper 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "weapon": "Sniper",
+            "gear": "E +0",
             "level": 73,
             "elementLevel": 1,
-            "hp": 2226,
-            "atk": 1106,
-            "def": 261,
+            "hp": 3084,
+            "atk": 688,
+            "def": 91,
             "flee": 154,
-            "xp": 17427,
+            "xp": 10670,
             "str": 24,
             "agi": 49,
             "vit": 24,
             "intel": 24,
             "dex": 67,
             "luk": 24,
+            "hardDef": 2.700000047683716,
             "homes": [
                 {
                     "map": "cdl_fild01",
                     "name": "Cindrel Field 1",
-                    "count": 8
+                    "count": 5
                 },
                 {
                     "map": "cdl_fild02",
                     "name": "Cindrel Field 2",
-                    "count": 6
+                    "count": 4
                 },
                 {
                     "map": "cdl_dun01",
                     "name": "Cindrel Dungeon 1",
-                    "count": 6
+                    "count": 4
                 },
                 {
                     "map": "cdl_dun02",
                     "name": "Cindrel Dungeon 2",
-                    "count": 5
+                    "count": 3
                 },
                 {
                     "map": "cdl_dun03",
                     "name": "Cindrel Dungeon 3",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "khn_fild05",
                     "name": "Kharnel Field 5",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_fild07",
                     "name": "Kharnel Field 7",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "brm_fild03",
                     "name": "Brimstone Field 3",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild10",
                     "name": "Kharnel Field 10",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun07",
                     "name": "Kharnel Dungeon 7",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun08",
                     "name": "Kharnel Dungeon 8",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun09",
                     "name": "Kharnel Dungeon 9",
-                    "count": 2
+                    "count": 1
                 }
             ]
         },
@@ -2925,42 +3031,43 @@
             "element": "Dark",
             "size": "Small",
             "biome": "Haunted",
-            "drops": "Drizzle Droplet 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×4–5, Quench Oil 47%, Katar 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 5%",
+            "drops": "Drizzle Droplet 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 54%, Katar 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 5%",
             "weapon": "Katar",
-            "gear": "Raw +6",
+            "gear": "E +0",
             "level": 74,
             "elementLevel": 1,
-            "hp": 897,
-            "atk": 244,
+            "hp": 2565,
+            "atk": 424,
             "def": 92,
             "flee": 174,
-            "xp": 9694,
+            "xp": 11186,
             "str": 50,
             "agi": 50,
             "vit": 25,
             "intel": 24,
             "dex": 24,
             "luk": 50,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_fild02",
                     "name": "Kharnel Field 2",
-                    "count": 10
+                    "count": 6
                 },
                 {
                     "map": "khn_fild01",
                     "name": "Kharnel Field 1",
-                    "count": 7
+                    "count": 5
                 },
                 {
                     "map": "khn_fild06",
                     "name": "Kharnel Field 6",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild08",
                     "name": "Kharnel Field 8",
-                    "count": 6
+                    "count": 4
                 }
             ]
         },
@@ -2971,62 +3078,63 @@
             "element": "Undead",
             "size": "Small",
             "biome": "Haunted",
-            "drops": "Blazeskull Flame Core 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 73%, Sword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Grilled Fish 5%",
+            "drops": "Blazeskull Flame Core 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×6–7, Quench Oil 63%, Sword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Grilled Fish 5%",
             "weapon": "Sword",
-            "gear": "E +7",
+            "gear": "D +0",
             "level": 76,
             "elementLevel": 1,
-            "hp": 1856,
-            "atk": 765,
-            "def": 212,
+            "hp": 4233,
+            "atk": 1009,
+            "def": 117,
             "flee": 172,
-            "xp": 16579,
+            "xp": 14327,
             "str": 51,
             "agi": 51,
             "vit": 40,
             "intel": 26,
             "dex": 40,
             "luk": 25,
+            "hardDef": 4.800000190734863,
             "homes": [
                 {
                     "map": "cdl_fild01",
                     "name": "Cindrel Field 1",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "cdl_fild02",
                     "name": "Cindrel Field 2",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "cdl_dun01",
                     "name": "Cindrel Dungeon 1",
-                    "count": 4
+                    "count": 2
                 },
                 {
                     "map": "cdl_dun02",
                     "name": "Cindrel Dungeon 2",
-                    "count": 4
+                    "count": 2
                 },
                 {
                     "map": "cdl_dun03",
                     "name": "Cindrel Dungeon 3",
-                    "count": 4
+                    "count": 2
                 },
                 {
                     "map": "khn_fild02",
                     "name": "Kharnel Field 2",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "khn_fild01",
                     "name": "Kharnel Field 1",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_fild08",
                     "name": "Kharnel Field 8",
-                    "count": 4
+                    "count": 2
                 }
             ]
         },
@@ -3039,13 +3147,13 @@
             "biome": "Swamp",
             "drops": "Inky Fin 10%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×6–7, Quench Oil 63%, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Spiced Broth 5%",
             "weapon": "Axe",
-            "gear": "F +8",
+            "gear": "D +0",
             "level": 77,
             "elementLevel": 1,
-            "hp": 936,
-            "atk": 387,
+            "hp": 2690,
+            "atk": 695,
             "def": 95,
-            "flee": 202,
+            "flee": 245,
             "xp": 15003,
             "str": 62,
             "agi": 52,
@@ -3053,36 +3161,37 @@
             "intel": 26,
             "dex": 25,
             "luk": 40,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "lmh_fild01",
                     "name": "Luminhal Field 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_fild03",
                     "name": "Kharnel Field 3",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_fild04",
                     "name": "Kharnel Field 4",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "lst_dun02",
                     "name": "Lastline Dungeon 2",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun05",
                     "name": "Kharnel Dungeon 5",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "khn_dun06",
                     "name": "Kharnel Dungeon 6",
-                    "count": 7
+                    "count": 4
                 }
             ]
         },
@@ -3093,93 +3202,48 @@
             "element": "Fire",
             "size": "Medium",
             "biome": "Volcanic",
-            "drops": "Sucker Cup 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×4–5, Quench Oil 47%, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
+            "drops": "Sucker Cup 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×6–7, Quench Oil 63%, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Flame Armor Converter 2.5%, Flame Elemental Converter 2.5%",
             "weapon": "Dagger",
-            "gear": "Raw +6",
+            "gear": "D +0",
             "level": 78,
             "elementLevel": 1,
-            "hp": 945,
-            "atk": 280,
+            "hp": 2721,
+            "atk": 850,
             "def": 96,
-            "flee": 207,
-            "xp": 11668,
+            "flee": 267,
+            "xp": 15706,
             "str": 53,
             "agi": 62,
             "vit": 26,
             "intel": 26,
             "dex": 41,
             "luk": 26,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "cdl_fild01",
                     "name": "Cindrel Field 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "cdl_fild02",
                     "name": "Cindrel Field 2",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "cdl_dun01",
                     "name": "Cindrel Dungeon 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "cdl_dun02",
                     "name": "Cindrel Dungeon 2",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "cdl_dun03",
                     "name": "Cindrel Dungeon 3",
-                    "count": 7
-                }
-            ]
-        },
-        {
-            "id": "mob.toadmaw",
-            "name": "Toadmaw",
-            "kind": "Elite",
-            "element": "Poison",
-            "size": "Large",
-            "biome": "Swamp",
-            "drops": "Toadmaw Toadstone 10%, Faint Ink 30%, Clear Ink 15%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×117–118, Quench Oil 100% ×11–12, Staff 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Spiced Broth 50%",
-            "weapon": "Staff",
-            "gear": "B +9",
-            "level": 78,
-            "elementLevel": 2,
-            "hp": 1132,
-            "atk": 143,
-            "def": 119,
-            "flee": 309,
-            "xp": 292810,
-            "str": 26,
-            "agi": 26,
-            "vit": 41,
-            "intel": 71,
-            "dex": 41,
-            "luk": 26,
-            "homes": [
-                {
-                    "map": "khn_fild03",
-                    "name": "Kharnel Field 3",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild09",
-                    "name": "Kharnel Field 9",
-                    "count": 1
-                },
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 1
+                    "count": 4
                 }
             ]
         },
@@ -3190,74 +3254,127 @@
             "element": "Water",
             "size": "Medium",
             "biome": "Haunted",
-            "drops": "Squirt Tentacle 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×3–4, Quench Oil 40%, Shuriken 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
+            "drops": "Squirt Tentacle 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×6–7, Quench Oil 63%, Shuriken 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Frost Armor Converter 2.5%, Frost Elemental Converter 2.5%",
             "weapon": "Shuriken",
-            "gear": "Raw +2",
+            "gear": "D +0",
             "level": 79,
             "elementLevel": 1,
-            "hp": 1156,
-            "atk": 278,
+            "hp": 3330,
+            "atk": 868,
             "def": 121,
-            "flee": 184,
-            "xp": 10332,
+            "flee": 245,
+            "xp": 16438,
             "str": 27,
             "agi": 53,
             "vit": 42,
             "intel": 26,
             "dex": 63,
             "luk": 26,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_fild02",
                     "name": "Kharnel Field 2",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_fild01",
                     "name": "Kharnel Field 1",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_dun01",
                     "name": "Kharnel Dungeon 1",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun02",
                     "name": "Kharnel Dungeon 2",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun03",
                     "name": "Kharnel Dungeon 3",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_fild03",
                     "name": "Kharnel Field 3",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_fild04",
                     "name": "Kharnel Field 4",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "khn_fild08",
                     "name": "Kharnel Field 8",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_dun05",
                     "name": "Kharnel Dungeon 5",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_dun06",
                     "name": "Kharnel Dungeon 6",
-                    "count": 7
+                    "count": 4
                 }
             ]
+        },
+        {
+            "id": "mob.blood-ronin",
+            "name": "Blood Ronin",
+            "kind": "Elite",
+            "element": "Fire",
+            "size": "Large",
+            "biome": "Desert",
+            "drops": "Blood Ronin Crest 100% in 2 piles, Faint Ink 30%, Clear Ink 15%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×97–98, Quench Oil 100% ×9–10, Dagger 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Flame Armor Converter 25%, Flame Elemental Converter 25%",
+            "weapon": "Dagger",
+            "gear": "B +4",
+            "level": 80,
+            "elementLevel": 2,
+            "hp": 160350,
+            "atk": 5724,
+            "def": 96,
+            "flee": 160,
+            "xp": 265330,
+            "str": 41,
+            "agi": 48,
+            "vit": 20,
+            "intel": 20,
+            "dex": 31,
+            "luk": 20,
+            "hardDef": 12.300000190734864,
+            "homes": []
+        },
+        {
+            "id": "mob.frost-ronin",
+            "name": "Frost Ronin",
+            "kind": "Elite",
+            "element": "Water",
+            "size": "Large",
+            "biome": "Snow",
+            "drops": "Frost Ronin Crest 100% in 2 piles, Faint Ink 30%, Clear Ink 15%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×97–98, Quench Oil 100% ×9–10, Sword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 25%, Frost Elemental Converter 25%",
+            "weapon": "Sword",
+            "gear": "B +4",
+            "level": 80,
+            "elementLevel": 2,
+            "hp": 158160,
+            "atk": 6879,
+            "def": 90,
+            "flee": 115,
+            "xp": 265330,
+            "str": 23,
+            "agi": 23,
+            "vit": 18,
+            "intel": 11,
+            "dex": 17,
+            "luk": 11,
+            "hardDef": 12.300000190734864,
+            "homes": []
         },
         {
             "id": "mob.inferno-mask",
@@ -3266,39 +3383,24 @@
             "element": "Fire",
             "size": "Large",
             "biome": "Volcanic",
-            "drops": "Inferno Mask Ember Eye 50%, Faint Ink 30%, Clear Ink 15%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×104–105, Quench Oil 100% ×10–11, Katar 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 25%, Flame Elemental Converter 25%",
+            "drops": "Inferno Mask Ember Eye 50%, Faint Ink 30%, Clear Ink 15%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×97–98, Quench Oil 100% ×9–10, Katar 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 25%, Flame Elemental Converter 25%",
             "weapon": "Katar",
-            "gear": "C +9",
+            "gear": "B +4",
             "level": 80,
             "elementLevel": 2,
-            "hp": 976,
-            "atk": 1053,
+            "hp": 84540,
+            "atk": 4089,
             "def": 99,
             "flee": 184,
-            "xp": 284980,
+            "xp": 265330,
             "str": 54,
             "agi": 54,
             "vit": 27,
             "intel": 27,
             "dex": 27,
             "luk": 53,
-            "homes": [
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "cdl_fild02",
-                    "name": "Cindrel Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "cdl_dun03",
-                    "name": "Cindrel Dungeon 3",
-                    "count": 1
-                }
-            ]
+            "hardDef": 0.0,
+            "homes": []
         },
         {
             "id": "mob.swampfang",
@@ -3307,49 +3409,76 @@
             "element": "Poison",
             "size": "Medium",
             "biome": "Swamp",
-            "drops": "Swampfang Hide 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×4–5, Quench Oil 47%, Dagger 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Spiced Broth 5%",
-            "weapon": "Dagger",
-            "gear": "Raw +6",
+            "drops": "Swampfang Hide 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×6–7, Quench Oil 63%, Katar 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Spiced Broth 5%",
+            "weapon": "Katar",
+            "gear": "D +0",
             "level": 80,
             "elementLevel": 1,
-            "hp": 1109,
-            "atk": 284,
-            "def": 116,
+            "hp": 3901,
+            "atk": 637,
+            "def": 99,
             "flee": 203,
-            "xp": 12775,
+            "xp": 17197,
             "str": 54,
             "agi": 64,
             "vit": 27,
             "intel": 27,
             "dex": 42,
             "luk": 26,
+            "hardDef": 4.800000190734863,
             "homes": [
                 {
                     "map": "khn_fild03",
                     "name": "Kharnel Field 3",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_fild04",
                     "name": "Kharnel Field 4",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_fild09",
                     "name": "Kharnel Field 9",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun05",
                     "name": "Kharnel Dungeon 5",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_dun06",
                     "name": "Kharnel Dungeon 6",
-                    "count": 7
+                    "count": 4
                 }
             ]
+        },
+        {
+            "id": "mob.wraithmother",
+            "name": "Wraithmother",
+            "kind": "Elite",
+            "element": "Ghost",
+            "size": "Large",
+            "biome": "Mist",
+            "drops": "Wraithmother Tear 100% in 2 piles, Faint Ink 30%, Clear Ink 15%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×97–98, Quench Oil 100% ×9–10, Greatsword 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Sage Stew 50%",
+            "weapon": "Greatsword",
+            "gear": "B +4",
+            "level": 80,
+            "elementLevel": 2,
+            "hp": 121890,
+            "atk": 9082,
+            "def": 154,
+            "flee": 138,
+            "xp": 265330,
+            "str": 72,
+            "agi": 31,
+            "vit": 61,
+            "intel": 31,
+            "dex": 30,
+            "luk": 47,
+            "hardDef": 0.0,
+            "homes": []
         },
         {
             "id": "mob.wisp",
@@ -3358,32 +3487,33 @@
             "element": "Holy",
             "size": "Medium",
             "biome": "Sacred",
-            "drops": "Wisp Core 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×9–10, Quench Oil 91%, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Traveller's Tea 5%",
+            "drops": "Wisp Core 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Traveller's Tea 5%",
             "weapon": "Staff",
-            "gear": "E +9",
+            "gear": "D +0",
             "level": 85,
             "elementLevel": 1,
-            "hp": 1262,
+            "hp": 3667,
             "atk": 165,
             "def": 128,
             "flee": 129,
-            "xp": 26666,
+            "xp": 21455,
             "str": 30,
             "agi": 29,
             "vit": 45,
             "intel": 77,
             "dex": 44,
             "luk": 29,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hcr_fild01",
                     "name": "Halcyra Field 1",
-                    "count": 12
+                    "count": 6
                 },
                 {
                     "map": "hcr_fild02",
                     "name": "Halcyra Field 2",
-                    "count": 12
+                    "count": 6
                 }
             ]
         },
@@ -3394,32 +3524,33 @@
             "element": "Holy",
             "size": "Small",
             "biome": "Sacred",
-            "drops": "Skywing Dust 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 59%, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Traveller's Tea 5%",
+            "drops": "Skywing Dust 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Spear 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Traveller's Tea 5%",
             "weapon": "Spear",
-            "gear": "Raw +8",
+            "gear": "D +0",
             "level": 87,
             "elementLevel": 1,
-            "hp": 1474,
-            "atk": 347,
+            "hp": 4295,
+            "atk": 1103,
             "def": 146,
-            "flee": 150,
-            "xp": 18715,
+            "flee": 208,
+            "xp": 23394,
             "str": 59,
             "agi": 30,
             "vit": 59,
             "intel": 30,
             "dex": 58,
             "luk": 29,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "hcr_fild01",
                     "name": "Halcyra Field 1",
-                    "count": 9
+                    "count": 4
                 },
                 {
                     "map": "hcr_fild02",
                     "name": "Halcyra Field 2",
-                    "count": 9
+                    "count": 4
                 }
             ]
         },
@@ -3430,67 +3561,68 @@
             "element": "Undead",
             "size": "Small",
             "biome": "Haunted",
-            "drops": "Glowcoil Glowing Eye 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×10–11, Quench Oil 100% ×1–2, Greatsword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Grilled Fish 5%",
+            "drops": "Glowcoil Glowing Eye 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Greatsword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Grilled Fish 5%",
             "weapon": "Greatsword",
-            "gear": "D +8",
+            "gear": "D +0",
             "level": 88,
             "elementLevel": 1,
-            "hp": 1487,
-            "atk": 1554,
+            "hp": 4338,
+            "atk": 1298,
             "def": 147,
-            "flee": 230,
-            "xp": 34187,
+            "flee": 213,
+            "xp": 24420,
             "str": 71,
             "agi": 30,
             "vit": 59,
             "intel": 30,
             "dex": 30,
             "luk": 46,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_fild01",
                     "name": "Kharnel Field 1",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun01",
                     "name": "Kharnel Dungeon 1",
-                    "count": 11
+                    "count": 6
                 },
                 {
                     "map": "khn_dun02",
                     "name": "Kharnel Dungeon 2",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_dun03",
                     "name": "Kharnel Dungeon 3",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_dun04",
                     "name": "Kharnel Dungeon 4",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild03",
                     "name": "Kharnel Field 3",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_fild04",
                     "name": "Kharnel Field 4",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "khn_fild08",
                     "name": "Kharnel Field 8",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_fild09",
                     "name": "Kharnel Field 9",
-                    "count": 11
+                    "count": 6
                 },
                 {
                     "map": "khn_dun05",
@@ -3511,93 +3643,63 @@
             "element": "Poison",
             "size": "Small",
             "biome": "Corrupted",
-            "drops": "Grubble Chrysalis 0.1%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×11–12, Quench Oil 100% ×1–2, Warhammer 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Spiced Broth 5%",
+            "drops": "Grubble Chrysalis 0.1%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Warhammer 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Spiced Broth 5%",
             "weapon": "Warhammer",
-            "gear": "C +8",
+            "gear": "D +0",
             "level": 90,
             "elementLevel": 1,
-            "hp": 3776,
-            "atk": 2051,
-            "def": 444,
+            "hp": 6036,
+            "atk": 1181,
+            "def": 184,
             "flee": 145,
-            "xp": 42535,
+            "xp": 26584,
             "str": 61,
             "agi": 31,
             "vit": 72,
             "intel": 31,
             "dex": 47,
             "luk": 30,
+            "hardDef": 4.800000190734863,
             "homes": [
                 {
                     "map": "khn_fild04",
                     "name": "Kharnel Field 4",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "khn_fild05",
                     "name": "Kharnel Field 5",
-                    "count": 10
+                    "count": 5
                 },
                 {
                     "map": "khn_fild07",
                     "name": "Kharnel Field 7",
-                    "count": 10
+                    "count": 5
                 },
                 {
                     "map": "khn_fild09",
                     "name": "Kharnel Field 9",
-                    "count": 10
+                    "count": 5
                 },
                 {
                     "map": "khn_fild10",
                     "name": "Kharnel Field 10",
-                    "count": 13
+                    "count": 6
                 },
                 {
                     "map": "khn_dun07",
                     "name": "Kharnel Dungeon 7",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_dun08",
                     "name": "Kharnel Dungeon 8",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_dun09",
                     "name": "Kharnel Dungeon 9",
-                    "count": 8
-                }
-            ]
-        },
-        {
-            "id": "mob.wraithmother",
-            "name": "Wraithmother",
-            "kind": "Elite",
-            "element": "Ghost",
-            "size": "Large",
-            "biome": "Mist",
-            "drops": "Wraithmother Tear 100% in 2 piles, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×110–111, Quench Oil 100% ×11–12, Greatsword 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Sage Stew 50%",
-            "weapon": "Greatsword",
-            "gear": "D +10",
-            "level": 90,
-            "elementLevel": 2,
-            "hp": 1541,
-            "atk": 1621,
-            "def": 164,
-            "flee": 148,
-            "xp": 398760,
-            "str": 72,
-            "agi": 31,
-            "vit": 61,
-            "intel": 31,
-            "dex": 30,
-            "luk": 47,
-            "homes": [
-                {
-                    "map": "khn_fild06",
-                    "name": "Kharnel Field 6",
-                    "count": 1
+                    "count": 4
                 }
             ]
         },
@@ -3608,52 +3710,53 @@
             "element": "Ghost",
             "size": "Small",
             "biome": "Mist",
-            "drops": "Frostskull Crown 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×8–9, Quench Oil 85%, Bow 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Sage Stew 5%",
+            "drops": "Frostskull Crown 2%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Bow 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Sage Stew 5%",
             "weapon": "Bow",
-            "gear": "E +7",
+            "gear": "D +0",
             "level": 91,
             "elementLevel": 1,
-            "hp": 1892,
-            "atk": 788,
-            "def": 214,
+            "hp": 4404,
+            "atk": 1002,
+            "def": 119,
             "flee": 212,
-            "xp": 32084,
+            "xp": 27727,
             "str": 31,
             "agi": 61,
             "vit": 31,
             "intel": 31,
             "dex": 83,
             "luk": 31,
+            "hardDef": 4.800000190734863,
             "homes": [
                 {
                     "map": "khn_dun01",
                     "name": "Kharnel Dungeon 1",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_dun02",
                     "name": "Kharnel Dungeon 2",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_dun03",
                     "name": "Kharnel Dungeon 3",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_dun04",
                     "name": "Kharnel Dungeon 4",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_fild06",
                     "name": "Kharnel Field 6",
-                    "count": 9
+                    "count": 4
                 },
                 {
                     "map": "khn_fild08",
                     "name": "Kharnel Field 8",
-                    "count": 4
+                    "count": 2
                 }
             ]
         },
@@ -3664,52 +3767,53 @@
             "element": "Dark",
             "size": "Small",
             "biome": "Corrupted",
-            "drops": "Nightsqueak Tail 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 55%, Sniper 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lucky Dumpling 5%",
+            "drops": "Nightsqueak Tail 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Sniper 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lucky Dumpling 5%",
             "weapon": "Sniper",
-            "gear": "Raw +6",
+            "gear": "D +0",
             "level": 92,
             "elementLevel": 1,
-            "hp": 1144,
-            "atk": 346,
+            "hp": 3353,
+            "atk": 1116,
             "def": 120,
-            "flee": 158,
-            "xp": 21477,
+            "flee": 218,
+            "xp": 28912,
             "str": 31,
             "agi": 31,
             "vit": 31,
             "intel": 74,
             "dex": 62,
             "luk": 49,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_dun01",
                     "name": "Kharnel Dungeon 1",
-                    "count": 4
+                    "count": 2
                 },
                 {
                     "map": "khn_dun02",
                     "name": "Kharnel Dungeon 2",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun03",
                     "name": "Kharnel Dungeon 3",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun04",
                     "name": "Kharnel Dungeon 4",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild05",
                     "name": "Kharnel Field 5",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild07",
                     "name": "Kharnel Field 7",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild08",
@@ -3719,58 +3823,22 @@
                 {
                     "map": "khn_fild10",
                     "name": "Kharnel Field 10",
-                    "count": 4
+                    "count": 2
                 },
                 {
                     "map": "khn_dun07",
                     "name": "Kharnel Dungeon 7",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun08",
                     "name": "Kharnel Dungeon 8",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun09",
                     "name": "Kharnel Dungeon 9",
-                    "count": 3
-                }
-            ]
-        },
-        {
-            "id": "mob.oni-tengu",
-            "name": "Oni Tengu",
-            "kind": "Elite",
-            "element": "Holy",
-            "size": "Medium",
-            "biome": "Sacred",
-            "drops": "Oni Tengu Horn 100% in 2 piles, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×110–111, Quench Oil 100% ×11–12, Sniper 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Traveller's Tea 50%",
-            "weapon": "Sniper",
-            "gear": "D +10",
-            "level": 92,
-            "elementLevel": 2,
-            "hp": 1144,
-            "atk": 1386,
-            "def": 120,
-            "flee": 238,
-            "xp": 433680,
-            "str": 31,
-            "agi": 31,
-            "vit": 31,
-            "intel": 74,
-            "dex": 62,
-            "luk": 49,
-            "homes": [
-                {
-                    "map": "hcr_fild01",
-                    "name": "Halcyra Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "hcr_fild02",
-                    "name": "Halcyra Field 2",
-                    "count": 1
+                    "count": 2
                 }
             ]
         },
@@ -3781,37 +3849,38 @@
             "element": "Ghost",
             "size": "Medium",
             "biome": "Mist",
-            "drops": "Frostcap Spore 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 55%, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Sage Stew 5%",
+            "drops": "Frostcap Spore 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Sage Stew 5%",
             "weapon": "Scythe",
-            "gear": "Raw +6",
+            "gear": "D +0",
             "level": 93,
             "elementLevel": 1,
-            "hp": 1609,
+            "hp": 4723,
             "atk": 196,
             "def": 168,
             "flee": 149,
-            "xp": 22390,
+            "xp": 30140,
             "str": 49,
             "agi": 32,
             "vit": 63,
             "intel": 74,
             "dex": 32,
             "luk": 31,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_fild06",
                     "name": "Kharnel Field 6",
-                    "count": 14
+                    "count": 7
                 },
                 {
                     "map": "hcr_fild01",
                     "name": "Halcyra Field 1",
-                    "count": 9
+                    "count": 4
                 },
                 {
                     "map": "hcr_fild02",
                     "name": "Halcyra Field 2",
-                    "count": 9
+                    "count": 4
                 }
             ]
         },
@@ -3822,22 +3891,23 @@
             "element": "Dark",
             "size": "Small",
             "biome": "Corrupted",
-            "drops": "Goopie Goo 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×4–5, Quench Oil 46%, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 5%",
-            "weapon": "Scythe",
-            "gear": "Raw +2",
+            "drops": "Goopie Goo 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Wand 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 5%",
+            "weapon": "Wand",
+            "gear": "D +0",
             "level": 94,
             "elementLevel": 1,
-            "hp": 1623,
+            "hp": 4769,
             "atk": 211,
             "def": 169,
             "flee": 151,
-            "xp": 19746,
+            "xp": 31414,
             "str": 50,
             "agi": 33,
             "vit": 63,
             "intel": 75,
             "dex": 32,
             "luk": 32,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_fild04",
@@ -3847,37 +3917,37 @@
                 {
                     "map": "khn_fild05",
                     "name": "Kharnel Field 5",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "khn_fild07",
                     "name": "Kharnel Field 7",
-                    "count": 6
+                    "count": 3
                 },
                 {
                     "map": "khn_fild09",
                     "name": "Kharnel Field 9",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_fild10",
                     "name": "Kharnel Field 10",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_dun07",
                     "name": "Kharnel Dungeon 7",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_dun08",
                     "name": "Kharnel Dungeon 8",
-                    "count": 5
+                    "count": 2
                 },
                 {
                     "map": "khn_dun09",
                     "name": "Kharnel Dungeon 9",
-                    "count": 5
+                    "count": 2
                 }
             ]
         },
@@ -3888,22 +3958,23 @@
             "element": "Ghost",
             "size": "Medium",
             "biome": "Mist",
-            "drops": "Frostwick Cold Ember 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×5–6, Quench Oil 59%, Warhammer 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Sage Stew 5%",
+            "drops": "Frostwick Cold Ember 50%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Warhammer 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Sage Stew 5%",
             "weapon": "Warhammer",
-            "gear": "Raw +8",
+            "gear": "D +0",
             "level": 95,
             "elementLevel": 1,
-            "hp": 1824,
-            "atk": 380,
+            "hp": 5368,
+            "atk": 1192,
             "def": 190,
             "flee": 152,
-            "xp": 26187,
+            "xp": 32734,
             "str": 64,
             "agi": 33,
             "vit": 76,
             "intel": 33,
             "dex": 50,
             "luk": 32,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_dun01",
@@ -3913,68 +3984,22 @@
                 {
                     "map": "khn_dun02",
                     "name": "Kharnel Dungeon 2",
-                    "count": 2
+                    "count": 1
                 },
                 {
                     "map": "khn_dun03",
                     "name": "Kharnel Dungeon 3",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun04",
                     "name": "Kharnel Dungeon 4",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_fild06",
                     "name": "Kharnel Field 6",
-                    "count": 5
-                }
-            ]
-        },
-        {
-            "id": "mob.venom-gloop",
-            "name": "Venom Gloop",
-            "kind": "Elite",
-            "element": "Dark",
-            "size": "Large",
-            "biome": "Corrupted",
-            "drops": "Venom Gloop Eye 10%, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×137–138, Quench Oil 100% ×13–14, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 50%",
-            "weapon": "Staff",
-            "gear": "B +9",
-            "level": 95,
-            "elementLevel": 2,
-            "hp": 1448,
-            "atk": 182,
-            "def": 151,
-            "flee": 152,
-            "xp": 610250,
-            "str": 33,
-            "agi": 33,
-            "vit": 50,
-            "intel": 86,
-            "dex": 50,
-            "luk": 33,
-            "homes": [
-                {
-                    "map": "khn_fild05",
-                    "name": "Kharnel Field 5",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild07",
-                    "name": "Kharnel Field 7",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild10",
-                    "name": "Kharnel Field 10",
-                    "count": 1
-                },
-                {
-                    "map": "khn_dun09",
-                    "name": "Kharnel Dungeon 9",
-                    "count": 1
+                    "count": 2
                 }
             ]
         },
@@ -3985,98 +4010,68 @@
             "element": "Dark",
             "size": "Small",
             "biome": "Corrupted",
-            "drops": "Lovebite Heart 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×10–11, Quench Oil 100% ×1–2, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lucky Dumpling 5%",
-            "weapon": "Axe",
-            "gear": "D +8",
+            "drops": "Lovebite Heart 0.5%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 10%, Fine Salt 0.5%, Pure Salt 0.1%, Temper Dust 100% ×7–8, Quench Oil 74%, Fist 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lucky Dumpling 5%",
+            "weapon": "Fist",
+            "gear": "D +0",
             "level": 96,
             "elementLevel": 1,
-            "hp": 1212,
-            "atk": 867,
+            "hp": 3569,
+            "atk": 891,
             "def": 125,
-            "flee": 310,
-            "xp": 47743,
+            "flee": 293,
+            "xp": 34102,
             "str": 76,
             "agi": 65,
             "vit": 33,
             "intel": 33,
             "dex": 33,
             "luk": 51,
+            "hardDef": 0.0,
             "homes": [
                 {
                     "map": "khn_dun02",
                     "name": "Kharnel Dungeon 2",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_dun03",
                     "name": "Kharnel Dungeon 3",
-                    "count": 7
+                    "count": 4
                 },
                 {
                     "map": "khn_dun04",
                     "name": "Kharnel Dungeon 4",
-                    "count": 10
+                    "count": 5
                 },
                 {
                     "map": "khn_fild05",
                     "name": "Kharnel Field 5",
-                    "count": 10
+                    "count": 5
                 },
                 {
                     "map": "khn_fild07",
                     "name": "Kharnel Field 7",
-                    "count": 10
+                    "count": 5
                 },
                 {
                     "map": "khn_fild10",
                     "name": "Kharnel Field 10",
-                    "count": 3
+                    "count": 2
                 },
                 {
                     "map": "khn_dun07",
                     "name": "Kharnel Dungeon 7",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_dun08",
                     "name": "Kharnel Dungeon 8",
-                    "count": 8
+                    "count": 4
                 },
                 {
                     "map": "khn_dun09",
                     "name": "Kharnel Dungeon 9",
-                    "count": 8
-                }
-            ]
-        },
-        {
-            "id": "mob.abyss-maw",
-            "name": "Abyss Maw",
-            "kind": "Elite",
-            "element": "Undead",
-            "size": "Large",
-            "biome": "Haunted",
-            "drops": "Abyss Maw Heart 100% in 2 piles, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, Temper Dust 100% ×110–111, Quench Oil 100% ×11–12, Wand 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Grilled Fish 50%",
-            "weapon": "Wand",
-            "gear": "D +10",
-            "level": 99,
-            "elementLevel": 2,
-            "hp": 3167,
-            "atk": 188,
-            "def": 352,
-            "flee": 157,
-            "xp": 577660,
-            "str": 34,
-            "agi": 34,
-            "vit": 67,
-            "intel": 79,
-            "dex": 52,
-            "luk": 34,
-            "homes": [
-                {
-                    "map": "khn_dun04",
-                    "name": "Kharnel Dungeon 4",
-                    "count": 1
+                    "count": 4
                 }
             ]
         },
@@ -4087,22 +4082,23 @@
             "element": "Wind",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Shuriken 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 50%, Lightning Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Shuriken 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 50%, Lightning Elemental Converter 50%",
             "weapon": "Shuriken",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 105,
             "elementLevel": 3,
-            "hp": 2327,
-            "atk": 2772,
+            "hp": 591300,
+            "atk": 12109,
             "def": 163,
-            "flee": 510,
-            "xp": 2023480,
+            "flee": 503,
+            "xp": 1883920,
             "str": 36,
             "agi": 71,
             "vit": 56,
             "intel": 36,
             "dex": 84,
             "luk": 36,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4112,22 +4108,23 @@
             "element": "Neutral",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Fist 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Hard Bread 100%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Fist 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Hard Bread 100%",
             "weapon": "Fist",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 110,
             "elementLevel": 3,
-            "hp": 9148,
-            "atk": 3629,
-            "def": 764,
+            "hp": 1419300,
+            "atk": 15322,
+            "def": 251,
             "flee": 174,
-            "xp": 2454340,
+            "xp": 2285080,
             "str": 59,
             "agi": 39,
             "vit": 99,
             "intel": 38,
             "dex": 59,
             "luk": 38,
+            "hardDef": 17.399999618530275,
             "homes": []
         },
         {
@@ -4137,22 +4134,23 @@
             "element": "Ghost",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Katar 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Sage Stew 100%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Katar 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Sage Stew 100%",
             "weapon": "Katar",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 115,
             "elementLevel": 3,
-            "hp": 1519,
-            "atk": 1948,
+            "hp": 450846,
+            "atk": 8799,
             "def": 156,
-            "flee": 696,
-            "xp": 2964680,
+            "flee": 702,
+            "xp": 2760220,
             "str": 78,
             "agi": 78,
             "vit": 40,
             "intel": 40,
             "dex": 40,
             "luk": 78,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4162,22 +4160,23 @@
             "element": "Holy",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Wand 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Traveller's Tea 100%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Wand 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Traveller's Tea 100%",
             "weapon": "Wand",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 120,
             "elementLevel": 3,
-            "hp": 2290,
-            "atk": 236,
-            "def": 329,
+            "hp": 716664,
+            "atk": 1110,
+            "def": 235,
             "flee": 198,
-            "xp": 3567500,
+            "xp": 3321480,
             "str": 43,
             "agi": 42,
             "vit": 81,
             "intel": 96,
             "dex": 64,
             "luk": 42,
+            "hardDef": 33.0,
             "homes": []
         },
         {
@@ -4187,22 +4186,23 @@
             "element": "Earth",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Warhammer 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 50%, Seismic Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Warhammer 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Seismic Armor Converter 50%, Seismic Elemental Converter 50%",
             "weapon": "Warhammer",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 125,
             "elementLevel": 3,
-            "hp": 9523,
-            "atk": 5487,
-            "def": 1091,
+            "hp": 1741932,
+            "atk": 24182,
+            "def": 266,
             "flee": 206,
-            "xp": 4278160,
+            "xp": 3983100,
             "str": 85,
             "agi": 45,
             "vit": 99,
             "intel": 44,
             "dex": 67,
             "luk": 44,
+            "hardDef": 50.400001525878909,
             "homes": []
         },
         {
@@ -4212,22 +4212,23 @@
             "element": "Water",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Spear 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 50%, Frost Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Spear 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 50%, Frost Elemental Converter 50%",
             "weapon": "Spear",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 130,
             "elementLevel": 3,
-            "hp": 9360,
-            "atk": 5170,
-            "def": 760,
+            "hp": 1773874,
+            "atk": 23134,
+            "def": 247,
             "flee": 213,
-            "xp": 5113940,
+            "xp": 4761240,
             "str": 89,
             "agi": 46,
             "vit": 88,
             "intel": 46,
             "dex": 88,
             "luk": 46,
+            "hardDef": 17.399999618530275,
             "homes": []
         },
         {
@@ -4237,22 +4238,23 @@
             "element": "Fire",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Flame Armor Converter 50%, Flame Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Axe 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Flame Armor Converter 50%, Flame Elemental Converter 50%",
             "weapon": "Axe",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 135,
             "elementLevel": 3,
-            "hp": 1947,
-            "atk": 3074,
+            "hp": 698442,
+            "atk": 13989,
             "def": 192,
-            "flee": 609,
-            "xp": 6094860,
+            "flee": 602,
+            "xp": 5674520,
             "str": 99,
             "agi": 94,
             "vit": 51,
             "intel": 51,
             "dex": 51,
             "luk": 75,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4262,22 +4264,23 @@
             "element": "Dark",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Sniper 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 100%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Sniper 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Lucky Dumpling 100%",
             "weapon": "Sniper",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 140,
             "elementLevel": 3,
-            "hp": 2068,
-            "atk": 3723,
+            "hp": 768844,
+            "atk": 17994,
             "def": 198,
             "flee": 249,
-            "xp": 7244060,
+            "xp": 6744460,
             "str": 55,
             "agi": 54,
             "vit": 54,
             "intel": 99,
             "dex": 98,
             "luk": 79,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4287,22 +4290,23 @@
             "element": "Undead",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Grilled Fish 100%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Scythe 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Grilled Fish 100%",
             "weapon": "Scythe",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 145,
             "elementLevel": 3,
-            "hp": 4273,
-            "atk": 363,
+            "hp": 1575435,
+            "atk": 1825,
             "def": 286,
             "flee": 255,
-            "xp": 8587980,
+            "xp": 7995720,
             "str": 84,
             "agi": 59,
             "vit": 99,
             "intel": 99,
             "dex": 59,
             "luk": 59,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4312,22 +4316,23 @@
             "element": "Poison",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Spiced Broth 100%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Dagger 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Spiced Broth 100%",
             "weapon": "Dagger",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 150,
             "elementLevel": 3,
-            "hp": 2424,
-            "atk": 4039,
+            "hp": 980628,
+            "atk": 19063,
             "def": 225,
-            "flee": 814,
-            "xp": 10157040,
+            "flee": 823,
+            "xp": 9456540,
             "str": 99,
             "agi": 99,
             "vit": 65,
             "intel": 64,
             "dex": 88,
             "luk": 64,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4337,22 +4342,23 @@
             "element": "Fire",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 50%, Flame Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Staff 2.5%, Padded Vest 2.5%, Woven Shoes 2.5%, Traveller's Cloak 2.5%, Flame Armor Converter 50%, Flame Elemental Converter 50%",
             "weapon": "Staff",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 155,
             "elementLevel": 3,
-            "hp": 3144,
-            "atk": 363,
+            "hp": 1313352,
+            "atk": 1867,
             "def": 294,
             "flee": 309,
-            "xp": 11986060,
+            "xp": 11159440,
             "str": 71,
             "agi": 70,
             "vit": 95,
             "intel": 99,
             "dex": 94,
             "luk": 70,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4362,22 +4368,23 @@
             "element": "Water",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Greatsword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 50%, Frost Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Greatsword 2.5%, Chainmail 2.5%, Iron Sabatons 2.5%, Chain Mantle 2.5%, Frost Armor Converter 50%, Frost Elemental Converter 50%",
             "weapon": "Greatsword",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 160,
             "elementLevel": 3,
-            "hp": 10399,
-            "atk": 6124,
-            "def": 814,
+            "hp": 2665323,
+            "atk": 29501,
+            "def": 301,
             "flee": 322,
-            "xp": 14115020,
+            "xp": 13141580,
             "str": 99,
             "agi": 73,
             "vit": 99,
             "intel": 73,
             "dex": 73,
             "luk": 99,
+            "hardDef": 17.399999618530275,
             "homes": []
         },
         {
@@ -4387,22 +4394,23 @@
             "element": "Wind",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Bow 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 50%, Lightning Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Bow 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 50%, Lightning Elemental Converter 50%",
             "weapon": "Bow",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 165,
             "elementLevel": 3,
-            "hp": 3089,
-            "atk": 3150,
+            "hp": 1381995,
+            "atk": 16144,
             "def": 281,
-            "flee": 838,
-            "xp": 16589740,
+            "flee": 849,
+            "xp": 15445620,
             "str": 85,
             "agi": 99,
             "vit": 85,
             "intel": 84,
             "dex": 99,
             "luk": 84,
+            "hardDef": 0.0,
             "homes": []
         },
         {
@@ -4412,22 +4420,23 @@
             "element": "Wind",
             "size": "Medium",
             "biome": "None",
-            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×304–305, Quench Oil 100% ×30–31, Sword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 50%, Lightning Elemental Converter 50%",
+            "drops": "Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, Temper Dust 100% ×283–284, Quench Oil 100% ×28–29, Sword 2.5%, Leather Jerkin 2.5%, Leather Boots 2.5%, Hide Cloak 2.5%, Lightning Armor Converter 50%, Lightning Elemental Converter 50%",
             "weapon": "Sword",
-            "gear": "A +9",
+            "gear": "A +7",
             "level": 170,
             "elementLevel": 3,
-            "hp": 4899,
-            "atk": 4941,
+            "hp": 2158050,
+            "atk": 24324,
             "def": 311,
-            "flee": 649,
-            "xp": 19462480,
+            "flee": 642,
+            "xp": 18120240,
             "str": 99,
             "agi": 99,
             "vit": 99,
             "intel": 78,
             "dex": 99,
             "luk": 78,
+            "hardDef": 0.0,
             "homes": []
         }
     ]

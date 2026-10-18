@@ -32,7 +32,7 @@ public static class CreatureMaterialPriceBake
     {
         if (!CreatureMaterials.Is(material)) return 0;
         // THE RULE NAMES WHAT A SHOP PAYS; the item keeps the value that pays exactly that once the Tax is taken.
-        int sells = CreatureMaterials.SellValue(d.level, CreatureMaterials.TierOfStep(material.materialStep), d.gearQuality, d.gearFolds);
+        int sells = CreatureMaterials.SellValue(d.level, CreatureMaterials.TierOfStep(material.materialStep), d.gearQuality, d.FileFolds);
         int price = ShopMath.ValueForSellPrice(sells);
         if (material.value == price) return 0;
         said.Append(material.displayName).Append(": ").Append(material.value).Append(" -> ").Append(price).Append('\n');

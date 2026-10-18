@@ -41,7 +41,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.0173333, y: 1.0173333, z: 1.0173333}
+  m_LocalScale: {x: 1.0899999, y: 1.0899999, z: 1.0899999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -156,7 +156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8410cc1e7179c544bb2d21ae58f3124, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
-  agentRadius: 0.30519998
+  agentRadius: 0.327
   arriveRadius: 0.1
   repathInterval: 0.35
   repathThreshold: 0.6
@@ -208,7 +208,7 @@ MonoBehaviour:
   level: 1
   preferredRange: 0
   fleeHpFraction: 0
-  size: 2.8
+  size: 3
   simulateRadius: 28
 --- !u!114 &2331088140895125814
 MonoBehaviour:
@@ -222,10 +222,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bf9dddf805e5421c871a961b1d0cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 10
-  gearInkTier: 1
+  startingGear:
+  - {fileID: 11400000, guid: f1204015c4ba457f8ab0049fecae8d55, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 2
 --- !u!114 &4368571286190339978
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -240,14 +242,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
     level: 65
-    str: 41
-    agi: 35
-    vit: 41
-    intel: 24
-    dex: 35
-    luk: 24
-    baseMaxHP: 160
-    hpPerLevel: 6
+    str: 22
+    agi: 44
+    vit: 21
+    intel: 21
+    dex: 60
+    luk: 21
+    baseMaxHP: 250
+    hpPerLevel: 20
     baseAttack: 4
     attackPerLevel: 1
     baseDefense: 1
@@ -383,6 +385,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.45779997
-  halfWidth: 0.50866663
+  halfHeight: 0.49049997
+  halfWidth: 0.54499996
   lift: 0

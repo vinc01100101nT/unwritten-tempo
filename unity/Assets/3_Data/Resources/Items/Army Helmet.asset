@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 363457277532270036, guid: 9060b61ff2a83844f96739fb795e50d2, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: Protects your head from danger, rain, and questionable orders.

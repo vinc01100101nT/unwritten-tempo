@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 4861169234630056764, guid: 4a40a65d85d3d4a468fa55b38cd4f120, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: Makes you look rich, dangerous, and terrible at doorways.

@@ -220,7 +220,7 @@ public class ItemTooltip : MonoBehaviour
         previewing = null;
         if (item == null) { group.alpha = 0f; return; }
         titleText.text = item.displayName;
-        titleText.color = Rarities.Color(Rarities.Of(item, null));
+        titleText.color = Rarities.Color(Rarities.Of(item));
         bodyText.text = Describe(item);
         ShowSkillIcons(null);   // a kit belongs to a COPY, not the shared def — nothing to show without an instance
         ShowPicture(item, null);
@@ -236,7 +236,7 @@ public class ItemTooltip : MonoBehaviour
         if (inst == null || inst.def == null) { group.alpha = 0f; return; }
         var def = inst.def;
         titleText.text = CopyTitle(inst);
-        titleText.color = Rarities.Color(Rarities.Of(def, inst));
+        titleText.color = Rarities.Color(Rarities.Of(def));
         bodyText.text = DescribeInstance(inst);
         ShowSkillIcons(null);
         ShowPicture(def, inst);
@@ -256,7 +256,7 @@ public class ItemTooltip : MonoBehaviour
     {
         if (inst == null || inst.def == null) { group.alpha = 0f; previewing = null; return; }
         titleText.text = CopyTitle(inst);
-        titleText.color = Rarities.Color(Rarities.Of(inst.def, inst));
+        titleText.color = Rarities.Color(Rarities.Of(inst.def));
         previewing = inst;
         previewingSlot = previewSlot;
         DrawPreviewBody();
@@ -279,7 +279,7 @@ public class ItemTooltip : MonoBehaviour
     void ShowSlots(Item def, EquipmentInstance copy)
     {
         if (slotDiamonds == null) return;
-        int slots = def != null ? Mathf.Min(def.cardSlots, slotDiamonds.Length) : 0;
+        int slots = copy != null ? Mathf.Min(copy.cardSlots, slotDiamonds.Length) : 0;
         for (int i = 0; i < slotDiamonds.Length; i++)
         {
             var d = slotDiamonds[i];
@@ -395,7 +395,7 @@ public class ItemTooltip : MonoBehaviour
     {
         var sb = new StringBuilder();
         AppendHeader(sb, item);
-        AppendRarity(sb, Rarities.Of(item, null));
+        AppendRarity(sb, Rarities.Of(item));
         AppendAttackKind(sb, item);
         AppendHeadgear(sb, item);
         AppendUseEffect(sb, item);
@@ -412,10 +412,10 @@ public class ItemTooltip : MonoBehaviour
         switch (item.materialKind)
         {
             case MaterialKind.TemperDust:
-                use = "Used to fold a piece at a smith, loom or tannery.";
+                use = "Used to fold a piece at a smith.";
                 break;
             case MaterialKind.QuenchOil:
-                use = "Used to quench a piece at a smith, loom or tannery.";
+                use = "Used to quench a piece at a smith.";
                 break;
             case MaterialKind.Ink:
                 use = "Writes one random stat onto a piece of gear. Stronger Ink writes a bigger number.";
@@ -457,14 +457,13 @@ public class ItemTooltip : MonoBehaviour
         var sb = new StringBuilder();
         var def = inst.def;
         AppendHeader(sb, def);
-        AppendRarity(sb, Rarities.Of(def, inst));
         AppendAttackKind(sb, def);
         AppendCopyStats(sb, inst);
         AppendHeadgear(sb, def);
         AppendTrademark(sb, inst);
         AppendWord(sb, inst);
 
-        int slots = def.cardSlots;
+        int slots = inst.cardSlots;
         if (slots > 0)
         {
             sb.Append("\n\n" + DimTag + "Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
@@ -509,20 +508,25 @@ public class ItemTooltip : MonoBehaviour
 
     /// <summary>How a copy is named on screen. A weapon with a trademark goes by its trademark skill's own name — a
     /// form of its weapon's style: its folds, the name, then its grade — "+15 Petal Storm [C]". Anything else: its
-    /// grade, then its folds, then the piece — "B +12 Sword".</summary>
+    /// grade, then its folds, then the piece — "B +12 Sword". A copy with card slots ends with their count, Ragnarok
+    /// style: "B +12 Sword [3]"; none shows nothing.</summary>
     public static string CopyTitle(EquipmentInstance inst)
     {
         if (inst == null || inst.def == null) return "";
         string grade = inst.quality == Quality.Raw ? "Raw" : inst.quality.ToString();
+        string slots = SlotSuffix(inst.cardSlots);
         var trademark = Trademarks.SkillOf(inst);
         if (trademark != null && !string.IsNullOrEmpty(trademark.displayName))
-            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.displayName + " [" + grade + "]";
+            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.displayName + " [" + grade + "]" + slots;
         // AN ARMOUR PIECE WITH A WORD reads the same way, the word before the design: "+15 Tireless Iron Sabatons [C]".
         if (inst.word != ArmourWord.None)
-            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + inst.word + " " + inst.def.displayName + " [" + grade + "]";
+            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + inst.word + " " + inst.def.displayName + " [" + grade + "]" + slots;
         string folds = inst.upgrade > 0 ? " +" + inst.upgrade : "";
-        return grade + folds + " " + inst.def.displayName;
+        return grade + folds + " " + inst.def.displayName + slots;
     }
+
+    /// <summary>A name's card-slot ending: " [3]" for three slots, nothing for none.</summary>
+    public static string SlotSuffix(int cardSlots) => cardSlots > 0 ? " [" + cardSlots + "]" : "";
 
     // THIS COPY's trademark: the skill it empowers, then one line per effect of that skill the weapon raises — read
     // off the skill as it is now, so an edited skill is described as edited. The percentage is the finished lift the
@@ -633,13 +637,14 @@ public class ItemTooltip : MonoBehaviour
         if (sb.Length == opened) sb.Length = before;
     }
 
-    // The piece's base as the server wrote it — base × roll, before rarity, folds and quenches: "Base 54 (108%)" for a
+    // The piece's base as the server wrote it — base × roll, before folds and quenches: "Base 54 (108%)" for a
     // piece that rolled, "Base 50" for one that never did. An armour piece shows its first stat. Nothing is worked out.
     static void AppendBase(StringBuilder sb, EquipmentInstance inst)
     {
         var b = inst.baseStats;
-        float first = b.attack != 0 ? b.attack : b.magicAttack != 0 ? b.magicAttack : b.defense != 0 ? b.defense
-                    : b.magicDefense != 0 ? b.magicDefense : b.hp != 0 ? b.hp : b.mp != 0 ? b.mp
+        float first = b.attack != 0 ? b.attack : b.magicAttack != 0 ? b.magicAttack
+                    : b.hardDefenseTenths != 0 ? b.hardDefenseTenths / 10f
+                    : b.hardMagicDefenseTenths != 0 ? b.hardMagicDefenseTenths / 10f : b.hp != 0 ? b.hp : b.mp != 0 ? b.mp
                     : b.evasion != 0 ? b.evasion : b.attackSpeedPercent;
         if (Mathf.Approximately(first, 0f)) return;
         sb.Append('\n').Append("Base ").Append(first.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
@@ -649,9 +654,9 @@ public class ItemTooltip : MonoBehaviour
     static void AppendStatList(StringBuilder sb, in EquipBonuses eb)
     {
         AppendStat(sb, "ATK", eb.atk);
-        AppendStat(sb, "DEF", eb.def);
+        AppendStat(sb, "DEF", eb.hardDefTenths / 10f, "%");
         AppendStat(sb, "M.ATK", eb.matk);
-        AppendStat(sb, "M.DEF", eb.mdef);
+        AppendStat(sb, "M.DEF", eb.hardMdefTenths / 10f, "%");
         AppendStat(sb, "Max HP", eb.hp);
         AppendStat(sb, "Max MP", eb.mp);
         AppendStat(sb, "STR", eb.str);
@@ -729,7 +734,7 @@ public class ItemTooltip : MonoBehaviour
         if (!item.CanBeStored)  sb.Append("\n" + DimTag).Append(Item.CannotBeStoredText).Append("</color>");
         if (!item.CanBeTraded)  sb.Append("\n" + DimTag).Append(Item.CannotBeTradedText).Append("</color>");
         if (!string.IsNullOrWhiteSpace(item.description))
-            sb.Append("\n\n" + MainTag).Append(item.description).Append("</color>");
+            sb.Append("\n\n" + MainTag + "<i>").Append(item.description).Append("</i></color>");
     }
 
     static void AppendStat(StringBuilder sb, string label, int v, string suffix = "")

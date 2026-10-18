@@ -167,6 +167,9 @@ public interface ICombatUnit : IDamageable
     /// <summary>The LUK that lowers an attacker's crit chance when it swings at this unit — gear included.</summary>
     int CritShieldLuk { get; }
 
+    /// <summary>The LUK this unit's perfect dodge is worked out from — its own LUK, gear included.</summary>
+    int PerfectDodgeLuk { get; }
+
     // ---- a SKILL this unit uses: everything the applier reads off whoever is using it ----------------------------
     // Asked of the unit, never of the player at this keyboard, so a skill in a creature's hands scales off the
     // creature exactly as one in a player's hands scales off the player.
@@ -221,6 +224,10 @@ public interface ICombatUnit : IDamageable
     /// for before it lands. 0 when there is no trip, or its length cannot be known.</returns>
     float GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
                   RelocationLook look = default);
+
+    /// <summary>How many seconds a glide of <paramref name="distance"/> metres takes this unit, at the same speed
+    /// <see cref="GlideTo"/> would move it — the one place either answer is worked out. 0 when it cannot be known.</summary>
+    float GlideSeconds(float distance, float speedMult, bool easeIn, bool easeOut, float easeSeconds);
 
     /// <summary>True while this unit is mid-relocation — travelling a fixed A→B glide rather than walking. Lets a
     /// presentation effect last exactly as long as the hop does, without anyone having to author its length or guess

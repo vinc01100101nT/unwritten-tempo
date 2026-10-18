@@ -27,7 +27,7 @@ public static class MobInfo
             $"<color={UiKit.Hex(UiKit.Accent)}>{d.displayName}</color> ({d.id}) — {d.kind}, Lv {d.level}",
             $"Size {size:0.##} ({MobSizes.GroupOf(size)}) · Element {d.element} {d.elementLevel} · Biome {d.biome}",
             $"HP {MonsterDefStats.Derived(d, MonsterDefStats.Stat.HP)} · ATK {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Atk)}"
-                + $" · DEF {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def)} · FLEE {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee)}",
+                + $" · DEF {MonsterDefStats.DefenseLabel(d)} · FLEE {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee)}",
             $"STR {d.str} · AGI {d.agi} · VIT {d.vit} · INT {d.intel} · DEX {d.dex} · LUK {d.luk}",
             $"XP {CreatureKinds.KillExperience(d)}",
             // WHAT IT DROPS, read from the same tables the death roll reads, in the one wording the wiki prints too.

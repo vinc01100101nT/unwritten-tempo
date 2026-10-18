@@ -8,8 +8,7 @@ using UnityEngine;
 /// <para><b>Temper Dust and Quench Oil on every kill</b>, more the higher its level's grade (the seven grades split levels
 /// 1 to 99 into seven even stretches; everything above 99, the shadows, is the top grade), its kind and its gear
 /// (<see cref="UnitsPerKill"/>). <b>The chance of an Ink or a Salt</b>, rarer ones from elites and shadows. <b>One piece
-/// of what it wears</b>, on <see cref="GearDropChance"/> of kills, as a new copy whose rarity its kind rolls
-/// (<see cref="DropRarity"/>).</para>
+/// of what it wears</b>, on <see cref="GearDropChance"/> of kills, as a new copy with its base rolled 85% to 115%.</para>
 ///
 /// <para>Every number below is a first guess, to be tuned in play. Design: docs/3-world/mob-roster.md.</para>
 /// </summary>
@@ -27,23 +26,6 @@ public static class CreatureLoot
 
     /// <summary>The chance, on every kind of creature, that a kill drops one piece of what it wears.</summary>
     public const float GearDropChance = 0.10f;
-
-    // The rarities a NORMAL creature's dropped piece can roll: Common, Uncommon and Rare, at their shares of the one
-    // rarity draw (CraftingMath.RarityAt) — 50, 30 and 14 of 94.
-    static readonly int[] NormalDropRarities = { 1, 1, 1, 0, 0 };
-
-    /// <summary>How wide the roll <see cref="DropRarity"/> takes is: 0 up to this, less one.</summary>
-    public static int DropRarityRollSize => CraftingMath.RarityDrawTotal(NormalDropRarities);
-
-    /// <summary>The rarity of the piece a creature of <paramref name="kind"/> drops, for a roll of 0 up to
-    /// <see cref="DropRarityRollSize"/> − 1: an elite's is always Epic, a shadow's always Legendary, and a normal
-    /// creature's Common, Uncommon or Rare by their shares. What a creature WEARS is always Common.</summary>
-    public static Rarity DropRarity(CreatureKind kind, int roll)
-    {
-        if (kind == CreatureKind.Shadow) return Rarity.Legendary;
-        if (kind == CreatureKind.Elite) return Rarity.Epic;
-        return CraftingMath.RarityAt(NormalDropRarities, roll);
-    }
 
     /// <summary>Hundredths of a unit of Temper Dust a kill drops for each grade of its creature's level, before its kind
     /// and its gear multiply it.</summary>
@@ -136,4 +118,93 @@ public static class CreatureLoot
     /// <summary>The tier a line's material is taken from: its own, or the creature's grade for a line with none.</summary>
     public static int StepFor(in Line line, int creatureLevel) =>
         line.step > 0 ? line.step : GradeForLevel(creatureLevel);
+
+    // ---- what a creature wears, rolled each life ------------------------------------------------------------
+    // Folds a creature's worn pieces take, in thousandths per fold count from the kind's lowest: each fold about 70%
+    // as likely as the one before. Normal 0..10, elite 4..10, shadow 7..10.
+    static readonly int[] NormalFolds = { 300, 210, 150, 100, 70, 50, 40, 30, 20, 15, 15 };
+    static readonly int[] EliteFolds  = { 350, 240, 170, 110, 70, 40, 20 };
+    static readonly int[] ShadowFolds = { 450, 300, 150, 100 };
+
+    static int[] FoldTable(CreatureKind kind) =>
+        kind == CreatureKind.Shadow ? ShadowFolds : kind == CreatureKind.Elite ? EliteFolds : NormalFolds;
+
+    /// <summary>The fewest folds a creature of <paramref name="kind"/> wears: 0, 4 or 7. What its pay and its value are
+    /// worked out at, so they never depend on a roll.</summary>
+    public static int FileFolds(CreatureKind kind) =>
+        kind == CreatureKind.Shadow ? 7 : kind == CreatureKind.Elite ? 4 : 0;
+
+    /// <summary>The folds a worn piece takes for a draw of <paramref name="roll0To999"/>.</summary>
+    public static int RollWornFolds(CreatureKind kind, int roll0To999)
+    {
+        var table = FoldTable(kind);
+        int left = Mathf.Clamp(roll0To999, 0, 999);
+        for (int i = 0; i < table.Length; i++)
+        {
+            left -= table[i];
+            if (left < 0) return FileFolds(kind) + i;
+        }
+        return FileFolds(kind) + table.Length - 1;
+    }
+
+    /// <summary>The card slots a worn piece in <paramref name="slot"/> takes for a draw of <paramref name="roll0To99"/>:
+    /// a weapon 0-2 / 2-3 / 3-4 by kind, evenly; an armour piece 1 on a quarter of normals, 1-2 on elites, 2 on shadows.</summary>
+    public static int RollWornCardSlots(EquipSlotType slot, CreatureKind kind, int roll0To99)
+    {
+        int roll = Mathf.Clamp(roll0To99, 0, 99);
+        int cap = CraftingMath.CardSlotCap(slot);
+        if (cap == 0) return 0;
+        if (slot == EquipSlotType.Weapon)
+        {
+            int low = kind == CreatureKind.Shadow ? 3 : kind == CreatureKind.Elite ? 2 : 0;
+            int high = kind == CreatureKind.Shadow ? 4 : kind == CreatureKind.Elite ? 3 : 2;
+            return low + roll * (high - low + 1) / 100;
+        }
+        if (kind == CreatureKind.Shadow) return 2;
+        if (kind == CreatureKind.Elite) return 1 + roll / 50;
+        return roll < 25 ? 1 : 0;
+    }
+
+    /// <summary>The grade a normal creature of <paramref name="level"/> wears: Raw 1-24, F 25-49, E 50-74, D 75 and up.</summary>
+    public static Quality GradeForNormal(int level) =>
+        level >= 75 ? Quality.D : level >= 50 ? Quality.E : level >= 25 ? Quality.F : Quality.Raw;
+
+    /// <summary>The Ink a creature's worn pieces are written with, by their grade: Raw none, F Watery up to C Clear,
+    /// B and A Sharp.</summary>
+    public static int InkTierFor(Quality grade) => Mathf.Min(CraftingMath.TopInkTier, (int)grade);
+
+    // ---- a build that fits the weapon a creature rolled ------------------------------------------------------
+    /// <summary>The armour a creature holding <paramref name="weapon"/> wears and how it spends its stat points, as
+    /// weights in the order STR, AGI, VIT, INT, DEX, LUK: a caster's weapon (staff, wand, scythe) cloth and INT; a
+    /// shooting weapon (bow, sniper, shuriken) or a quick blade (dagger, katar) leather and AGI/DEX; everything
+    /// swung for strength metal and STR/VIT. So a creature that rolls a wand never wears plate on a STR build.</summary>
+    public static MaterialKind BuildFor(WeaponType weapon, float[] weights)
+    {
+        switch (weapon)
+        {
+            case WeaponType.Staff:
+            case WeaponType.Wand:
+            case WeaponType.Scythe:
+                SetWeights(weights, 0f, 0.05f, 0.15f, 0.45f, 0.3f, 0.05f);
+                return MaterialKind.Cloth;
+            case WeaponType.Bow:
+            case WeaponType.Firearm:
+            case WeaponType.Shuriken:
+                SetWeights(weights, 0.1f, 0.3f, 0.05f, 0f, 0.45f, 0.1f);
+                return MaterialKind.Leather;
+            case WeaponType.Dagger:
+            case WeaponType.Katar:
+                SetWeights(weights, 0.1f, 0.45f, 0.05f, 0f, 0.25f, 0.15f);
+                return MaterialKind.Leather;
+            default:
+                SetWeights(weights, 0.45f, 0.1f, 0.25f, 0f, 0.15f, 0.05f);
+                return MaterialKind.Metal;
+        }
+    }
+
+    static void SetWeights(float[] w, float str, float agi, float vit, float intel, float dex, float luk)
+    {
+        if (w == null || w.Length < 6) return;
+        w[0] = str; w[1] = agi; w[2] = vit; w[3] = intel; w[4] = dex; w[5] = luk;
+    }
 }

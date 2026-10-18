@@ -42,8 +42,10 @@ public class TrainingDummy : MonoBehaviour
             // figure against a 10,000,000 maximum, which reads as an empty bar. Filled here so both callers start it full.
             health.RefillToMax();
             // Measure raw weapon/skill output, not post-mitigation: no defence and no dodge.
-            health.defense = 0;
-            health.magicDefense = 0;
+            health.softDefense = 0;
+            health.softMagicDefense = 0;
+            health.hardDefenseTenths = 0;
+            health.hardMagicDefenseTenths = 0;
             health.flee = 0;
         }
 

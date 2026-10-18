@@ -433,6 +433,12 @@ public static class SkillTooltip
                     ? "Parries the next " + Hl(charges.ToString()) + " hits" + window + " — no damage taken"
                     : "Parries the next hit" + window + " — no damage taken";
             }
+            case SkillEffectKind.Charges:
+            {
+                int held = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
+                return "Gives " + Hl(held.ToString()) + (held > 1 ? " charges" : " charge")
+                     + " for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            }
             case SkillEffectKind.Brace:
             {
                 // Charges ARE stacks — the same read Parry uses, off the same knob, so the two can't word it differently.
@@ -488,7 +494,6 @@ public static class SkillTooltip
             case SubStat.CritChance:    return "crit chance";
             case SubStat.CritDamage:    return "crit damage";
             case SubStat.MaxHP:         return "max HP";
-            case SubStat.DamageReduction: return "damage reduction";
             case SubStat.BasicAttackRange: return "basic attack range";
             case SubStat.BlockChance:   return "block chance";
             case SubStat.ExtraBounceJumps: return "extra bounce jumps";

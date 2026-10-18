@@ -66,6 +66,11 @@ public struct CraftStationOffer
     /// <summary>False when the piece is already at its grade's fold cap — the point at which only a quench moves it on.</summary>
     public bool canFold;
 
+    /// <summary>Card slots: how many the piece has, the most it can have, the chance one more lands (whole percent),
+    /// and what a press costs — all the server's numbers. canSlot is false at the cap.</summary>
+    public int cardSlots, slotCap, slotChance, slotMaterialCost, slotGoldCost;
+    public bool canSlot;
+
     /// <summary>What recycling this piece gives back, worked out on the server: item ids and counts, parallel, and
     /// gold — half of what the piece provably consumed (<see cref="CraftingMath.RecycleYield"/>, <see cref="CraftingMath.RecycleInks"/>).</summary>
     public string[] recycleIds;
@@ -76,4 +81,10 @@ public struct CraftStationOffer
     /// a copy (<see cref="CraftingMath.PieceNumbers"/>), so the Fold tab can show what the press buys without working
     /// anything out. The same as now when the piece cannot be folded further.</summary>
     public CraftingMath.PieceStats pieceNow, pieceNext;
+
+    /// <summary>THE INK THE INK TAB WRITES WITH — the strongest one carried (<see cref="CraftStations.StrongestOfKind"/>)
+    /// — by name, and what it writes for each stat, in <see cref="CraftingMath.All"/>'s order. Which of them lands is
+    /// rolled at the press. Empty name and no numbers when no Ink is carried.</summary>
+    public string inkName;
+    public float[] inkWrites;
 }

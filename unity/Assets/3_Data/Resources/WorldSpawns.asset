@@ -343,16 +343,6 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: olk_fild01
-    creature: mob.autumn-stalk
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: olk_dun01
     creature: mob.blinkbat
     biome: 0
@@ -443,16 +433,6 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
-  - map: olk_dun02
-    creature: mob.oculord
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: lst_fild02
     creature: mob.mossnail
     biome: 0
@@ -523,16 +503,6 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lst_fild02
-    creature: mob.autumn-stalk
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: gmr_fild01
     creature: mob.tarantix
     biome: 0
@@ -582,16 +552,6 @@ MonoBehaviour:
     population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: gmr_fild01
-    creature: mob.oculord
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: plv_fild01
     creature: mob.gillie
@@ -653,23 +613,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: plv_fild01
-    creature: mob.deep-maw
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: lst_fild03
     creature: mob.pilfer
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 14
+    population: 11
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -689,120 +639,100 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.burrowbo
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.mudpup
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.grumbear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.mossgore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.hootie
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.dewdrop
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.grumbear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.mossgore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.burrowbo
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
     population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lst_fild03
-    creature: mob.bandit-boss
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: hlt_fild02
-    creature: mob.burrowbo
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 5
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild02
-    creature: mob.mudpup
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild02
-    creature: mob.grumbear
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild02
-    creature: mob.mossgore
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild02
-    creature: mob.hootie
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild02
-    creature: mob.dewdrop
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild02
-    creature: mob.frost-ronin
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: hlt_fild01
-    creature: mob.grumbear
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild01
-    creature: mob.mossgore
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild01
-    creature: mob.burrowbo
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 4
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
   - map: hlt_fild01
     creature: mob.mudpup
     biome: 0
@@ -819,7 +749,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -832,16 +762,6 @@ MonoBehaviour:
     population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: hlt_fild01
-    creature: mob.frost-ronin
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: hlt_dun01
     creature: mob.burrowbo
@@ -849,7 +769,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -859,7 +779,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -899,7 +819,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -909,7 +829,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -919,7 +839,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -929,7 +849,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -939,7 +859,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -969,7 +889,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -979,7 +899,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -989,7 +909,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -999,7 +919,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1009,7 +929,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1023,23 +943,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
-  - map: hlt_dun03
-    creature: mob.mossmaw
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: hrw_fild01
     creature: mob.grumbear
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 10
+    population: 8
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1049,7 +959,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1083,23 +993,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: hrw_fild01
-    creature: mob.autumn-stalk
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: prl_fild02
     creature: mob.wyrmlet
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 11
+    population: 9
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1109,7 +1009,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 16
+    population: 13
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1123,23 +1023,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: prl_fild02
-    creature: mob.bandit-boss
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: pnr_fild01
     creature: mob.wyrmlet
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1149,7 +1039,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1159,7 +1049,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1169,7 +1059,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1179,7 +1069,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1193,16 +1083,6 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: pnr_fild01
-    creature: mob.elder-stalk
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: vlm_fild01
     creature: mob.viper
     biome: 0
@@ -1219,7 +1099,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1229,7 +1109,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1239,7 +1119,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1249,7 +1129,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 7
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1263,18 +1143,18 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: vlm_fild01
-    creature: mob.golden-bandit
+  - map: trn_fild01
+    creature: mob.emberhoot
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
+    population: 9
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
   - map: trn_fild01
-    creature: mob.emberhoot
+    creature: mob.chomper
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -1284,22 +1164,12 @@ MonoBehaviour:
     radius: 25
     playerClearRadius: 6
   - map: trn_fild01
-    creature: mob.chomper
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 14
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: trn_fild01
     creature: mob.viper
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1309,19 +1179,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: trn_fild01
-    creature: mob.golden-bandit
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: vlm_fild02
     creature: mob.sunscale
@@ -1329,7 +1189,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1339,7 +1199,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1349,7 +1209,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 7
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1359,7 +1219,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1369,7 +1229,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1393,38 +1253,8 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: vlm_fild02
-    creature: mob.blood-ronin
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: brm_fild02
     creature: mob.hornscale
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 14
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: brm_fild02
-    creature: mob.snapper
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 5
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: brm_fild02
-    creature: mob.iris
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -1434,7 +1264,7 @@ MonoBehaviour:
     radius: 25
     playerClearRadius: 6
   - map: brm_fild02
-    creature: mob.emberhoot
+    creature: mob.snapper
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -1444,47 +1274,27 @@ MonoBehaviour:
     radius: 25
     playerClearRadius: 6
   - map: brm_fild02
-    creature: mob.karasu
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: vlm_fild03
-    creature: mob.snapper
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 5
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: vlm_fild03
     creature: mob.iris
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: vlm_fild03
-    creature: mob.hornscale
+  - map: brm_fild02
+    creature: mob.emberhoot
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 14
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
   - map: vlm_fild03
-    creature: mob.emberhoot
+    creature: mob.snapper
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -1494,14 +1304,34 @@ MonoBehaviour:
     radius: 25
     playerClearRadius: 6
   - map: vlm_fild03
-    creature: mob.karasu
+    creature: mob.iris
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
+    population: 6
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild03
+    creature: mob.hornscale
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild03
+    creature: mob.emberhoot
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
     playerClearRadius: 6
   - map: vlm_dun01
     creature: mob.sunscale
@@ -1509,7 +1339,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1519,7 +1349,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1529,7 +1359,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1539,7 +1369,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1549,7 +1379,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1579,7 +1409,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1589,7 +1419,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1599,7 +1429,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1609,7 +1439,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1619,7 +1449,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1649,7 +1479,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1659,7 +1489,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1669,7 +1499,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 15
+    population: 10
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1679,7 +1509,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1689,19 +1519,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: vlm_dun03
-    creature: mob.blood-ronin
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 17
     playerClearRadius: 6
   - map: brm_fild01
     creature: mob.bloodshot
@@ -1709,7 +1529,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1719,7 +1539,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1729,7 +1549,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1739,7 +1559,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1749,7 +1569,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 12
+    population: 8
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1759,7 +1579,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1769,7 +1589,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1779,7 +1599,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1789,7 +1609,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1799,7 +1619,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1809,7 +1629,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1819,7 +1639,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1839,19 +1659,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: cdl_fild01
-    creature: mob.inferno-mask
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
   - map: cdl_fild02
     creature: mob.horngore
@@ -1859,7 +1669,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1869,7 +1679,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1879,7 +1689,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1889,7 +1699,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1899,7 +1709,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -1913,23 +1723,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: cdl_fild02
-    creature: mob.inferno-mask
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: cdl_dun01
     creature: mob.emberlurk
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1939,7 +1739,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1949,7 +1749,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1959,7 +1759,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1969,7 +1769,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1989,7 +1789,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -1999,7 +1799,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2009,7 +1809,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2019,7 +1819,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2029,7 +1829,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2039,7 +1839,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2059,7 +1859,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2069,7 +1869,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2079,7 +1879,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2089,7 +1889,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2102,16 +1902,6 @@ MonoBehaviour:
     population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
-    playerClearRadius: 6
-  - map: cdl_dun03
-    creature: mob.inferno-mask
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: lmh_fild01
     creature: mob.gnasher
@@ -2119,7 +1909,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2129,7 +1919,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2139,7 +1929,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2149,7 +1939,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2169,42 +1959,12 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lmh_fild01
-    creature: mob.great-croak
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
   - map: khn_fild02
     creature: mob.emberlurk
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 10
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: khn_fild02
-    creature: mob.drizzle
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 10
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: khn_fild02
-    creature: mob.blazeskull
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -2214,6 +1974,26 @@ MonoBehaviour:
     radius: 25
     playerClearRadius: 6
   - map: khn_fild02
+    creature: mob.drizzle
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild02
+    creature: mob.blazeskull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild02
     creature: mob.webber
     biome: 0
     minLevel: 1
@@ -2229,7 +2009,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2239,7 +2019,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2249,7 +2029,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2259,7 +2039,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2269,7 +2049,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2289,7 +2069,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2299,22 +2079,12 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 11
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
   - map: khn_dun01
     creature: mob.frostskull
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun01
-    creature: mob.nightsqueak
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -2324,12 +2094,22 @@ MonoBehaviour:
     radius: 17
     playerClearRadius: 6
   - map: khn_dun01
+    creature: mob.nightsqueak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun01
     creature: mob.squirt
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2349,7 +2129,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2359,7 +2139,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -2369,159 +2149,149 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
   - map: khn_dun02
     creature: mob.frostwick
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun02
-    creature: mob.lovebite
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun02
-    creature: mob.squirt
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun03
-    creature: mob.frostwick
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 3
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun03
-    creature: mob.nightsqueak
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun03
-    creature: mob.lovebite
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun03
-    creature: mob.frostskull
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 5
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun03
-    creature: mob.glowcoil
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun03
-    creature: mob.squirt
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun04
-    creature: mob.lovebite
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 10
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun04
-    creature: mob.frostwick
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 3
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun04
-    creature: mob.nightsqueak
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 3
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun04
-    creature: mob.frostskull
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 7
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun04
-    creature: mob.glowcoil
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 3
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun04
-    creature: mob.abyss-maw
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.lovebite
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.squirt
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.frostwick
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.nightsqueak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.lovebite
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.frostskull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.glowcoil
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.squirt
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.lovebite
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.frostwick
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.nightsqueak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.frostskull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.glowcoil
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
     playerClearRadius: 6
   - map: khn_fild03
     creature: mob.inky
@@ -2529,7 +2299,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2539,7 +2309,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2549,7 +2319,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2559,7 +2329,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2569,7 +2339,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2579,19 +2349,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: khn_fild03
-    creature: mob.toadmaw
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
   - map: khn_fild04
     creature: mob.swampfang
@@ -2599,7 +2359,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2609,7 +2369,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2619,7 +2379,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2629,7 +2389,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2639,7 +2399,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2663,23 +2423,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: khn_fild04
-    creature: mob.toadmaw
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: khn_fild05
     creature: mob.grubble
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 10
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2689,7 +2439,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2699,7 +2449,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2709,7 +2459,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 10
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2719,19 +2469,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: khn_fild05
-    creature: mob.venom-gloop
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
   - map: khn_fild07
     creature: mob.lovebite
@@ -2739,7 +2479,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 10
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2749,7 +2489,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2759,7 +2499,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2769,7 +2509,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 10
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2779,19 +2519,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: khn_fild07
-    creature: mob.venom-gloop
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
   - map: khn_fild06
     creature: mob.frostcap
@@ -2799,7 +2529,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 14
+    population: 7
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2809,7 +2539,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2819,7 +2549,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2829,19 +2559,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: khn_fild06
-    creature: mob.wraithmother
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: hcr_fild01
     creature: mob.wisp
@@ -2849,7 +2569,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 12
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2859,7 +2579,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2869,7 +2589,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2883,23 +2603,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: hcr_fild01
-    creature: mob.oni-tengu
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: hcr_fild02
     creature: mob.frostcap
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2909,7 +2619,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2919,7 +2629,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 12
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -2932,16 +2642,6 @@ MonoBehaviour:
     population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: hcr_fild02
-    creature: mob.oni-tengu
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: gmr_fild02
     creature: mob.rascal
@@ -3012,16 +2712,6 @@ MonoBehaviour:
     population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: gmr_fild02
-    creature: mob.autumn-stalk
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: lst_fild04
     creature: mob.rascal
@@ -3069,29 +2759,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: lst_fild04
-    creature: mob.gloop-king
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lst_fild04
-    creature: mob.bandit-boss
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: hrw_fild02
     creature: mob.pando
@@ -3153,16 +2823,6 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: hrw_fild02
-    creature: mob.autumn-stalk
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: lst_fild05
     creature: mob.gillie
     biome: 0
@@ -3223,23 +2883,13 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lst_fild05
-    creature: mob.deep-maw
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
   - map: lst_dun01
     creature: mob.rivershell
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3249,7 +2899,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3259,7 +2909,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3269,7 +2919,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3289,7 +2939,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3299,7 +2949,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3309,7 +2959,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3319,7 +2969,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3339,19 +2989,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: lst_dun02
-    creature: mob.great-croak
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 17
     playerClearRadius: 6
   - map: pnr_fild02
     creature: mob.scaly
@@ -3359,7 +2999,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3369,7 +3009,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 9
+    population: 7
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3379,7 +3019,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3389,7 +3029,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3409,19 +3049,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: pnr_fild02
-    creature: mob.golden-bandit
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: brm_fild03
     creature: mob.cinder
@@ -3429,7 +3059,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3439,7 +3069,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3449,7 +3079,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3459,7 +3089,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3469,7 +3099,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 10
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3479,7 +3109,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3489,7 +3119,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3499,7 +3129,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3509,7 +3139,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3519,7 +3149,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3529,7 +3159,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3539,7 +3169,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 4
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3549,7 +3179,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3569,7 +3199,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 11
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3579,7 +3209,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 10
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3589,7 +3219,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
@@ -3599,19 +3229,9 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 3
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 25
-    playerClearRadius: 6
-  - map: khn_fild09
-    creature: mob.toadmaw
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
     playerClearRadius: 6
   - map: khn_dun05
     creature: mob.moldy
@@ -3619,7 +3239,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3629,7 +3249,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3639,7 +3259,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3649,7 +3269,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3659,7 +3279,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 5
+    population: 2
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3689,7 +3309,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3699,7 +3319,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3709,7 +3329,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 7
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3719,7 +3339,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3729,7 +3349,7 @@ MonoBehaviour:
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 2
+    population: 1
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
@@ -3743,6 +3363,256 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 17
     playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.grubble
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.nightsqueak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.goopie
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.horngore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.lovebite
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_dun07
+    creature: mob.grubble
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun07
+    creature: mob.nightsqueak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun07
+    creature: mob.goopie
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun07
+    creature: mob.lovebite
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun07
+    creature: mob.horngore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.nightsqueak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.goopie
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.grubble
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.lovebite
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.horngore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.lovebite
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.goopie
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.nightsqueak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.grubble
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.horngore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun02
+    creature: mob.oculord
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.mossmaw
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: vlm_dun03
+    creature: mob.golden-bandit
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: cdl_dun03
+    creature: mob.karasu
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.abyss-maw
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
   - map: khn_dun06
     creature: mob.toadmaw
     biome: 0
@@ -3753,18 +3623,88 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: khn_fild10
-    creature: mob.grubble
+  - map: khn_dun09
+    creature: mob.venom-gloop
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 13
+    population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 25
+    radius: 10
     playerClearRadius: 6
-  - map: khn_fild10
-    creature: mob.nightsqueak
+  - map: lst_dun02
+    creature: mob.great-croak
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: olk_fild01
+    creature: mob.autumn-stalk
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: lst_fild03
+    creature: mob.bandit-boss
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: plv_fild01
+    creature: mob.deep-maw
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: hcr_fild01
+    creature: mob.oni-tengu
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.elder-stalk
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: prl_fild01
+    creature: mob.gloop-king
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: lst_fild01
+    creature: mob.pilfer
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -3773,18 +3713,38 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: khn_fild10
-    creature: mob.goopie
+  - map: prl_fild01
+    creature: mob.pilfer
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 8
+    population: 4
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: khn_fild10
-    creature: mob.horngore
+  - map: olk_fild01
+    creature: mob.mossgore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: olk_dun01
+    creature: mob.mossgore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_fild02
+    creature: mob.mossgore
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -3793,8 +3753,8 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: khn_fild10
-    creature: mob.lovebite
+  - map: plv_fild01
+    creature: mob.burrowbo
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -3803,173 +3763,43 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: khn_fild10
-    creature: mob.venom-gloop
+  - map: khn_fild02
+    creature: mob.mossgore
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
-  - map: khn_dun07
-    creature: mob.grubble
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun07
-    creature: mob.nightsqueak
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 3
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun07
-    creature: mob.goopie
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 5
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun07
-    creature: mob.lovebite
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun07
-    creature: mob.horngore
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun08
-    creature: mob.nightsqueak
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 3
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun08
-    creature: mob.goopie
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 5
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun08
-    creature: mob.grubble
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun08
-    creature: mob.lovebite
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun08
-    creature: mob.horngore
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun09
-    creature: mob.lovebite
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun09
-    creature: mob.goopie
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 5
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun09
-    creature: mob.nightsqueak
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 3
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun09
-    creature: mob.grubble
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 8
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun09
-    creature: mob.horngore
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 2
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: khn_dun09
-    creature: mob.venom-gloop
+  - map: khn_fild01
+    creature: mob.mossgore
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.mossgore
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild05
+    creature: mob.burrowbo
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
     playerClearRadius: 6

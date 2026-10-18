@@ -7,8 +7,8 @@ using UnityEngine.UI;
 /// builds it, never looked up by its name or position. While the element is on screen it is in <see cref="Live"/>; a
 /// window that closes switches its rows off and so takes them out.
 ///
-/// <para><see cref="station"/> says which station's window a station row belongs to, so a guide for the smith never
-/// lights the same-named row at the loom.</para>
+/// <para><see cref="station"/> says which station's window a station row belongs to, so a guide lights a station row
+/// only while that station's window is the one open.</para>
 /// </summary>
 public class GuideMarker : MonoBehaviour
 {

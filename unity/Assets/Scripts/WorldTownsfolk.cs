@@ -47,6 +47,13 @@ public class WorldTownsfolk : ScriptableObject
         [Tooltip("This person is the town's Keeper: pressing F on them opens the Keeper's window — Save Point, Storage, " +
                  "Teleport. Every town has exactly one, and a Keeper keeps no shop and works no station.")]
         public bool keeper;
+        [Tooltip("The summon-only boss this person calls, by its creature id (e.g. 'mob.blood-ronin'). Empty = they summon " +
+                 "nothing. A summoner stands at their boss's own spot in the field or dungeon, keeps no shop and works no " +
+                 "station; pressing F on them opens the summoning window for that one boss.")]
+        public string summons = "";
+        [Tooltip("Only for a summoner: where their boss appears, in the map's own coordinates like Home. The boss stands " +
+                 "on the ground under it.")]
+        [ShownCoords] public Vector3 summonAt;
         [Tooltip("Their level. At 99 or above they wear the same smoke every unit at level 99 or above wears.")]
         [Min(1)] public int level = 1;
         [Tooltip("Whether they call out the odd line when a player walks past.")]
@@ -124,6 +131,7 @@ public class WorldTownsfolk : ScriptableObject
             if (row.wanderRadius <= 0f) root.transform.rotation = Quaternion.Euler(0f, row.facing, 0f);
             var npc = root.GetComponent<TownNPC>();
             npc.Init(at, row.wanderRadius, row.barks, row.level, row.name, row.description, row.station, row.shop, row.keeper);
+            npc.Summons = row.summons ?? "";
             // Who they are to a quest — "talk to Gunnar" is decided against this, never against a name on screen.
             npc.PersonId = row.id;
             // What is on their head — the same hair and the same Head items everybody wears.
@@ -164,6 +172,24 @@ public class WorldTownsfolk : ScriptableObject
             if (row != null && row.keeper && row.map == map) return row;
         }
         return null;
+    }
+
+    /// <summary>Where the summoner <paramref name="personId"/> of <paramref name="map"/> calls their boss, in the world
+    /// and on the ground — the same turn from map coordinates and the same drop onto the ground every townsperson gets.
+    /// False when there is no such summoner.</summary>
+    public static bool SummonSpot(string personId, Scene map, out Vector3 at)
+    {
+        at = default;
+        var list = Instance;
+        if (list == null || string.IsNullOrEmpty(personId)) return false;
+        for (int i = 0; i < list.rows.Count; i++)
+        {
+            var row = list.rows[i];
+            if (row == null || string.IsNullOrEmpty(row.summons) || row.id != personId || row.map != map.name) continue;
+            at = GroundUnder(MapManager.InWorld(row.summonAt, map.name), map);
+            return true;
+        }
+        return false;
     }
 
     static int ByLevelThenName(Row a, Row b) =>

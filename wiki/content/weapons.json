@@ -236,9 +236,9 @@
       "type": "table",
       "headers": [
         "Slot",
-        "Metal (Smith)",
-        "Leather (Tannery)",
-        "Cloth (Loom)"
+        "Metal",
+        "Leather",
+        "Cloth"
       ],
       "rows": [
         [
@@ -331,7 +331,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Each piece adds what it is worth — attack on a weapon; on armour, what its material buys — plus its word, plus any stats written onto it with **Ink** (see *Crafting & Recycling*). What it is worth starts from its **base**, and its **rarity**, its **folds** and its **quality** build on that."
+      "text": "Each piece adds what it is worth — attack on a weapon; on armour, what its material buys — plus its word, plus any stats written onto it with **Ink** (see *Crafting & Recycling*). What it is worth starts from its **base**, and its **folds** and its **grade** build on that."
     },
     {
       "type": "heading",
@@ -442,11 +442,11 @@
     },
     {
       "type": "paragraph",
-      "text": "**A weapon has a trademark.** As it drops it rolls one skill of its type and is named for it — a sword that empowers Thousand Petals is itself called **Thousand Petals**, and folded to +7 at grade C it reads **+7 Thousand Petals [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: **1%** of weapons carry an ultimate's, the other **99%** an active's or a passive's, and inside each group every skill is equally likely — on a sword each of the fifteen actives and passives comes up **6.6%** of the time and each of the three ultimates **0.33%**. The trademark has nothing to do with the weapon's rarity, and the Sword you start with has none. *Database ▸ Equipment* lists every trademark's chance. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Thousand Petals sword raises Thousand Petals' strike and its damage buff alike. Every trademark skill, on any weapon or none, is also **efficient** one cast in twenty, raising those numbers by a further +20% (see *Skills*). Right-click the weapon to see which skill and which numbers; right-click the skill to see the bonus on its own line."
+      "text": "**A weapon has a trademark.** As it drops it rolls one skill of its type and is named for it — a sword that empowers Thousand Petals is itself called **Thousand Petals**, and folded to +7 at grade C it reads **+7 Thousand Petals [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: **1%** of weapons carry an ultimate's, the other **99%** an active's or a passive's, and inside each group every skill is equally likely — on a sword each of the fifteen actives and passives comes up **6.6%** of the time and each of the three ultimates **0.33%**. The Sword you start with has none. *Database ▸ Equipment* lists every trademark's chance. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Thousand Petals sword raises Thousand Petals' strike and its damage buff alike. Every trademark skill, on any weapon or none, is also **efficient** one cast in twenty, raising those numbers by a further +20% (see *Skills*). Right-click the weapon to see which skill and which numbers; right-click the skill to see the bonus on its own line."
     },
     {
       "type": "paragraph",
-      "text": "**Rarity makes a piece worth more.** A piece of gear takes its rarity as it drops, from the kind of monster that dropped it: an ordinary monster's piece is **Common**, **Uncommon** or **Rare** (about 53%, 32% and 15% of the time), an elite's is always **Epic** and a shadow's always **Legendary**. Rarity multiplies the base, and with it everything the folds and quenches add — **×1** Common, **×1.1** Uncommon, **×1.2** Rare, **×1.35** Epic, **×1.5** Legendary — so a Legendary A +10 sword carries **3,750** attack where a Common one carries 2,500, and **4,313** at the best roll. A piece's rarity never changes, and the gear you start in is Common. An item's name is written in its rarity's colour, on its card (which also names the rarity), in the shop and on the ground, and its picture in your bag sits on a square of that colour: **Common** in the ordinary text colour (a plain white square in the bag), **Uncommon** green, **Rare** blue, **Epic** purple, **Legendary** orange-gold. Potions, food and everything else are Common. Materials go by how hard they are to find: **Temper Dust** and **Quench Oil** are Common; **Watery Ink** and **Coarse Salt** Uncommon; **Thin Ink** and **Faint Ink** Rare; **Clear Ink**, **Sharp Ink** and **Fine Salt** Epic; **Pure Salt** Legendary."
+      "text": "**Gear has no rarity — what makes a piece better is its grade, its folds, its Ink and its card slots**, every one of them something you can work on. A piece's name ends with its card slots, **[1]** up to **[4]** on a weapon and up to **[2]** on armour; a piece with none shows nothing. Materials go by how hard they are to find, and their names and the squares behind them in your bag are coloured to match: **Temper Dust** and **Quench Oil** are Common (the ordinary text colour); **Watery Ink** and **Coarse Salt** Uncommon (green); **Thin Ink** and **Faint Ink** Rare (blue); **Clear Ink**, **Sharp Ink** and **Fine Salt** Epic (purple); **Pure Salt** Legendary (orange-gold)."
     },
     {
       "type": "paragraph",

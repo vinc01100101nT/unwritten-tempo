@@ -651,7 +651,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
     // How often the owner tells the server where it is. Ten times a second is far below the frame rate and
     // still smoother than a person can walk; sending every frame would be bandwidth spent on nothing.
-    const float ReportInterval = 0.1f;
+    public const float ReportInterval = 0.1f;
     float nextReport;
 
     // Below these, a change is not worth a packet — a player standing perfectly still should cost nothing.
@@ -2098,10 +2098,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <para>The ITEM'S NAME is not sent: what crosses is its id and the two numbers that decide how the line
     /// reads, and the other machine looks the rest up in the catalog it already has — the same way it builds the
     /// words for a thing lying on the ground.</para></summary>
-    public void TellOwnerTheyGot(string itemId, int count, int folds, Rarity rarity)
+    public void TellOwnerTheyGot(string itemId, int count, int folds, Rarity rarity, int cardSlots)
     {
         if (!isServer || connectionToClient == null) return;
-        TargetGotItem(connectionToClient, itemId, count, folds, (int)rarity);
+        TargetGotItem(connectionToClient, itemId, count, folds, (int)rarity, cardSlots);
     }
 
     /// <summary>Server-only: a sentence from the game to the person playing here, in their chat log, in red — why a
@@ -2133,12 +2133,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         new System.Collections.Generic.Dictionary<string, float>();
 
     [TargetRpc]
-    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds, int rarity)
+    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds, int rarity, int cardSlots)
     {
         var def = ItemCatalog.Resolve(itemId);
         if (def == null) return;
-        ChatController.ItemArrived(def, count, folds);
-        LootCards.Show(def, count, folds, (Rarity)rarity);
+        ChatController.ItemArrived(def, count, folds, cardSlots);
+        LootCards.Show(def, count, folds, (Rarity)rarity, cardSlots);
     }
 
     /// <summary>The server's copy of whoever is playing here, or null when this connection has no fighter
@@ -2385,6 +2385,55 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         AfterWorkingOnGear(c, inst);
     }
 
+    /// <summary>Add a card slot to a piece: one more on a success, the slots it had on a failure, never past the cap
+    /// (a weapon 4, an armour piece 2). Paid in Quench Oil and gold, tripling for every slot already there.</summary>
+    [Command]
+    void CmdSlot(int index, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        Slot(c, c.Bag[index].instance);
+    }
+
+    /// <summary>The same slotting, of the piece worn in <paramref name="slot"/>.</summary>
+    [Command]
+    void CmdSlotWorn(int slot, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        Slot(c, WornPiece(c, slot, expectedItemId));
+    }
+
+    void Slot(Character c, EquipmentInstance inst)
+    {
+        if (c == null || inst == null || inst.def == null) return;
+        if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
+        int cap = CraftingMath.CardSlotCap(inst.def.slot);
+        if (inst.cardSlots >= cap)
+        { Refused(ItemTooltip.CopyTitle(inst) + " already has every card slot it can (" + cap + ").", "Slots full"); return; }
+
+        var oil = MaterialCatalog.QuenchOil;
+        if (oil == null) { Refused("No Quench Oil is authored."); return; }
+        int before = inst.cardSlots;
+        int units = CraftingMath.SlotMaterialCost(inst.quality, before);
+        int gold = CraftingMath.SlotGoldCost(inst.quality, before);
+        if (!Spend(c, oil, units, gold)) return;
+
+        bool landed = CombatRng.Range(0, 100) < CraftingMath.SlotChancePct(inst.def.slot, before);
+        if (!landed)
+        {
+            Failed("Slotting failed — " + ItemTooltip.CopyTitle(inst) + " keeps its " + before + " slot(s), and the "
+                   + Paid(oil, units, gold) + " is spent.", "Slotting failed — slots kept");
+            AfterWorkingOnGear(c, inst);
+            return;
+        }
+        inst.cardSlots = before + 1;
+        Done("Slotted " + ItemTooltip.CopyTitle(inst) + " for " + Paid(oil, units, gold) + ".",
+             "Slotted — " + inst.cardSlots + "/" + cap + " slots");
+        AfterWorkingOnGear(c, inst);
+    }
+
     /// <summary>Quench a piece at its cap: it goes up one grade to +0, or fails — and what a failure does is the Salt's
     /// answer (CraftingMath.QuenchFail). A Salt named by bag position is consumed whatever happens.</summary>
     [Command]
@@ -2511,9 +2560,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         string inkName = ink.def.displayName;
         string replaced = inst.inkStats != null && slot < inst.inkStats.Count ? ItemTooltip.InkStatLabel(inst.inkStats[slot]) : null;
-        float value = CraftingMath.InkValue(stat, ink.def.materialStep);
         TakeOne(c, ink);
-        inst.WriteInk(slot, stat, value);
+        inst.WriteInk(slot, stat, ink.def.materialStep);
+        float value = inst.inkValues[Mathf.Min(slot, inst.inkValues.Count - 1)];
         Done("Wrote " + ItemTooltip.InkStatLine(stat, value)
              + " on " + ItemTooltip.CopyTitle(inst) + " (slot " + (slot + 1) + ") with 1 " + inkName
              + (replaced != null ? ", replacing " + replaced : "") + ".", "Wrote " + ItemTooltip.InkStatLine(stat, value));
@@ -2571,7 +2620,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         string was = ItemTooltip.CopyTitle(inst);
         CraftingMath.RecycleYield(inst.quality, inst.upgrade, out int dust, out int oil, out int gold);
-        CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
+        CraftingMath.RecycleInks(inst.inkTiers, recycleTiers);
         var dustItem = MaterialCatalog.TemperDust;
         var oilItem = MaterialCatalog.QuenchOil;
 
@@ -2641,7 +2690,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             var owing = c.Quests.FirstRunOwing(inst.def.id);
             if (owing != null) return StillNeeded(inst.def, owing);
             batchIndices.Add(index);
-            CraftingMath.AddRecycleYield(inst.quality, inst.upgrade, inst.inkStats, inst.inkValues,
+            CraftingMath.AddRecycleYield(inst.quality, inst.upgrade, inst.inkTiers,
                                          ref batchDust, ref batchOil, ref batchGold, batchInkTiers);
         }
         return null;
@@ -2899,7 +2948,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         // WHAT RECYCLING WOULD GIVE BACK, as finished item ids and counts — the window only names them.
         CraftingMath.RecycleYield(inst.quality, inst.upgrade, out int recycleDust, out int recycleOil, out int recycleGold);
-        CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
+        CraftingMath.RecycleInks(inst.inkTiers, recycleTiers);
         var ids = new System.Collections.Generic.List<string>();
         var counts = new System.Collections.Generic.List<int>();
         if (recycleDust > 0 && dustItem != null) { ids.Add(dustItem.id); counts.Add(recycleDust); }
@@ -2910,8 +2959,20 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             if (ink != null) { ids.Add(ink.id); counts.Add(recycleTiers[t]); }
         }
 
+        // WHAT THE INK TAB'S INK WRITES, stat by stat: the window lists them and works none of them out.
+        int inkAt = CraftStations.StrongestOfKind(c.Bag, MaterialKind.Ink);
+        var inkDef = inkAt >= 0 ? c.Bag[inkAt].def : null;
+        float[] inkWrites = null;
+        if (inkDef != null)
+        {
+            inkWrites = new float[CraftingMath.All.Length];
+            for (int s = 0; s < inkWrites.Length; s++) inkWrites[s] = CraftingMath.InkValue(CraftingMath.All[s], inst.quality, inkDef.materialStep);
+        }
+
         TargetOffer(connectionToClient, new CraftStationOffer
         {
+            inkName = inkDef != null ? inkDef.displayName : "",
+            inkWrites = inkWrites ?? System.Array.Empty<float>(),
             recycleIds = ids.ToArray(),
             recycleCounts = counts.ToArray(),
             recycleGold = recycleGold,
@@ -2940,6 +3001,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             atTheTop = !CraftingMath.CanQuench(inst.quality),
             canFold = inst.upgrade < CraftingMath.FoldCap(inst.quality),
             foldFree = FoldIsFree(c, inst),
+            cardSlots = inst.cardSlots,
+            slotCap = CraftingMath.CardSlotCap(inst.def.slot),
+            slotChance = CraftingMath.SlotChancePct(inst.def.slot, inst.cardSlots),
+            slotMaterialCost = CraftingMath.SlotMaterialCost(inst.quality, inst.cardSlots),
+            slotGoldCost = CraftingMath.SlotGoldCost(inst.quality, inst.cardSlots),
+            canSlot = inst.cardSlots < CraftingMath.CardSlotCap(inst.def.slot),
             pieceNow = inst.piece,
             pieceNext = inst.upgrade < CraftingMath.FoldCap(inst.quality)
                 ? inst.NumbersAt(inst.upgrade + 1, inst.quality)
@@ -2951,6 +3018,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     void TargetOffer(NetworkConnectionToClient target, CraftStationOffer offer) => CraftStationPanel.TakeOffer(offer);
 
     public void AskToFold(int index, string itemId) => CmdFold(index, itemId);
+    public void AskToSlot(int index, string itemId) => CmdSlot(index, itemId);
+    public void AskToSlotWorn(EquipSlotType slot, string itemId) => CmdSlotWorn((int)slot, itemId);
     public void AskToQuench(int index, string itemId, int saltIndex) => CmdQuench(index, itemId, saltIndex);
     public void AskToInk(int index, string itemId, int inkIndex, int slot) => CmdInk(index, itemId, inkIndex, slot);
     public void AskForOffer(int index, int saltIndex) => CmdAskOffer(index, saltIndex);
@@ -3461,6 +3530,135 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
     [TargetRpc]
     void TargetStorageRow(NetworkConnectionToClient target, StoredLine line, int rows) => KeeperPanel.TakeStorageRow(line, rows);
+
+    // ---- the Elite Summoner ------------------------------------------------------------------------------------
+    // The window asks for its list; a press names one boss. The server checks reach, the recipe, the spot and the
+    // materials, holds the spot BEFORE taking anything, takes the materials only once a body has arrived, and gives
+    // the spot back when no body comes — so two presses never make two bosses, and a boss that cannot be made costs nothing.
+
+    [Command]
+    void CmdAskSummonOffer()
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        var npc = TownNPC.NearestSummoner(transform.position, StationReach + ReachSlack);
+        if (c == null || npc == null) return;
+        TargetSummonOffer(connectionToClient, SummonLinesFor(c, npc.Summons), SummonedBoss.Taken(npc.GetInstanceID()));
+    }
+
+    // The one boss this summoner calls, as an offer line.
+    static SummonLine[] SummonLinesFor(Character c, string bossId)
+    {
+        var recipe = SummonRecipes.Find(bossId);
+        if (recipe == null) return new SummonLine[0];
+        var sbIds = new System.Text.StringBuilder();
+        var sbNeed = new System.Text.StringBuilder();
+        var sbHeld = new System.Text.StringBuilder();
+        bool canPay = true;
+        for (int k = 0; k < recipe.needs.Count; k++)
+        {
+            var need = recipe.needs[k];
+            var item = ItemCatalog.Resolve(need.itemId);
+            int held = Held(c, item);
+            if (item == null || held < need.count) canPay = false;
+            if (k > 0) { sbIds.Append(','); sbNeed.Append(','); sbHeld.Append(','); }
+            sbIds.Append(need.itemId); sbNeed.Append(need.count); sbHeld.Append(held);
+        }
+        var lines = new[]
+        {
+            new SummonLine
+            {
+                bossId = recipe.bossId, needIds = sbIds.ToString(), needCounts = sbNeed.ToString(),
+                heldCounts = sbHeld.ToString(), canPay = canPay,
+            },
+        };
+        return lines;
+    }
+
+    [Command]
+    void CmdSummon(string bossId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null) return;
+        var npc = TownNPC.NearestSummoner(transform.position, StationReach + ReachSlack);
+        if (npc == null) { SummonSaid("You need to stand at a summoner.", "Not at a summoner", false); return; }
+        // a summoner calls their own boss and nobody else
+        var recipe = bossId == npc.Summons ? SummonRecipes.Find(bossId) : null;
+        var def = recipe != null ? MonsterCatalog.ById(bossId) : null;
+        if (def == null) { SummonSaid("Nobody by that name can be summoned.", "Cannot summon that", false); return; }
+        int spot = npc.GetInstanceID();
+        if (SummonedBoss.Taken(spot)) { SummonSaid("A boss is already out here.", "A boss is already out", false); return; }
+        if (!HoldsRecipe(c, recipe)) { SummonSaid("You do not have every material " + def.displayName + " needs.", "Not enough materials", false); return; }
+        var map = npc.gameObject.scene;
+        if (!WorldTownsfolk.SummonSpot(npc.PersonId, map, out var at))
+        { SummonSaid("This Summoner has nowhere to call a boss.", "Nowhere to summon", false); return; }
+
+        SummonedBoss.Hold(spot);
+        var me = this;
+        MobSpawner.Spawn(def, at, map, go =>
+        {
+            // NO BODY, NO PRICE: the spot goes back and nothing is taken.
+            if (go == null) { SummonedBoss.Free(spot); me.SummonSaid(def.displayName + " could not be called.", "Summon failed", false); return; }
+            var payer = me != null ? me.ServerCharacter : null;
+            // the materials may have left the bag while the body loaded
+            if (payer == null || !HoldsRecipe(payer, recipe))
+            {
+                SummonedBoss.Free(spot);
+                Destroy(go);
+                if (me != null) me.SummonSaid("The materials were gone before " + def.displayName + " arrived.", "Not enough materials", false);
+                return;
+            }
+            for (int k = 0; k < recipe.needs.Count; k++)
+                me.Spend(payer, ItemCatalog.Resolve(recipe.needs[k].itemId), recipe.needs[k].count, 0);
+            var comesBack = go.GetComponent<MobRespawn>();
+            if (comesBack != null) Destroy(comesBack);
+            var brain = go.GetComponent<MonsterAI3D>();
+            if (brain != null) { brain.SetHome(at); brain.tetherRadius = SummonMath.TetherMetres; }
+            go.AddComponent<SummonedBoss>().Begin(spot);
+            GameNetwork.PublishMob(go, def.id);
+            me.PushBagToOwner();
+            me.SendOwedBag();
+            me.SaveSoon();
+            if (GameLog.On(LogCat.Server)) me.LogDid(payer, "summoned " + def.id + " at " + map.name);
+            me.SummonSaid(def.displayName + " has been summoned!", "Summoned " + def.displayName, true);
+        });
+    }
+
+    static bool HoldsRecipe(Character c, SummonRecipes.Recipe recipe)
+    {
+        if (c == null || recipe == null) return false;
+        for (int k = 0; k < recipe.needs.Count; k++)
+        {
+            var item = ItemCatalog.Resolve(recipe.needs[k].itemId);
+            if (item == null || Held(c, item) < recipe.needs[k].count) return false;
+        }
+        return true;
+    }
+
+    void SummonSaid(string line, string notice, bool ok)
+    {
+        if (connectionToClient == null) return;
+        TargetSummonSaid(connectionToClient, line, notice, ok);
+        var c = ServerCharacter;
+        var npc = TownNPC.NearestSummoner(transform.position, StationReach + ReachSlack);
+        if (c != null && npc != null)
+            TargetSummonOffer(connectionToClient, SummonLinesFor(c, npc.Summons), SummonedBoss.Taken(npc.GetInstanceID()));
+    }
+
+    [TargetRpc]
+    void TargetSummonSaid(NetworkConnectionToClient target, string line, string notice, bool ok)
+    {
+        ChatController.GameSaid(line, ok);
+        OverheadNotice.Result(notice, ok);
+        SummonerPanel.ShowResult(line, ok);
+    }
+
+    [TargetRpc]
+    void TargetSummonOffer(NetworkConnectionToClient target, SummonLine[] lines, bool taken) => SummonerPanel.TakeOffer(lines, taken);
+
+    public void AskSummonOffer() => CmdAskSummonOffer();
+    public void AskToSummon(string bossId) => CmdSummon(bossId ?? "");
 
     public void AskKeeperSavePoint() => CmdKeeperSavePoint();
     public void AskKeeperTrips() => CmdKeeperAskTrips();

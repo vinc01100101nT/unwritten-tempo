@@ -5,8 +5,8 @@ using System.Text;
 
 /// <summary>
 /// WHAT A CREATURE IS WEARING, as one piece of text that crosses the wire: each worn piece's item id, its grade,
-/// how many times it has been folded and its rarity. The SERVER writes it; every watching machine reads it back and
-/// works nothing out — a watcher holds no copy, so it cannot see the trademark a weapon's rarity comes from.
+/// and how many times it has been folded. The SERVER writes it; every watching machine reads it back and works
+/// nothing out.
 /// </summary>
 public static class WornList
 {
@@ -16,7 +16,6 @@ public static class WornList
         public Item def;
         public Quality quality;
         public int folds;
-        public Rarity rarity;
     }
 
     const char PieceGap = '\n';
@@ -45,8 +44,7 @@ public static class WornList
             if (sb.Length > 0) sb.Append(PieceGap);
             sb.Append(inst.def.id).Append(FieldGap)
               .Append(((int)inst.quality).ToString(CultureInfo.InvariantCulture)).Append(FieldGap)
-              .Append(inst.upgrade.ToString(CultureInfo.InvariantCulture)).Append(FieldGap)
-              .Append(((int)Rarities.Of(inst.def, inst)).ToString(CultureInfo.InvariantCulture));
+              .Append(inst.upgrade.ToString(CultureInfo.InvariantCulture));
         }
         scratch.Clear();
         return sb.ToString();
@@ -63,18 +61,13 @@ public static class WornList
         foreach (var piece in text.Split(PieceGap))
         {
             var fields = piece.Split(FieldGap);
-            // Three fields or more: a text from a build before the rarity field (or after a later one) still dresses the
-            // body, rather than every piece being thrown away during a half-finished deploy.
             if (fields.Length < 3) continue;
             var def = ItemCatalog.Resolve(fields[0]);
             if (def == null) continue;
             if (!int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int q)) continue;
             if (q < (int)Quality.Raw || q > (int)Quality.A) continue;
             int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int folds);
-            int rarity = (int)Rarity.Common;
-            if (fields.Length > 3) int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out rarity);
-            if (rarity < (int)Rarity.Common || rarity > (int)Rarity.Legendary) rarity = (int)Rarity.Common;
-            result.Add(new Entry { def = def, quality = (Quality)q, folds = Mathf.Max(0, folds), rarity = (Rarity)rarity });
+            result.Add(new Entry { def = def, quality = (Quality)q, folds = Mathf.Max(0, folds) });
         }
     }
 }

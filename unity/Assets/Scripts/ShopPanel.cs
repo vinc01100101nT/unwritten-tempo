@@ -451,7 +451,7 @@ public class ShopPanel : MonoBehaviour
         if (entry.instance != null)
         {
             if (existing != null) return;
-            cart.Add(Line(CartKind.Sell, entry, entry.def.id, entry.instance.copyId ?? "", 1, entry.def.value));
+            cart.Add(Line(CartKind.Sell, entry, entry.def.id, entry.instance.copyId ?? "", 1, entry.Value));
             UISounds.PlayClick();
             CartChanged();
             return;
@@ -461,7 +461,7 @@ public class ShopPanel : MonoBehaviour
         AskHowMany("Sell how many? (1–" + left + ")", left, left, true, at, n =>
         {
             if (existing != null && cart.Contains(existing)) existing.count = Mathf.Min(entry.count, existing.count + n);
-            else cart.Add(Line(CartKind.Sell, entry, entry.def.id, "", Mathf.Min(entry.count, n), entry.def.value));
+            else cart.Add(Line(CartKind.Sell, entry, entry.def.id, "", Mathf.Min(entry.count, n), entry.Value));
             CartChanged();
         });
     }
@@ -682,7 +682,7 @@ public class ShopPanel : MonoBehaviour
         {
             var e = Bag[index];
             slot.ShowItem(e, e.instance != null ? "" : "×" + e.count, null, UiKit.TextDim, null,
-                          e.def != null && e.def.CanBeSold ? Price(e.def.value) : "");
+                          e.def != null && e.def.CanBeSold ? Price(e.Value) : "");
             p.MarkRow(slot, GuideSpot.None, "");
         }
         public void Press(int index, int which) { }

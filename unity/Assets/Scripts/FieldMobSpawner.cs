@@ -120,10 +120,20 @@ public class FieldMobSpawner : MonoBehaviour
             warnedUnknown = true;
             GameLog.Warn(LogCat.Spawn, "'" + gameObject.scene.name + "' names a creature '" + fixedMobId + "' that is not on the roster — that area stays empty.");
         }
+        // A SUMMON-ONLY BOSS never spawns on its own: the area stays empty and says why, once.
+        if (named != null && SummonRecipes.IsSummonOnly(named.id))
+        {
+            if (!warnedSummonOnly)
+            {
+                warnedSummonOnly = true;
+                GameLog.Warn(LogCat.Spawn, "'" + gameObject.scene.name + "' names '" + named.id + "', which only appears by summoning — that area stays empty.");
+            }
+            return null;
+        }
         return named;
     }
 
-    bool warnedUnknown;
+    bool warnedUnknown, warnedSummonOnly;
 
     /// <summary>A dead mob (its fade finished) hands itself back here: hide it, bank it in its type pool, and
     /// schedule a replacement so the population holds steady.</summary>

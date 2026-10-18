@@ -94,11 +94,11 @@ public class ChatController : MonoBehaviour
     /// it came from, because WHERE it came from is not what a player needs to be told; WHAT they now have is.
     ///
     /// <para>Built here rather than by each caller so there is one sentence and one word order.</para></summary>
-    public static void ItemArrived(Item def, int count, int upgrade)
+    public static void ItemArrived(Item def, int count, int upgrade, int cardSlots = 0)
     {
         if (instance == null || def == null || count <= 0) return;
 
-        string name = upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName;
+        string name = (upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName) + ItemTooltip.SlotSuffix(cardSlots);
         if (count > 1) name += " ×" + count;
         instance.AddLine($"<color=#{ObtainedHex}>Obtained</color>  {Sanitize(name)}");
         // And in the combat log, beside what the kill paid.

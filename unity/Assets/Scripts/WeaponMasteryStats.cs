@@ -24,7 +24,7 @@ public static class WeaponMasteryStats
                 return stat == StatId.AttackSpeed || stat == StatId.Atk || stat == StatId.Critical;
             // Warhammer (Mace) — deny enemy actions.
             case WeaponType.Mace:
-                return stat == StatId.Atk || stat == StatId.Def || stat == StatId.HP;
+                return stat == StatId.Atk || stat == StatId.HP || stat == StatId.Accuracy;
             // Spear — control positioning.
             case WeaponType.Spear:
                 return stat == StatId.Accuracy || stat == StatId.Atk || stat == StatId.HP;
@@ -48,7 +48,7 @@ public static class WeaponMasteryStats
                 return stat == StatId.MAtk || stat == StatId.CastSpeed || stat == StatId.MP;
             // Wand — keep allies alive.
             case WeaponType.Wand:
-                return stat == StatId.MP || stat == StatId.CastSpeed || stat == StatId.Def;
+                return stat == StatId.MP || stat == StatId.CastSpeed || stat == StatId.HP;
             // Scythe — overwhelm with curses.
             case WeaponType.Scythe:
                 return stat == StatId.MAtk || stat == StatId.MP || stat == StatId.HP;

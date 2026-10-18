@@ -192,6 +192,24 @@ public static class PassiveEvents
         }
     }
 
+    /// <summary>True when one of <paramref name="actor"/>'s skills answers <paramref name="trigger"/> and its required
+    /// pile is held right now — read off the skill list and the states this machine was told, so it decides nothing:
+    /// the person's own machine asks it only to know whether a moment is worth telling the server about. Allocates
+    /// nothing.</summary>
+    public static bool AnyReady(ICombatUnit actor, SkillTrigger trigger)
+    {
+        var skills = actor?.Skills;
+        if (skills == null) return false;
+        var slots = skills.SlotsFor(trigger);
+        for (int s = 0; s < slots.Length; s++)
+        {
+            var def = skills.DefAt(slots[s]);
+            var entry = def != null ? def.EntryFor(trigger, null) : null;
+            if (entry != null && StateGate.IsMet(entry, actor.States)) return true;
+        }
+        return false;
+    }
+
     /// <summary>The fraction of full health at or under which a unit counts as badly hurt — the falling edge
     /// <see cref="SkillTrigger.OnLowHP"/> answers. ONE owner, because both damage doors ask it and a copy on either
     /// side would let a person and a creature disagree about what "nearly dead" means.</summary>

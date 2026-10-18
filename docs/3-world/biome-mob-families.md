@@ -37,7 +37,7 @@ there.
    one up to 15 levels stronger. A visitor keeps a quarter of a resident's share. No map starts below level 9 with a
    stronger visitor, so the fields beside Lastline stay safe.
 6. **Elites** have a home biome, element and level too. Each stands in the fields of its home biome within 12 levels
-   of its own; a dungeon's bottom floor holds the elite named for it. **Once it has bought the summon skill, an elite summons the
+   of its own; a dungeon's bottom floor holds the elite named for it. **An elite summons the
    normals of its own home biome** nearest its level at or below it, and only reaches outside its biome when its biome has too few.
 7. **Drops are unchanged**: what a creature drops still follows its own level (the seven level steps in the
    [Mob Roster](mob-roster.md)), so a creature of levels 57–70 still gives five steps' worth of Temper Dust and Quench Oil, wherever

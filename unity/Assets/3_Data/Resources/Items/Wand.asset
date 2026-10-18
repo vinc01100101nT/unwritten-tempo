@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 7221307183960036424, guid: 87e6d89816058944ab861e6ef0ba9e8e, type: 3}
   element: 0
   category: 0
-  cardSlots: 2
   weight: 50
   value: 8
   undroppable: 0
   unsellable: 0
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 1
   materialKind: 0
   materialStep: 0
@@ -47,4 +56,6 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 49d119a83e396134fa07af4f5855130c, type: 3}
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: Seraphine ran to her through the storm. As the morning mist settled
+    over her, Veyra opened her eyes and stood, and Seraphine felt something cold
+    look back at her. She said nothing.

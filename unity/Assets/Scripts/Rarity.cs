@@ -1,30 +1,24 @@
 using UnityEngine;
 
-/// <summary>How RARE a thing is to come by. A piece of gear's rarity is decided once, when the copy is made: a piece a
-/// creature drops rolls it by the creature's kind, and every other piece is <see cref="Common"/>. It multiplies the
-/// piece's base (<see cref="CraftingMath.RarityBaseHundredths"/>) and is never changed by a fold or a quench. A material is as rare as it is to find; everything else is Common.
+/// <summary>How RARE a thing is to come by. A material is as rare as it is to find; gear and everything else is
+/// <see cref="Common"/> — gear has no rarity (decided 2026-10-18).
 ///
-/// <para>⚠️ The numbers are PINNED: a copy's rarity is saved as one, and the server sends one with every drop and
-/// every worn piece. Never reorder; a new rarity takes the next number.</para></summary>
+/// <para>⚠️ The numbers are PINNED: the server sends one with every drop. Never reorder; a new rarity takes the next
+/// number.</para></summary>
 public enum Rarity { Common = 0, Uncommon = 1, Rare = 2, Epic = 3, Legendary = 4 }
 
 /// <summary>
 /// THE ONE PLACE that answers "how rare is this", what that rarity is called and what colour it is written in. Every
 /// screen that shows an item asks here, so the bag, the tooltip, the floor, the worn list and the shop can never
-/// disagree. It is decided on the SERVER: a piece of gear's is saved on its copy (<see cref="EquipmentInstance.rarity"/>)
-/// and travels in the copy's roll text, so a player's machine reads it off the copy it was sent; a material's is read
-/// off its kind and step.
+/// disagree. Gear has none (decided 2026-10-18), so it is Common; a material's is read off its kind and step.
 /// </summary>
 public static class Rarities
 {
-    /// <summary>How rare <paramref name="def"/> is — and, for a piece of gear, the particular copy
-    /// <paramref name="copy"/> (null for a bag stack). A piece of gear is as rare as its copy says, and Common with no
-    /// copy; a crafting material goes by its kind and step (<see cref="OfMaterial"/>); consumables and everything else
-    /// are Common.</summary>
-    public static Rarity Of(Item def, EquipmentInstance copy)
+    /// <summary>How rare <paramref name="def"/> is. Gear has no rarity, so it is Common; a crafting material goes by
+    /// its kind and step (<see cref="OfMaterial"/>); consumables and everything else are Common.</summary>
+    public static Rarity Of(Item def)
     {
         if (def == null) return Rarity.Common;
-        if (def.slot != EquipSlotType.None) return copy != null ? copy.rarity : Rarity.Common;
         if (def.materialKind != MaterialKind.None) return OfMaterial(def.materialKind, def.materialStep);
         return Rarity.Common;
     }
@@ -80,9 +74,8 @@ public static class Rarities
     static string[] tags;
 
     /// <summary><paramref name="name"/> — a thing's name as a row writes it — in the colour of <paramref name="def"/>'s
-    /// rarity (<paramref name="copy"/> for a piece of gear, null for a stack), as rich text. Only the name: a price or a
-    /// count beside it is left in the row's own colour.</summary>
-    public static string Coloured(Item def, EquipmentInstance copy, string name) => Tag(Of(def, copy)) + name + "</color>";
+    /// rarity, as rich text. Only the name: a price or a count beside it is left in the row's own colour.</summary>
+    public static string Coloured(Item def, string name) => Tag(Of(def)) + name + "</color>";
 
     /// <summary>The rich-text tag that opens text in <paramref name="rarity"/>'s colour — close it with "&lt;/color&gt;".</summary>
     public static string Tag(Rarity rarity)

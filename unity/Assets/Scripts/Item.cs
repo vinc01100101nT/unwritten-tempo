@@ -31,8 +31,8 @@ public enum EquipSlotType
 /// is every item that is not a crafting material at all — the zero value, so the seventeen items authored before
 /// crafting existed read correctly without being touched.
 ///
-/// <para>The three crafts are the material a piece is made of: metal at a smith, cloth at a loom, leather at a
-/// tannery. <see cref="MaterialKind.TemperDust"/> is what every fold takes and <see cref="MaterialKind.QuenchOil"/>
+/// <para>The three crafts are the material a piece is made of: metal, cloth or leather, all worked at the smith.
+/// <see cref="MaterialKind.TemperDust"/> is what every fold takes and <see cref="MaterialKind.QuenchOil"/>
 /// what every quench takes; <see cref="MaterialKind.Ink"/> writes a stat onto a piece and
 /// <see cref="MaterialKind.Salt"/> boosts a quench — all four shared by the three crafts.
 /// <see cref="MaterialKind.Creature"/> is the material only one creature drops (<see cref="CreatureMaterials"/>): no
@@ -132,8 +132,6 @@ public class Item : ScriptableObject
     [Header("Identity (HUD relay spec)")]
     [Tooltip("Which inventory tab this falls under. Equip = has a real slot.")]
     public ItemCategory category = ItemCategory.Etc;
-    [Tooltip("Number of card sockets (◇ pips). 0 = no sockets. Only meaningful for equipment.")]
-    public int cardSlots;
     [Tooltip("How heavy it is. A weapon's weight sets how long it takes to draw and to put away (0.2 s plus 0.006 s " +
              "per point) and the time between its swings (0.8 s plus 0.005 s per point a hand carries — a pair " +
              "weapon's two hands carry half each).")]
@@ -188,8 +186,8 @@ public class Item : ScriptableObject
     public string wornSkillId = "";
 
     [Header("Crafting")]
-    [Tooltip("What this PIECE is made of, which decides the station that works it: Metal at a smith, Cloth at a " +
-             "loom, Leather at a tannery. None = not something any station works (a consumable, a material, or a " +
+    [Tooltip("What this PIECE is made of: Metal, Cloth or Leather, each worked at the smith. None = not something " +
+             "any station works (a consumable, a material, or a " +
              "piece nobody has given a craft to yet). A worn piece made of None is worn for its look alone: it rolls " +
              "no word and is never handed out at random.")]
     public MaterialKind madeOf = MaterialKind.None;

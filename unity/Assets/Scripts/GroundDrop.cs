@@ -50,6 +50,8 @@ public class GroundDrop : MonoBehaviour
 
     /// <summary>The +N in front of the name. Sent as its own number for the same reason the grade is.</summary>
     public int upgrade;
+    /// <summary>How many card slots the piece has — named at the end, " [3]".</summary>
+    public int cardSlots;
 
     /// <summary>How rare it is (<see cref="Rarities.Of"/>), which colours its name. Worked out where the copy is and
     /// sent like the grade, because a weapon's rarity is its trademark's and a watcher never holds the copy.</summary>
@@ -252,7 +254,8 @@ public class GroundDrop : MonoBehaviour
     /// sent instead. With no rarity given it is read off the item and the copy. Nothing is drawn here: a watching
     /// machine puts its plate and icon up with <see cref="ShowOnScreen"/>, and the server never does.</summary>
     public static GroundDrop Place(Vector3 worldPos, Item def, int count, EquipmentInstance instance,
-                                   Quality quality, int upgrade, string mapName, uint netId, Rarity? rarity = null)
+                                   Quality quality, int upgrade, string mapName, uint netId, Rarity? rarity = null,
+                                   int cardSlots = 0)
     {
         if (def == null || count <= 0) return null;
 
@@ -274,7 +277,8 @@ public class GroundDrop : MonoBehaviour
         drop.instance = instance;
         drop.quality = instance != null ? instance.quality : quality;
         drop.upgrade = instance != null ? instance.upgrade : upgrade;
-        drop.rarity = rarity ?? Rarities.Of(def, instance);
+        drop.cardSlots = instance != null ? instance.cardSlots : cardSlots;
+        drop.rarity = rarity ?? Rarities.Of(def);
         drop.mapName = mapName;
         drop.netId = netId;
         drop.placedAt = Time.time;
@@ -403,7 +407,7 @@ public class GroundDrop : MonoBehaviour
         get
         {
             if (def == null) return "";
-            string s = upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName;
+            string s = (upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName) + ItemTooltip.SlotSuffix(cardSlots);
             return count > 1 ? s + " ×" + count : s;
         }
     }

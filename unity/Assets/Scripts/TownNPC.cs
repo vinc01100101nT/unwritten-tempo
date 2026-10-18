@@ -49,9 +49,9 @@ public class TownNPC : MonoBehaviour
     public int Level { get; private set; } = 1;
 
     [Header("Craft station")]
-    [Tooltip("What this townsperson WORKS at. None = an ordinary villager who only talks. A smith works metal, " +
-             "a loom cloth, a tannery leather — pressing F on one opens their station instead of a " +
-             "conversation, and a piece may only be worked on at a station of its own craft.")]
+    [Tooltip("What this townsperson WORKS at. None = an ordinary villager who only talks. A smith works every " +
+             "piece — metal, cloth and leather — and pressing F on one opens their station instead of a " +
+             "conversation.")]
     public CraftStation station = CraftStation.None;
 
     [Header("Wander")]
@@ -153,6 +153,21 @@ public class TownNPC : MonoBehaviour
         {
             var n = Active[i];
             if (n == null || n.Shop != shopId) continue;
+            float d = (n.transform.position - pos).sqrMagnitude;
+            if (d <= bestSq) { bestSq = d; best = n; }
+        }
+        return best;
+    }
+
+    /// <summary>The nearest summoner within <paramref name="maxDist"/>, or null.</summary>
+    public static TownNPC NearestSummoner(Vector3 pos, float maxDist)
+    {
+        TownNPC best = null;
+        float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Active.Count; i++)
+        {
+            var n = Active[i];
+            if (n == null || !n.Summoner) continue;
             float d = (n.transform.position - pos).sqrMagnitude;
             if (d <= bestSq) { bestSq = d; best = n; }
         }
@@ -357,6 +372,14 @@ public class TownNPC : MonoBehaviour
     /// <summary>True for the town's Keeper (<see cref="WorldTownsfolk.Row.keeper"/>): pressing F on them opens the Keeper
     /// window. Set by whatever placed them on the server, and by the shell that speaks for them on a watching machine.</summary>
     public bool Keeper { get; set; }
+
+    /// <summary>The boss this person summons (<see cref="WorldTownsfolk.Row.summons"/>), or empty: pressing F on a summoner
+    /// opens the summoning window for that boss. Set by whatever placed them on the server, and by the shell on a
+    /// watching machine.</summary>
+    public string Summons { get; set; } = "";
+
+    /// <summary>True for a summoner.</summary>
+    public bool Summoner => !string.IsNullOrEmpty(Summons);
 
     /// <summary>True for somebody who stands at their home and never strolls — a shopkeeper at their door.</summary>
     public bool Stands { get; private set; }

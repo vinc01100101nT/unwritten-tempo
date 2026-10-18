@@ -133,7 +133,7 @@ public class MobTableWindow : EditorWindow
         // designer edits the cause and immediately sees the effect. Never editable — these have no storage.
         new Col("=HP",   "hp",     52),
         new Col("=ATK",  "atk",    46),
-        new Col("=DEF",  null,     44),
+        new Col("=DEF",  null,     84),
         new Col("=FLEE", null,     46),
         new Col("elem",  "elem",   84),
         new Col("Element Lv", "elemlv", 70),
@@ -617,7 +617,7 @@ public class MobTableWindow : EditorWindow
         // Derived readouts — computed live from the block just edited, never stored and never editable.
         DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.HP));
         DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.Atk));
-        DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.Def));
+        DrawDerived(Next(), MonsterDefStats.DefenseLabel(def));
         DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.Flee));
         var elem     = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.element);
         int elemLv   = EditorGUI.IntField(VCenter(Next(), 18), def.elementLevel);
@@ -752,21 +752,17 @@ public class MobTableWindow : EditorWindow
         EditorGUILayout.LabelField("   gear state  (every piece this creature wears comes to life at these)",
                                    EditorStyles.miniBoldLabel);
         var quality = def.gearQuality;
-        int folds = def.gearFolds;
-        int inkTier = def.gearInkTier;
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Grade", EditorStyles.miniLabel, GUILayout.Width(74));
         quality = (Quality)EditorGUILayout.EnumPopup(quality, GUILayout.Width(80));
         GUILayout.Space(8);
-        EditorGUILayout.LabelField("Folds", EditorStyles.miniLabel, GUILayout.Width(44));
-        int cap = CraftingMath.FoldCap(quality);
-        folds = Mathf.Clamp(EditorGUILayout.IntField(folds, GUILayout.Width(50)), 0, cap);
-        EditorGUILayout.LabelField("of " + cap, EditorStyles.miniLabel, GUILayout.Width(44));
-        GUILayout.Space(8);
-        EditorGUILayout.LabelField("Ink", EditorStyles.miniLabel, GUILayout.Width(30));
-        inkTier = EditorGUILayout.IntPopup(Mathf.Clamp(inkTier, 1, InkTierValues.Length),
-                                           InkTierNames, InkTierValues, GUILayout.Width(80));
-        int written = CraftingMath.InkSlots(quality);
+        // folds and Ink are not authored: the kind rolls the folds each life, the grade decides the Ink
+        EditorGUILayout.LabelField("Folds " + CreatureLoot.FileFolds(def.kind) + "–10, rolled each life",
+                                   EditorStyles.miniLabel, GUILayout.Width(170));
+        int inkTier = CreatureLoot.InkTierFor(quality);
+        EditorGUILayout.LabelField(inkTier > 0 ? "Ink " + InkTierNames[inkTier - 1] : "no Ink", EditorStyles.miniLabel,
+                                   GUILayout.Width(80));
+        int written = inkTier > 0 ? CraftingMath.InkSlots(quality) : 0;
         EditorGUILayout.LabelField(written == 0 ? "writes nothing" : written == 1 ? "writes 1 stat"
                                                                    : "writes " + written + " stats",
                                    EditorStyles.miniLabel, GUILayout.Width(110));
@@ -777,14 +773,14 @@ public class MobTableWindow : EditorWindow
         var vals  = new List<int>();
         {
             GUILayout.Space(4);
-            EditorGUILayout.LabelField("   ring ranks  (same soft-cap curve as the player's ring)", EditorStyles.miniBoldLabel);
+            EditorGUILayout.LabelField("   ring ranks  (same as the player's ring: 1% a rank, at most 33)", EditorStyles.miniBoldLabel);
             for (int i = 0; i < RingStatOrder.Length; i++)
             {
                 var st = RingStatOrder[i];
                 int cur = RanksIn(def, st);
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(st.ToString(), EditorStyles.miniLabel, GUILayout.Width(90));
-                int next = Mathf.Max(0, EditorGUILayout.IntField(cur, GUILayout.Width(50)));
+                int next = Mathf.Clamp(EditorGUILayout.IntField(cur, GUILayout.Width(50)), 0, SkillRing.NodeCap);
                 // Show what that rank count is actually WORTH, so a designer tunes the effect, not the raw number.
                 EditorGUILayout.LabelField(next > 0 ? $"+{SkillRing.Percent(st, next) * 100f:0.#}%" : "—",
                                            EditorStyles.miniLabel, GUILayout.Width(60));
@@ -802,8 +798,6 @@ public class MobTableWindow : EditorWindow
             // No weapon, no mastery: it is mastery IN a weapon, so it cannot outlive the weapon it belongs to.
             if (def.Weapon == null) def.weaponMastery = 0;
             def.gearQuality = quality;
-            def.gearFolds = Mathf.Clamp(folds, 0, CraftingMath.FoldCap(quality));
-            def.gearInkTier = inkTier;
             def.ringRankStats  = stats.ToArray();
             def.ringRankValues = vals.ToArray();
             EditorUtility.SetDirty(def);
@@ -815,7 +809,6 @@ public class MobTableWindow : EditorWindow
 
     // The five Inks, by the names the game calls them, for the gear-state dropdown.
     static readonly string[] InkTierNames = { "Watery", "Thin", "Faint", "Clear", "Sharp" };
-    static readonly int[] InkTierValues = { 1, 2, 3, 4, 5 };
 
     // Ring stats in the canonical LOOP order (SkillRing.Ring), never enum order.
     static readonly StatId[] RingStatOrder =
@@ -852,14 +845,16 @@ public class MobTableWindow : EditorWindow
 
     static GUIStyle derivedStyle;
     // Greyed + right-aligned so a derived number reads as a readout, not a field you can type into.
-    static void DrawDerived(Rect r, int value)
+    static void DrawDerived(Rect r, int value) => DrawDerived(r, value.ToString());
+
+    static void DrawDerived(Rect r, string value)
     {
         derivedStyle ??= new GUIStyle(EditorStyles.label)
         {
             alignment = TextAnchor.MiddleRight,
             normal = { textColor = new Color(0.62f, 0.72f, 0.62f) },
         };
-        GUI.Label(VCenter(r, 18), value.ToString(), derivedStyle);
+        GUI.Label(VCenter(r, 18), value, derivedStyle);
     }
 
     void DrawPreview(Rect r, MonsterDef def)

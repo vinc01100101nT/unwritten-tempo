@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 0}
   element: 0
   category: 3
-  cardSlots: 0
   weight: 10
   value: 462
   undroppable: 0
   unsellable: 0
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 0
   materialKind: 6
   materialStep: 1
@@ -41,4 +50,7 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: Dropped only by Rascal.
+  description: 'Rascal tried to make a clean getaway. The tail betrayed everything.
+
+    Dropped
+    only by Rascal.'

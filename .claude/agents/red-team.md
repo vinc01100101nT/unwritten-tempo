@@ -40,13 +40,14 @@ After each finding, write it out in full before you look for the next one. A run
 must still hand back everything found so far: whatever you have written IS the report. If you are
 messaged to continue after a cut-off, carry on from where you stopped — never start over.
 
-## Each finding, in this shape — Example → Problem → Solution
+## Each finding, in this shape — Problem → Root cause → Solution
 
-- **Example** — one concrete case with real names and real numbers: "Alpha, level 1, 145 health, meets a
-  Flutterby with 86 attack…". An abstract claim with no example is not a finding.
-- **Problem** — what goes wrong in that example and the one reason it does, with the file and line you
-  READ this session that makes it possible. A claim about code you did not open is worth nothing.
-- **Solution** — the smallest change to the PLAN that closes it, and what it gives in the same example.
+- **Problem** — what goes wrong, as one concrete case with real names and real numbers: "Alpha, level 1,
+  145 health, meets a Flutterby with 86 attack and dies on the 3rd hit…". An abstract claim with no
+  concrete case is not a finding.
+- **Root cause** — the one reason it happens, with the file and line you READ this session that makes it
+  possible. A claim about code you did not open is worth nothing.
+- **Solution** — the smallest change to the PLAN that closes it, and what it gives in the same case.
   When the answer is a design choice only the user can make, say so and name the choice.
 
 Rank them, most damaging first. If nothing real is left, say exactly **"No real problems left."** — a

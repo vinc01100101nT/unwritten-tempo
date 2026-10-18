@@ -116,8 +116,8 @@ skill has no main number to raise and never rolls.
 ## 3. Which skills are trademarks
 
 **Every skill with a main number on any of its effects is a trademark skill, automatically, no exception.**
-A new weapon rolls among the PUBLISHED ones of its type. For the sword that is **eighteen**:
-fifteen actives and passives and all three ultimates, in two classes the roll treats apart (§4).
+A new weapon rolls among the PUBLISHED ones of its type. For the sword that is **seventeen**:
+fourteen actives and passives and all three ultimates, in two classes the roll treats apart (§4).
 
 ### Why a rule beats a hand-picked list
 
@@ -139,7 +139,7 @@ Burn Status · SubStatBuff · SubStatDebuff · BoostOutgoingDamage · ReduceOutg
 list the lift reads (§2). A skill with none of them — only Parry, Brace, Taunt, Teleport, Dash, Knockback, Pull,
 Cleanse, ImmuneToDisables, ExtendDuration, or a Stun, Freeze or Silence — has nothing to lift.
 
-### The sword's eighteen
+### The sword's seventeen
 
 Read off the saved skill data, every effect decoded.
 
@@ -148,7 +148,6 @@ Read off the saved skill data, every effect decoded.
 | **Piercing Gust** | 1 | its strike — and every auto-lunge Crossed Branches fires, since those ARE Piercing Gust |
 | **Rising Breeze** | 3 | its +3%-damage stack |
 | **Still Air** | 5 | its 50% damage reduction |
-| **Crossed Branches** | 7 | its +2 basic attack range per charge |
 | **Eye of the Storm** | 11 | its 2/sec MP return |
 | **Scattered Petals** | 15 | its strike, and the 30% attack-speed cut it puts on them |
 | **Tailwind** | 17 | the Rising Breeze it adds per basic attack |

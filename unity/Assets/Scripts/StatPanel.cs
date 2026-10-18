@@ -132,10 +132,10 @@ public class StatPanel : MonoBehaviour
 
         derivedText.text =
             $"ATK   {c.MinAttack}-{c.MaxAttack}  M.ATK {c.MinMagicAttack}-{c.MaxMagicAttack}\n" +
-            $"DEF   {c.Defense,-4}  M.DEF {c.MagicDefense}\n" +
+            $"DEF   {c.CurrentDerived.hardDef / 10f:0.0}%+{c.SoftDefense}  M.DEF {c.CurrentDerived.hardMdef / 10f:0.0}%+{c.SoftMagicDefense}\n" +
             $"HP    {c.CurrentHP}/{c.MaxHP}\n" +
             $"MP    {c.CurrentMP}/{c.MaxMP}\n" +
-            $"ASPD  +{Mathf.RoundToInt((c.AttackSpeedMult - 1f) * 100)}%   " +
+            $"ASPD  {c.CurrentDerived.aspd} ({UnitStatMath.MaxAspd})   " +
             $"CAST ×{c.CastTimeMult:0.00}\n" +
             $"CRIT  {Mathf.RoundToInt(c.CritChance01 * 100)}% ×{c.CritMultiplier:0.0}\n" +
             $"HIT   {c.Hit,-4}  FLEE {c.Flee}";

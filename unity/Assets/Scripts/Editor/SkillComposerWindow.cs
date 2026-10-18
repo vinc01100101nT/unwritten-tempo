@@ -1443,7 +1443,7 @@ public class SkillComposerWindow : EditorWindow
           SkillEffectKind.ReturnToSavePoint, SkillEffectKind.TeleportToRandomSpot };
     static readonly SkillEffectKind[] BuffKinds =
         { SkillEffectKind.SubStatBuff, SkillEffectKind.BoostOutgoingDamage,
-          SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
+          SkillEffectKind.Parry, SkillEffectKind.Charges, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
           SkillEffectKind.Shield, SkillEffectKind.ElementConverter };
 
     // Modifiers: the effects whose target is a SKILL's pile rather than a body. Labelled as the whole sentence they
@@ -1892,6 +1892,11 @@ public class SkillComposerWindow : EditorWindow
                         "A weapon converter and an armor converter run side by side. Skills keep their own element; " +
                         "only ordinary attacks take the weapon's.", MessageType.None);
                     break;
+                case SkillEffectKind.Charges:
+                    // No magnitude: a charge changes nothing on its own, it is only there to be spent. Charges come from
+                    // the stacking block below, as Parry's do.
+                    NumberRow("seconds", "How long the charges last. A charge changes no stat and does nothing on its own: " + "another skill's trigger spends it, by naming this skill and the Charges pile in its stack gate.", ref ef.seconds, ef.useStacks);
+                    break;
                 case SkillEffectKind.ImmuneToDisables:
                     NumberRow("seconds", "How long nothing can stop the holder. No other knob — being stopped is yes or no, so there " + "is no amount to set.", ref ef.seconds, ef.useStacks);
                     EditorGUILayout.HelpBox("Turns away, by name: FLINCH (the stagger a landing hit causes), STUN, " +
@@ -2148,6 +2153,8 @@ public class SkillComposerWindow : EditorWindow
                                                 return "Each charge makes ONE outgoing attack hit harder and is spent by it, hit or miss. Every kind of attack counts except damage-over-time ticks.";
             case SkillEffectKind.ElementConverter:
                                                 return "For a while, the holder's weapon strikes as an element, or their armor is hit as one (level 1). A new one on the same slot replaces the old.";
+            case SkillEffectKind.Charges:
+                                                return "Gives charges for a while. They change no stat and do nothing on their own; another skill's trigger spends them by naming this skill and the Charges pile in its stack gate.";
             case SkillEffectKind.ImmuneToDisables:
                                                 return "Nothing stops the holder for a while: no flinch, stun, freeze, silence, knockback, pull, and hits can't cancel their casts.";
             case SkillEffectKind.ReduceOutgoingDamage:

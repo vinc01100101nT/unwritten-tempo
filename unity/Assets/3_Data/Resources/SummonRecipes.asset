@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cdc3b0f06c8a1f4b8d70883463298d1, type: 3}
+  m_Name: SummonRecipes
+  m_EditorClassIdentifier: Assembly-CSharp::SummonRecipes
+  recipes:
+  - bossId: mob.blood-ronin
+    needs:
+    - itemId: item.golden-bandits-gold-tooth
+      count: 1
+    - itemId: item.karasu-black-plume
+      count: 1
+    - itemId: item.oni-tengu-horn
+      count: 1
+    - itemId: item.bandit-bosss-loot-sack
+      count: 1
+  - bossId: mob.frost-ronin
+    needs:
+    - itemId: item.deep-maw-pearl
+      count: 1
+    - itemId: item.great-croak-throat-sac
+      count: 1
+    - itemId: item.abyss-maw-heart
+      count: 1
+    - itemId: item.mossmaw-eye
+      count: 1
+  - bossId: mob.wraithmother
+    needs:
+    - itemId: item.venom-gloop-eye
+      count: 1
+    - itemId: item.toadmaw-toadstone
+      count: 1
+    - itemId: item.gloop-kings-eye
+      count: 1
+    - itemId: item.oculord-iris
+      count: 1
+  - bossId: mob.inferno-mask
+    needs:
+    - itemId: item.autumn-stalk-seed
+      count: 1
+    - itemId: item.elder-stalk-heartwood
+      count: 1
+    - itemId: item.golden-bandits-gold-tooth
+      count: 1
+    - itemId: item.abyss-maw-heart
+      count: 1
+  - bossId: mob.shadow.riven
+    needs:
+    - itemId: item.elder-stalk-heartwood
+      count: 2
+    - itemId: item.blood-ronin-crest
+      count: 1
+  - bossId: mob.shadow.asterion
+    needs:
+    - itemId: item.deep-maw-pearl
+      count: 2
+    - itemId: item.frost-ronin-crest
+      count: 1
+  - bossId: mob.shadow.nysara
+    needs:
+    - itemId: item.oni-tengu-horn
+      count: 3
+    - itemId: item.wraithmother-tear
+      count: 1
+  - bossId: mob.shadow.seraphine
+    needs:
+    - itemId: item.abyss-maw-heart
+      count: 3
+    - itemId: item.inferno-mask-ember-eye
+      count: 2
+  - bossId: mob.shadow.tharos
+    needs:
+    - itemId: item.karasu-black-plume
+      count: 3
+    - itemId: item.blood-ronin-crest
+      count: 2
+  - bossId: mob.shadow.orion
+    needs:
+    - itemId: item.great-croak-throat-sac
+      count: 4
+    - itemId: item.frost-ronin-crest
+      count: 2
+  - bossId: mob.shadow.varkhaz
+    needs:
+    - itemId: item.autumn-stalk-seed
+      count: 4
+    - itemId: item.wraithmother-tear
+      count: 2
+  - bossId: mob.shadow.vael
+    needs:
+    - itemId: item.mossmaw-eye
+      count: 4
+    - itemId: item.inferno-mask-ember-eye
+      count: 3
+  - bossId: mob.shadow.morwen
+    needs:
+    - itemId: item.gloop-kings-eye
+      count: 4
+    - itemId: item.blood-ronin-crest
+      count: 3
+  - bossId: mob.shadow.velmora
+    needs:
+    - itemId: item.golden-bandits-gold-tooth
+      count: 5
+    - itemId: item.frost-ronin-crest
+      count: 3
+  - bossId: mob.shadow.kaelen
+    needs:
+    - itemId: item.venom-gloop-eye
+      count: 5
+    - itemId: item.wraithmother-tear
+      count: 3
+  - bossId: mob.shadow.mordane
+    needs:
+    - itemId: item.toadmaw-toadstone
+      count: 5
+    - itemId: item.inferno-mask-ember-eye
+      count: 4
+  - bossId: mob.shadow.celestia
+    needs:
+    - itemId: item.oculord-iris
+      count: 6
+    - itemId: item.blood-ronin-crest
+      count: 4
+  - bossId: mob.shadow.veyra
+    needs:
+    - itemId: item.bandit-bosss-loot-sack
+      count: 6
+    - itemId: item.frost-ronin-crest
+      count: 4

@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 7140270672994081818, guid: ab2f970975c0d094ab12b80aed09ec08, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: Comes with pockets for loot and absolutely no survival manual.

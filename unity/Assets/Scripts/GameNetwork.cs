@@ -515,6 +515,14 @@ public class GameNetwork : NetworkManager
         public uint targetNetId;
     }
 
+    /// <summary>"I am attacking this target and am not in reach yet" — which target, nothing else. Sent by a person's
+    /// own machine at most once a swing interval, and only while a skill that answers the start of a basic attack is
+    /// ready (Crossed Branches' lunge). The server judges everything else (<see cref="OnAttackIntentRequest"/>).</summary>
+    public struct AttackIntentRequest : NetworkMessage
+    {
+        public uint targetNetId;
+    }
+
     /// <summary>What the server DREW for one blow on a creature, sent to everybody watching it — the number, its
     /// colour and opacity, whether it staggers — and NOT the creature's remaining health, which travels the usual way.
     ///
@@ -971,8 +979,10 @@ public class GameNetwork : NetworkManager
         // names a connection number this one will hand out again to somebody else.
         pendingBlows.Clear();
         swingDueAt.Clear();
+        attackStartDueAt.Clear();
         NetworkServer.RegisterHandler<JoinRequest>(OnJoinRequest);
         NetworkServer.RegisterHandler<HitRequest>(OnHitRequest);
+        NetworkServer.RegisterHandler<AttackIntentRequest>(OnAttackIntentRequest);
         NetworkServer.RegisterHandler<ReviveRequest>(OnReviveRequest);
         NetworkServer.RegisterHandler<SkillCastRequest>(OnSkillCastRequest);
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
@@ -1684,13 +1694,13 @@ public class GameNetwork : NetworkManager
     /// <summary>Server-only: tell whoever is playing <paramref name="who"/> that something just arrived in their
     /// bag. True when it was sent — false when there is no world, or nobody is playing that character here, which
     /// is the caller's signal to say it on this machine instead.</summary>
-    public static bool TellOwnerTheyGot(Character who, string itemId, int count, int folds, Rarity rarity)
+    public static bool TellOwnerTheyGot(Character who, string itemId, int count, int folds, Rarity rarity, int cardSlots)
     {
         if (!NetworkServer.active || who == null || string.IsNullOrEmpty(itemId)) return false;
         var identity = IdentityOfFighter(who);
         var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
         if (shell == null || identity.connectionToClient == null) return false;
-        shell.TellOwnerTheyGot(itemId, count, folds, rarity);
+        shell.TellOwnerTheyGot(itemId, count, folds, rarity, cardSlots);
         return true;
     }
 
@@ -1790,6 +1800,16 @@ public class GameNetwork : NetworkManager
         return true;
     }
 
+    /// <summary>Tell the server this person is attacking <paramref name="target"/> while still out of reach. False when
+    /// there is no server to tell.</summary>
+    public static bool TellAttackIntent(IDamageable target)
+    {
+        var identity = SharedIdentityOf(target);
+        if (identity == null) return false;
+        NetworkClient.Send(new AttackIntentRequest { targetNetId = identity.netId });
+        return true;
+    }
+
     static NetworkIdentity SharedIdentityOf(IDamageable target)
     {
         if (NetworkServer.active) return null;                  // I AM the authority — apply it for real
@@ -1871,6 +1891,39 @@ public class GameNetwork : NetworkManager
     // it still cuts the fastest a machine can possibly swing down to twice its real rate, from the twenty a
     // second the flood ceiling allows. Tighten it once the swing's timing lives here rather than on the client.
     const float SwingEarliness = 0.5f;
+
+    // When each connection may next raise "about to swing" (OnBasicAttackStart). ONE gate for both roads that raise it —
+    // an accepted swing and an attack intent — so a lunge fired while walking in is not fired again by the swing it
+    // led to: once per swing interval, whichever road comes first.
+    static readonly System.Collections.Generic.Dictionary<int, float> attackStartDueAt =
+        new System.Collections.Generic.Dictionary<int, float>();
+
+    static bool AttackStartIsDue(int connectionId, float swingTime)
+    {
+        float now = Time.time;
+        if (attackStartDueAt.TryGetValue(connectionId, out float due) && now < due) return false;
+        attackStartDueAt[connectionId] = now + swingTime * SwingEarliness;   // server-math: only the server's message handlers reach this
+        return true;
+    }
+
+    // A person attacking a target still out of their reach: raise "about to swing" at it, so a lunge that answers that
+    // moment can close the gap. Judged like a swing request — an enemy, in their map, the swinger able to act — but
+    // nothing is struck here. The lunge's own range and its charges are asked by PassiveEvents, as for any moment.
+    void OnAttackIntentRequest(NetworkConnectionToClient conn, AttackIntentRequest msg)
+    {
+        if (SwingingTooFast(conn.connectionId)) return;
+        if (!NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
+        var victim = VictimBehind(identity) as ICombatUnit;
+        if (victim == null || victim.IsDead) return;
+        var attacker = ShellFor(conn);
+        var swinger = attacker != null && !attacker.Leaving ? attacker.ServerCombatUnit : null;
+        if (swinger == null || swinger.IsDead || victim.Map != swinger.Map) return;
+        if (!Sides.Hostile(swinger, victim)) return;
+        var fighter = swinger as Character;
+        float swingTime = fighter != null ? fighter.SwingTime : 0f;
+        if (swingTime <= 0f || !AttackStartIsDue(conn.connectionId, swingTime)) return;
+        PassiveEvents.Fire(swinger, SkillTrigger.OnBasicAttackStart, null, victim.Body);
+    }
 
     static bool SwingIsDue(int connectionId, float swingTime)
     {
@@ -2027,8 +2080,10 @@ public class GameNetwork : NetworkManager
         // ONCE PER ACCEPTED SWING, on both roads out of this method — the melee blow scheduled below and a bow's,
         // which lands straight away — so neither can raise it twice and neither can skip it.
         var announceTo = VictimBehind(identity);
-        PassiveEvents.Fire(swinger, SkillTrigger.OnBasicAttackStart, null,
-                           announceTo is ICombatUnit hit ? hit.Body : identity.transform);
+        // Not again if an attack intent already raised it this swing interval (AttackStartIsDue).
+        if (swingTime <= 0f || AttackStartIsDue(conn.connectionId, swingTime))
+            PassiveEvents.Fire(swinger, SkillTrigger.OnBasicAttackStart, null,
+                               announceTo is ICombatUnit hit ? hit.Body : identity.transform);
 
         // WHEN IT LANDS IS THIS MACHINE'S TOO. A swing was asked for at the moment it began, and it connects part
         // way through — the same fraction the swinger's own animation reaches, because both read the one number in
@@ -3290,6 +3345,7 @@ public class GameNetwork : NetworkManager
         if (leftShell != null && !string.IsNullOrEmpty(leftShell.ServerCharacterId))
             pmReceivedLedgers.Remove(leftShell.ServerCharacterId);
         swingDueAt.Remove(conn.connectionId);
+        attackStartDueAt.Remove(conn.connectionId);
         // AND ANY SWING STILL IN FLIGHT. A blow scheduled a moment before somebody left would otherwise come round
         // and look for a fighter that has been dismissed — harmless, but it would sit in the list until it did.
         for (int i = pendingBlows.Count - 1; i >= 0; i--)

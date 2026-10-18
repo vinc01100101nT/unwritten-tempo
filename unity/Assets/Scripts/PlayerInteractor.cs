@@ -44,6 +44,7 @@ public class PlayerInteractor : MonoBehaviour
                 if (atStation) { CraftStationPanel.CloseIt(); UISounds.PlayClose(); EndTalk(); }
                 else if (atShop) { ShopPanel.CloseIt(); UISounds.PlayClose(); EndTalk(); }
                 else if (atKeeper) { KeeperPanel.CloseIt(); UISounds.PlayClose(); EndTalk(); }
+                else if (atSummoner) { SummonerPanel.CloseIt(); UISounds.PlayClose(); EndTalk(); }
                 else if (DialogBox.Instance != null) DialogBox.Instance.Close();   // fires onClosed → EndTalk
                 else EndTalk();
                 return;
@@ -53,6 +54,7 @@ public class PlayerInteractor : MonoBehaviour
             if (atStation && !CraftStationPanel.IsOpen) { EndTalk(); return; }
             if (atShop && !ShopPanel.IsOpen) { EndTalk(); return; }
             if (atKeeper && !KeeperPanel.IsOpen) { EndTalk(); return; }
+            if (atSummoner && !SummonerPanel.IsOpen) { EndTalk(); return; }
 
             // Keep both turned to each other and the camera framed on the side (they're frozen, but track anyway).
             player.FaceWorldPoint(partner.transform.position);
@@ -106,8 +108,9 @@ public class PlayerInteractor : MonoBehaviour
         // ONE SERVICE PER PERSON: the Keeper opens the Keeper's window; somebody who keeps a shop opens it; otherwise
         // one who works a station opens that.
         atKeeper = npc.Keeper;
-        atShop = !atKeeper && !string.IsNullOrEmpty(npc.Shop);
-        atStation = !atKeeper && !atShop && npc.station != CraftStation.None;
+        atSummoner = !atKeeper && npc.Summoner;
+        atShop = !atKeeper && !atSummoner && !string.IsNullOrEmpty(npc.Shop);
+        atStation = !atKeeper && !atSummoner && !atShop && npc.station != CraftStation.None;
         // THE TOWNSPERSON IS THE SERVER'S TO STOP, not this machine's. The body in front of you is a copy of
         // somebody the world owns, so asking here is what makes them halt and turn on EVERY screen — including the
         // screens of the other people standing in the square, who would otherwise watch them stroll away mid-chat.
@@ -127,6 +130,12 @@ public class PlayerInteractor : MonoBehaviour
         {
             KeeperPanel.OpenFor(string.IsNullOrEmpty(npc.Description) ? npc.SpeakerName
                                                                       : npc.SpeakerName + " · " + npc.Description);
+            return;
+        }
+        if (atSummoner)
+        {
+            SummonerPanel.OpenFor(string.IsNullOrEmpty(npc.Description) ? npc.SpeakerName
+                                                                         : npc.SpeakerName + " · " + npc.Description);
             return;
         }
         if (atShop)
@@ -176,6 +185,7 @@ public class PlayerInteractor : MonoBehaviour
     bool atStation;
     bool atShop;
     bool atKeeper;
+    bool atSummoner;
 
     // Invoked as the DialogBox's onClosed (natural CLOSE / past-last-line) AND on Esc/despawn via DialogBox.Close.
     // Idempotent: unwinds the cinematic once.
@@ -188,6 +198,7 @@ public class PlayerInteractor : MonoBehaviour
         atStation = false;
         atShop = false;
         atKeeper = false;
+        atSummoner = false;
         if (CameraFollow3D.Main != null) CameraFollow3D.Main.ExitCinematic();
         HideHud(false);
     }

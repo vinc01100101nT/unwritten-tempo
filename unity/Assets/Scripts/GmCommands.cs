@@ -244,17 +244,16 @@ public static class GmCommands
         // went from nothing to nothing, and an added coin vanished the instant the server next spoke.
         Register(new GmCommand("gold", "gold <n>", "Add " + Wallet.Name + " (may be negative).", "gold 5000", CmdGold, false, true, "zeny"));
         Register(new GmCommand("item", "item <id|name> [count]", "Drop an item into the bag.", "item \"watery ink\" 10", CmdItem, false, true, "give"));
-        Register(new GmCommand("weapon", "weapon [type] [trademark] [folds] [grade] [rarity]",
+        Register(new GmCommand("weapon", "weapon [type] [trademark] [folds] [grade] [slots]",
             "Put a new weapon in your bag. Type = sword/bow/…; trademark = one of that weapon's skills a new weapon " +
             "can roll (quote a name with spaces); folds = a number up to the grade's cap; grade = Raw or F to A; " +
-            "rarity = Common to Legendary. Anything left out is random but the rarity, which is Common; the trademark " +
-            "is rolled exactly as a new weapon's is.", "weapon sword 3 C Epic",
+            "slots = a second number, the card slots (up to 4). " +
+            "Anything left out is random; the trademark is rolled exactly as a new weapon's is.", "weapon sword 3 C",
             CmdWeapon, false, true));
-        Register(new GmCommand("armor", "armor [slot|item] [folds] [grade] [rarity]",
+        Register(new GmCommand("armor", "armor [slot|item] [folds] [grade] [slots]",
             "Put a new armour piece in your bag. Slot = body, garment or shoes (a hat never folds or grades, so it is " +
             "not one); or name the exact piece (quote a name with spaces); folds = a number up to the grade's cap; " +
-            "grade = Raw or F to A; rarity = Common to Legendary. Anything left out is random but the rarity, which is " +
-            "Common.", "armor body 7 C Epic",
+            "grade = Raw or F to A; slots = a second number, the card slots (up to 2). Anything left out is random.", "armor body 7 C",
             CmdArmor, false, true, "armour"));
         Register(new GmCommand("mastery", "mastery [weapon] <n>",
             "Testing: set your Weapon Mastery level in a weapon (default: the one in your hands) — one mastery " +
@@ -455,10 +454,10 @@ public static class GmCommands
         c.Reply($"Gave {count}× {found.displayName}.");
     }
 
-    // /weapon [type] [trademark] [folds] [grade] [rarity] — the testing door for a new weapon, in any order. Each word
-    // is read as a weapon type, a grade, a rarity, a number of folds, or else a trademark. Whatever is left out is
-    // random — the trademark rolled exactly as a new weapon's is, the grade drawn from Raw to A, the folds from none to
-    // that grade's cap — except the rarity, which is Common unless named. No Ink is written, which is what a piece
+    // /weapon [type] [trademark] [folds] [grade] — the testing door for a new weapon, in any order. Each word is read as
+    // a weapon type, a grade, a number of folds, or else a trademark. Whatever is left out is random — the trademark
+    // rolled exactly as a new weapon's is, the grade drawn from Raw to A, the folds from none to that grade's cap. No
+    // Ink is written, which is what a piece
     // fresh off the quench carries until somebody inks it.
     static void CmdWeapon(GmContext c)
     {
@@ -466,20 +465,18 @@ public static class GmCommands
 
         WeaponType? type = null;
         Quality? grade = null;
-        int folds = -1;
-        var rarity = Rarity.Common;
+        int folds = -1, slots = 0;
         SkillDef trademark = null;
         for (int i = 0; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
             if (WeaponTypes.TryParse(a, out var t)) { type = t; continue; }
             if (TryName<Quality>(a, out var q)) { grade = q; continue; }
-            if (TryName<Rarity>(a, out var r)) { rarity = r; continue; }
-            if (int.TryParse(a, out var f) && f >= 0) { folds = f; continue; }
+            if (int.TryParse(a, out var f) && f >= 0) { if (folds < 0) folds = f; else slots = f; continue; }
             var skill = FindSkill(a);
             if (skill != null && Trademarks.Qualifies(skill)) { trademark = skill; continue; }
             c.Reply($"Don't know '{a}' — expected a weapon type (sword, bow, ...), a grade (Raw, F to A), " +
-                    "a rarity (Common to Legendary), a number of folds, or a trademark skill.");
+                    "a number of folds, or a trademark skill.");
             return;
         }
 
@@ -526,20 +523,19 @@ public static class GmCommands
         if (trademark != null) inst.trademarkSkillId = trademark.id;
         inst.quality = quality;
         inst.upgrade = folds;
-        inst.rarity = rarity;
+        inst.cardSlots = Mathf.Clamp(slots, 0, CraftingMath.CardSlotCap(pick.slot));
         inst.Recompute();
         c.Ch.TakeIntoBag(inst);
         AfterChangingTheirBag(c.Ch);
         var rolled = Trademarks.SkillOf(inst);
-        c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {Rarities.Label(rarity)} {pick.displayName}" +
+        c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {pick.displayName}" +
                 (rolled != null ? $", trademark {rolled.displayName}." : $", no trademark ({WeaponTypes.Label(pick.weaponType)} has no skill a new weapon can roll)."));
     }
 
-    // /armor [slot|item] [folds] [grade] [rarity] — /weapon's twin for the three armour slots a grade can sit on, in
-    // any order. Each word is read as a slot, a grade, a rarity, a number of folds, or else an armour piece's id or
-    // name. Whatever is left out is random — the slot, the piece within it, the grade drawn from Raw to A, the folds
-    // from none to that grade's cap — except the rarity, which is Common unless named. The word is rolled exactly as
-    // a new piece's is.
+    // /armor [slot|item] [folds] [grade] — /weapon's twin for the three armour slots a grade can sit on, in any order.
+    // Each word is read as a slot, a grade, a number of folds, or else an armour piece's id or name. Whatever is left
+    // out is random — the slot, the piece within it, the grade drawn from Raw to A, the folds from none to that
+    // grade's cap. The word is rolled exactly as a new piece's is.
     static void CmdArmor(GmContext c)
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
@@ -547,19 +543,17 @@ public static class GmCommands
         EquipSlotType? slot = null;
         Item named = null;
         Quality? grade = null;
-        int folds = -1;
-        var rarity = Rarity.Common;
+        int folds = -1, slots = 0;
         for (int i = 0; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
             if (TryArmorSlot(a, out var s)) { slot = s; continue; }
             if (TryName<Quality>(a, out var q)) { grade = q; continue; }
-            if (TryName<Rarity>(a, out var r)) { rarity = r; continue; }
-            if (int.TryParse(a, out var f) && f >= 0) { folds = f; continue; }
+            if (int.TryParse(a, out var f) && f >= 0) { if (folds < 0) folds = f; else slots = f; continue; }
             var it = FindItem(a);
             if (it != null && IsGradedArmorSlot(it.slot)) { named = it; continue; }
             c.Reply($"Don't know '{a}' — expected a slot (body, garment, shoes), a grade (Raw, F to A), " +
-                    "a rarity (Common to Legendary), a number of folds, or a body, garment or shoes piece.");
+                    "a number of folds, or a body, garment or shoes piece.");
             return;
         }
         if (named != null && slot.HasValue && named.slot != slot.Value)
@@ -599,14 +593,14 @@ public static class GmCommands
         var inst = EquipmentInstance.CreateFresh(pick);
         inst.quality = quality;
         inst.upgrade = folds;
-        inst.rarity = rarity;
+        inst.cardSlots = Mathf.Clamp(slots, 0, CraftingMath.CardSlotCap(pick.slot));
         inst.Recompute();
         c.Ch.TakeIntoBag(inst);
         AfterChangingTheirBag(c.Ch);
-        c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {Rarities.Label(rarity)} {pick.displayName} ({ArmorSlotLabel(pick.slot)}).");
+        c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {pick.displayName} ({ArmorSlotLabel(pick.slot)}).");
     }
 
-    // The three armour slots a piece can be folded, graded and given a rarity in — the three the set's aura reads.
+    // The three armour slots a piece can be folded and graded in — the three the set's aura reads.
     static bool IsGradedArmorSlot(EquipSlotType s) =>
         s == EquipSlotType.Armor || s == EquipSlotType.Garment || s == EquipSlotType.Boots;
 
@@ -1101,11 +1095,12 @@ public static class GmCommands
         c.Reply(head.ToString());
 
         var facts = new StringBuilder($"Weight {it.weight} · " + (it.CanBeSold ? "Value " + Wallet.Amount(it.value) : Item.CannotBeSoldText));
-        if (it.cardSlots > 0) facts.Append(" · Card slots ").Append(it.cardSlots);
+        int slotCap = CraftingMath.CardSlotCap(it.slot);
+        if (slotCap > 0) facts.Append(" · Card slots up to ").Append(slotCap);
         if (it.madeOf != MaterialKind.None) facts.Append(" · Made of ").Append(it.madeOf);
         // An Ink's or a Salt's step is its TIER — the word the item's own field uses.
         if (it.materialKind == MaterialKind.Creature)
-            facts.Append(" · Creature material · ").Append(Rarities.Of(it, null));
+            facts.Append(" · Creature material · ").Append(Rarities.Of(it));
         else if (it.materialKind == MaterialKind.Ink || it.materialKind == MaterialKind.Salt)
             facts.Append(" · ").Append(it.materialKind).Append(" tier ").Append(it.materialStep);
         c.Reply(facts.ToString());

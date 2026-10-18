@@ -72,50 +72,6 @@ public static class CraftingMath
         return share / 100f / mine;
     }
 
-    // ---- the rarity draw ----------------------------------------------------------------------------------
-    // Indexed by (int)Rarity: Common, Uncommon, Rare, Epic, Legendary. Each rarity's share, in percent, of a draw
-    // every rarity takes part in. Whole numbers summing to 100, so the draw is one integer draw.
-    static readonly int[] RarityShares = { 50, 30, 14, 5, 1 };
-
-    /// <summary>How many rarities there are — the length every per-rarity array below must have.</summary>
-    public static int RarityCount => RarityShares.Length;
-
-    /// <summary><paramref name="rarity"/>'s share, in percent, of a draw every rarity takes part in.</summary>
-    public static int RarityShare(Rarity rarity) => RarityShares[Mathf.Clamp((int)rarity, 0, RarityShares.Length - 1)];
-
-    /// <summary>The size of a rarity draw among only the rarities <paramref name="present"/> marks (above 0, indexed by
-    /// (int)Rarity): their shares added up, so a rarity left out hands its share to the others in proportion. 0 when
-    /// none is present.</summary>
-    public static int RarityDrawTotal(int[] present)
-    {
-        int total = 0;
-        for (int r = 0; r < RarityShares.Length && r < present.Length; r++)
-            if (present[r] > 0) total += RarityShares[r];
-        return total;
-    }
-
-    /// <summary>The rarity a draw of <paramref name="roll"/> (0 to <see cref="RarityDrawTotal"/> − 1) lands on, among
-    /// the rarities <paramref name="present"/> marks.</summary>
-    public static Rarity RarityAt(int[] present, int roll)
-    {
-        int last = 0;
-        for (int r = 0; r < RarityShares.Length && r < present.Length; r++)
-        {
-            if (present[r] <= 0) continue;
-            last = r;
-            roll -= RarityShares[r];
-            if (roll < 0) return (Rarity)r;
-        }
-        return (Rarity)last;
-    }
-
-    // What a rarity multiplies a piece's base by, in hundredths: Common 100 … Legendary 150.
-    static readonly int[] RarityBases = { 100, 110, 120, 135, 150 };
-
-    /// <summary>What <paramref name="rarity"/> multiplies a piece's base by, in hundredths: 100 at Common, 150 at
-    /// Legendary.</summary>
-    public static int RarityBaseHundredths(Rarity rarity) => RarityBases[Mathf.Clamp((int)rarity, 0, RarityBases.Length - 1)];
-
     /// <summary>The most folds this grade allows — and, because a piece cannot be folded past its grade, also
     /// the point at which the only way further is a quench.</summary>
     public static int FoldCap(Quality q) => FoldCaps[Index(q)];
@@ -157,27 +113,31 @@ public static class CraftingMath
     public static int QuenchGoldCost(Quality q) => QuenchFeeTenthsOfAKill * CreatureMaterials.GoldPerLevel * GradePriceLevel(q) / 10;
 
     // ---- what a piece is worth ----------------------------------------------------------------------------
-    // WORTH = BASE × ROLL × RARITY × (1 + EVERY FOLD AND QUENCH PERCENTAGE, ADDED TOGETHER) (decided 2026-10-14). The
-    // percentages add, never multiply each other. A Raw +0 piece is worth its base × roll × rarity.
+    // WORTH = BASE × ROLL × (1 + EVERY FOLD AND QUENCH PERCENTAGE, ADDED TOGETHER) (decided 2026-10-14). The
+    // percentages add, never multiply each other. A Raw +0 piece is worth its base × roll. Gear has no rarity.
     //
     // A WEAPON'S BASE IS 50 × ITS SWING TIME IN SECONDS, divided by (1 + the off hand's power) for a pair weapon, so
     // every weapon deals the same damage a second at equal gear. A caster's weapon gives magic attack instead — the
     // only place a weapon TYPE changes what its number means. The swing time and the off hand's power come in as
     // whole thousandths, rounded once by the caller: 1.3 as a float is 1.2999999, which truncated would cost 0.1%.
     //
-    // AN ARMOUR PIECE'S MATERIAL DECIDES WHAT ITS BASE BUYS, AND ITS SLOT HOW MUCH: a body or a garment is worth one
-    // sixth of a sword's base (the constant 50) on Ink's exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed,
-    // evasion at double defence — split evenly between its material's two stats; head and shoes half. Sized so a full
-    // metal set's defence at equal gear is 25% of a sword's attack. Each stat is a numerator over 12: metal 50 defence
-    // + 400 HP, leather 25 attack speed + 25 evasion, cloth 50 magic defence + 200 MP.
+    // AN ARMOUR PIECE'S MATERIAL DECIDES WHAT ITS BASE BUYS, AND ITS SLOT HOW MUCH: metal gives hard defence and HP,
+    // leather attack speed and evasion, cloth hard magic defence and MP. HP, MP, attack speed and evasion are a
+    // numerator over 12, head and shoes half: metal 400 HP, leather 25 attack speed + 25 evasion, cloth 200 MP. HARD
+    // DEFENCE is the same on every piece, in tenths of a percent: 7.0% at A +10 (roll 115), so body, shoes and garment
+    // give 21%, the armour's share of the 90% budget. Every number scales by the roll alike; the budget is set at the
+    // best ordinary roll, 115%, so a 100% piece gives 6.1%.
     //
     // NO PIECE BUYS MOVEMENT SPEED (decided 2026-10-14): a person moves at the shared pace, and only a timed effect
     // changes it.
     const int WeaponBase = 50;
     const int Twelfths = 12;
-    const int MetalDefense12 = 50, MetalHP12 = 400;
+    const int MetalHP12 = 400;
     const int LeatherAttackSpeed12 = 25, LeatherEvasion12 = 25;
-    const int ClothMagicDefense12 = 50, ClothMP12 = 200;
+    const int ClothMP12 = 200;
+    // hard defence per piece at A +10 (100 + 4,900 percent) at the best ordinary roll, 115%: 70 tenths = 7.0%
+    const int HardDefenseTenthsAtTop = 70;
+    const int TopTotalPercent = 100 + 4900;
 
     // What each fold adds at each grade, and what the quench that reached each grade adds, in percent of the base.
     static readonly int[] FoldPercents   = { 10, 20, 30, 40, 50, 60, 70 };
@@ -204,7 +164,9 @@ public static class CraftingMath
     [System.Serializable]
     public struct PieceStats
     {
-        public int attack, magicAttack, defense, magicDefense, hp, mp, evasion;
+        public int attack, magicAttack, hp, mp, evasion;
+        /// <summary>Hard defence and hard magic defence, in tenths of a percent (70 = 7.0%).</summary>
+        public int hardDefenseTenths, hardMagicDefenseTenths;
         public float attackSpeedPercent;
     }
 
@@ -217,19 +179,21 @@ public static class CraftingMath
     /// once — never truncated, since 1.3 and 1.4 as floats sit just below themselves.</summary>
     public static int Thousandths(float value) => Mathf.RoundToInt(value * 1000f);
 
-    /// <summary>The piece's own numbers at <paramref name="folds"/> folds of grade <paramref name="q"/>, rarity
-    /// <paramref name="rarity"/> and base roll <paramref name="rollPercent"/> (0 = never rolled, counted as 100) — the
+    /// <summary>The piece's own numbers at <paramref name="folds"/> folds of grade <paramref name="q"/> and base roll <paramref name="rollPercent"/> (0 = never rolled, counted as 100) — the
     /// finished numbers, as the server writes them onto the copy. A weapon's base follows its swing time
     /// (<paramref name="swingMs"/>, whole milliseconds) and, for a pair weapon, its off hand's power
     /// (<paramref name="offHandThousandths"/>). An armour piece with no material is worth nothing. Rounds half UP,
     /// deliberately: <c>Mathf.RoundToInt</c> rounds .5 to the even number.</summary>
     public static PieceStats PieceNumbers(EquipSlotType slot, WeaponType weapon, MaterialKind material, int folds, Quality q,
-                                          Rarity rarity, int rollPercent, int swingMs, int offHandThousandths)
+                                          int rollPercent, int swingMs, int offHandThousandths)
     {
         var p = default(PieceStats);
         if (slot == EquipSlotType.None) return p;
-        long scale = (long)RollOrPar(rollPercent) * RarityBaseHundredths(rarity) * (100 + TotalPercent(q, folds));
-        const long Percents = 100L * 100 * 100;
+        long growth = 100 + TotalPercent(q, folds);
+        long scale = (long)RollOrPar(rollPercent) * growth;
+        const long Percents = 100L * 100;
+        // hard defence: the same on every piece, scaled by the roll like every other number
+        long hardDef = HalfUp(HardDefenseTenthsAtTop * RollOrPar(rollPercent) * growth, (long)RollMax * TopTotalPercent);
         if (slot == EquipSlotType.Weapon)
         {
             long hands = WeaponTypes.IsDualWield(weapon) ? 1000 + Mathf.Max(0, offHandThousandths) : 1000;
@@ -243,7 +207,7 @@ public static class CraftingMath
         switch (material)
         {
             case MaterialKind.Metal:
-                p.defense = HalfUp(MetalDefense12 * scale, den);
+                p.hardDefenseTenths = (int)hardDef;
                 p.hp = HalfUp(MetalHP12 * scale, den);
                 break;
             case MaterialKind.Leather:
@@ -251,17 +215,17 @@ public static class CraftingMath
                 p.evasion = HalfUp(LeatherEvasion12 * scale, den);
                 break;
             case MaterialKind.Cloth:
-                p.magicDefense = HalfUp(ClothMagicDefense12 * scale, den);
+                p.hardMagicDefenseTenths = (int)hardDef;
                 p.mp = HalfUp(ClothMP12 * scale, den);
                 break;
         }
         return p;
     }
 
-    /// <summary>The piece's BASE alone — base × roll, before rarity, folds and quenches: what a tooltip's Base line shows.</summary>
+    /// <summary>The piece's BASE alone — base × roll, before folds and quenches: what a tooltip's Base line shows.</summary>
     public static PieceStats BaseNumbers(EquipSlotType slot, WeaponType weapon, MaterialKind material, int rollPercent,
                                          int swingMs, int offHandThousandths) =>
-        PieceNumbers(slot, weapon, material, 0, Quality.Raw, Rarity.Common, rollPercent, swingMs, offHandThousandths);
+        PieceNumbers(slot, weapon, material, 0, Quality.Raw, rollPercent, swingMs, offHandThousandths);
 
     /// <summary><paramref name="num"/> ÷ <paramref name="den"/>, rounded half UP, in whole numbers.</summary>
     static int HalfUp(long num, long den) => (int)((2 * num + den) / (2 * den));
@@ -339,36 +303,43 @@ public static class CraftingMath
     }
 
     // ---- Ink ----------------------------------------------------------------------------------------------
-    // What one Ink writes, by stat, for tiers 1..5 (Watery, Thin, Faint, Clear, Sharp). A stat that is a
-    // PERCENTAGE is stored as whole percent — Critical 0.6 means +0.6% crit chance.
-    static readonly float[] Ones      = { 2, 4, 6, 8, 10 };       // Attack, Magic Attack, both defences, Accuracy, Evasion
-    static readonly float[] Health    = { 16, 32, 48, 64, 80 };
-    static readonly float[] Mana      = { 8, 16, 24, 32, 40 };
-    static readonly float[] Crit      = { 0.6f, 1.2f, 1.8f, 2.4f, 3f };
-    static readonly float[] Speed     = { 1, 2, 3, 4, 5 };        // Attack Speed, Cast Speed
-    static readonly float[] Primary   = { 3, 6, 9, 12, 15 };      // the premium: 1.5× the Attack line
+    // What one Ink line is worth = the stat's top value × the piece's GRADE share × the Ink's TIER share, rounded once
+    // when the server writes it, in the unit the stat is applied in. Top values are a Sharp line on an A piece. A stat
+    // that is a PERCENTAGE is stored as whole percent — Critical 3 means +3% crit chance; hard defence is a percentage
+    // too (6 = 6.0%), and every stat rolls on every piece, so four pieces of Sharp A Defence give the Ink share, 24%.
+    const float TopOnes = 10f, TopHealth = 80f, TopMana = 40f, TopCrit = 3f, TopSpeed = 5f, TopPrimary = 15f, TopDefense = 6f;
+    // Indexed by (int)Quality: Raw, F, E, D, C, B, A. Raw has no Ink slots.
+    static readonly int[] InkGradeShares = { 0, 50, 60, 70, 80, 90, 100 };
+    // Indexed by tier − 1: Watery, Thin, Faint, Clear, Sharp.
+    static readonly int[] InkTierShares = { 60, 70, 80, 90, 100 };
 
     /// <summary>The strongest Ink's tier — Sharp.</summary>
     public const int TopInkTier = 5;
 
-    /// <summary>What one Ink of <paramref name="tier"/> (1..5) writes for <paramref name="stat"/>. A percentage
-    /// stat comes back as whole percent.</summary>
-    public static float InkValue(InkStat stat, int tier)
+    /// <summary>What one Ink of <paramref name="tier"/> (1..5) writes for <paramref name="stat"/> on a piece of grade
+    /// <paramref name="grade"/>: whole numbers for flat stats, one decimal for percentages (hard defence included).</summary>
+    public static float InkValue(InkStat stat, Quality grade, int tier)
     {
-        int t = Mathf.Clamp(tier, 1, 5) - 1;
+        int share = InkGradeShares[Index(grade)] * InkTierShares[Mathf.Clamp(tier, 1, 5) - 1];
+        float top;
+        bool percent = true;
         switch (stat)
         {
-            case InkStat.HP:          return Health[t];
-            case InkStat.MP:          return Mana[t];
-            // Both halves of the ring's Critical node are percentages and both are worth the same per Ink.
+            case InkStat.Defense:
+            case InkStat.MagicDefense: top = TopDefense; break;
             case InkStat.CritChance:
-            case InkStat.CritDamage:  return Crit[t];
+            case InkStat.CritDamage:  top = TopCrit; break;
             case InkStat.AttackSpeed:
-            case InkStat.CastSpeed:   return Speed[t];
+            case InkStat.CastSpeed:   top = TopSpeed; break;
+            case InkStat.HP:          top = TopHealth; percent = false; break;
+            case InkStat.MP:          top = TopMana; percent = false; break;
             case InkStat.STR: case InkStat.AGI: case InkStat.VIT:
-            case InkStat.INT: case InkStat.DEX: case InkStat.LUK: return Primary[t];
-            default:                  return Ones[t];
+            case InkStat.INT: case InkStat.DEX: case InkStat.LUK: top = TopPrimary; percent = false; break;
+            default:                  top = TopOnes; percent = false; break;
         }
+        // whole tenths for a percentage, whole points for a flat stat, rounded half up
+        long unit = percent ? 10 : 1;
+        return HalfUp((long)Mathf.RoundToInt(top * unit) * share, 100L * 100) / (float)unit;
     }
 
     /// <summary>FOLD ONE WRITTEN STAT INTO A GEAR TOTAL — the one place an Ink line becomes a number, so the
@@ -378,8 +349,8 @@ public static class CraftingMath
     {
         switch (stat)
         {
-            case InkStat.Defense:     eb.def += (int)value; break;
-            case InkStat.MagicDefense: eb.mdef += (int)value; break;
+            case InkStat.Defense:     eb.hardDefTenths += Mathf.RoundToInt(value * 10f); break;
+            case InkStat.MagicDefense: eb.hardMdefTenths += Mathf.RoundToInt(value * 10f); break;
             case InkStat.CritDamage:  eb.critDamagePercent += value; break;
             case InkStat.HP:          eb.hp += (int)value; break;
             case InkStat.Attack:      eb.atk += (int)value; break;
@@ -407,8 +378,8 @@ public static class CraftingMath
     {
         eb.atk += piece.attack;
         eb.matk += piece.magicAttack;
-        eb.def += piece.defense;
-        eb.mdef += piece.magicDefense;
+        eb.hardDefTenths += piece.hardDefenseTenths;
+        eb.hardMdefTenths += piece.hardMagicDefenseTenths;
         eb.hp += piece.hp;
         eb.mp += piece.mp;
         eb.evasion += piece.evasion;
@@ -416,16 +387,6 @@ public static class CraftingMath
         if (stats == null || values == null) return;
         int n = Mathf.Min(stats.Count, values.Count);
         for (int i = 0; i < n; i++) AddInk(stats[i], values[i], ref eb);
-    }
-
-    /// <summary>Which tier (1..5) of Ink wrote <paramref name="value"/> for <paramref name="stat"/>, or 0 when no tier
-    /// writes that number — a value from before the table was tuned. The table is exact per tier, so the value
-    /// names the tier.</summary>
-    public static int InkTierOf(InkStat stat, float value)
-    {
-        for (int tier = 1; tier <= 5; tier++)
-            if (Mathf.Approximately(InkValue(stat, tier), value)) return tier;
-        return 0;
     }
 
     // ---- recycling ----------------------------------------------------------------------------------------
@@ -451,21 +412,34 @@ public static class CraftingMath
     /// <para>The Temper Dust is never below <see cref="RecycleLeastDust"/>.</para></summary>
     public static void RecycleYield(Quality q, int folds, out int dust, out int oil, out int gold)
     {
-        int spentDust = 0, spentOil = 0, spentGold = 0;
-        for (int g = (int)Quality.Raw; g < (int)q; g++)
-        {
-            var from = (Quality)g;
-            spentOil += QuenchMaterialCost(from);
-            spentGold += QuenchGoldCost(from);
-            spentDust += FoldCap(from) * FoldMaterialCost(from);
-            spentGold += FoldCap(from) * FoldGoldCost(from);
-        }
-        spentDust += Mathf.Max(0, folds) * FoldMaterialCost(q);
-        spentGold += Mathf.Max(0, folds) * FoldGoldCost(q);
+        Spent(q, folds, out int spentDust, out int spentOil, out int spentGold);
         dust = Mathf.Max(RecycleLeastDust, Mathf.FloorToInt(spentDust * RecycleShare));
         oil = Mathf.FloorToInt(spentOil * RecycleShare);
         gold = Mathf.FloorToInt(spentGold * RecycleShare);
     }
+
+    // What reaching q +folds from Raw +0 costs: for every grade climbed, its quench and the full set of folds its gate
+    // required, each at the grade it was made from; and the folds standing on the piece now. A piece is worth this
+    // however it came to be — made, dropped by a creature or given.
+    static void Spent(Quality q, int folds, out int dust, out int oil, out int gold)
+    {
+        dust = 0; oil = 0; gold = 0;
+        for (int g = (int)Quality.Raw; g < (int)q; g++)
+        {
+            var from = (Quality)g;
+            oil += QuenchMaterialCost(from);
+            gold += QuenchGoldCost(from);
+            dust += FoldCap(from) * FoldMaterialCost(from);
+            gold += FoldCap(from) * FoldGoldCost(from);
+        }
+        dust += Mathf.Max(0, folds) * FoldMaterialCost(q);
+        gold += Mathf.Max(0, folds) * FoldGoldCost(q);
+    }
+
+    /// <summary>What a recycle is worth in gold: its gold, and its Temper Dust and Quench Oil at their values. A piece's
+    /// worth — what a shop prices it at — is this plus its Inks at theirs (<see cref="EquipmentInstance.worth"/>).</summary>
+    public static long WorthOf(int gold, int dust, int dustValue, int oil, int oilValue) =>
+        (long)gold + (long)dust * dustValue + (long)oil * oilValue;
 
     // Scratch for AddRecycleYield's Inks — a recycle is never run from two threads.
     static readonly int[] addInkScratch = new int[6];
@@ -473,27 +447,24 @@ public static class CraftingMath
     /// <summary>ADD one piece's recycle to a running total — several pieces recycled together give back exactly the sum
     /// of what each gives alone (<see cref="RecycleYield"/>, <see cref="RecycleInks"/>), the minimum included per piece.
     /// <paramref name="inkTotals"/> is indexed by tier, 1..5.</summary>
-    public static void AddRecycleYield(Quality q, int folds, System.Collections.Generic.List<InkStat> stats,
-                                       System.Collections.Generic.List<float> values,
+    public static void AddRecycleYield(Quality q, int folds, System.Collections.Generic.List<int> inkTiers,
                                        ref int dust, ref int oil, ref int gold, int[] inkTotals)
     {
         RecycleYield(q, folds, out int d, out int o, out int g);
         dust += d; oil += o; gold += g;
-        RecycleInks(stats, values, addInkScratch);
+        RecycleInks(inkTiers, addInkScratch);
         for (int t = 1; t < addInkScratch.Length && t < inkTotals.Length; t++) inkTotals[t] += addInkScratch[t];
     }
 
     /// <summary>How many Inks of each tier (places 1..5) a piece gives back for the stats written on it — one Ink
-    /// per written stat, its tier read off the value, then halved and floored per tier.</summary>
-    public static void RecycleInks(System.Collections.Generic.List<InkStat> stats,
-                                   System.Collections.Generic.List<float> values, int[] perTier)
+    /// per written stat, of the tier that wrote it, then halved and floored per tier.</summary>
+    public static void RecycleInks(System.Collections.Generic.List<int> inkTiers, int[] perTier)
     {
         System.Array.Clear(perTier, 0, perTier.Length);
-        if (stats == null || values == null) return;
-        int n = Mathf.Min(stats.Count, values.Count);
-        for (int i = 0; i < n; i++)
+        if (inkTiers == null) return;
+        for (int i = 0; i < inkTiers.Count; i++)
         {
-            int tier = InkTierOf(stats[i], values[i]);
+            int tier = inkTiers[i];
             if (tier > 0 && tier < perTier.Length) perTier[tier]++;
         }
         for (int t = 1; t < perTier.Length; t++) perTier[t] = Mathf.FloorToInt(perTier[t] * RecycleShare);
@@ -543,5 +514,46 @@ public static class CraftingMath
             at -= w;
         }
         return false;
+    }
+
+    // ---- card slots ---------------------------------------------------------------------------------------
+    /// <summary>The most card slots a piece in <paramref name="slot"/> can have: a weapon 4, an armour piece (body, shoes,
+    /// garment) 2, anything else none.</summary>
+    public static int CardSlotCap(EquipSlotType slot)
+    {
+        switch (slot)
+        {
+            case EquipSlotType.Weapon: return 4;
+            case EquipSlotType.Armor:
+            case EquipSlotType.Boots:
+            case EquipSlotType.Garment: return 2;
+            default: return 0;
+        }
+    }
+
+    static readonly int[] WeaponSlotChances = { 50, 25, 10, 3 };
+    static readonly int[] ArmourSlotChances = { 25, 5 };
+
+    /// <summary>The chance, in whole percent, that slotting a piece in <paramref name="slot"/> that already has
+    /// <paramref name="slotsBefore"/> slots adds one. 0 at the cap.</summary>
+    public static int SlotChancePct(EquipSlotType slot, int slotsBefore)
+    {
+        if (slotsBefore < 0 || slotsBefore >= CardSlotCap(slot)) return 0;
+        var table = slot == EquipSlotType.Weapon ? WeaponSlotChances : ArmourSlotChances;
+        return slotsBefore < table.Length ? table[slotsBefore] : 0;
+    }
+
+    /// <summary>Quench Oil one slotting press costs on a grade <paramref name="q"/> piece holding
+    /// <paramref name="slotsBefore"/> slots: the quench's oil, tripled for every slot already there.</summary>
+    public static int SlotMaterialCost(Quality q, int slotsBefore) => QuenchMaterialCost(q) * Pow3(slotsBefore);
+
+    /// <summary>Gold one slotting press costs: the quench's fee, tripled for every slot already there.</summary>
+    public static int SlotGoldCost(Quality q, int slotsBefore) => QuenchGoldCost(q) * Pow3(slotsBefore);
+
+    static int Pow3(int n)
+    {
+        int r = 1;
+        for (int i = 0; i < n; i++) r *= 3;
+        return r;
     }
 }

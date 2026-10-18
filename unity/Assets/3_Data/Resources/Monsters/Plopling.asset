@@ -41,9 +41,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 0
-  gearFolds: 0
-  gearInkTier: 1
   weaponMastery: 0
+  rollsGearEachLife: 0
   ringRankStats: 
   ringRankValues: 
   aggroRadius: 6

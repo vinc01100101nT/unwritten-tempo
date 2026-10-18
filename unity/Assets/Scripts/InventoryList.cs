@@ -159,7 +159,7 @@ public class InventoryList : IItemBoxOwner
         {
             case SortKey.Name:   c = string.Compare(NameOf(a), NameOf(b), StringComparison.OrdinalIgnoreCase); break;
             case SortKey.Held:   c = a.count.CompareTo(b.count); break;
-            case SortKey.Rarity: c = ((int)Rarities.Of(a.def, a.instance)).CompareTo((int)Rarities.Of(b.def, b.instance)); break;
+            case SortKey.Rarity: c = ((int)Rarities.Of(a.def)).CompareTo((int)Rarities.Of(b.def)); break;
             default:             return 0;
         }
         if (sortDescending) c = -c;

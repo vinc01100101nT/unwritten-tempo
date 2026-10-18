@@ -21,12 +21,12 @@ MonoBehaviour:
   published: 1
   trademarkRarity: 0
   trademarkRaritySet: 1
-  maxLevel: 5
+  maxLevel: 1
   description: 'No escape.
 
-    Casting Piercing Gust arms 5 charges, each +2 basic
-    attack range for 5s. Every basic attack you start spends one to lunge at the
-    target again.'
+    Casting Piercing Gust gives 5 charges
+    for 5s. Every basic attack you start on a target within Piercing Gust''s range
+    spends one to lunge at it again.'
   archetype: 0
   family: 0
   shape: 0
@@ -79,7 +79,7 @@ MonoBehaviour:
     bounceReturns: 0
     bounceEffectId: 
     effects:
-    - kind: 5
+    - kind: 27
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1
@@ -123,7 +123,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 2
+        value: 0
         useStacks: 0
         op: 0
         read: 0
@@ -209,7 +209,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      subStat: 20
+      subStat: 0
       affinity: []
       chanceAffinity: []
       durationAffinity: []

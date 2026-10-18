@@ -154,13 +154,13 @@ public static class MobSpawner
             // perf-ok: once per creature made
             if (block != null && !block.inputs.Equals(authored)) block.SetSpawnInputs(authored);
             // The pieces themselves too, not only their settings: the weapon picked in the table is worn without a re-bake.
-            if (gear != null && (gear.gearQuality != def.gearQuality || gear.gearFolds != def.gearFolds ||
-                                 gear.gearInkTier != def.gearInkTier || !SamePieces(gear.startingGear, def.startingGear)))
+            if (gear != null && (gear.gearQuality != def.gearQuality || gear.kind != def.kind || gear.rollsGearEachLife != def.rollsGearEachLife ||
+                                 !SamePieces(gear.startingGear, def.startingGear)))
             {
                 gear.startingGear = def.startingGear ?? Array.Empty<Item>();
                 gear.gearQuality = def.gearQuality;
-                gear.gearFolds = def.gearFolds;
-                gear.gearInkTier = def.gearInkTier;
+                gear.kind = def.kind;
+                gear.rollsGearEachLife = def.rollsGearEachLife;
                 gear.ReseatForNewLife();
                 rederive = true;
             }
@@ -173,6 +173,19 @@ public static class MobSpawner
                 health.Mastery.SetPractice(held.weaponType, MasteryMath.WeaponXpFor(def.MasteryOnWeapon));
                 rederive = true;
             }
+            // A creature that rolls its weapon each life has its mastery in every weapon, so whichever it rolls counts.
+            if (health != null && def.rollsGearEachLife && def.weaponMastery > 0)
+            {
+                foreach (WeaponType w in System.Enum.GetValues(typeof(WeaponType)))
+                    if (w != WeaponType.None) health.Mastery.SetPractice(w, MasteryMath.WeaponXpFor(def.weaponMastery));
+                rederive = true;
+            }
+            // A SUMMONING KIND HOLDS THE SUMMON SKILL whatever weapon it wields, or none: it is the kind's, not a weapon's.
+            if (health != null && CreatureKinds.Summons(def.kind))
+                health.Mastery.GrantCreatureSkill(CreatureKinds.SummonSkillId, 1);
+            // Its health and attack are multiplied by its kind (CreatureKinds.HealthMultiplier, AttackMultiplier), and the kind
+            // was only set above.
+            if (def.kind != CreatureKind.Normal) rederive = true;
             if (rederive && block != null) block.Rederive(healToFull: true);
         }
         // ITS SIZE, from its data, on every machine — how tall it stands, its body, and the melee reach both read it, so

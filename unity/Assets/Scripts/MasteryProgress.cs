@@ -208,6 +208,16 @@ public sealed class MasteryProgress
         return true;
     }
 
+    /// <summary>SERVER: give a CREATURE <paramref name="skillId"/> at <paramref name="level"/> outright, with no weapon
+    /// and no points — how a summoning kind holds the summon skill whatever it wields. A creature never spends points.</summary>
+    public void GrantCreatureSkill(string skillId, int level)
+    {
+        if (string.IsNullOrEmpty(skillId) || level < 1 || LevelOf(skillId) == level) return;
+        skillLevels[skillId] = level;
+        LevelsVersion++;
+        OnChanged?.Invoke();
+    }
+
     /// <summary>SERVER: take back every point spent on <paramref name="weapon"/>'s skills (every weapon's, when it is
     /// <see cref="WeaponType.None"/>), so they can be spent again. The testing door (<c>/resetskills</c>) — nothing in
     /// the game calls it. Returns how many points came back.</summary>

@@ -403,17 +403,17 @@ public class ProgressionWindows : MonoBehaviour
             $"{b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
             $"{Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}";
         charDerived[1].text = DerivedSkip +
-            $"{b.def}{Delta(d.def - b.def)}\n" +
+            $"{Tenths(b.hardDef)}{DeltaTenths(d.hardDef - b.hardDef)} + {b.def}{Delta(d.def - b.def)} ({Tenths(Combat.MaxHardDefenseTenths)})\n" +
             $"{b.hit}{Delta(d.hit - b.hit)}\n" +
-            $"{b.swingsPerSecond:0.00}/s{Delta(d.swingsPerSecond - b.swingsPerSecond)}\n" +
+            $"{b.aspd}{Delta(d.aspd - b.aspd)} ({UnitStatMath.MaxAspd})\n" +
             $"{b.moveSpeed}{Delta(d.moveSpeed - b.moveSpeed)}\n" +
-            $"{Pct(b.guardCutPct)}{DeltaPct(d.guardCutPct - b.guardCutPct)}\n" +
+            $"{Tenths(d.guardHardDef)}\n" +
             $"{Pct(b.lifeStealPct)}{DeltaPct(d.lifeStealPct - b.lifeStealPct)}\n" +
             $"{Pct(b.reflectPct)}{DeltaPct(d.reflectPct - b.reflectPct)}\n" +
             $"{c.MaxHP}\n" +
             $"{Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}";
         charDerived[2].text = DerivedSkip +
-            $"{b.mdef}{Delta(d.mdef - b.mdef)}\n" +
+            $"{Tenths(b.hardMdef)}{DeltaTenths(d.hardMdef - b.hardMdef)} + {b.mdef}{Delta(d.mdef - b.mdef)} ({Tenths(Combat.MaxHardDefenseTenths)})\n" +
             $"{b.flee}{Delta(d.flee - b.flee)}\n" +
             $"×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
             $"{RunSpeed(pc)}\n" +
@@ -424,6 +424,9 @@ public class ProgressionWindows : MonoBehaviour
     }
 
     static string Pct(float f01) => Mathf.RoundToInt(f01 * 100) + "%";
+    // A server-sent figure in tenths of a percent, written as a percentage: 455 reads "45.5%".
+    static string Tenths(int tenths) => (tenths / 10f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "%";
+    static string DeltaTenths(int diff) => diff == 0 ? "" : $" <color={(diff > 0 ? BonusHex : MalusHex)}>({(diff > 0 ? "+" : "−")}{Tenths(Mathf.Abs(diff))})</color>";
     // Sprint/run gear lives on the player's BODY, not the character sheet — surfaced here because it's a speed the
     // player feels. Shown as the real run speed so it reads next to MOVE.
     static string RunSpeed(Player3DController pc) => pc == null ? "" : pc.CurrentRunSpeed.ToString("0.0");

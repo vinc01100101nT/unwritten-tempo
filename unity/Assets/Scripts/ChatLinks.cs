@@ -58,7 +58,7 @@ public static class ChatLinks
                 string title = piece != null ? ItemTooltip.CopyTitle(piece) : def.displayName;
                 int width = title.Length + 2;
                 if (shown + width > mostShown) break;
-                AppendLink(sb, title, ColorUtility.ToHtmlStringRGB(Rarities.Color(Rarities.Of(def, piece))), def.id,
+                AppendLink(sb, title, ColorUtility.ToHtmlStringRGB(Rarities.Color(Rarities.Of(def))), def.id,
                            ItemTooltip.BodyFor(def, piece));
                 shown += width;
                 links++;

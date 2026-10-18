@@ -64,7 +64,7 @@ public static class ItemIcon
     /// <summary>The square behind <paramref name="def"/>'s icon.</summary>
     public static Color Back(Item def, EquipmentInstance copy)
     {
-        var r = Rarities.Of(def, copy);
+        var r = Rarities.Of(def);
         return r == Rarity.Common ? UiKit.SlotFill : Rarities.Color(r);
     }
 
@@ -178,7 +178,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         bool pictured = ItemIcon.Show(icon, e.def);
         GradeGlow.Show(glow, e.instance);
         Write(title, pictured ? "" : e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName);
-        title.color = Rarities.Color(Rarities.Of(e.def, e.instance));
+        title.color = Rarities.Color(Rarities.Of(e.def));
         // A stack shows how many, always — as the hotbar does; a piece of gear is one of itself.
         Write(count, e.IsEquip ? "" : e.count.ToString());
         // WHAT THE TUTORIAL GUIDE MAY POINT AT: a thing in the bag. A worn or stored one, or an empty box, is not one.

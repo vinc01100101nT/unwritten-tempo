@@ -6,17 +6,17 @@ tags:
   - systems-combat-design
 ---
 
-# Crafting Tables — what every station takes, grade by grade
+# Crafting Tables — what the station takes, grade by grade
 
 The reference companion to [the V4 design](README.md). That page says WHY; this one is only the numbers as
 they are in the game today. Sell prices live on the item assets under `unity/Assets/3_Data/Resources/Items/`; every
 base, cost, chance and per-grade rule lives in `unity/Assets/Scripts/CraftingMath.cs`, and what a kill drops in
 `unity/Assets/Scripts/CreatureLoot.cs`. Nothing here is typed from memory.
 
-## 1. The three stations and their two materials
+## 1. The station and its two materials
 
-A piece is worked at the station of its own material — metal at a smith, cloth at a loom, leather at a tannery. A
-station does four things: **Fold, Quench, Ink, Recycle**. All three stations take the same two materials: every
+Every piece — metal, cloth or leather — is worked at the smith. The station does four things: **Fold, Quench, Ink,
+Recycle**, and it takes the same two materials for all three: every
 fold is paid in **Temper Dust** and every quench in **Quench Oil**, the amount set by the piece's CURRENT grade.
 
 Neither has tiers, so neither merges. Both come from creatures only, and no shop sells them. Each kill gives 0.6

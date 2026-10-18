@@ -81,6 +81,8 @@ public class HotbarPanel : MonoBehaviour
         if (GetComponent<ShopPanel>() == null) gameObject.AddComponent<ShopPanel>();
         // The Keeper's window — added the same way. Idempotent.
         if (GetComponent<KeeperPanel>() == null) gameObject.AddComponent<KeeperPanel>();
+        // The Elite Summoner's window — added the same way. Idempotent.
+        if (GetComponent<SummonerPanel>() == null) gameObject.AddComponent<SummonerPanel>();
         // The stamina gauge — added the same way so it appears without a shell rebuild. Idempotent.
         if (GetComponent<StaminaBar>() == null) gameObject.AddComponent<StaminaBar>();
         // The kill combo and the per-hour rates on the left edge — added the same way. Idempotent.

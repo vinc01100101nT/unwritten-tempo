@@ -23,9 +23,10 @@ public struct UnitStatInputs
     {
         level = Mathf.Max(1, level),
         str = 1, agi = 1, vit = 1, intel = 1, dex = 1, luk = 1,
-        // 160, not RO's 20 (decided 2026-10-16): a level 1 player in the Raw +5 starter armour must take at least 5
-        // blows from a Raw +0 newbie-map creature, at any creation spread.
-        baseMaxHP = 160, hpPerLevel = 6,
+        // 250, not RO's 20 (decided 2026-10-18): a level 1 player in the Raw +5 starter armour must take at least 5
+        // blows from a Raw +0 newbie-map creature, at any creation spread — 250 keeps that once armour gives hard
+        // defence instead of flat (211 is the least that does). 20 a level, not 6 (2026-10-17): fights at high level last longer for everyone.
+        baseMaxHP = 250, hpPerLevel = 20,
         baseAttack = 4, attackPerLevel = 1,
         baseDefense = 1, defensePerLevel = 1,
         baseMaxMP = 10, mpPerLevel = 3,
@@ -68,13 +69,20 @@ public static class UnitStatMath
 {
     // Per-point contributions of each primary to the derived layer.
     public const int   AtkPerStr = 1, MatkPerInt = 1, RangedAtkPerDex = 1;
-    public const int   DefPerVit = 3, MdefPerInt = 3, AtkPerDex = 2, AtkPerLuk = 4, MatkPerLuk = 4, RangedAtkPerStr = 2;  // DIVISORS
-    public const float AspdPerAgi = 0.005f, CritPerLuk = 0.003f;   // pre-renewal CRIT = LUK×0.3%
+    // DIVISORS, Ragnarok's: DEX÷5 helps a melee swing, STR÷5 a ranged one, LUK÷5 both
+    public const int   AtkPerDex = 5, AtkPerLuk = 5, RangedAtkPerStr = 5;
+    // Ragnarok: AGI cuts the time between swings 0.4% a point (DEX a quarter of that); CRIT = LUK × 0.3% + 1%
+    public const float AspdPerAgi = 0.004f, CritPerLuk = 0.003f, BaseCrit = 0.01f;
     // VIT and INT scale HP/SP as a PERCENT per point (they multiply the level-driven base, not add flat);
     // DEX raises ASPD a fraction of what AGI does.
-    public const float VitHpPercent = 0.02f, IntSpPercent = 0.015f, DexAspdShare = 0.25f;
-    /// <summary>Hard ceiling on the attack-speed multiplier — bounds the Momentum/Deathblow equilibrium.</summary>
-    public const float MaxAttackSpeedMult = 3f;
+    public const float VitHpPercent = 0.01f, IntSpPercent = 0.01f, DexAspdShare = 0.25f;
+    /// <summary>Ragnarok's attack-speed scale: hits a second = 50 ÷ (200 − ASPD). 190 is the most there is (5 hits a
+    /// second); 0 is the least, so stacked slows can never stretch a swing past 4 seconds.</summary>
+    public const int MaxAspd = 190, MinAspd = 0;
+    /// <summary>The most movement-speed effects can lift a unit's pace: 250%.</summary>
+    public const float MaxMoveMult = 2.5f;
+    /// <summary>The most of a blow life steal can return, and the most of a blow reflect can send back.</summary>
+    public const float MaxLifeSteal = 0.25f, MaxReflect = 0.5f;
     /// <summary>The range of a creature's own movement speed, in multiples of the shared pace: 0 never moves, 1 is the
     /// pace a person travels at, 2 the fastest there is.</summary>
     public const float MinCreatureMoveSpeed = 0f, MaxCreatureMoveSpeed = 2f;
@@ -84,17 +92,19 @@ public static class UnitStatMath
     public static float CreatureTravelSpeed(float gearSpeed, float ownMoveSpeed, float moveMult) =>
         Mathf.Max(0f, gearSpeed * Mathf.Clamp(ownMoveSpeed, MinCreatureMoveSpeed, MaxCreatureMoveSpeed) * moveMult);
     /// <summary>Pre-renewal "crit shield": the TARGET's LUK lowers an attacker's crit chance 0.3%/pt.</summary>
-    public const float CritShieldPerLuk = 0.003f;
+    public const float CritShieldPerLuk = 0.002f;
+    /// <summary>Ragnarok's perfect dodge: each point of the defender's LUK dodges 0.1% of ordinary attacks outright —
+    /// a crit included.</summary>
+    public const float PerfectDodgePerLuk = 0.001f;
     /// <summary>DEX at which a spell's wind-up reaches zero: castTime = baseCast × (1 − DEX/150).</summary>
     public const int   InstantCastDex = 150;
     public const int   HitPerDex = 1, FleePerAgi = 1;
-    public const int   LukPerHit = 3, LukPerFlee = 5;   // DIVISORS: LUK/3 → HIT, LUK/5 → FLEE
     // RO-style damage spread: a hit rolls Min…Max. Min is a fraction of Max that DEX (physical) / INT (magic)
     // raise toward 1.0 — the relevant stat both LIFTS and STABILISES damage. A crit ignores the spread.
     public const float MinDmgFloorFraction = 0.55f;   // 0 DEX/INT → a swing can drop to 55% of max
     public const float MinFractionPerStat  = 0.012f;  // each point closes the min→max gap (~38 → min == max)
-    /// <summary>Pre-renewal base crit multiplier: a crit deals 140%.</summary>
-    public const float BaseCritMultiplier = 1.4f;
+    /// <summary>A crit deals double damage; crit-damage bonuses can raise it to triple, never further.</summary>
+    public const float BaseCritMultiplier = 2f, MaxCritMultiplier = 3f;
     /// <summary>LUK's pull on how hard a crit lands: +0.2% crit damage per point, on top of the base.</summary>
     public const float CritDamagePerLuk = 0.002f;
     // Natural regeneration is a PERCENT of the pool per second, not a flat amount, so it stays meaningful as the pool
@@ -368,14 +378,14 @@ public static class UnitStatMath
     /// <summary>The physical attack of every weapon that is not ranged, and of bare hands: STR leads, DEX helps.</summary>
     public static int MeleeAttack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(u.baseAttack + u.attackPerLevel * (u.level - 1) + u.str * AtkPerStr
-              + StatJumpBonus(u.str) + u.dex / AtkPerDex + u.luk / AtkPerLuk + eb.atk, ringPct);
+              + TensSquared(u.str) + u.dex / AtkPerDex + u.luk / AtkPerLuk + eb.atk, ringPct);
 
     /// <summary>The physical attack of a ranged weapon: <see cref="MeleeAttack"/> with STR and DEX swapped — DEX
     /// leads, STR helps. Base, level growth, LUK, gear and the ring feed both the same way, so the two differ only in
     /// which primary drives them.</summary>
     public static int RangedAttack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(u.baseAttack + u.attackPerLevel * (u.level - 1) + u.dex * RangedAtkPerDex
-              + StatJumpBonus(u.dex) + u.str / RangedAtkPerStr + u.luk / AtkPerLuk + eb.atk, ringPct);
+              + TensSquared(u.dex) + u.str / RangedAtkPerStr + u.luk / AtkPerLuk + eb.atk, ringPct);
 
     /// <summary>The physical attack a unit holding <paramref name="weapon"/> swings with — the one place the held
     /// weapon (and, for a shuriken, the higher of its holder's total STR and DEX) decides between the two, for normal
@@ -385,24 +395,47 @@ public static class UnitStatMath
 
     public static int MagicAttack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(u.baseMagicAttack + u.magicAttackPerLevel * (u.level - 1) + u.intel * MatkPerInt
-              + StatJumpBonus(u.intel) + u.luk / MatkPerLuk + eb.matk, ringPct);
+              + Squared(u.intel / 5) + eb.matk, ringPct);
+
+    /// <summary>(<paramref name="stat"/> ÷ 10)², whole tens — Ragnarok's bonus for the stat that leads an attack.</summary>
+    public static int TensSquared(int stat) => Squared(Mathf.Max(0, stat) / 10);
+
+    static int Squared(int n) => n * n;
 
     // ---- defence ------------------------------------------------------------------------------------------------
-    public static int Defense(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        Scale(u.baseDefense + u.defensePerLevel * (u.level - 1) + u.vit / DefPerVit
-              + StatJumpBonus(u.vit) + eb.def, ringPct);
+    // Ragnarok's two parts (see Combat.Mitigated). SOFT defence is the flat part, from the body alone: base, level and
+    // VIT (INT for magic). HARD defence is the percentage part, in tenths of a percent, from the ring's Defence node
+    // (+1 point a rank), what is worn (armour, Ink, the Bulwark word) and timed Defence effects; never below 0, and the
+    // 90% ceiling is applied where a blow is taken.
+    public static int SoftDefense(in UnitStatInputs u) =>
+        u.baseDefense + u.defensePerLevel * (u.level - 1) + VitSoftDefense(u.vit);
 
-    public static int MagicDefense(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        Scale(u.baseMagicDefense + u.magicDefensePerLevel * (u.level - 1) + u.intel / MdefPerInt + eb.mdef, ringPct);
+    /// <summary>Ragnarok's VIT defence: VIT÷2, plus the larger of VIT×0.3 and VIT²÷150 − 1, each floored.</summary>
+    public static int VitSoftDefense(int vit)
+    {
+        vit = Mathf.Max(0, vit);
+        return vit / 2 + Mathf.Max(vit * 3 / 10, vit * vit / 150 - 1);
+    }
+
+    public static int SoftMagicDefense(in UnitStatInputs u) =>
+        u.baseMagicDefense + u.magicDefensePerLevel * (u.level - 1) + u.intel;
+
+    /// <summary><paramref name="ringPct"/> is the Defence node's value (0.01 a rank = 1 point = 10 tenths);
+    /// <paramref name="timedBonus"/> is the live Defence sub-stat (0.06 = 6 points).</summary>
+    public static int HardDefenseTenths(float ringPct, int wornTenths, float timedBonus) =>
+        Mathf.Max(0, Mathf.RoundToInt(ringPct * 1000f) + wornTenths + Mathf.RoundToInt(timedBonus * 1000f));
+
+    /// <summary>Hard defence as a blow will actually use it: held inside [0, 90%].</summary>
+    public static int CappedHardDefenseTenths(int hardTenths) => Mathf.Clamp(hardTenths, 0, Combat.MaxHardDefenseTenths);
 
     // ---- accuracy / evasion -------------------------------------------------------------------------------------
     // Worn accuracy and evasion (Ink lines, and a leather piece's folds) add straight in, before the ring's lift —
     // the same place worn defence joins the defence sum above.
     public static int Hit(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        Scale(u.level + u.dex * HitPerDex + u.luk / LukPerHit + eb.accuracy, ringPct);
+        Scale(u.level + u.dex * HitPerDex + eb.accuracy, ringPct);
 
     public static int Flee(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        Mathf.RoundToInt((u.level + u.agi * FleePerAgi + StatJumpBonus(u.agi) + u.luk / LukPerFlee + eb.evasion)
+        Mathf.RoundToInt((u.level + u.agi * FleePerAgi + eb.evasion)
                          * (1f + ringPct));
 
     // ---- crit / speeds ------------------------------------------------------------------------------------------
@@ -413,14 +446,14 @@ public static class UnitStatMath
     public static int CritShieldAsLuk(float percent) => Mathf.RoundToInt(percent / (CritShieldPerLuk * 100f));
 
     public static float EffectiveCritChance(float critChance01, int targetLuk) =>
-        Mathf.Clamp(critChance01 - targetLuk * CritShieldPerLuk, 0f, 0.95f);
+        Mathf.Clamp01(critChance01 - targetLuk * CritShieldPerLuk);
 
     public static float CritChance01(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        Mathf.Min(0.95f, u.luk * CritPerLuk + ringPct + eb.critPercent / 100f);
+        Mathf.Min(1f, BaseCrit + u.luk * CritPerLuk + ringPct + eb.critPercent / 100f);
 
     public static float CritMultiplier(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        BaseCritMultiplier + u.luk * CritDamagePerLuk + StatJumpBonus(u.luk) / 100f
-        + ringPct + eb.critDamagePercent / 100f;
+        Mathf.Min(MaxCritMultiplier, BaseCritMultiplier + u.luk * CritDamagePerLuk + StatJumpBonus(u.luk) / 100f
+                                     + ringPct + eb.critDamagePercent / 100f);
 
     // ---- natural regeneration ------------------------------------------------------------------------------------
     // Both pools regenerate on their own, from the primary that grows them. Reported as a RATE PER SECOND so the
@@ -429,10 +462,29 @@ public static class UnitStatMath
 
     public static float MPRegenPerSecond(in UnitStatInputs u, int maxMP) => maxMP * u.intel * MpRegenPercentPerInt;
 
-    /// <summary><paramref name="buffMult"/> is the live attack-speed buff (1 = none); the cap applies AFTER it.</summary>
+    /// <summary><paramref name="buffMult"/> is the live attack-speed buff (1 = none). Uncapped: the ceiling is on
+    /// <see cref="Aspd"/>, the number a swing is actually timed by.</summary>
     public static float AttackSpeedMult(in UnitStatInputs u, in EquipBonuses eb, float ringPct, float buffMult) =>
-        Mathf.Min(MaxAttackSpeedMult,
-                  (1f + (u.agi + u.dex * DexAspdShare) * AspdPerAgi + ringPct + eb.aspdPercent / 100f) * buffMult);
+        Mathf.Max(0f, (1f + (u.agi + u.dex * DexAspdShare) * AspdPerAgi + ringPct + eb.aspdPercent / 100f) * buffMult);
+
+    /// <summary>Ragnarok's ASPD for a weapon that swings every <paramref name="baseSwingSec"/> at speed 1, sped up by
+    /// <paramref name="speedMult"/>: <c>200 − 50 × base ÷ mult</c>, held inside [<see cref="MinAspd"/>,
+    /// <see cref="MaxAspd"/>]. A multiplier of 0 (slows stacked to 100%) lands on the floor, never on infinity.</summary>
+    public static float Aspd(float baseSwingSec, float speedMult)
+    {
+        if (speedMult <= 0f) return MinAspd;
+        return Mathf.Clamp(200f - 50f * baseSwingSec / speedMult, MinAspd, MaxAspd);
+    }
+
+    /// <summary>Seconds between swings at <paramref name="aspd"/>: <c>(200 − ASPD) ÷ 50</c> — 0.2 s at 190, 4 s at 0.</summary>
+    public static float SwingIntervalFromAspd(float aspd) => (200f - Mathf.Clamp(aspd, MinAspd, MaxAspd)) / 50f;
+
+    /// <summary>A movement-speed effect multiplier (1 + the live bonus), held inside [0, <see cref="MaxMoveMult"/>].</summary>
+    public static float MoveMult(float bonus) => Mathf.Clamp(1f + bonus, 0f, MaxMoveMult);
+
+    public static float LifeStealFraction(float bonus) => Mathf.Clamp(bonus, 0f, MaxLifeSteal);
+
+    public static float ReflectFraction(float bonus) => Mathf.Clamp(bonus, 0f, MaxReflect);
 
     /// <summary>THE cast-speed value — the multiplier a spell's base wind-up is scaled by (1 = full, 0 = instant).
     /// DEX shortens it on the pre-renewal curve (instant at <see cref="InstantCastDex"/>); the ring's CastSpeed node
@@ -455,6 +507,20 @@ public static class UnitStatMath
     public static int MinAttack(int maxAttack, int dex) =>
         Mathf.Clamp(Mathf.RoundToInt(maxAttack * MinFraction(dex)), 1, Mathf.Max(1, maxAttack));
 
-    public static int MinMagicAttack(int maxMagicAttack, int intel) =>
-        Mathf.Clamp(Mathf.RoundToInt(maxMagicAttack * MinFraction(intel)), 1, Mathf.Max(1, maxMagicAttack));
+    /// <summary>Ragnarok's magic spread: the INT part of a spell runs from INT + (INT÷7)² to INT + (INT÷5)², so the low
+    /// end is the high end less the difference of those two squares.</summary>
+    public static int MinMagicAttack(int maxMagicAttack, int intel)
+    {
+        intel = Mathf.Max(0, intel);
+        return Mathf.Clamp(maxMagicAttack - (Squared(intel / 5) - Squared(intel / 7)), 1, Mathf.Max(1, maxMagicAttack));
+    }
+
+    /// <summary>A defender's FLEE with <paramref name="attackers"/> creatures on it: Ragnarok takes 10% off for every
+    /// attacker past the second, and 12 or more always hit.</summary>
+    public static int CrowdedFlee(int flee, int attackers)
+    {
+        if (attackers >= 12) return int.MinValue / 4;
+        int past = Mathf.Max(0, attackers - 2);
+        return Mathf.RoundToInt(flee * (1f - 0.1f * past));
+    }
 }

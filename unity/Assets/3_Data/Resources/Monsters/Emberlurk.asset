@@ -36,14 +36,13 @@ MonoBehaviour:
   dex: 37
   luk: 23
   startingGear:
-  - {fileID: 11400000, guid: 5296fef8d7a735b408311057c8184f90, type: 2}
+  - {fileID: 11400000, guid: 5c65838bbb620394296e8e14e37b84ea, type: 2}
   - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
   - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
   - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
-  gearQuality: 4
-  gearFolds: 8
-  gearInkTier: 4
+  gearQuality: 2
   weaponMastery: 0
+  rollsGearEachLife: 0
   ringRankStats: 
   ringRankValues: 
   aggroRadius: 6

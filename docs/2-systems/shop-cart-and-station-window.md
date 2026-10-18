@@ -109,8 +109,10 @@ never scrolls: the piece's name in its rarity colour, bold, its folds small besi
 bold, and under it what you carry of the same — "You have 12 Temper Dust · 1,220u" on Fold, Quench Oil on Quench,
 both counts the server's (`CraftStationOffer.foldMaterialHeld / quenchMaterialHeld`, written by the one `Wallet.YouHave`
 the shop's purse uses too); a fold that can fail, "Chance: X% · If it fails: back to +N"; Quench's "Chance to rise" in green with what a
-failure does — "drops to E +0" in red, or "stays F, back to +4" in grey; warnings in red; Salt as the game's checkbox; Ink as one
-small button per slot showing the stat it holds ("+80 Max HP"), the next empty one "Slot N"; Recycle's "Gives back
+failure does — "drops to E +0" in red, or "stays F, back to +4" in grey; warnings in red; Salt as the game's checkbox; Ink as "Using <Ink>" with an "i" whose
+tooltip lists every stat that Ink can write with its number, one a line, both the server's (`CraftStationOffer.inkName /
+inkWrites`, the strongest Ink carried), a stat already in another slot greyed; then one small button per slot showing the stat it
+holds ("+80 Max HP"), the next empty one "Slot N"; Recycle's "Gives back
 …" — on the Recycle page a click TICKS a carried piece (any number of them; a worn one is still picked alone), the
 section shows "N pieces" and the server's total for all of them, and **Recycle N** breaks them all down in one
 request, judged by the single-recycle rules and refused whole if any piece or the bag's room fails; and the **fold preview** — each of the piece's own stats now → after one more fold, both numbers the server's

@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 0}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 40
   value: 8
   undroppable: 0
   unsellable: 0
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 3
   materialKind: 0
   materialStep: 0
@@ -41,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: Blend into the wilderness. Smell like it, too.

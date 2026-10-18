@@ -31,8 +31,6 @@ public struct MonsterArchetype
     /// <summary>The grade, folds and Ink strength every worn piece comes to life at — the creature's own three
     /// settings, carried through untouched.</summary>
     public Quality gearQuality;
-    public int gearFolds;
-    public int gearInkTier;
     public StatId[] ringRankStats;
     public int[] ringRankValues;
 

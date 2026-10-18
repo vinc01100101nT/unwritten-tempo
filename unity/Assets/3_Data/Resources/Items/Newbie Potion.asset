@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 0}
   element: 0
   category: 1
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 1
   unsellable: 1
   unstorable: 1
   untradeable: 1
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 0
   materialKind: 0
   materialStep: 0
@@ -41,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: You just woke up holding these
+  description: Training wheels for your bloodstream.

@@ -16,11 +16,18 @@ public class Health : MonoBehaviour, ICombatUnit
     /// <summary>Maximum hit points.</summary>
     [System.NonSerialized] public int maxHealth = 3;
 
-    /// <summary>Defence: a FLAT subtraction from incoming physical damage. Damage dealt is always ≥ 1.</summary>
-    [System.NonSerialized] public int defense = 0;
+    /// <summary>Soft defence: the FLAT part a physical blow loses, after hard defence. Damage dealt is always ≥ 1.</summary>
+    [System.NonSerialized] public int softDefense = 0;
 
-    /// <summary>Magic defence: a FLAT subtraction from incoming magic damage. Damage dealt is always ≥ 1.</summary>
-    [System.NonSerialized] public int magicDefense = 0;
+    /// <summary>Soft magic defence: the FLAT part a magic blow loses, after hard magic defence.</summary>
+    [System.NonSerialized] public int softMagicDefense = 0;
+
+    /// <summary>Hard defence in tenths of a percent (60 = 6.0%), taken off a physical blow first; held inside 90% where
+    /// a blow uses it.</summary>
+    [System.NonSerialized] public int hardDefenseTenths = 0;
+
+    /// <summary>Hard magic defence in tenths of a percent, taken off a magic blow first.</summary>
+    [System.NonSerialized] public int hardMagicDefenseTenths = 0;
 
     /// <summary>LUK — the crit shield: each point lowers an attacker's crit chance against this unit (0.3%/pt).</summary>
     [System.NonSerialized] public int luk = 0;
@@ -178,6 +185,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
     /// <summary>Our LUK, which lowers an attacker's crit chance against us.</summary>
     public int CritShieldLuk => luk + States.WornCritShieldLuk;
+    public int PerfectDodgeLuk => luk;
 
     // A skill in this mob's hands: forwarded to the pieces that own each number, exactly as the swing above is.
     // Looked up once, found or not: the training dummy removes its stat block on purpose, and a miss must not turn
@@ -258,15 +266,21 @@ public class Health : MonoBehaviour, ICombatUnit
     {
         var a = Agent;
         if (a == null) return 0f;
-        // speedMult is a multiple of the unit's OWN run speed on both sides, so the same authored dash reads the same
-        // relative to whoever performs it. ≤ 0 = the effect authored none → travel at plain run speed.
-        float speed = (speedMult > 0f ? speedMult : 1f) * a.moveSpeed;
         Vector3 flat = dest - a.transform.position; flat.y = 0f;
-        float seconds = flat.magnitude < 0.05f ? 0f
-            : GlideEase.Seconds(speed, flat.magnitude, easeIn, easeOut, Mathf.Max(0.05f, easeSeconds));
-        a.GlideTo(dest, speed, easeIn, easeOut, easeSeconds, faceAt, look);
+        float seconds = flat.magnitude < 0.05f ? 0f : GlideSeconds(flat.magnitude, speedMult, easeIn, easeOut, easeSeconds);
+        a.GlideTo(dest, GlideSpeed(a, speedMult), easeIn, easeOut, easeSeconds, faceAt, look);
         return seconds;
     }
+
+    public float GlideSeconds(float distance, float speedMult, bool easeIn, bool easeOut, float easeSeconds)
+    {
+        var a = Agent;
+        return a != null ? GlideEase.Seconds(GlideSpeed(a, speedMult), distance, easeIn, easeOut, Mathf.Max(0.05f, easeSeconds)) : 0f;
+    }
+
+    // speedMult is a multiple of the unit's OWN run speed on both sides, so the same authored dash reads the same
+    // relative to whoever performs it. ≤ 0 = the effect authored none → travel at plain run speed.
+    static float GlideSpeed(PathAgent3D a, float speedMult) => (speedMult > 0f ? speedMult : 1f) * a.moveSpeed;
     public bool IsRelocating { get { var a = Agent; return a != null && a.Gliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
     {
@@ -417,7 +431,7 @@ public class Health : MonoBehaviour, ICombatUnit
     // same thing, which is a change to what crosses the wire rather than a line here.
     int Mitigate(float rawAfterDefence)
     {
-        int landed = UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), out _);
+        int landed = UnitMitigation.AfterShield(States, UnitMitigation.Landed(rawAfterDefence), out _);
         int dealt = UnitMitigation.Deferred(States, landed, out int banked);
         if (dealt <= 0) CombatAuthority.NoDamage(banked > 0 ? NoDamageReason.Braced : NoDamageReason.Soaked);
         return dealt;
@@ -553,7 +567,7 @@ public class Health : MonoBehaviour, ICombatUnit
         // Neutral-vs-Neutral is 1.0, so default callers are unaffected.
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerAttack, defense, crit), mod, false, attacker);
+            return HealedByElement(Combat.Mitigated(attackerAttack, hardDefenseTenths, softDefense, crit), mod, false, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
@@ -562,7 +576,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
-        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, defense, crit) * mod);
+        int dmg = Mitigate(Combat.Mitigated(attackerAttack, hardDefenseTenths, softDefense, crit) * mod);
         int before = Current;
         SubtractHealth(dmg);
         PassiveEvents.HitLanded(this, before, attacker);
@@ -586,7 +600,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerMagic, magicDefense, crit), mod, true, attacker);
+            return HealedByElement(Combat.Mitigated(attackerMagic, hardMagicDefenseTenths, softMagicDefense, crit), mod, true, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
@@ -594,7 +608,7 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, magicDefense, crit) * mod);
+        int dmg = Mitigate(Combat.Mitigated(attackerMagic, hardMagicDefenseTenths, softMagicDefense, crit) * mod);
         int before = Current;
         SubtractHealth(dmg);
         PassiveEvents.HitLanded(this, before, attacker);
@@ -617,7 +631,7 @@ public class Health : MonoBehaviour, ICombatUnit
     {
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerMagic, magicDefense, crit), mod, true, attacker);
+            return HealedByElement(Combat.Mitigated(attackerMagic, hardMagicDefenseTenths, softMagicDefense, crit), mod, true, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
@@ -625,7 +639,8 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, magicDefense, crit) * mod);
+        // server-math: reached only through CombatAuthority.ApplyDamage, which refuses on a player's machine
+        int dmg = Mitigate(Combat.Mitigated(attackerMagic, hardMagicDefenseTenths, softMagicDefense, crit) * mod);
         bool wasAlive = !IsDead;
         int before = Current;
         SubtractHealth(dmg);
@@ -652,7 +667,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (Blocked()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerAttack, defense, crit), mod, false, attacker);
+            return HealedByElement(Combat.Mitigated(attackerAttack, hardDefenseTenths, softDefense, crit), mod, false, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
@@ -660,7 +675,8 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, defense, crit) * mod);
+        // server-math: reached only through CombatAuthority.ApplyDamage, which refuses on a player's machine
+        int dmg = Mitigate(Combat.Mitigated(attackerAttack, hardDefenseTenths, softDefense, crit) * mod);
         bool wasAlive = !IsDead;
         int before = Current;
         SubtractHealth(dmg);
@@ -712,8 +728,8 @@ public class Health : MonoBehaviour, ICombatUnit
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
         }
         float afterDefence = info.isMagic
-            ? Combat.AfterDefense(info.amount, magicDefense, info.isCrit)
-            : Combat.AfterDefense(info.amount, defense, info.isCrit);
+            ? Combat.Mitigated(info.amount, hardMagicDefenseTenths, softMagicDefense, info.isCrit)
+            : Combat.Mitigated(info.amount, hardDefenseTenths, softDefense, info.isCrit);
         int shown = Mathf.Max(1, Mathf.RoundToInt(afterDefence * mod));
         // The same impact sound and cue a live beat plays, so a flurry sounds to the end of its count.
         Show(new ShownBlow(shown, mod, info.isCrit, info.isMagic, flash: false), info.attacker);
@@ -855,7 +871,7 @@ public class Health : MonoBehaviour, ICombatUnit
     /// <summary>This creature's life steal — whatever a skill window is lending it. It has no gear affix for one, so
     /// with no window running this is zero; the READ is here so a creature that is given one is paid exactly as a
     /// person is.</summary>
-    public float LifeStealPct => Mathf.Max(0f, States.SubStatBonus(SubStat.LifeSteal));
+    public float LifeStealPct => UnitStatMath.LifeStealFraction(States.SubStatBonus(SubStat.LifeSteal));
 
     /// <summary>Health returned by life steal — silent, and refused on a watched copy for the same reason every other
     /// gain is: this creature's health is the server's to state.</summary>

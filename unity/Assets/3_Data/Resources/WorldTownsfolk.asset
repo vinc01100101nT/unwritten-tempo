@@ -20,6 +20,12 @@ MonoBehaviour:
     map: lastline
     home: {x: -10.83, y: 0, z: -0.5}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair05
@@ -32,6 +38,12 @@ MonoBehaviour:
     map: lastline
     home: {x: 10.58, y: 0, z: -0.5}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair11
@@ -42,8 +54,14 @@ MonoBehaviour:
     description: Wandering Herbalist
     model: Elf
     map: lastline
-    home: {x: 0.0, y: 0, z: 8.31}
+    home: {x: 0, y: 0, z: 8.31}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: none
@@ -54,8 +72,14 @@ MonoBehaviour:
     description: Tea Brewer
     model: Kimono_Male
     map: lastline
-    home: {x: 0.0, y: 0, z: -9.95}
+    home: {x: 0, y: 0, z: -9.95}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: none
@@ -66,8 +90,14 @@ MonoBehaviour:
     description: South Gate Lantern Keeper
     model: Kimono_Female
     map: lastline
-    home: {x: 0.0, y: 0, z: -21.66}
+    home: {x: 0, y: 0, z: -21.66}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair06
@@ -78,8 +108,14 @@ MonoBehaviour:
     description: Town Physician
     model: Doctor_Male_Old
     map: lastline
-    home: {x: 0.0, y: 0, z: 19.9}
+    home: {x: 0, y: 0, z: 19.9}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair11
@@ -92,6 +128,12 @@ MonoBehaviour:
     map: lastline
     home: {x: 17.51, y: 0, z: -5.54}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair03
@@ -104,6 +146,12 @@ MonoBehaviour:
     map: lastline
     home: {x: 17.51, y: 0, z: 9.57}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair13
@@ -116,6 +164,12 @@ MonoBehaviour:
     map: lastline
     home: {x: -17.38, y: 0, z: 9.57}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair06
@@ -128,6 +182,12 @@ MonoBehaviour:
     map: lastline
     home: {x: 15.62, y: 0, z: 20.28}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair10
@@ -140,6 +200,12 @@ MonoBehaviour:
     map: lastline
     home: {x: 9.32, y: 0, z: -23.17}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair01
@@ -152,6 +218,12 @@ MonoBehaviour:
     map: lastline
     home: {x: -9.57, y: 0, z: 20.91}
     wanderRadius: 6
+    facing: 0
+    station: 0
+    shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair10
@@ -164,44 +236,17 @@ MonoBehaviour:
     map: lastline
     home: {x: -2.42, y: 0, z: -2.59}
     wanderRadius: 0
-    facing: 41.0
+    facing: 41
     station: 1
     shop: 
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: none
     hairColour: 
     headgear: item.hard-hat
-  - id: odette
-    name: Odette
-    description: Weaver
-    model: OldClassy_Female
-    map: lastline
-    home: {x: -2.49, y: 0, z: 3.31}
-    wanderRadius: 0
-    facing: 47.0
-    station: 2
-    shop: 
-    level: 1
-    barks: 1
-    hairStyle: hair01
-    hairColour: '#9C9C9C'
-    headgear: item.top-hat
-  - id: rook
-    name: Rook
-    description: Tanner
-    model: Pirate_Male
-    map: lastline
-    home: {x: 4.19, y: 0, z: 1.64}
-    wanderRadius: 0
-    facing: 130.7
-    station: 3
-    shop: 
-    level: 1
-    barks: 1
-    hairStyle: none
-    hairColour: 
-    headgear: item.pirate-hat
   - id: fenwick
     name: Fenwick
     description: Tool Dealer
@@ -209,9 +254,12 @@ MonoBehaviour:
     map: lastline
     home: {x: 3.06, y: 0, z: -2.18}
     wanderRadius: 0
-    facing: -41.0
+    facing: -41
     station: 0
     shop: tool-dealer
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair12
@@ -222,12 +270,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: lastline
-    home: {x: -16.51, y: 0.0, z: -1.08}
+    home: {x: -16.51, y: 0, z: -1.08}
     wanderRadius: 0
     facing: 123
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -238,12 +288,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: old_oak
-    home: {x: 30.5, y: 0.0, z: 2.0}
+    home: {x: 30.5, y: 0, z: 2}
     wanderRadius: 0
     facing: 270
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -254,12 +306,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: gemmara
-    home: {x: -30.5, y: 0.0, z: -2.0}
+    home: {x: -30.5, y: 0, z: -2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -270,12 +324,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: pluvenne
-    home: {x: -30.5, y: 0.0, z: -2.0}
+    home: {x: -30.5, y: 0, z: -2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -286,12 +342,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: hilt
-    home: {x: -30.5, y: 0.0, z: -2.0}
+    home: {x: -30.5, y: 0, z: -2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -302,12 +360,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: parley
-    home: {x: 22.5, y: 0.0, z: 2.0}
+    home: {x: 22.5, y: 0, z: 2}
     wanderRadius: 0
     facing: 270
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -318,12 +378,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: tornel
-    home: {x: 2.0, y: 0.18, z: 22.5}
+    home: {x: 2, y: 0.18, z: 22.5}
     wanderRadius: 0
     facing: 180
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -334,12 +396,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: harrowen
-    home: {x: 22.5, y: 0.0, z: 2.0}
+    home: {x: 22.5, y: 0, z: 2}
     wanderRadius: 0
     facing: 270
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -350,12 +414,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: pennaryl
-    home: {x: 2.0, y: 0.0, z: -30.5}
+    home: {x: 2, y: 0, z: -30.5}
     wanderRadius: 0
     facing: 0
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -366,12 +432,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: velmora
-    home: {x: -2.0, y: 0.66, z: 30.5}
+    home: {x: -2, y: 0.66, z: 30.5}
     wanderRadius: 0
     facing: 180
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -382,12 +450,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: brimstone
-    home: {x: -22.5, y: 0.0, z: -2.0}
+    home: {x: -22.5, y: 0, z: -2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -398,12 +468,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: cindrel
-    home: {x: -30.5, y: 0.0, z: -2.0}
+    home: {x: -30.5, y: 0, z: -2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -414,12 +486,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: luminhal
-    home: {x: 2.0, y: 0.0, z: -30.5}
+    home: {x: 2, y: 0, z: -30.5}
     wanderRadius: 0
     facing: 0
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -430,12 +504,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: kharnel
-    home: {x: -21.5, y: 0.0, z: 2.0}
+    home: {x: -21.5, y: 0, z: 2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -446,12 +522,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: halcyra
-    home: {x: -30.5, y: 0.0, z: -2.0}
+    home: {x: -30.5, y: 0, z: -2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -462,12 +540,14 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: hazemere
-    home: {x: -30.5, y: 0.18, z: -2.0}
+    home: {x: -30.5, y: 0.18, z: -2}
     wanderRadius: 0
     facing: 90
     station: 0
     shop: 
     keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 0
     hairStyle: 
@@ -483,8 +563,335 @@ MonoBehaviour:
     facing: 180
     station: 0
     shop: beta-headgear
+    keeper: 0
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
     level: 1
     barks: 1
     hairStyle: hair12
     hairColour: '#8B7643'
+    headgear: item.top-hat
+  - id: summoner-blood-ronin
+    name: Summoner
+    description: "Elite Summoner \xB7 Blood Ronin"
+    model: Witch
+    map: khn_fild01
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.blood-ronin
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 60
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-frost-ronin
+    name: Summoner
+    description: "Elite Summoner \xB7 Frost Ronin"
+    model: Witch
+    map: brm_fild02
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.frost-ronin
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 33
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-wraithmother
+    name: Summoner
+    description: "Elite Summoner \xB7 Wraithmother"
+    model: Witch
+    map: lmh_fild01
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.wraithmother
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 90
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-inferno-mask
+    name: Summoner
+    description: "Elite Summoner \xB7 Inferno Mask"
+    model: Witch
+    map: cdl_fild01
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.inferno-mask
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 80
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-riven
+    name: Summoner
+    description: "Shadow Summoner \xB7 Riven, the Red Autumn"
+    model: Witch
+    map: khn_dun05
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.riven
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 105
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-asterion
+    name: Summoner
+    description: "Shadow Summoner \xB7 Asterion, the Light Beyond Night"
+    model: Witch
+    map: khn_fild03
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.asterion
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 110
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-nysara
+    name: Summoner
+    description: "Shadow Summoner \xB7 Nysara, the Face Without a Name"
+    model: Witch
+    map: hcr_fild02
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.nysara
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 115
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-seraphine
+    name: Summoner
+    description: "Shadow Summoner \xB7 Seraphine, Before the Dawn"
+    model: Witch
+    map: khn_fild08
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.seraphine
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 120
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-tharos
+    name: Summoner
+    description: "Shadow Summoner \xB7 Tharos, the Starbreaker"
+    model: Witch
+    map: khn_fild04
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.tharos
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 125
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-orion
+    name: Summoner
+    description: "Shadow Summoner \xB7 Orion, the River That Remembers"
+    model: Witch
+    map: khn_fild09
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.orion
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 130
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-varkhaz
+    name: Summoner
+    description: "Shadow Summoner \xB7 Varkhaz, the Ever-Burning"
+    model: Witch
+    map: khn_dun01
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.varkhaz
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 135
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-vael
+    name: Summoner
+    description: "Shadow Summoner \xB7 Vael, the Moonless Eye"
+    model: Witch
+    map: khn_dun07
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.vael
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 140
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-morwen
+    name: Summoner
+    description: "Shadow Summoner \xB7 Morwen, the Last Bloom"
+    model: Witch
+    map: khn_dun08
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.morwen
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 145
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-velmora
+    name: Summoner
+    description: "Shadow Summoner \xB7 Velmora, the Poisoned Rose"
+    model: Witch
+    map: khn_fild05
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.velmora
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 150
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-kaelen
+    name: Summoner
+    description: "Shadow Summoner \xB7 Kaelen, the Ember Beneath Snow"
+    model: Witch
+    map: khn_fild07
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.kaelen
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 155
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-mordane
+    name: Summoner
+    description: "Shadow Summoner \xB7 Mordane, King Beneath the Waves"
+    model: Witch
+    map: khn_fild10
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.mordane
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 160
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-celestia
+    name: Summoner
+    description: "Shadow Summoner \xB7 Celestia, the Wandering Sky"
+    model: Witch
+    map: khn_dun02
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.celestia
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 165
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
+  - id: summoner-shadow-veyra
+    name: Summoner
+    description: "Shadow Summoner \xB7 Veyra, the Last Petal"
+    model: Witch
+    map: khn_dun03
+    home: {x: 3, y: 0, z: 0}
+    wanderRadius: 0
+    facing: 270
+    station: 0
+    shop: 
+    keeper: 0
+    summons: mob.shadow.veyra
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 170
+    barks: 0
+    hairStyle: 
+    hairColour: 
     headgear: 

@@ -46,7 +46,7 @@ HIT and FLEE before the ring's lift (`UnitStatMath.Hit` / `Flee`), for players a
 
 ## 3. The roster — nine designs
 
-| Slot | Metal (Smith) | Leather (Tannery) | Cloth (Loom) |
+| Slot | Metal | Leather | Cloth |
 | --- | --- | --- | --- |
 | Body | Chainmail | Leather Jerkin | Padded Vest |
 | Garment | Chain Mantle | Hide Cloak | Traveller's Cloak |

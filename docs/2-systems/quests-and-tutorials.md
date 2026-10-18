@@ -156,7 +156,7 @@ potions are their reward.
 
 - **Which hint shows:** a step lists its hints in order; the guide shows the **last one whose part is on screen right
   now**. Nothing is remembered, so going back a page or picking the wrong piece simply brings an earlier hint back.
-- **Station steps light only the station the step is worked at** — a smith's step never lights the loom's rows.
+- **Station steps light only the station the step is worked at** — a smith's step lights the smith's rows only while the smith's window is open.
 - **It never traps you.** The dark stops the mouse only while its one part is on screen; the keyboard is never
   touched (Esc, movement and F work as always); it is gone while you are dead or out of the world. **The health bar
   over your own head is framed and pointed at with nothing dark** — it is on screen the whole time, so a dark there

@@ -287,9 +287,10 @@ public enum SkillTrigger
     /// because nothing was taken.</summary>
     OnParry,
 
-    /// <summary>YOU ARE ABOUT TO SWING — the intent, not the outcome. Fires at <c>Player3DAttacker.cs:165</c>
-    /// (<c>AnnounceAttackIntent</c>) BEFORE reach is judged, so a gap-closer moves you in and the same swing still
-    /// lands. Gated to once per swing interval. Entity = the intended target. The ONLY moment here that does not
+    /// <summary>YOU ARE ABOUT TO SWING — the intent, not the outcome. For a person the server raises it when it
+    /// accepts a swing, or — while the target is still out of reach and a skill answering this moment is ready — when
+    /// their machine says which target they are attacking (<c>GameNetwork.OnAttackIntentRequest</c>), so a gap-closer
+    /// moves them in before the swing. Once per swing interval, whichever comes first. Entity = the intended target. The ONLY moment here that does not
     /// require damage — it fires even if the swing goes on to miss.</summary>
     OnBasicAttackStart,
 

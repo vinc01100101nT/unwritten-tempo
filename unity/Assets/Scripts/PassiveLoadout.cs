@@ -21,16 +21,18 @@ public class PassiveLoadout
 
     public PassiveLoadout(Character owner) { this.owner = owner; }
 
-    /// <summary>THE gate: may this passive run right now? Learned, AND the weapon it belongs to in hand. A skill that
-    /// belongs to no weapon is never learned, so a potion's skill (which also has no press) never fires through here.
-    /// Non-passives always pass: an active is gated by the hotbar and by the cast, not by this. A passive a worn piece
-    /// runs (a hat's effect) is on for exactly as long as that piece is worn, whatever weapon is in hand.</summary>
+    /// <summary>THE gate: may this skill answer a moment right now? Learned, AND the weapon it belongs to in hand. A
+    /// skill that belongs to no weapon is never learned, so a potion's skill (which also has no press) never fires
+    /// through here. AN ACTIVE THAT ALSO ANSWERS A MOMENT (Piercing Gust's lunge on every basic attack) is held to the
+    /// same weapon test its press is (<see cref="Character.MayUse"/>), so with another weapon in hand it does not fire
+    /// and spends none of the charges it would use. A skill a worn piece runs (a hat's effect) is on for exactly as
+    /// long as that piece is worn, whatever weapon is in hand.</summary>
     public bool IsActive(SkillDef def)
     {
-        if (def == null) return false;
-        if (!def.IsPassive) return true;
-        if (owner == null) return false;
-        return (owner.Mastery.HasLearned(def.id) && owner.MayUse(def.id)) || owner.WearsSkill(def.id);
+        if (def == null || owner == null) return false;
+        if (owner.WearsSkill(def.id)) return true;
+        if (!def.IsPassive) return owner.MayUse(def.id);
+        return owner.Mastery.HasLearned(def.id) && owner.MayUse(def.id);
     }
 
     /// <summary>Every passive this character has learned, in the catalog's order — what a character carries a

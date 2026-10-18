@@ -64,7 +64,7 @@ public class ChatLinkInput : MonoBehaviour
             if (s.start >= at) { s.start += word.Length; spans[i] = s; }
         }
         spans.Add(new Span { start = at, length = word.Length, reference = ChatLinks.Ref(thing),
-                             colour = Rarities.Color(Rarities.Of(thing.def, thing.instance)) });
+                             colour = Rarities.Color(Rarities.Of(thing.def)) });
 
         fixing = true;
         field.text = text.Insert(at, word);

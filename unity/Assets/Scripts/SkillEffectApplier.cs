@@ -96,16 +96,19 @@ public static class SkillEffectApplier
         // "Single Target on a mob" can't swallow a Dash (the bug this split fixes), and a Self tick can't double-apply it.
         // A HOP of a bouncing chain skips it: the cast's own side — its buffs, its dash, its self-heal — happened once,
         // on the cast, and a jump is only the strike reaching someone else.
+        Vector3 dashDest = relocatePoint;
+        float dashGiveUp = 0f;
         float dashSeconds = casterPass
-            ? ApplyCasterEffects(effects, relocatePoint, singleTarget, srcSymbol, srcName, srcId, ch, vars) : 0f;
+            ? ApplyCasterEffects(effects, relocatePoint, singleTarget, srcSymbol, srcName, srcId, ch, vars,
+                                 out dashDest, out dashGiveUp) : 0f;
 
         // PASS 2 — TARGET effects: gather who the tick reaches, then run the hit loop on them.
         if (targets == SkillTargets.None) return;
 
         // A DASH STRIKES WHERE IT LANDS: when the caster pass sent the caster gliding, the strike waits for the trip
         // and lands on arrival (DashLandings), never as the dash leaves.
-        if (dashSeconds > 0f && DashLandings.Hold(dashSeconds, point, radius, scope, targets, effects, singleTarget,
-                                                  srcSymbol, srcName, srcId, aimPoint, ch, vars, efficient))
+        if (dashSeconds > 0f && DashLandings.Hold(dashSeconds, dashGiveUp, dashDest, point, radius, scope, targets, effects,
+                                                  singleTarget, srcSymbol, srcName, srcId, aimPoint, ch, vars, efficient))
             return;
 
         // SINGLE scope: ignore the radius, land straight on the cast's designated unit. Falls back to Area if unset.
@@ -375,14 +378,21 @@ public static class SkillEffectApplier
     // The longest glide the caster pass just sent the caster on, in seconds — set by the Dash case of ApplyOne and read
     // back by ApplyCasterEffects. One value for one caster pass, held the same way the lifts above are.
     static float casterGlideSeconds;
+    // Where that glide was sent, and the longest it may take before a strike riding it is given up (DashLandings).
+    static Vector3 casterGlideDest;
+    static float casterGlideGiveUp;
 
-    // Returns how long the longest glide it started on the caster lasts, 0 when it started none.
+    // Returns how long the longest glide it started on the caster lasts, 0 when it started none — with where it was
+    // sent and the longest it may take.
     static float ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Transform aimUnit,
-                                    string srcSymbol, string srcName, string srcId, ICombatUnit ch, in StackVars vars)
+                                    string srcSymbol, string srcName, string srcId, ICombatUnit ch, in StackVars vars,
+                                    out Vector3 glideDest, out float glideGiveUp)
     {
+        glideDest = point; glideGiveUp = 0f;
         if (ch == null || ch.IsDead) return 0f;
-        float outer = casterGlideSeconds;
-        casterGlideSeconds = 0f;
+        float outer = casterGlideSeconds, outerGiveUp = casterGlideGiveUp;
+        Vector3 outerDest = casterGlideDest;
+        casterGlideSeconds = 0f; casterGlideGiveUp = 0f; casterGlideDest = point;
         try
         {
             for (int i = 0; i < effects.Count; i++)
@@ -391,9 +401,10 @@ public static class SkillEffectApplier
                 if (SkillEffect.LandsOnCaster(e))
                     ApplyOne(e, ch, 0, ch, point, aimUnit, srcSymbol, srcName, srcId, vars);
             }
+            glideDest = casterGlideDest; glideGiveUp = casterGlideGiveUp;
             return casterGlideSeconds;
         }
-        finally { casterGlideSeconds = outer; }
+        finally { casterGlideSeconds = outer; casterGlideGiveUp = outerGiveUp; casterGlideDest = outerDest; }
     }
 
     /// <summary>True when <paramref name="effects"/> carries an all-in cost on the caster side — the tick that pays
@@ -645,6 +656,9 @@ public static class SkillEffectApplier
                 // practice for the same reason a stat buff's is — what one charge is worth is this effect's OUTPUT.
                 if (Fires(e, hit, caster, vars)) states.BeginOutgoingBoost(seconds, OutputMagnitude(e, caster, vars));
                 break;
+            case SkillEffectKind.Charges:
+                if (Fires(e, hit, caster, vars)) states.BeginCharges(seconds);   // charges ride the apply context
+                break;
             case SkillEffectKind.ImmuneToDisables:
                 // No magnitude: being stopped is binary. The whole knob is how long it lasts.
                 if (Fires(e, hit, caster, vars)) states.BeginDisableImmunity(seconds);
@@ -720,11 +734,22 @@ public static class SkillEffectApplier
                     // Face what the hop is AIMED AT for the whole trip, not the direction it flies. A relocation lands
                     // BESIDE its target (a star corner), so facing the travel line leaves the caster swinging at empty
                     // air on arrival — and nothing turns it back afterwards. No aimed unit = face travel, as before.
-                    float trip = unit.GlideTo(RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)),
-                                              e.dashSpeedMult.Resolve(vars), e.dashEaseIn, e.dashEaseOut,
-                                              Mathf.Max(0.05f, e.dashEaseSeconds.Resolve(vars)),
+                    var dest = RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars));
+                    float speedMult = e.dashSpeedMult.Resolve(vars);
+                    float easeSeconds = Mathf.Max(0.05f, e.dashEaseSeconds.Resolve(vars));
+                    float trip = unit.GlideTo(dest, speedMult, e.dashEaseIn, e.dashEaseOut, easeSeconds,
                                               aimUnit != null ? aimUnit.position : (Vector3?)null, look);
-                    if (unit == caster) casterGlideSeconds = Mathf.Max(casterGlideSeconds, trip);
+                    if (unit == caster && trip >= casterGlideSeconds)
+                    {
+                        casterGlideSeconds = trip;
+                        casterGlideDest = dest;
+                        // THE LONGEST THIS DASH MAY TAKE: its skill's whole cast range at the same speed, never less
+                        // than this trip. A caster still short of where it was sent by then was stopped on the way.
+                        var skill = SkillCatalog.Get(srcId);
+                        float range = skill != null ? skill.castRange : 0f;
+                        casterGlideGiveUp = Mathf.Max(trip, range > 0f
+                            ? unit.GlideSeconds(range, speedMult, e.dashEaseIn, e.dashEaseOut, easeSeconds) : 0f);
+                    }
                 }
                 break;
             }

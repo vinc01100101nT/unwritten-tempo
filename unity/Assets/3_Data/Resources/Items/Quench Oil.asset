@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 0}
   element: 0
   category: 2
-  cardSlots: 0
   weight: 1
   value: 1563
   undroppable: 0
   unsellable: 0
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 0
   materialKind: 8
   materialStep: 0
@@ -41,5 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: Dark, heavy, and cold to the touch. A blade goes into it to find out
-    what it is.
+  description: Cools hot metal and hotter heads.

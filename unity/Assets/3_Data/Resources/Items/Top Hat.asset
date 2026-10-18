@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 4534732463170502057, guid: 612e7aabad01285438a71e870f429cc7, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: For looking wealthy while looting other people's basements.

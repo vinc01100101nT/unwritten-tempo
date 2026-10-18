@@ -55,34 +55,14 @@ public static class SkillRing
 
     public static int Count => Ring.Length;
 
-    // ---- soft-cap diminishing returns ----------------------------------------
-    // passive%(stat) = Cap * R / (R + K)   — never exceeds Cap, halves at R == K.
-    // Global for the MVP (doc §7). CritChance gets a tighter ceiling because a
-    // crit rate near 100% would trivialise combat — the one per-stat exception the
-    // doc explicitly calls out.
-    public const float DefaultCap = 0.80f;   // asymptotic ceiling (+80%)
-    public const float DefaultK   = 40f;     // ranks to reach half the cap
+    // ---- ranks ----------------------------------------------------------------
+    /// <summary>The most ranks a node takes. The ring stops at level 99 with 99 points, so three nodes can be full.</summary>
+    public const int NodeCap = 33;
+    /// <summary>What one rank is worth on every node: +1% (the Defence node: +1 point of hard defence).</summary>
+    public const float PercentPerRank = 0.01f;
 
-    public static float CapFor(StatId stat)
-    {
-        switch (stat)
-        {
-            case StatId.Critical: return 0.50f;   // one cap governs both crit-rate and crit-damage %; near-100% crit would trivialise combat
-            case StatId.Evasion:  return 0.60f;    // dodge is strong defensively — keep it under a hard wall
-            default:              return DefaultCap;
-        }
-    }
-
-    public static float KFor(StatId stat) => DefaultK;
-
-    /// <summary>The passive multiplier (e.g. 0.32 == +32%) granted by <paramref name="ranks"/>
-    /// invested in <paramref name="stat"/>. This is the soft-cap curve; it asymptotes to the cap.</summary>
-    public static float Percent(StatId stat, int ranks)
-    {
-        if (ranks <= 0) return 0f;
-        float cap = CapFor(stat), k = KFor(stat);
-        return cap * ranks / (ranks + k);
-    }
+    /// <summary>The node's value (0.10 == +10%) at <paramref name="ranks"/>: 1% a rank, stopping at <see cref="NodeCap"/>.</summary>
+    public static float Percent(StatId stat, int ranks) => PercentPerRank * Mathf.Clamp(ranks, 0, NodeCap);
 
     /// <summary><see cref="Percent"/> as the whole number a window shows — 0.104 reads as 10.</summary>
     public static int PercentPoints(StatId stat, int ranks) => Mathf.RoundToInt(Percent(stat, ranks) * 100f);

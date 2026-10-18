@@ -71,12 +71,12 @@ public static class CreatureDrops
     static void AddUnits(Item material, int perGrade, MonsterDef def, List<Drop> into)
     {
         if (material == null) return;
-        int least = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.gearFolds, 99);
-        int most = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.gearFolds, 0);
+        int least = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.FileFolds, 99);
+        int most = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.FileFolds, 0);
         if (most <= 0) return;
         // Under one whole unit a kill, it is a CHANCE of one, not one every kill.
         if (least == 0)
-            into.Add(new Drop(material, CreatureLoot.HundredthsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.gearFolds) / 100f, 1, 1));
+            into.Add(new Drop(material, CreatureLoot.HundredthsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.FileFolds) / 100f, 1, 1));
         else into.Add(new Drop(material, 1f, least, most));
     }
 

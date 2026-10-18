@@ -16,7 +16,7 @@ How far the game is from being something a stranger can buy and finish. **This d
 
 ## The one-paragraph answer
 
-The technology is built and the game has started to fill. Fighting is finished and deep, and the whole of a fight runs on a server. Since mid-September a fight pays something worth having: ten crafting materials (Temper Dust, Quench Oil, five Inks, three Salts), gear that drops from what creatures wear to fold and quench with them at three stations, a shop, two quests, sixteen townsfolk with names, and a Keeper in every town who sets your save point, keeps your account's storage and sends you to any other town. What is still thin is breadth. Only the sword, one of fourteen weapon families, has skills anybody can learn, and only the sword and the bow exist as weapons to hold. Every named person and both quests are in one town of sixteen. None of the fourteen shadows has a place to stand. And most of what was added this month is built but has not yet been played.
+The technology is built and the game has started to fill. Fighting is finished and deep, and the whole of a fight runs on a server. Since mid-September a fight pays something worth having: ten crafting materials (Temper Dust, Quench Oil, five Inks, three Salts), gear that drops from what creatures wear to fold and quench with them at the smith, a shop, two quests, fifteen townsfolk with names, and a Keeper in every town who sets your save point, keeps your account's storage and sends you to any other town. What is still thin is breadth. Only the sword, one of fourteen weapon families, has skills anybody can learn, and only the sword and the bow exist as weapons to hold. Every named person and both quests are in one town of sixteen. None of the fourteen shadows has a place to stand. And most of what was added this month is built but has not yet been played.
 
 ---
 
@@ -31,7 +31,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 | Items in the whole game | 223 | 14 weapons · 27 other worn pieces · 29 crafting materials · 126 creature materials · 27 to use (10 potions, 6 foods, 2 wings, the Antidote and 8 element converters) |
 | Cards | 0 | no card exists, and the card roster has not been decided |
 | Quests | 2 | a crafting tutorial given to every character, and one side quest from Torvald in Lastline; no main-story quest |
-| Townsfolk with a name | 16 | all in Lastline: three keep a crafting station (smith, loom, tannery) and one keeps the only shop |
+| Townsfolk with a name | 15 | all in Lastline: one keeps the crafting station (the smith) and two keep shops (the Tool Dealer and the Hatter) |
 | Saved characters | 91 | the characters a beaten creature can turn back into |
 | Live characters in the database | 7 | the furthest is level 8; two test characters hold 99,987,850u each |
 | Builds that exist | 6 | made on this PC: the Windows game (847 MB), the Windows game server (420 MB) and the Mac game (1,009 MB), all on 5 Oct; the launcher for Windows (99 MB), Mac with an Apple chip (108 MB) and Mac with an Intel chip (101 MB), on 4 Oct. The sizes leave out the debugging folder Unity writes beside a build, which never ships |
@@ -52,7 +52,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 
 ## What is half-built — measured, each one
 
-**Making gear is built and not yet played** ([Gameplay System V4](../2-systems/gameplay-system-v4/README.md)). Gear is dropped by the creatures that wear it, always Raw, then folded, quenched up the quality ladder and written on with Ink at a smith, a loom or a tannery.
+**Making gear is built and not yet played** ([Gameplay System V4](../2-systems/gameplay-system-v4/README.md)). Gear is dropped by the creatures that wear it, always Raw, then folded, quenched up the quality ladder and written on with Ink at the smith.
 
 **Loot follows the creature's kind, level and gear.** Every kill gives Temper Dust and Quench Oil by the creature's level, its kind and the grade and folds of its gear, a chance of an Ink or a Salt — elites much more, shadows more again — a normal creature's or an elite's own material, a 10% chance of one piece of what it wears, as a new Raw copy, and a chance of the creature's own find, a food or an element converter ([Mob Roster](../3-world/mob-roster.md), [Town Supplies and Hunting Finds](../2-systems/town-supplies-and-hunting-finds.md)). What drops is worked out at the moment of death from those, so a change to the rule needs no rebuild of the creatures. It lands on the ground, held for the killer for 10 seconds, and is gone after 60.
 

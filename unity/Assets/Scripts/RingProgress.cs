@@ -24,8 +24,12 @@ public sealed class RingProgress
     /// <summary>Ring XP banked toward the next ring level.</summary>
     public double XP { get; private set; }
 
+    /// <summary>The highest ring level. Every power source has a cap, so a late starter can catch up: 99 levels = 99
+    /// points (one at level 1), enough to fill three nodes of 33.</summary>
+    public const int MaxLevel = 99;
+
     /// <summary>XP needed to reach the next ring level — the character's own curve (decided 2026-09-30). The ring is
-    /// paid a third of every kill's experience (<see cref="UnitStatMath.RingXpFromKill"/>) and has no cap.</summary>
+    /// paid a third of every kill's experience (<see cref="UnitStatMath.RingXpFromKill"/>) until level 99.</summary>
     public int XPToNext => UnitStatMath.RingXpToNextFrom(Level);
 
     /// <summary>Fired on any XP or level change — drives the K-panel ring readout (level + XP bar).</summary>
@@ -41,10 +45,12 @@ public sealed class RingProgress
     public int AddXP(double amount)
     {
         if (amount <= 0.0) return 0;
+        // at the cap the ring earns nothing more, like the character at 99
+        if (Level >= MaxLevel) { XP = 0; return 0; }
         int gained = 0;
         // server-math: only the server pays a ring; a player's machine takes TakeFromServer's finished figure
         XP = UnitStatMath.RoundExperience(XP + amount);
-        while (XP >= XPToNext)
+        while (XP >= XPToNext && Level < MaxLevel)
         {
             // server-math: the level-up loop runs on the server only, like the add above
             XP = UnitStatMath.RoundExperience(XP - XPToNext);
@@ -53,6 +59,7 @@ public sealed class RingProgress
             Passives.AddPoint();          // a ring level = one new Trio-Ring point to spend
             OnLeveledUp?.Invoke(Level);
         }
+        if (Level >= MaxLevel) XP = 0;
         OnChanged?.Invoke();
         return gained;
     }

@@ -22,6 +22,7 @@ public class NetGroundDrop : NetworkBehaviour
     [SyncVar] int count = 1;
     [SyncVar] int qualityIndex;
     [SyncVar] int upgrade;
+    [SyncVar] int cardSlots;
 
     /// <summary>How rare it is, which colours its name — worked out on the server, where the copy and its trademark
     /// are (<see cref="Rarities.Of"/>).</summary>
@@ -55,6 +56,7 @@ public class NetGroundDrop : NetworkBehaviour
         count = drop.count;
         qualityIndex = (int)drop.quality;
         upgrade = drop.upgrade;
+        cardSlots = drop.cardSlots;
         rarityIndex = (int)drop.rarity;
         mapName = drop.mapName;
         inMap = MapManager.InMap(drop.transform.position, drop.mapName);
@@ -129,7 +131,7 @@ public class NetGroundDrop : NetworkBehaviour
         }
 
         view = GroundDrop.Place(MapManager.InWorld(inMap, mapName), def, count, null,
-                                (Quality)qualityIndex, upgrade, mapName, netId, (Rarity)rarityIndex);
+                                (Quality)qualityIndex, upgrade, mapName, netId, (Rarity)rarityIndex, cardSlots);
         if (view == null) return;
         view.ShowOnScreen();
         Toss();

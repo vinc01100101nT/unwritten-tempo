@@ -90,10 +90,10 @@ def main():
                 "System.Math.Exp(0.099 * L + 0.021 * wall * wall)",
                 "UnitStatMath.cs")
     # A different file, so one blind spot cannot pass the whole prover. The accuracy ceiling is a
-    # promise; raising it means a target can never dodge, and nothing on screen would say so.
+    # promise; raising it past 100% lets a chance to hit exceed certainty, and nothing on screen would say so.
     bad += case("a raised accuracy ceiling is caught",
                 "Combat.cs",
-                "public const float MaxHitChance = 0.95f;",
+                "public const float MaxHitChance = 1f;",
                 "public const float MaxHitChance = 1.05f;",
                 "Combat.cs")
     # The bug that made Momentum's +3% a stack run as +103%, put back: a plain buff's number read as the whole

@@ -36,7 +36,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every stat feeds several numbers at once — that spread is what makes a build. On top of that, **every time a stat reaches a multiple of 10 — gear included — it jumps one number up**: +4 at 10, +6 at 20, +22 at 100, each jump bigger than the last. The exact per-point values:"
+      "text": "Every stat feeds several numbers at once — that spread is what makes a build. The stat that leads an attack also grows faster the higher it goes: **STR adds (STR ÷ 10)² more melee attack, DEX adds (DEX ÷ 10)² more ranged attack**, and INT's square widens your magic attack. The exact per-point values:"
     },
     {
       "type": "table",
@@ -47,27 +47,27 @@
       "rows": [
         [
           "**STR**",
-          "+1 MELEE ATK and +½ RANGED ATK, and +30 to how much you can carry. STR's jump goes to MELEE ATK."
+          "+1 MELEE ATK plus (STR ÷ 10)², +⅕ RANGED ATK, and +30 to how much you can carry"
         ],
         [
           "**AGI**",
-          "+1 FLEE (dodge), and +0.5% attack speed. AGI's jump goes to FLEE."
+          "+1 FLEE (dodge), and 0.4% faster attacks"
         ],
         [
           "**VIT**",
-          "+2% max HP, +⅓ DEF, and health regeneration worth 0.02% of your max HP every second. VIT's jump goes to DEF."
+          "+1% max HP, soft DEF (VIT ÷ 2, plus the larger of VIT × 0.3 or VIT² ÷ 150 − 1), and health regeneration worth 0.02% of your max HP every second"
         ],
         [
           "**INT**",
-          "+1 M.ATK, +1.5% max MP, +⅓ M.DEF, mana regeneration worth 0.02% of your max MP every second, and steadier magic damage. INT's jump goes to M.ATK."
+          "+1 M.ATK, the top of your magic attack rising by (INT ÷ 5)² and the bottom by (INT ÷ 7)², +1% max MP, +1 soft M.DEF, and mana regeneration worth 0.02% of your max MP every second"
         ],
         [
           "**DEX**",
-          "+1 RANGED ATK, +1 HIT (accuracy), +½ MELEE ATK, +0.125% attack speed, steadier physical damage, and a shorter cast wind-up — reaching **instant casting at 150 DEX**. DEX's jump goes to RANGED ATK."
+          "+1 RANGED ATK plus (DEX ÷ 10)², +1 HIT (accuracy), +⅕ MELEE ATK, 0.1% faster attacks, steadier physical damage, and a shorter cast wind-up — reaching **instant casting at 150 DEX**"
         ],
         [
           "**LUK**",
-          "+0.3% crit chance, +0.2% crit damage, +¼ MELEE ATK, +¼ RANGED ATK, +¼ M.ATK, +⅓ HIT, +⅕ FLEE — and it works defensively too: your LUK lowers an attacker's crit chance against you by 0.3% per point. LUK's jump goes to crit damage, counted in percent."
+          "+0.3% crit chance, +0.2% crit damage, +⅕ MELEE ATK and RANGED ATK, and **perfect dodge**: 0.1% of ordinary attacks miss you outright, even critical ones. It works defensively against crits too: every point of your LUK lowers an attacker's crit chance against you by 0.2%"
         ]
       ]
     },
@@ -93,43 +93,43 @@
       "rows": [
         [
           "**MELEE ATK**",
-          "STR (plus its jump), DEX÷2, LUK÷4, your level, your gear, the Attack ring stat — what normal attacks and physical skills use while you hold anything that isn't a bow or sniper rifle (and a shuriken while your STR is at least your DEX), or nothing at all"
+          "STR + (STR ÷ 10)², DEX ÷ 5, LUK ÷ 5, your level, your gear, the Attack ring stat — what normal attacks and physical skills use while you hold anything that isn't a bow or sniper rifle (and a shuriken while your STR is at least your DEX), or nothing at all"
         ],
         [
           "**RANGED ATK**",
-          "DEX (plus its jump), STR÷2, LUK÷4, your level, your gear, the *same* Attack ring stat — what normal attacks and physical skills use while you hold a bow, or a shuriken with more DEX than STR, and what a sniper rifle's physical skills use — its normal attack is a magic shot that uses your Magic Attack"
+          "DEX + (DEX ÷ 10)², STR ÷ 5, LUK ÷ 5, your level, your gear, the *same* Attack ring stat — what normal attacks and physical skills use while you hold a bow, or a shuriken with more DEX than STR, and what a sniper rifle's physical skills use — its normal attack is a magic shot that uses your Magic Attack"
         ],
         [
           "**M.ATK**",
-          "INT (plus its jump), LUK÷4, your level, your gear, the Magic Attack ring stat"
+          "INT + (INT ÷ 5)² at the top and INT + (INT ÷ 7)² at the bottom, your level, your gear, the Magic Attack ring stat"
         ],
         [
           "**DEF**",
-          "VIT÷3 (plus VIT's jump), your level, your gear, the Defense ring stat"
+          "two parts. **Hard DEF** is a percentage taken off every physical hit, from your armour, the Defense lines Ink writes, the Bulwark armour word, the Defense ring stat and timed defence buffs. **Soft DEF** is a flat amount taken off after that, from VIT and your level. A critical hit ignores both"
         ],
         [
           "**M.DEF**",
-          "INT÷3, your level, your gear — the *same* Defense ring stat, there is no separate magic node"
+          "the same two parts for magic: hard M.DEF from cloth armour, Ink, Bulwark and the *same* Defense ring stat; soft M.DEF from INT and your level"
         ],
         [
           "**Max HP**",
-          "a level curve raised 2% per VIT, your gear, the HP ring stat"
+          "a level curve raised 1% per VIT, your gear, the HP ring stat"
         ],
         [
           "**Max MP**",
-          "a level curve raised 1.5% per INT, your gear, the MP ring stat"
+          "a level curve raised 1% per INT, your gear, the MP ring stat"
         ],
         [
           "**HIT** (accuracy)",
-          "your level + DEX + LUK÷3, accuracy written on your gear, the Accuracy ring stat"
+          "your level + DEX, accuracy written on your gear, the Accuracy ring stat. Your chance to hit is **HIT + 80 − your target's FLEE**, in percent — never below 5%, up to 100%"
         ],
         [
           "**FLEE** (dodge)",
-          "your level + AGI (plus its jump) + LUK÷5, evasion on your gear (Ink, and leather armour), the Evasion ring stat"
+          "your level + AGI, evasion on your gear (Ink, and leather armour), the Evasion ring stat. **Every creature attacking you past the second takes 10% off it**, and twelve or more always hit"
         ],
         [
-          "**Attack speed**",
-          "AGI at 0.5% a point, DEX at a quarter of that, your gear, the Attack Speed ring stat — **hard-capped at 3× normal**"
+          "**Attack speed** (ASPD)",
+          "AGI and DEX, your gear, the Attack Speed ring stat. Shown as a number up to **190** — five attacks a second"
         ],
         [
           "**Cast wind-up**",
@@ -137,11 +137,11 @@
         ],
         [
           "**Crit chance**",
-          "LUK at 0.3% a point, your gear, the Critical ring stat — **capped at 95%**"
+          "1% + LUK at 0.3% a point, your gear, the Critical ring stat — it can reach 100%"
         ],
         [
           "**Crit damage**",
-          "starts at 140%, plus 0.2% a point of LUK, plus LUK's jump in percent, plus the *same* Critical ring stat"
+          "starts at 200%, plus 0.2% a point of LUK, plus the *same* Critical ring stat — never above 300%"
         ],
         [
           "**HP regen**",
@@ -153,7 +153,7 @@
         ],
         [
           "**Damage spread**",
-          "a swing rolls between a floor and its maximum. The floor starts at 55% and closes as DEX (physical) or INT (magic) rises, hitting full around 38 points — so investment both raises *and* steadies your damage."
+          "a physical swing rolls between a floor and its maximum; the floor starts at 55% and closes as DEX rises, hitting full around 38 points. A spell rolls between the bottom and the top of your magic attack"
         ]
       ]
     },
@@ -175,7 +175,7 @@
       "rows": [
         [
           "**Move speed**",
-          "your character's own speed, multiplied by whatever is slowing or hastening you"
+          "your character's own speed, multiplied by whatever is slowing or hastening you — never above 250%"
         ],
         [
           "**Block chance**",
@@ -195,11 +195,7 @@
         ],
         [
           "**Life steal · MP leech · Reflect**",
-          "0 at rest — they exist only while a card or a skill grants them"
-        ],
-        [
-          "**Flat damage cut**",
-          "a percentage taken off a hit *before* DEF subtracts its flat amount. Monsters can be built with it; you have none yet"
+          "0 at rest — they exist only while gear or a skill grants them. Life steal returns at most 25% of a hit, reflect sends back at most 50%"
         ]
       ]
     },
@@ -273,11 +269,11 @@
     {
       "type": "heading",
       "level": 3,
-      "text": "Percentage growth with a soft cap"
+      "text": "Ranks, and where the Ring stops"
     },
     {
       "type": "paragraph",
-      "text": "Ring stats give **percentage multipliers**, not flat points, so they never go obsolete as your gear grows. Growth follows a **soft cap**: most stats climb toward a **+80% ceiling**, while **Critical caps at +50%** and **Evasion at +60%** (both would break combat if left uncapped). Because each extra rank is worth a little less, the math **rewards spreading out** — though single-stacking is always allowed."
+      "text": "Every Ring stat gives a **percentage**, not flat points, so it never goes obsolete as your gear grows: **each rank is worth +1%**, and a stat takes **at most 33 ranks** (+33%). The one exception is **Defense, where each rank is +1 hard DEF** against both physical and magic hits. The Ring itself levels up to **99**, which is **99 points — enough to fill three stats completely**. Which three is your build."
     },
     {
       "type": "heading",
@@ -299,11 +295,81 @@
     },
     {
       "type": "paragraph",
-      "text": "Everything on this page describes **monsters too**. They have the same six stats, the same formulas behind them, the same rising cost per point, and the same level-based budget — a level 20 monster carries what a level 20 player could have bought. They wear real equipment, and a monster can carry Ring investment of its own that scales it on this same soft-cap curve."
+      "text": "Everything on this page describes **monsters too**. They have the same six stats, the same formulas behind them, the same rising cost per point, and the same level-based budget — a level 20 monster carries what a level 20 player could have bought. They wear real equipment, and a monster can carry Ring investment of its own, by the same ranks and the same 33-rank limit."
     },
     {
       "type": "callout",
       "text": "There is no difficulty multiplier anywhere. A monster is hard because of its level, its stats, and its gear — the same three things that make you hard. See *Monsters*."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Every kind of power has a limit"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Everything that makes you stronger stops somewhere.** Your level, every stat, the Ring, every grade and fold, every Ink line and card slot — each has a ceiling. Nothing grows forever just because you played longer, so **a player who starts today can always reach exactly where a veteran stands**. What separates players is the build they chose and how they play it, never the hours they put in."
+    },
+    {
+      "type": "table",
+      "headers": [
+        "What",
+        "Where it stops"
+      ],
+      "rows": [
+        [
+          "Character level",
+          "99"
+        ],
+        [
+          "Each of the six stats",
+          "99"
+        ],
+        [
+          "Ring level",
+          "99 — 99 points to spend"
+        ],
+        [
+          "Each Ring stat",
+          "33 ranks"
+        ],
+        [
+          "Gear grade · folds",
+          "A · +10"
+        ],
+        [
+          "Card slots",
+          "4 on a weapon, 2 on armour"
+        ],
+        [
+          "Hard DEF and hard M.DEF",
+          "90% of a hit, from every source together"
+        ],
+        [
+          "Attack speed",
+          "ASPD 190"
+        ],
+        [
+          "Chance to hit",
+          "never below 5%, up to 100%"
+        ],
+        [
+          "Crit chance · crit damage",
+          "100% · 300%"
+        ],
+        [
+          "Move speed · life steal · reflect",
+          "250% · 25% · 50%"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "**Some limits are easy to reach, some are not.** Comfort stats like attack speed and cast speed reach their limit with good gear well before the best gear exists. The ones that make you nearly untouchable — hard defence and dodging — take the best gear and a full Ring. Your character sheet shows each limit beside its number, so you can always see when more of something stops helping and your points are better spent elsewhere."
+    },
+    {
+      "type": "callout",
+      "text": "**Reaching the top is the start of a different game, not the end of one.** Every weapon has its own skills and mastery, every Ring stat combination plays differently, and the strongest elites and the shadows are called by summoning — with materials only other elites drop. Once your numbers are capped, there's always another build to master, another boss to call, another corner of the world to explore."
     },
     {
       "type": "heading",
@@ -347,11 +413,11 @@
         ],
         [
           "Defense",
-          "DEF and M.DEF (plus their flat damage cut) · FLEE · GUARD · BARRIER"
+          "DEF and M.DEF (hard % + soft, with the 90% limit beside them) · FLEE · GUARD (defence a buff is adding) · BARRIER"
         ],
         [
           "Speed",
-          "ASPD (attack speed) · CAST (between casts) · WIND-UP (cast time) · MOVE and RUN speed"
+          "ASPD (attack speed, with the 190 limit beside it) · CAST (between casts) · WIND-UP (cast time) · MOVE and RUN speed"
         ],
         [
           "Sustain",

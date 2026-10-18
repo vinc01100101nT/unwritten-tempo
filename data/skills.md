@@ -9,8 +9,8 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | Symbol | Skill | Tier | Cost | When | What it does |
 | --- | --- | --- | --- | --- | --- |
 | — | Blink Step *(unpublished)* | active | MP **6**  CD **6s**  Instant  Range **6** | pressed | Blinks to the target location |
-| — | Bulwark *(unpublished)* | active | MP **12**  CD **14s**  Instant  Range **6** | pressed | +**50%** damage reduction for **5s** · Taunts nearby enemies for **5s** |
-| — | Ember Bolt *(unpublished)* | active | MP **8**  CD **1.5s**  Cast **1.1s**  Range **11** | pressed | Deals **1×** magic damage · +**100%** damage reduction for **0.5s** |
+| — | Bulwark *(unpublished)* | active | MP **12**  CD **14s**  Instant  Range **6** | pressed | +**6%** defense for **5s** · +**6%** magic defense for **5s** · Taunts nearby enemies for **5s** |
+| — | Ember Bolt *(unpublished)* | active | MP **8**  CD **1.5s**  Cast **1.1s**  Range **11** | pressed | Deals **1×** magic damage · +**6%** defense for **0.5s** · +**6%** magic defense for **0.5s** |
 | `Ah` | Army Helmet *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When you draw your weapon | +**20%** damage for **5s** |
 | `Cb` | Cowboy Hat *(unpublished)* | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**10%** movement speed for **2s** |
 | `Gh` | Golden Horned Helm *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **40** | When you kill a mob | Deals **0.3×** physical damage |
@@ -73,15 +73,15 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | `St` | Stripped Bough | active | MP **12**  CD **9s**  Instant  Range **5** | pressed | Deals **1×** physical damage · Their next attack deals −**40%** damage within **6s** |
 | `Sb` | Second Bloom | passive | MP **0**  CD **0s**  Instant | When you kill a mob | Adds **7** to **Thousand Petals** |
 | `Tw` | Tailwind | passive | MP **0**  CD **0s**  Instant  Range **1** | When a basic attack lands | Adds **1** to **Rising Breeze** |
-| `Sa` | Still Air | active | MP **12**  CD **9s**  Instant | pressed | +**50%** damage reduction for **6s** |
+| `Sa` | Still Air | active | MP **12**  CD **9s**  Instant | pressed | +**6%** defense for **6s** · +**6%** magic defense for **6s** |
 | `Bb` | Bare Branch | passive | MP **0**  CD **0s**  Instant | When your HP drops low | Adds **5** to **Held Breath** |
-| `Cb` | Crossed Branches | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Piercing Gust | +2 basic attack range per stack for **5s** |
+| `Cb` | Crossed Branches | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Piercing Gust | Gives **5** charges for **5s** |
 | `Pg` | Piercing Gust | active | MP **8**  CD **5s**  Instant  Range **8** | When you start a basic attack | Dashes to the target location · Deals **1×** physical damage |
 | `Rb` | Rising Breeze | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**3%** damage per stack for **5s** |
 | `Sc` | Scattered Petals | active | MP **12**  CD **8s**  Instant  Range **5** | pressed | Deals **1×** physical damage · −**30%** attack speed for **5s** |
 | `Ps` | Petal Storm | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | +**1%** damage per stack for **5s** · Deals **1×** physical damage |
 | `Pc` | Parting Clouds | passive | MP **0**  CD **0s**  Instant  Range **11** | When you parry | **50%** per hit: your next attack deals +**200%** damage within **5s** |
-| `Sq` | Squall | active | MP **12**  CD **12s**  Instant | pressed | +**30%** attack speed for **8s** · −**100%** damage reduction for **3s** |
+| `Sq` | Squall | active | MP **12**  CD **12s**  Instant | pressed | +**30%** attack speed for **8s** · −**6%** defense for **3s** · −**6%** magic defense for **3s** |
 | `Br` | Bending Reed | active | MP **8**  CD **5s**  Instant | pressed | Parries the next hit within **3s** — no damage taken |
 | `Hd` | Headwind | passive | MP **0**  CD **0s**  Instant  Range **11** | When you deal damage | −3 HP regen per stack for **5s** |
 | `Rw` | Returning Wind | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1×** physical damage, **5×** hits **+ 2.5 × banked total** |

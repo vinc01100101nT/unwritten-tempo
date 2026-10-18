@@ -34,7 +34,11 @@ public class SaveData
     // ready again rides the save (sharedUltimateDueAt).
     // v19: every piece of gear's roll text carries its rarity as a sixth part, and Copper to Wyrmhide are gone — a fold
     // takes Temper Dust and a quench Quench Oil.
-    public const int CurrentVersion = 19;
+    // v20: gear has no rarity — the roll text drops that part — every Ink line carries the tier that wrote it
+    // (stat:tier:value), and armour carries hard defence in tenths of a percent. Every character was deleted with it.
+    // v21: every piece's roll text gains a 7th part — its card slots and the grade and folds it was born at — and each
+    // Ink line says whether it was bought (stat:tier:value:bought). Every character was deleted with it.
+    public const int CurrentVersion = 21;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero

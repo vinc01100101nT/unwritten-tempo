@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 5410364025161807168, guid: 469df58eb6e2b894f99727e92496a0d5, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -36,7 +35,7 @@ MonoBehaviour:
     dex: 0
     luk: 3
     attackReach: 0
-    experiencePercent: 15.0
+    experiencePercent: 15
   wornSkillId: 
   madeOf: 0
   materialKind: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: Adds +10 confidence to meals of uncertain origin.

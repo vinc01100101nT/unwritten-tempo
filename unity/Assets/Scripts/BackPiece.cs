@@ -201,11 +201,24 @@ public static class BackPieceSway
     /// straight back instead of swinging across the map.</summary>
     public const float SnapAfterLengths = 9f;
 
-    /// <summary>One step of the damped spring pulling <paramref name="point"/> toward <paramref name="goal"/>.</summary>
+    /// <summary>The longest single step of the spring. One step only holds while Stiffness × step² + 2 × Damping × step
+    /// stays under 4 — a step of 1/31 s or longer breaks it, every step overshooting the last, and the cloth whips back
+    /// and forth each frame (measured 2026-10-17: a nudge settles at 35 frames a second and grows a millionfold in ten
+    /// seconds at 30). A longer frame is walked in equal steps no longer than this.</summary>
+    public const float LongestSpringStep = 1f / 120f;
+
+    /// <summary>The damped spring pulling <paramref name="point"/> toward <paramref name="goal"/> over <paramref name="dt"/>
+    /// seconds, in as many equal steps of at most <see cref="LongestSpringStep"/> as that takes.</summary>
     public static void Step(ref Vector3 point, ref Vector3 speed, Vector3 goal, float dt)
     {
-        speed += ((goal - point) * Stiffness - speed * Damping) * dt;
-        point += speed * dt;
+        int steps = Mathf.Max(1, Mathf.CeilToInt(dt / LongestSpringStep - 1e-4f));
+        // the 1e-4 keeps a 1/60 s frame at two steps when float rounding lands it a hair over 2.0
+        float h = dt / steps;
+        for (int s = 0; s < steps; s++)
+        {
+            speed += ((goal - point) * Stiffness - speed * Damping) * h;
+            point += speed * h;
+        }
     }
 
     /// <summary><paramref name="point"/> pushed straight out of the capsule round the segment <paramref name="a"/>–

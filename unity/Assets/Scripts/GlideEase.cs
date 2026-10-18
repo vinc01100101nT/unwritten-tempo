@@ -7,6 +7,14 @@ using UnityEngine;
 /// </summary>
 public static class GlideEase
 {
+    /// <summary>A GLIDE THAT HITS SOMETHING STOPS WHERE IT IS. True when one frame's move closed less than half of the
+    /// <paramref name="step"/> it tried — a wall, a creature, any collision in the way — so the body ends the glide on
+    /// the spot instead of pushing against it (or sliding round it) until its time runs out. A strike riding the dash
+    /// then fails, because the body never reached where it was sent (<see cref="DashLandings"/>). The person's legs and
+    /// a creature's pathing agent both ask this.</summary>
+    public static bool Blocked(float leftBefore, float leftAfter, float step)
+        => step > 1e-4f && leftBefore - leftAfter < step * 0.5f;
+
     /// <summary>The glide speed with <paramref name="remaining"/> of <paramref name="total"/> distance left. Each ramp
     /// spans <paramref name="easeSeconds"/> of travel at full speed, clamped to the trip, so a dash shorter than the
     /// window eases the whole way; a floor of a fifth keeps an eased glide from stalling short of its end. No easing =

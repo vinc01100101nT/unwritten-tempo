@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 212899280838363702, guid: 3dc8af427211c1d419b06e142c5e5aa9, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: For adventurers whose hairstyles have side quests.

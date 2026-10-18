@@ -25,7 +25,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Lifesteal fraction (0..1), read by <see cref="Health"/> when the player deals damage — whatever worn
     /// words and timed sub-stat windows are adding. Floored at 0 so a debuff cannot turn dealing damage into taking
     /// it.</summary>
-    public float LifeStealPct => Mathf.Max(0f, SubBonus(SubStat.LifeSteal));
+    public float LifeStealPct => UnitStatMath.LifeStealFraction(SubBonus(SubStat.LifeSteal));
 
     [Header("Stat distribution (pre-renewal RO)")]
     [Tooltip("Status points available at the start (base level 1) — the classic pre-renewal grant.")]
@@ -615,13 +615,20 @@ public class Character : MonoBehaviour, ICombatUnit
             return w != null ? w.weaponType : WeaponType.None;
         }
     }
-    public int Defense => Told ? toldCurrent.def : UnitStatMath.Defense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.Defense));
+    /// <summary>Soft defence — the flat part a blow loses after hard defence (see <see cref="Combat.Mitigated"/>).</summary>
+    public int SoftDefense => Told ? toldCurrent.def : UnitStatMath.SoftDefense(Inputs);
+    /// <summary>Hard defence in tenths of a percent: the ring's Defence node, what is worn, and timed Defence effects.
+    /// Uncapped here; a blow and the sheet hold it inside 90%.</summary>
+    public int HardDefenseTenths => Told ? toldCurrent.hardDef
+        : UnitStatMath.HardDefenseTenths(PassivePercent(StatId.Def), equipBonuses.hardDefTenths, SubBonus(SubStat.Defense));
 
     public int MaxMP        => Told ? toldMaxMP : UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
     public float MPRegenPerSecond => UnitStatMath.BaseMpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Inputs, MaxMP);
     public int MagicAttack  => Told ? toldCurrent.matkMax : UnitStatMath.MagicAttack(Inputs, equipBonuses, Lift(StatId.MAtk, SubStat.MagicAttack));
-    // The ring has no separate M.DEF node — the Def node is dual, so MagicDefense reads the Def passive %.
-    public int MagicDefense => Told ? toldCurrent.mdef : UnitStatMath.MagicDefense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.MagicDefense));
+    public int SoftMagicDefense => Told ? toldCurrent.mdef : UnitStatMath.SoftMagicDefense(Inputs);
+    // The ring has no separate M.DEF node — the Def node is dual, so hard magic defence reads the same node.
+    public int HardMagicDefenseTenths => Told ? toldCurrent.hardMdef
+        : UnitStatMath.HardDefenseTenths(PassivePercent(StatId.Def), equipBonuses.hardMdefTenths, SubBonus(SubStat.MagicDefense));
 
     // The damage window each hit rolls within. MAX = the full Attack/MagicAttack above; MIN is a
     // fraction of it raised by DEX (physical) / INT (magic). See MinDmgFloorFraction / MinFractionPerStat.
@@ -677,12 +684,16 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>SECONDS BETWEEN SWINGS at this unit's current attack speed — the live cadence, buffs included.
     ///
     /// <para>This is the honest way to read attack speed as a COUNT: the speed stat itself is a multiplier around 1
-    /// (capped at 3), so it can only become "how many times would I have swung" by way of the interval.</para>
+    /// turned into Ragnarok's ASPD (capped at 190), so it can only become "how many times would I have swung" by way
+    /// of the interval.</para>
     ///
     /// <para>Owned HERE for the same reason reach is (see <see cref="MeleeReachFullSize"/>): a cadence is a fact about
     /// the character, and it has to have an answer on a machine where that character has no body standing in a
     /// scene.</para></summary>
-    public float SwingTime => UnitOffense.AttackInterval(UnitOffense.SwingSeconds(HeldWeaponType, HeldWeaponWeight), AttackSpeedMult);
+    public float SwingTime => UnitOffense.AttackInterval(BaseSwingTime, AttackSpeedMult);
+
+    /// <summary>Seconds between swings with the weapon in hand at attack speed 1 — what ASPD is worked out from.</summary>
+    public float BaseSwingTime => UnitOffense.SwingSeconds(HeldWeaponType, HeldWeaponWeight);
 
     int HeldWeaponWeight { get { var w = GetEquipped(EquipSlotType.Weapon); return w != null ? w.weight : 0; } }
 
@@ -716,11 +727,10 @@ public class Character : MonoBehaviour, ICombatUnit
         // multiple of the shared full speed the owner's machine moves it by. An effect authoring no speed leaves it unknown.
         float seconds = 0f;
         var body = Body;
-        if (body != null && speedMult > 0f)
+        if (body != null)
         {
             Vector3 flat = dest - body.position; flat.y = 0f;
-            seconds = GlideEase.Seconds(speedMult * CharacterSpec.Active.FullSpeed, flat.magnitude, easeIn, easeOut,
-                                        Mathf.Max(0.01f, easeSeconds));
+            seconds = GlideSeconds(flat.magnitude, speedMult, easeIn, easeOut, easeSeconds);
         }
         if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
             { kind = NetPlayer.Motion.Kind.Glide, destination = dest, speed = speedMult,
@@ -729,6 +739,11 @@ public class Character : MonoBehaviour, ICombatUnit
         var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt, look);
         return seconds;
     }
+
+    public float GlideSeconds(float distance, float speedMult, bool easeIn, bool easeOut, float easeSeconds)
+        => speedMult > 0f
+            ? GlideEase.Seconds(speedMult * CharacterSpec.Active.FullSpeed, distance, easeIn, easeOut, Mathf.Max(0.01f, easeSeconds))
+            : 0f;
     public bool IsRelocating { get { var r = Rig(); return r != null && r.SkillGliding; } }
 
     /// <summary>Walk this character to <paramref name="target"/> and run <paramref name="onArrive"/> the moment the
@@ -779,7 +794,8 @@ public class Character : MonoBehaviour, ICombatUnit
 
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
-    public const float BaseCritMultiplier = UnitStatMath.BaseCritMultiplier;          // pre-renewal: a crit deals 140%…
+    // a crit deals 200%…
+    public const float BaseCritMultiplier = UnitStatMath.BaseCritMultiplier;
     // The single Critical ring node drives BOTH crit rate and crit damage — both read PassivePercent(StatId.Critical).
     public float CritMultiplier  => Told ? toldCurrent.critMult : UnitStatMath.CritMultiplier(Inputs, equipBonuses, Lift(StatId.Critical, SubStat.CritDamage));   // …+ LUK + the Critical node's % + what Ink wrote
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
@@ -856,14 +872,18 @@ public class Character : MonoBehaviour, ICombatUnit
         meleeMin = UnitStatMath.MinAttack(MeleeAttack, P(PrimaryStat.DEX)),   meleeMax = MeleeAttack,
         rangedMin = UnitStatMath.MinAttack(RangedAttack, P(PrimaryStat.DEX)), rangedMax = RangedAttack,
         matkMin = MinMagicAttack, matkMax = MaxMagicAttack,
-        def = Defense,            mdef = MagicDefense,
+        def = SoftDefense,        mdef = SoftMagicDefense,
+        hardDef = UnitStatMath.CappedHardDefenseTenths(HardDefenseTenths),
+        hardMdef = UnitStatMath.CappedHardDefenseTenths(HardMagicDefenseTenths),
+        guardHardDef = GuardHardDefNow,
+        aspd = Mathf.RoundToInt(UnitStatMath.Aspd(BaseSwingTime, AttackSpeedMult)),
         hit = Hit,                flee = Flee,
         maxHP = MaxHP,            maxMP = MaxMP,
         moveSpeed = 100,
         critChance = CritChance01, critMult = CritMultiplier,
         aspdMult = AttackSpeedMult, castTimeMult = CastTimeMult,
         swingsPerSecond = 1f / SwingTime,
-        guardCutPct = DamageCutNow, lifeStealPct = LifeStealPct,
+        lifeStealPct = LifeStealPct,
         reflectPct = ReflectPctNow, manaLeechPct = ManaLeechPctNow, barrierHP = BarrierNow,
         basicAttackRange = ReachNow,
     };
@@ -874,8 +894,8 @@ public class Character : MonoBehaviour, ICombatUnit
 
     // State-sourced readouts, neutral while BaseDerived is snapshotting — so each reads 0 on the baseline and shows its
     // real value in the live view, giving the window a clean "0 (+25)" bonus line instead of a silently-mixed number.
-    // What the damage-reduction sub-stat is cutting right now, as a positive fraction — the readout the window shows.
-    float DamageCutNow    => ignoreStates ? 0f : 1f - States.IncomingMult;
+    // The hard defence a timed Defence effect (Guard Stance and the like) is adding right now, in tenths.
+    int   GuardHardDefNow => Mathf.RoundToInt(SubBonus(SubStat.Defense) * 1000f);
     float ManaLeechPctNow => ignoreStates ? 0f : States.ManaLeechPct;
     int   BarrierNow      => ignoreStates ? 0  : States.ShieldPool;
     // Reflect has BOTH a permanent source (the thorns card) and a timed one — the baseline keeps the permanent part.
@@ -954,6 +974,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Our LUK, which lowers an attacker's crit chance against us — the same shield a mob's LUK gives it.</summary>
     public int CritShieldLuk => P(PrimaryStat.LUK) + States.WornCritShieldLuk;
+    public int PerfectDodgeLuk => P(PrimaryStat.LUK);
 
     /// <summary>Roll the damage NUMBER for an attack whose crit is already decided. Only called once the strike is
     /// known to connect. UnitOffense.Dealt folds in the damage buffs — the same call a mob's swing makes, so both
@@ -1452,16 +1473,6 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Tell this character which status host is theirs, instead of reading the one-per-screen handle.</summary>
     public void BindStatusHost(StatusController host) { boundStatusHost = host; }
 
-    // ---- Damage reduction (a timed defensive stance) ---------------------------------------------
-    // Guard used to be its own state and its own effect kind. It only ever moved one number — how hard an incoming hit
-    // lands — so it is the DamageReduction sub-stat now, and the exposure debuff that used to be Vulnerability is the
-    // same pile carrying a negative. Both intakes hand their raw post-defence figure to UnitMitigation.Landed.
-
-    /// <summary>True while a defensive window is cutting incoming damage.</summary>
-    public bool GuardActive => States.SubStatBonus(SubStat.DamageReduction) > 0f;
-    /// <summary>Seconds left on the damage-reduction window (0 when none).</summary>
-    public float GuardRemaining => States.Remaining(StateId.DamageReduction);
-
     // ---- Timed offensive self-buffs + regen (skill-driven; runtime-only, cleared on revive) -------
     // Each buff is a multiplier live until its expiry; the getters/rolls below fold in the current value (1 when
     // expired). Latest call replaces the current buff on that channel (no stacking) — matches the Haste model.
@@ -1603,7 +1614,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
         // Element property: the incoming attack's element vs what we are hit as scales the damage (RO chart).
         float mod = ElementModifier(attackElement);
-        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerAttack, Defense, crit), mod);
+        if (mod < 0f) return HealedByElement(Combat.Mitigated(attackerAttack, HardDefenseTenths, SoftDefense, crit), mod);
         // our armor fully resists this element
         if (mod == 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // read LAST of the negations, so a charge is only ever spent on a hit that would really have landed (a miss /
@@ -1611,7 +1622,8 @@ public class Character : MonoBehaviour, ICombatUnit
         if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both, exactly as it does on a mob.
-        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, Defense, crit) * mod);
+        // server-math: a watched copy returned above with the server's told number; only the server's copy gets here
+        int dmg = UnitMitigation.Landed(Combat.Mitigated(attackerAttack, HardDefenseTenths, SoftDefense, crit) * mod);
         // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
         // no HP, so it must also not flash, not bounce thorns, and must report 0 to the attacker
         // (whose own "did I connect" check pops the damage number and grants its XP).
@@ -1673,6 +1685,8 @@ public class Character : MonoBehaviour, ICombatUnit
             OnDamaged?.Invoke(dmg);
             // thorns: bounce a fraction back at the attacker
             Reflect(dmg, attacker);
+            // and the attacker's life steal heals it, exactly as a person's does when they hit a creature
+            AttackerStealsLife(dmg, attacker);
         }
         // the death window (SystemWindow) handles the death → respawn flow
         if (CurrentHP == 0) RaiseDeath();
@@ -1722,15 +1736,15 @@ public class Character : MonoBehaviour, ICombatUnit
         if (IsWatchedCopy) return LandOnMe(attackerMagic, attacker, true, crit, -1);
 
         float mod = ElementModifier(attackElement);
-        // A sniper's magic crit pierces magic defence the way a physical crit pierces defence (Combat.AfterDefense).
-        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerMagic, MagicDefense, crit), mod);
+        // A sniper's magic crit pierces magic defence the way a physical crit pierces defence (Combat.Mitigated).
+        if (mod < 0f) return HealedByElement(Combat.Mitigated(attackerMagic, HardMagicDefenseTenths, SoftMagicDefense, crit), mod);
         // armour already nullified it — nothing to parry, so no charge is spent
         if (mod == 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // the read catches magic too: Parry is a timing skill, not a physical block
         if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // server-math: a watched copy returned above with the server's told number; only the server's copy gets here
-        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, MagicDefense, crit) * mod);
+        int dmg = UnitMitigation.Landed(Combat.Mitigated(attackerMagic, HardMagicDefenseTenths, SoftMagicDefense, crit) * mod);
         return LandOnMe(dmg, attacker, true, crit, -1);
     }
 
@@ -1756,6 +1770,14 @@ public class Character : MonoBehaviour, ICombatUnit
         if (pct <= 0f || dmgTaken <= 0 || PlayerUnits.Gone(attacker) || attacker.IsDead) return;
         int r = Mathf.RoundToInt(dmgTaken * pct);
         if (r > 0) CombatAuthority.ApplyTrue(attacker, r, TrueDamageCause.ReflectedByPerson);
+    }
+
+    // Life steal on a blow that landed on this person: mobs get everything players get.
+    static void AttackerStealsLife(int dmgTaken, ICombatUnit attacker)
+    {
+        if (dmgTaken <= 0 || PlayerUnits.Gone(attacker) || attacker.IsDead) return;
+        float steal = attacker.LifeStealPct;
+        if (steal > 0f) attacker.LeechHeal(Mathf.RoundToInt(dmgTaken * steal));
     }
 
     /// <summary>Heal from lifesteal — like <see cref="Heal"/> but SILENT (no green popup), so multi-hit leech
@@ -1925,8 +1947,8 @@ public class Character : MonoBehaviour, ICombatUnit
         if (amount <= 0) return 0;
 
         // The SAME kills feed every track: the character (flat stats) and the ring (its own level → passive draft
-        // points), which is paid a THIRD of it. The ring is part of the character, so nothing gates this — not even
-        // the character's cap below: the ring goes on levelling after 99.
+        // points), which is paid a THIRD of it. The ring is part of the character, so the character's own cap below
+        // does not gate it; the ring has its own cap of 99 (RingProgress.MaxLevel).
         ringLevelsGained = Ring.AddXP(UnitStatMath.RingXpFromKill(amount));
         // AND THE WEAPON IN HAND'S MASTERY, paid TWO THIRDS of the same experience — at the speed its grade trains,
         // stopped at what its grade allows. Each level reached is one more mastery point to spend in the Skills window.
@@ -2090,14 +2112,15 @@ public class Character : MonoBehaviour, ICombatUnit
         if (def == null || count <= 0) return;
 
         int folds = inst != null ? inst.upgrade : 0;
-        var rarity = Rarities.Of(def, inst);
-        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, folds, rarity)) return;
+        int slots = inst != null ? inst.cardSlots : 0;
+        var rarity = Rarities.Of(def);
+        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, folds, rarity, slots)) return;
 
         // A server holds several people and has no chat of its own; one that could not reach the owner above has
         // nobody to tell.
         if (GameServer.IsServer || this != Instance) return;
-        ChatController.ItemArrived(def, count, folds);
-        LootCards.Show(def, count, folds, rarity);
+        ChatController.ItemArrived(def, count, folds, slots);
+        LootCards.Show(def, count, folds, rarity, slots);
     }
 
     // ---- HOW MUCH THE BAG HOLDS (BagRoom) -------------------------------------------------------------------

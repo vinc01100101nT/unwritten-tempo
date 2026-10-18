@@ -45,10 +45,11 @@
       "castTime": 0,
       "castRange": 6,
       "trigger": "",
-      "description": "Brace behind a guard.\nCuts incoming damage by 50% for 5s and forces nearby foes to attack you.",
+      "description": "Brace behind a guard.\n+6% defence and magic defence for 5s, and forces nearby foes to attack you.",
       "trademark": "",
       "effects": [
-        "+**50%** damage reduction for **5s**",
+        "+**6%** defense for **5s**",
+        "+**6%** magic defense for **5s**",
         "Taunts nearby enemies for **5s**"
       ]
     },
@@ -73,7 +74,8 @@
       "trademark": "",
       "effects": [
         "Deals **1×** magic damage",
-        "+**100%** damage reduction for **0.5s**"
+        "+**6%** defense for **0.5s**",
+        "+**6%** magic defense for **0.5s**"
       ]
     },
     {
@@ -1413,10 +1415,11 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "",
-      "description": "Weather it.\nTake 50% less damage for 6 seconds.",
+      "description": "Weather it.\n+6% defence and magic defence for 6 seconds.",
       "trademark": "Still Air",
       "effects": [
-        "+**50%** damage reduction for **6s**"
+        "+**6%** defense for **6s**",
+        "+**6%** magic defense for **6s**"
       ]
     },
     {
@@ -1459,10 +1462,10 @@
       "castTime": 0,
       "castRange": 11,
       "trigger": "After casting Piercing Gust",
-      "description": "No escape.\nCasting Piercing Gust arms 5 charges, each +2 basic attack range for 5s. Every basic attack you start spends one to lunge at the target again.",
-      "trademark": "Crossed Branches",
+      "description": "No escape.\nCasting Piercing Gust gives 5 charges for 5s. Every basic attack you start on a target within Piercing Gust's range spends one to lunge at it again.",
+      "trademark": "",
       "effects": [
-        "+2 basic attack range per stack for **5s**"
+        "Gives **5** charges for **5s**"
       ]
     },
     {
@@ -1600,11 +1603,12 @@
       "castTime": 0,
       "castRange": 0,
       "trigger": "",
-      "description": "Go faster, fragile.\n+30% Attack Speed for 8 seconds, but you take double damage for the first 3.",
+      "description": "Go faster, fragile.\n+30% Attack Speed for 8 seconds, but you lose 6% defence and magic defence for the first 3.",
       "trademark": "Squall",
       "effects": [
         "+**30%** attack speed for **8s**",
-        "−**100%** damage reduction for **3s**"
+        "−**6%** defense for **3s**",
+        "−**6%** magic defense for **3s**"
       ]
     },
     {

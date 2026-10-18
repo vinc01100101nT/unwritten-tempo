@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 6667950716569879627, guid: 2dfcc43c274ec1d41881d2db1cc986c5, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: For riding into the sunset or dramatically entering the bakery.

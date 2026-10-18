@@ -86,3 +86,5 @@
 - [Income first, then prices](../income-first-then-prices.md) — 2026-10-13: every NPC price/service cost is a placeholder; settle player income first, never justify income from a current cost.
 - [Gear is the only difficulty dial](../gear-is-the-only-difficulty-dial.md) — 2026-10-13: level sets the body, grade and folds (two separate variables, not tied to level) set difficulty; pay = level × kind × grade × fold; never a measured toughness number.
 - [Creature grade decides its material](../creature-grade-decides-material.md) — 2026-10-16: one material per creature by grade, newbie maps Raw +0, base HP 160, item tags are the rule, payout script at deploy.
+- [Weapon variants stay inside one type](../weapon-variants-stay-inside-one-type.md) — 2026-10-17: a variant is another item of the SAME weapon type (three Swords), never another kind; never invent kinds.
+- [All skill numbers are placeholders](../sword-skill-numbers-are-placeholders.md) — every number on every skill (all weapons, unattached too) is untuned; retune freely.

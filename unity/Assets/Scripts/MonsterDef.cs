@@ -94,16 +94,17 @@ public class MonsterDef : ScriptableObject
     [Tooltip("THE GRADE every piece this creature wears comes to life at — Raw through A, the same ladder a quench " +
              "climbs. It decides the fold cap and HOW MANY stats Ink writes on each piece (Raw none, F one, up to A six).")]
     public Quality gearQuality = Quality.Raw;
-    [Tooltip("How many times every piece this creature wears is folded. Each fold adds a share of the piece's base to " +
-             "its attack or defence. Never past the cap of +10, at every grade.")]
-    public int gearFolds;
-    [Tooltip("Which Ink writes the stats on every piece this creature wears — 1 Watery, 2 Thin, 3 Faint, 4 Clear, " +
-             "5 Sharp. WHICH stats are written is rolled fresh each life, exactly as a station rolls one.")]
-    [Range(1, 5)] public int gearInkTier = 1;
+    /// <summary>The folds this creature's pay and value are worked out at: the fewest its kind wears (0, 4 or 7). The
+    /// folds it actually wears are rolled each life (<see cref="CreatureLoot.RollWornFolds"/>).</summary>
+    public int FileFolds => CreatureLoot.FileFolds(kind);
     [Tooltip("This creature's Weapon Mastery in the ONE weapon it holds — the same mastery a player earns, put on that " +
              "weapon when the creature is made. It raises that weapon's three stats by 0.5% a level, counting only " +
              "what the weapon's grade allows. A creature has mastery in one weapon only, so with no weapon it is 0.")]
     public int weaponMastery;
+    [Tooltip("Rolls weapon and armour each life: every time it comes to life it picks a weapon type at random and one " +
+             "armour material for its body, shoes and garment, instead of the pieces listed above. Its mastery counts " +
+             "in whatever weapon it rolled.")]
+    public bool rollsGearEachLife;
     [Tooltip("Which stats this creature's ring has invested in. Parallel to Ring Rank Values. The ring is part of "+
              "the creature, so these always count — nothing has to be worn.")]
     public StatId[] ringRankStats = System.Array.Empty<StatId>();
@@ -193,8 +194,6 @@ public class MonsterDef : ScriptableObject
             stats = u,
             startingGear = startingGear,
             gearQuality = gearQuality,
-            gearFolds = gearFolds,
-            gearInkTier = gearInkTier,
             ringRankStats = ringRankStats,
             ringRankValues = ringRankValues,
             name = string.IsNullOrEmpty(displayName) ? name : displayName,

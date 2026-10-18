@@ -21,3 +21,4 @@
 - [Guide vanished, list stuck at bottom](../guide-scroll-fight-two-hints-one-list.md) — two hints in one long list each scrolled the other away every frame; only the chosen hint's part is scrolled now.
 - [Compact windows, no explaining text](../ui-compact-no-explaining-text.md) — user wants small windows with no empty-state sentences, self-evident headings or hints; the ring is a clickable circle; its points are "ring points", never "skill points" (2026-10-11).
 - [Floating text hidden by grass, bars not](../world-hud-draws-over-world-switch.md) — the on-top switch is `unity_GUIZTestMode` via `UiKit.DrawOverTheWorld`; HasProperty lies about it and `new Material(copy)` drops it.
+- [Hover = dark strip, right-click = item card](../hover-strip-vs-item-card.md) — hover text uses ItemTooltip.ShowName (multi-line ok); the scrolling item card is right-click only.

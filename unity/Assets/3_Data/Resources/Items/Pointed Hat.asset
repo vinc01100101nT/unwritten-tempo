@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 1549731415641202670, guid: acbe53dfa0421554ea0303f1f7d5f906, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: Makes your wisdom look taller than it is.

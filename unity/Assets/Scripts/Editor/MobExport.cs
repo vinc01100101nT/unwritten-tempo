@@ -34,6 +34,8 @@ public static class MobExport
     {
         public string id, name, kind, element, size, biome, drops, weapon, gear;
         public int level, elementLevel, hp, atk, def, flee, xp, str, agi, vit, intel, dex, luk;
+        /// <summary>Hard defence as a percentage, one decimal (def above is soft defence, the flat part).</summary>
+        public float hardDef;
         public Home[] homes;
     }
 
@@ -76,10 +78,11 @@ public static class MobExport
                 hp = MonsterDefStats.Derived(d, MonsterDefStats.Stat.HP),
                 atk = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Atk),
                 def = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def),
+                hardDef = MonsterDefStats.Derived(d, MonsterDefStats.Stat.HardDef) / 10f,
                 flee = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee),
                 xp = CreatureKinds.KillExperience(d),
                 weapon = d.Weapon != null ? d.Weapon.displayName : "",
-                gear = d.startingGear != null && d.startingGear.Length > 0 ? d.gearQuality + " +" + d.gearFolds : "",
+                gear = d.startingGear != null && d.startingGear.Length > 0 ? d.gearQuality + " +" + d.FileFolds : "",
                 str = d.str, agi = d.agi, vit = d.vit, intel = d.intel, dex = d.dex, luk = d.luk,
                 drops = CreatureDrops.Line(d),
                 homes = h,

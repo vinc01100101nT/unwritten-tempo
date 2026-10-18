@@ -156,34 +156,86 @@ static class Checks
         // and this check said nothing, because it was comparing the code against itself.)
         That(Math.Abs(Combat.MinHitChance - 0.05f) < 0.0001f, CombatF,
              "the accuracy FLOOR is no longer 5%: " + Combat.MinHitChance);
-        That(Math.Abs(Combat.MaxHitChance - 0.95f) < 0.0001f, CombatF,
-             "the accuracy CEILING is no longer 95%: " + Combat.MaxHitChance);
+        That(Math.Abs(Combat.MaxHitChance - 1f) < 0.0001f, CombatF,
+             "the accuracy CEILING is no longer 100%: " + Combat.MaxHitChance);
         for (int hit = -500; hit <= 500; hit += 25)
             for (int flee = 0; flee <= 500; flee += 25)
             {
                 float chance = Combat.HitChance01(hit, flee);
-                That(chance >= 0.05f - 0.0001f && chance <= 0.95f + 0.0001f, CombatF,
+                That(chance >= 0.05f - 0.0001f && chance <= 1f + 0.0001f, CombatF,
                      "hit chance left its window at hit " + hit + " against evasion " + flee + ": " + chance);
             }
 
-        // A critical hit ignores defence. Every value, not one sample.
-        for (int def = 0; def <= 200; def += 20)
-            That(Math.Abs(Combat.AfterDefense(100f, def, true) - 100f) < 0.001f, CombatF,
-                 "a critical hit was reduced by defence (" + def + ")");
+        // RAGNAROK'S TWO-PART DEFENCE (decided 2026-10-18): hard defence takes a percentage, soft defence a flat amount
+        // after it, and a crit skips both. Hard defence is held inside [0, 90%]. Literals, so a moved cap fails here.
+        That(Combat.MaxHardDefenseTenths == 900, CombatF, "hard defence should stop at 90%, not " + Combat.MaxHardDefenseTenths);
+        for (int hard = 0; hard <= 2000; hard += 100)
+            for (int soft = 0; soft <= 40; soft += 10)
+                That(Math.Abs(Combat.Mitigated(100f, hard, soft, true) - 100f) < 0.001f, CombatF,
+                     "a critical hit was reduced by defence (" + hard + " tenths, " + soft + " soft)");
+        That(Math.Abs(Combat.Mitigated(100f, 0, 20, false) - 80f) < 0.001f, CombatF, "100 against 20 soft defence should leave 80");
+        That(Math.Abs(Combat.Mitigated(100f, 500, 0, false) - 50f) < 0.001f, CombatF, "100 against 50% hard defence should leave 50");
+        That(Math.Abs(Combat.Mitigated(100f, 450, 12, false) - 43f) < 0.001f, CombatF, "100 against 45% + 12 should leave 43");
+        That(Math.Abs(Combat.Mitigated(100f, 2000, 0, false) - 10f) < 0.001f, CombatF, "hard defence past 90% should still leave 10 of 100");
+        That(Math.Abs(Combat.Mitigated(100f, -300, 0, false) - 100f) < 0.001f, CombatF, "negative hard defence should never add damage");
+        // Timed defence counts as points (0.06 = 6 points = 60 tenths) and never takes hard defence below 0.
+        That(UnitStatMath.HardDefenseTenths(0.33f, 450, 0.06f) == 840, StatMath, "33 ring ranks + 45% worn + a 6-point buff should be 840 tenths");
+        That(UnitStatMath.HardDefenseTenths(0f, 20, -0.06f) == 0, StatMath, "a defence debuff took hard defence below 0");
+        That(UnitStatMath.CappedHardDefenseTenths(1200) == 900, StatMath, "the sheet's hard defence passed 90%");
 
-        // An ordinary hit loses exactly the flat defence — no percentage is taken here.
-        for (int def = 0; def <= 200; def += 20)
-            That(Math.Abs(Combat.AfterDefense(100f, def, false) - (100f - def)) < 0.001f, CombatF,
-                 "an ordinary hit should lose exactly its defence (" + def + ")");
+        // RAGNAROK'S FORMULAS (adopted 2026-10-18): hit = HIT + 80 − FLEE; HIT = level + DEX; FLEE = level + AGI; FLEE
+        // loses 10% per attacker past the second and 12 always hit; perfect dodge is 0.1% a LUK; crit = 1% + LUK × 0.3%,
+        // and each target LUK takes 0.2% off; VIT gives HP +1% a point; VIT defence = VIT÷2 + max(VIT×0.3, VIT²÷150 − 1);
+        // magic attack spreads from INT + (INT÷7)² to INT + (INT÷5)²; a leading stat adds (stat÷10)².
+        That(Combat.HitBase == 80 && Math.Abs(Combat.HitChance01(300, 330) - 0.5f) < 0.0001f, CombatF, "HIT 300 vs FLEE 330 should hit 50%");
+        var plain = UnitStatInputs.Default(50); plain.dex = 40; plain.agi = 30; plain.luk = 60;
+        That(UnitStatMath.Hit(plain, default(EquipBonuses), 0f) == 90, StatMath, "HIT should be level + DEX, no LUK");
+        That(UnitStatMath.Flee(plain, default(EquipBonuses), 0f) == 80, StatMath, "FLEE should be level + AGI, no LUK, no step bonus");
+        That(UnitStatMath.CrowdedFlee(200, 2) == 200 && UnitStatMath.CrowdedFlee(200, 4) == 160 && UnitStatMath.CrowdedFlee(200, 11) == 20
+             && Combat.HitChance01(0, UnitStatMath.CrowdedFlee(900, 12)) >= 1f, StatMath, "the crowd penalty on FLEE is off");
+        That(Math.Abs(UnitStatMath.PerfectDodgePerLuk - 0.001f) < 1e-7f && Math.Abs(UnitStatMath.CritShieldPerLuk - 0.002f) < 1e-7f,
+             StatMath, "perfect dodge should be 0.1% a LUK and the crit shield 0.2% a LUK");
+        That(Math.Abs(UnitStatMath.CritChance01(plain, default(EquipBonuses), 0f) - (0.01f + 60 * 0.003f)) < 1e-5f, StatMath, "crit should be 1% + LUK × 0.3%");
+        That(UnitStatMath.VitSoftDefense(99) == 49 + 64 && UnitStatMath.VitSoftDefense(30) == 15 + 9 && UnitStatMath.VitSoftDefense(0) == 0,
+             StatMath, "VIT defence should be VIT÷2 + max(VIT×0.3, VIT²÷150 − 1)");
+        That(UnitStatMath.TensSquared(99) == 81 && UnitStatMath.TensSquared(9) == 0, StatMath, "a leading stat should add (stat÷10)²");
+        That(UnitStatMath.MinMagicAttack(1000, 99) == 1000 - (19 * 19 - 14 * 14), StatMath, "magic spread should be (INT÷5)² − (INT÷7)²");
+        var vit = UnitStatInputs.Default(1); vit.vit = 50;
+        That(UnitStatMath.MaxHP(vit, default(EquipBonuses), 0f) == 375, StatMath, "VIT should give +1% max HP a point (250 × 1.5)");
 
-        // A crit's chance is held inside [0, 95%] however much LUK either side has — the same sum for every unit.
+        // A crit's chance can reach 100% (no lower ceiling), held inside [0, 100%] whatever LUK either side has.
         for (int luk = 0; luk <= 1000; luk += 50)
             foreach (float chance in new[] { 0f, 0.3f, 0.95f, 5f })
             {
                 float c = UnitStatMath.EffectiveCritChance(chance, luk);
-                That(c >= 0f && c <= 0.95f + 0.0001f, StatMath,
-                     "crit chance " + chance + " against " + luk + " LUK left [0, 95%]: " + c);
+                That(c >= 0f && c <= 1f + 0.0001f, StatMath,
+                     "crit chance " + chance + " against " + luk + " LUK left [0, 100%]: " + c);
             }
+        That(Math.Abs(UnitStatMath.EffectiveCritChance(1f, 0) - 1f) < 0.0001f, StatMath, "a crit chance of 100% should stay 100%");
+        // A crit deals double; crit-damage bonuses stop at triple. Ragnarok's attack speed: 190 at most, 0 at least.
+        That(UnitStatMath.BaseCritMultiplier == 2f && UnitStatMath.MaxCritMultiplier == 3f, StatMath, "a crit should be 2x, at most 3x");
+        That(UnitStatMath.MaxAspd == 190 && UnitStatMath.MinAspd == 0, StatMath, "ASPD should run 0 to 190");
+        That(Math.Abs(UnitStatMath.Aspd(1f, 1f) - 150f) < 0.001f, StatMath, "a 1 s weapon at speed 1 should be ASPD 150");
+        That(Math.Abs(UnitStatMath.Aspd(1f, 100f) - 190f) < 0.001f, StatMath, "ASPD passed 190");
+        That(UnitStatMath.Aspd(0.8f, 0f) == 0f, StatMath, "attack speed slowed to nothing should land on ASPD 0, not infinity");
+        That(Math.Abs(UnitStatMath.SwingIntervalFromAspd(190f) - 0.2f) < 0.0001f, StatMath, "ASPD 190 should swing every 0.2 s");
+        That(Math.Abs(UnitStatMath.SwingIntervalFromAspd(0f) - 4f) < 0.0001f, StatMath, "ASPD 0 should swing every 4 s");
+        That(Math.Abs(UnitOffense.AttackInterval(0.8f, 0f) - 4f) < 0.0001f, StatMath, "a unit slowed to nothing must still swing every 4 s");
+        // Movement-speed effects stop at 250%; life steal at 25% of a blow; reflect at 50%.
+        That(UnitStatMath.MoveMult(5f) == 2.5f && UnitStatMath.MoveMult(-3f) == 0f, StatMath, "movement speed left [0, 250%]");
+        That(UnitStatMath.LifeStealFraction(0.9f) == 0.25f && UnitStatMath.ReflectFraction(0.9f) == 0.5f, StatMath,
+             "life steal should stop at 25% and reflect at 50%");
+        // Creature kinds: elite 30x health, a shadow 90x at level 105 to 150x at level 170; attack the cube root.
+        That(CreatureKinds.HealthMultiplier(CreatureKind.Normal, 50) == 1 && CreatureKinds.HealthMultiplier(CreatureKind.Elite, 50) == 30,
+             StatMath, "an elite should have 30x health, a normal creature 1x");
+        int[] shadowLevels = { 105, 110, 140, 165, 170, 200 };
+        int[] shadowHealth = { 90, 95, 122, 145, 150, 150 };
+        for (int i = 0; i < shadowLevels.Length; i++)
+            That(CreatureKinds.HealthMultiplier(CreatureKind.Shadow, shadowLevels[i]) == shadowHealth[i], StatMath,
+                 "a level " + shadowLevels[i] + " shadow should have " + shadowHealth[i] + "x health, got "
+                 + CreatureKinds.HealthMultiplier(CreatureKind.Shadow, shadowLevels[i]));
+        That(Math.Abs(CreatureKinds.AttackMultiplier(CreatureKind.Elite, 50) - 3.107f) < 0.001f, StatMath, "an elite should hit about 3.107x");
+        That(CreatureKinds.AttackMultiplier(CreatureKind.Normal, 50) == 1f, StatMath, "a normal creature should hit 1x");
     }
 
     // ---- a strike that grows ------------------------------------------------------------------------------
@@ -276,7 +328,10 @@ static class Checks
         That(ArmourWords.For(EquipSlotType.Weapon).Length == 0, WordsF, "a weapon can roll an armour word");
 
         // The agreed first numbers, as literals.
-        That(Math.Abs(ArmourWords.Amount(ArmourWord.Bulwark, Quality.A) - 8f) < 0.001f, WordsF, "Bulwark at A should be 8%");
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Bulwark, Quality.A) - 6f) < 0.001f, WordsF, "Bulwark at A should be 6 points of hard defence");
+        var bulwark = default(EquipBonuses);
+        ArmourWords.AddWord(ArmourWord.Bulwark, 6f, ref bulwark);
+        That(bulwark.hardDefTenths == 60 && bulwark.hardMdefTenths == 60, WordsF, "Bulwark 6 should be 60 tenths of hard defence and magic defence");
         That(Math.Abs(ArmourWords.Amount(ArmourWord.Emberward, Quality.A) - 15f) < 0.001f, WordsF, "a ward at A should be 15%");
         // Anchored and Wayfarer, decided 2026-10-06: 5% to 25% shorter shoves, +1 to +5 HP a second.
         That(Math.Abs(ArmourWords.Amount(ArmourWord.Anchored, Quality.Raw) - 5f) < 0.001f, WordsF, "Anchored at Raw should be 5%");
@@ -290,8 +345,9 @@ static class Checks
         That(Math.Abs(wornTable[(int)SubStat.HPRegen] - 3f) < 0.001f, WordsF, "a worn Wayfarer does not reach HP regeneration");
         That(Math.Abs(ArmourWords.CutBy(10f, 0.25f) - 7.5f) < 0.001f, WordsF, "a 25% Anchored should leave a shove at 75% of its speed");
 
-        // Ironblood's percentage reaches the crit roll as the LUK it is worth: 7.5% at 0.3% a point is 25 LUK.
-        That(UnitStatMath.CritShieldAsLuk(7.5f) == 25, StatMath, "7.5% crit shield should be worth 25 LUK");
+        // Ironblood's percentage reaches the crit roll as the LUK it is worth: 7.5% at Ragnarok's 0.2% a point is 37.5,
+        // rounded to 38 LUK.
+        That(UnitStatMath.CritShieldAsLuk(7.5f) == 38, StatMath, "7.5% crit shield should be worth 38 LUK");
         // A quarter cut takes a quarter off; a ward cuts damage but never touches immunity or a heal.
         That(Math.Abs(ArmourWords.CutBy(8f, 0.25f) - 6f) < 0.001f, WordsF, "a 25% cut of 8 should be 6");
         That(Math.Abs(Elements.Warded(1.5f, 0.1f) - 1.35f) < 0.001f, ElementF, "a 10% ward on 150% should leave 135%");
@@ -300,7 +356,7 @@ static class Checks
         // A worn word lands in the sub-stat table in that stat's own units, and worn shoes buy no movement speed.
         var table = new float[SubStats.All.Length];
         var eb = default(EquipBonuses);
-        CraftingMath.AddPiece(CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw, Rarity.Common, 0, 0, 0),
+        CraftingMath.AddPiece(CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw, 0, 0, 0),
                               null, null, ref eb);
         ArmourWords.AddWord(ArmourWord.Wellspring, 2.5f, ref eb);
         ArmourWords.FoldIntoSubStats(eb, table);
@@ -452,27 +508,22 @@ static class Checks
             That(seen.TryGetValue(stat, out int count) && count == 1, RingF,
                  stat + " appears on the ring " + (seen.TryGetValue(stat, out int c) ? c : 0) + " times, not once");
 
+        // Every node is worth 1% a rank and stops at 33 ranks (decided 2026-10-18).
+        That(SkillRing.NodeCap == 33, RingF, "a ring node should stop at 33 ranks, not " + SkillRing.NodeCap);
         foreach (var stat in SkillRing.Ring)
-        {
-            float cap = SkillRing.CapFor(stat);
-            That(Math.Abs(SkillRing.Percent(stat, 0)) < 0.0001f, RingF,
-                 stat + " is worth something at zero ranks");
-            float last = -1f;
-            for (int ranks = 0; ranks <= 200; ranks++)
+            for (int ranks = 0; ranks <= 60; ranks++)
             {
-                float value = SkillRing.Percent(stat, ranks);
-                That(value >= last, RingF, stat + " goes DOWN between " + (ranks - 1) + " and " + ranks + " ranks");
-                That(value < cap + 0.0001f, RingF,
-                     stat + " passed its ceiling at " + ranks + " ranks: " + value + " over " + cap);
-                last = value;
+                float want = 0.01f * Math.Min(ranks, 33);
+                That(Math.Abs(SkillRing.Percent(stat, ranks) - want) < 0.0001f, RingF,
+                     stat + " at " + ranks + " ranks is " + SkillRing.Percent(stat, ranks) + ", not " + want);
             }
-        }
+        That(RingProgress.MaxLevel == 99, RingF, "the ring should stop at level 99");
     }
 
-    // ---- the trademark roll: a class, then a skill of it evenly; and the rarity draw ------------------------
+    // ---- the trademark roll: a class, then a skill of it evenly; and what a material's rarity is ---------------
     // A trademark is an ULTIMATE's on 1% of new weapons and an active's or a passive's on the rest, every skill inside
     // its class equally likely; a weapon type with only one class gives that class everything (decided 2026-10-13).
-    // The rarity shares are the decided ladder: Common 50, Uncommon 30, Rare 14, Epic 5, Legendary 1. Promises, so stated.
+    // Gear has no rarity (decided 2026-10-18); materials keep theirs.
     const string RarityF = "unity/Assets/Scripts/Rarity.cs";
 
     static void TrademarkRoll()
@@ -501,53 +552,12 @@ static class Checks
         That(CraftingMath.TrademarkChance(true, 0, 0) == 0f && CraftingMath.TrademarkChance(false, 0, 0) == 0f, CraftF,
              "a weapon type with nothing to roll still has a trademark chance");
 
-        var rarities = (Rarity[])Enum.GetValues(typeof(Rarity));
-        That(CraftingMath.RarityCount == rarities.Length, CraftF,
-             "there are " + rarities.Length + " rarities but " + CraftingMath.RarityCount + " shares");
-        int[] promised = { 50, 30, 14, 5, 1 };
-        int sum = 0;
-        for (int r = 0; r < rarities.Length; r++)
-        {
-            int share = CraftingMath.RarityShare(rarities[r]);
-            sum += share;
-            if (r < promised.Length)
-                That(share == promised[r], CraftF, rarities[r] + "'s share is " + share + "%, not the decided " + promised[r] + "%");
-        }
-        That(sum == 100, CraftF, "the rarity shares add up to " + sum + "%, not 100%");
-
-        // In ANY set of rarities taking part, each is drawn exactly as often as its share, the missing ones' share
-        // handed out in proportion.
-        int[][] sets =
-        {
-            new[] { 1, 1, 1, 1, 1 }, new[] { 1, 1, 1, 0, 0 }, new[] { 0, 0, 0, 0, 1 }, new[] { 1, 0, 1, 0, 0 },
-        };
-        foreach (var present in sets)
-        {
-            string name = "[" + string.Join(",", present) + "]";
-            int total = CraftingMath.RarityDrawTotal(present);
-            int expectTotal = 0;
-            for (int r = 0; r < present.Length; r++) if (present[r] > 0) expectTotal += CraftingMath.RarityShare((Rarity)r);
-            That(total == expectTotal, CraftF, "the rarity draw over " + name + " is " + total + " wide, not " + expectTotal);
-            var hits = new int[present.Length];
-            for (int roll = 0; roll < total; roll++) hits[(int)CraftingMath.RarityAt(present, roll)]++;
-            for (int r = 0; r < present.Length; r++)
-            {
-                int want = present[r] > 0 ? CraftingMath.RarityShare((Rarity)r) : 0;
-                That(hits[r] == want, CraftF, "over " + name + ", " + (Rarity)r + " is drawn on " + hits[r] + " of " + total + " rolls, not " + want);
-            }
-        }
-        That(CraftingMath.RarityDrawTotal(new[] { 0, 0, 0, 0, 0 }) == 0, CraftF, "a draw with no rarity in it still has a size");
-
-        // THE ROLL TEXT carries the rarity as its sixth part, every part in its place whether or not a trademark or a
-        // word is there, and reads back exactly what was written.
+        // THE ROLL TEXT: six parts, every part in its place whether or not a trademark or a word is there, every Ink
+        // line carrying its tier, and it reads back exactly what was written.
         RollTextRoundTrip("", ArmourWord.None);
         RollTextRoundTrip("skill.sword.lunge", ArmourWord.None);
         RollTextRoundTrip("", ArmourWord.Wellspring);
         RollTextRoundTrip("skill.sword.lunge", ArmourWord.Wellspring);
-        var old = new EquipmentInstance();
-        old.ReadRoll("2;1,0,0,0,0,0,0,0,0;;skill.sword.lunge:0.1");
-        That(old.rarity == Rarity.Common && old.quality == Quality.E && old.trademarkSkillId == "skill.sword.lunge", EquipF,
-             "a roll text with no rarity part should read back as a Common E piece with its trademark");
 
         // A material's rarity, as decided: Temper Dust and Quench Oil Common; Ink Watery Uncommon, Thin and Faint Rare,
         // Clear and Sharp Epic; Salt at its drop chance, Coarse Uncommon, Fine Epic, Pure Legendary (decided 2026-10-14).
@@ -567,13 +577,16 @@ static class Checks
 
     const string EquipF = "unity/Assets/Scripts/EquipmentInstance.cs";
 
-    // One copy at a non-Common rarity, written to roll text and read back.
+    // One copy written to roll text and read back.
     static void RollTextRoundTrip(string trademark, ArmourWord word)
     {
-        var made = new EquipmentInstance { quality = Quality.C, upgrade = 7, rarity = Rarity.Epic,
+        var made = new EquipmentInstance { quality = Quality.C, upgrade = 7,
                                            trademarkSkillId = trademark, trademarkLift = trademark.Length > 0 ? 0.15f : 0f,
                                            word = word, wordAmount = word != ArmourWord.None ? 2.5f : 0f };
         made.piece.attack = 12;
+        made.piece.hardDefenseTenths = 36;
+        made.inkStats.Add(InkStat.Defense); made.inkTiers.Add(4); made.inkValues.Add(4.3f);
+        made.cardSlots = 3; made.worth = 12345;
         made.basePercent = 108;
         made.baseStats.attack = 54;
         string text = made.EncodeRoll();
@@ -582,39 +595,115 @@ static class Checks
         That(text.Split(';').Length == 7, EquipF, name + " is written in " + text.Split(';').Length + " parts, not 7: " + text);
         var back = new EquipmentInstance();
         back.ReadRoll(text);
-        That(back.rarity == Rarity.Epic, EquipF, name + " reads back as " + back.rarity + ", not Epic: " + text);
+        That(back.piece.hardDefenseTenths == 36, EquipF, name + " loses its hard defence on the way back: " + text);
+        That(back.inkStats.Count == 1 && back.inkStats[0] == InkStat.Defense && back.inkTiers[0] == 4
+             && Math.Abs(back.inkValues[0] - 4.3f) < 1e-5f, EquipF, name + " loses its Ink line or its tier on the way back: " + text);
+        That(back.cardSlots == 3 && back.worth == 12345, EquipF, name + " loses its card slots or its worth on the way back: " + text);
         That(back.quality == Quality.C && back.trademarkSkillId == trademark && back.word == word, EquipF,
              name + " does not read back as written: " + text);
         That(Math.Abs(back.trademarkLift - made.trademarkLift) < 1e-5f && Math.Abs(back.wordAmount - made.wordAmount) < 1e-5f
              && back.piece.attack == 12, EquipF, name + " loses a finished number on the way back: " + text);
         That(back.basePercent == 108 && back.baseStats.attack == 54, EquipF, name + " loses its base roll on the way back: " + text);
-        // A text from before the base rolled never rolled: 0, which counts as 100 — never a rolled 100.
+        // A text with no base part never rolled: 0, which counts as 100 — never a rolled 100.
         var old = new EquipmentInstance();
-        old.ReadRoll(string.Join(";", text.Split(';'), 0, 6));
-        That(old.basePercent == 0, EquipF, "a six-part text should read back as never rolled, got " + old.basePercent);
+        old.ReadRoll(string.Join(";", text.Split(';'), 0, 5));
+        That(old.basePercent == 0, EquipF, "a five-part text should read back as never rolled, got " + old.basePercent);
     }
 
-    // ---- what a kill drops: a piece's rarity by kind, and Temper Dust and Quench Oil ---------------------------
-    // Decided 2026-10-13: one kill in ten drops a piece of what the creature wears; a normal creature's piece is Common,
-    // Uncommon or Rare at 50, 30 and 14 of 94, an elite's always Epic, a shadow's always Legendary. Every kill drops
+    // ---- what a kill drops: a worn piece, and Temper Dust and Quench Oil --------------------------------------
+    // Decided 2026-10-13: one kill in ten drops a piece of what the creature wears. Every kill drops
     // 0.60 Temper Dust and 0.06 Quench Oil a grade of its file's level, times its kind's multiple and its gear's pay.
     const string LootF = "unity/Assets/Scripts/CreatureLoot.cs";
+
+    // ---- what a creature wears, and card slots (decided 2026-10-18) -------------------------------------------
+    static void WornGearAndSlots()
+    {
+        var kinds = new[] { CreatureKind.Normal, CreatureKind.Elite, CreatureKind.Shadow };
+        int[][] wantShares = { new[] { 300, 210, 150, 100, 70, 50, 40, 30, 20, 15, 15 }, new[] { 350, 240, 170, 110, 70, 40, 20 },
+                               new[] { 450, 300, 150, 100 } };
+        int[] low = { 0, 4, 7 };
+        for (int k = 0; k < kinds.Length; k++)
+        {
+            That(CreatureLoot.FileFolds(kinds[k]) == low[k], LootF, kinds[k] + "'s fewest folds should be " + low[k]);
+            var hits = new int[11];
+            for (int roll = 0; roll < 1000; roll++)
+            {
+                int f = CreatureLoot.RollWornFolds(kinds[k], roll);
+                That(f >= low[k] && f <= 10, LootF, kinds[k] + " rolled " + f + " folds, outside " + low[k] + "..10");
+                hits[Math.Min(10, Math.Max(0, f))]++;
+            }
+            for (int i = 0; i < wantShares[k].Length; i++)
+                That(hits[low[k] + i] == wantShares[k][i], LootF, kinds[k] + " +" + (low[k] + i) + " comes up " + hits[low[k] + i]
+                     + " times in 1000, not " + wantShares[k][i]);
+        }
+
+        That(CraftingMath.CardSlotCap(EquipSlotType.Weapon) == 4 && CraftingMath.CardSlotCap(EquipSlotType.Armor) == 2
+             && CraftingMath.CardSlotCap(EquipSlotType.Boots) == 2 && CraftingMath.CardSlotCap(EquipSlotType.Garment) == 2
+             && CraftingMath.CardSlotCap(EquipSlotType.Head) == 0, CraftF, "card slot caps should be weapon 4, armour 2, hat 0");
+        int[] weaponOdds = { 50, 25, 10, 3, 0 };
+        for (int n = 0; n < weaponOdds.Length; n++)
+            That(CraftingMath.SlotChancePct(EquipSlotType.Weapon, n) == weaponOdds[n], CraftF, "weapon slot " + (n + 1) + " should be " + weaponOdds[n] + "%");
+        int[] armourOdds = { 25, 5, 0 };
+        for (int n = 0; n < armourOdds.Length; n++)
+            That(CraftingMath.SlotChancePct(EquipSlotType.Boots, n) == armourOdds[n], CraftF, "armour slot " + (n + 1) + " should be " + armourOdds[n] + "%");
+        That(CraftingMath.SlotMaterialCost(Quality.Raw, 3) == CraftingMath.QuenchMaterialCost(Quality.Raw) * 27
+             && CraftingMath.SlotGoldCost(Quality.A, 2) == CraftingMath.QuenchGoldCost(Quality.A) * 9, CraftF, "slotting should triple per slot held");
+
+        // Worn card slots, every roll: weapon 0-2 / 2-3 / 3-4 evenly; armour a quarter of normals 1, elites 1-2, shadows 2.
+        int[,] weaponRange = { { 0, 2 }, { 2, 3 }, { 3, 4 } };
+        for (int k = 0; k < kinds.Length; k++)
+        {
+            var seen = new int[5];
+            for (int roll = 0; roll < 100; roll++) seen[CreatureLoot.RollWornCardSlots(EquipSlotType.Weapon, kinds[k], roll)]++;
+            int span = weaponRange[k, 1] - weaponRange[k, 0] + 1;
+            for (int n = 0; n <= 4; n++)
+            {
+                bool inside = n >= weaponRange[k, 0] && n <= weaponRange[k, 1];
+                That(inside ? Math.Abs(seen[n] - 100 / span) <= 1 : seen[n] == 0, LootF, kinds[k] + " weapon gets " + n + " slots " + seen[n] + " times in 100");
+            }
+        }
+        int normalOne = 0, eliteTwo = 0, shadowTwo = 0;
+        for (int roll = 0; roll < 100; roll++)
+        {
+            if (CreatureLoot.RollWornCardSlots(EquipSlotType.Armor, CreatureKind.Normal, roll) == 1) normalOne++;
+            if (CreatureLoot.RollWornCardSlots(EquipSlotType.Armor, CreatureKind.Elite, roll) == 2) eliteTwo++;
+            if (CreatureLoot.RollWornCardSlots(EquipSlotType.Armor, CreatureKind.Shadow, roll) == 2) shadowTwo++;
+        }
+        That(normalOne == 25 && eliteTwo == 50 && shadowTwo == 100, LootF, "armour slots: normal 1 on 25, elite 2 on 50, shadow 2 on 100 of 100 rolls");
+        That(CreatureLoot.RollWornCardSlots(EquipSlotType.Head, CreatureKind.Shadow, 99) == 0, LootF, "a hat should never get a slot");
+
+        That(CreatureLoot.GradeForNormal(1) == Quality.Raw && CreatureLoot.GradeForNormal(24) == Quality.Raw && CreatureLoot.GradeForNormal(25) == Quality.F
+             && CreatureLoot.GradeForNormal(50) == Quality.E && CreatureLoot.GradeForNormal(75) == Quality.D && CreatureLoot.GradeForNormal(99) == Quality.D,
+             LootF, "a normal creature's grade by level should be Raw 1-24, F 25-49, E 50-74, D 75+");
+        That(CreatureLoot.InkTierFor(Quality.Raw) == 0 && CreatureLoot.InkTierFor(Quality.F) == 1 && CreatureLoot.InkTierFor(Quality.C) == 4
+             && CreatureLoot.InkTierFor(Quality.B) == 5 && CreatureLoot.InkTierFor(Quality.A) == 5, LootF, "worn Ink tier by grade is off");
+
+        // A summon: every material held, or nothing; a boss leaves after 10 minutes with nobody hitting it.
+        That(SummonMath.CanPay(new[] { 1, 2 }, new[] { 1, 2 }) && !SummonMath.CanPay(new[] { 1, 2 }, new[] { 1, 1 })
+             && !SummonMath.CanPay(new[] { 1 }, new int[0]), LootF, "a summon must need every material in full");
+        That(!SummonMath.ShouldLeave(0f, float.NegativeInfinity, 599f) && SummonMath.ShouldLeave(0f, float.NegativeInfinity, 600f)
+             && !SummonMath.ShouldLeave(0f, 500f, 1000f) && SummonMath.ShouldLeave(0f, 500f, 1100f), LootF,
+             "a summoned boss should leave 10 minutes after it appeared or was last hit, whichever is later");
+        That(SummonMath.TetherMetres == 15f, LootF, "a summoned boss should be tethered 15 m from where it appeared");
+
+        // A rolled weapon brings a build that fits it: casters wear cloth and spend most on INT, shooters and quick
+        // blades leather on AGI/DEX, everything swung for strength metal on STR — never plate on a wand.
+        var w = new float[6];
+        foreach (WeaponType weapon in Enum.GetValues(typeof(WeaponType)))
+        {
+            if (weapon == WeaponType.None) continue;
+            var armour = CreatureLoot.BuildFor(weapon, w);
+            float sum = w[0] + w[1] + w[2] + w[3] + w[4] + w[5];
+            That(Math.Abs(sum - 1f) < 0.001f, LootF, weapon + "'s build weights add to " + sum + ", not 1");
+            bool caster = weapon == WeaponType.Staff || weapon == WeaponType.Wand || weapon == WeaponType.Scythe;
+            if (caster) That(armour == MaterialKind.Cloth && w[3] >= 0.4f && w[0] == 0f, LootF, weapon + " should be cloth and INT, no STR");
+            else That(armour != MaterialKind.Cloth && w[3] == 0f, LootF, weapon + " should not be a cloth INT build");
+        }
+    }
 
     static void KillDropNumbers()
     {
         That(Math.Abs(CreatureLoot.GearDropChance - 0.10f) < 1e-6f, LootF, "a kill should drop a worn piece one time in ten");
-        That(CreatureLoot.DropRarityRollSize == 94, LootF, "a normal creature's rarity draw is " + CreatureLoot.DropRarityRollSize + " wide, not 94");
-        var hits = new int[CraftingMath.RarityCount];
-        for (int roll = 0; roll < CreatureLoot.DropRarityRollSize; roll++) hits[(int)CreatureLoot.DropRarity(CreatureKind.Normal, roll)]++;
-        That(hits[0] == 50 && hits[1] == 30 && hits[2] == 14 && hits[3] == 0 && hits[4] == 0, LootF,
-             "a normal creature's piece should be Common, Uncommon or Rare on 50, 30 and 14 of 94 rolls, got "
-             + string.Join(",", hits));
-        for (int roll = 0; roll < CreatureLoot.DropRarityRollSize; roll++)
-        {
-            That(CreatureLoot.DropRarity(CreatureKind.Elite, roll) == Rarity.Epic, LootF, "an elite's piece is not always Epic");
-            That(CreatureLoot.DropRarity(CreatureKind.Shadow, roll) == Rarity.Legendary, LootF, "a shadow's piece is not always Legendary");
-        }
-
         That(CreatureLoot.TemperDustPerGrade == 60 && CreatureLoot.QuenchOilPerGrade == 6, LootF,
              "a kill should drop 0.60 Temper Dust and 0.06 Quench Oil a grade");
         // Over the hundred rolls, a kill pays exactly its hundredths: whole units always, and the rest that often.
@@ -701,54 +790,54 @@ static class Checks
 
         // A WEAPON'S BASE IS 50 × ITS SWING TIME, ÷ 1.5 for a pair (decided 2026-10-14). The swing times are the
         // character settings' own floats, rounded to thousandths once: 1.3 and 1.4 sit just below themselves as floats.
-        int Atk(WeaponType w, float seconds, int folds, Quality q, Rarity r, int roll) =>
-            CraftingMath.PieceNumbers(EquipSlotType.Weapon, w, MaterialKind.Metal, folds, q, r, roll,
+        int Atk(WeaponType w, float seconds, int folds, Quality q, int roll) =>
+            CraftingMath.PieceNumbers(EquipSlotType.Weapon, w, MaterialKind.Metal, folds, q, roll,
                                       CraftingMath.Thousandths(seconds), CraftingMath.Thousandths(0.5f)).attack;
-        That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, Rarity.Common, 0) == 50, CraftF, "a Raw +0 Common sword should be worth its base, 50");
-        That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, Rarity.Common, 100) == 50, CraftF, "a roll of 100 and no roll should be the same");
-        That(Atk(WeaponType.TwoHandSword, 1.3f, 0, Quality.Raw, Rarity.Common, 0) == 65, CraftF, "a Greatsword's base should be 65");
-        That(Atk(WeaponType.Firearm, 1.4f, 0, Quality.Raw, Rarity.Common, 0) == 70, CraftF, "a Sniper's base should be 70");
-        That(Atk(WeaponType.Shuriken, 0.9f, 0, Quality.Raw, Rarity.Common, 0) == 45, CraftF, "a Shuriken's base should be 45");
-        That(Atk(WeaponType.Katar, 0.85f, 0, Quality.Raw, Rarity.Common, 0) == 28, CraftF, "a Katar, a pair, should be 28.3 → 28");
-        That(Atk(WeaponType.Axe, 1.1f, 0, Quality.Raw, Rarity.Common, 0) == 37, CraftF, "an Axe, a pair, should be 36.7 → 37");
-        That(Atk(WeaponType.Sword, 1f, 10, Quality.A, Rarity.Common, 0) == 2500, CraftF, "a Common A +10 sword should be 2,500");
-        That(Atk(WeaponType.Sword, 1f, 10, Quality.A, Rarity.Legendary, 115) == 4313, CraftF,
-             "a Legendary A +10 sword at a 115% roll should be 50 × 1.15 × 1.5 × 50 = 4,312.5 → 4,313");
-        That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, Rarity.Common, 108) == 54, CraftF, "a 108% roll should be a base of 54");
-        var staff = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, MaterialKind.None, 0, Quality.Raw, Rarity.Common, 0, 1200, 500);
+        That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, 0) == 50, CraftF, "a Raw +0 sword should be worth its base, 50");
+        That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, 100) == 50, CraftF, "a roll of 100 and no roll should be the same");
+        That(Atk(WeaponType.TwoHandSword, 1.3f, 0, Quality.Raw, 0) == 65, CraftF, "a Greatsword's base should be 65");
+        That(Atk(WeaponType.Firearm, 1.4f, 0, Quality.Raw, 0) == 70, CraftF, "a Sniper's base should be 70");
+        That(Atk(WeaponType.Shuriken, 0.9f, 0, Quality.Raw, 0) == 45, CraftF, "a Shuriken's base should be 45");
+        That(Atk(WeaponType.Katar, 0.85f, 0, Quality.Raw, 0) == 28, CraftF, "a Katar, a pair, should be 28.3 → 28");
+        That(Atk(WeaponType.Axe, 1.1f, 0, Quality.Raw, 0) == 37, CraftF, "an Axe, a pair, should be 36.7 → 37");
+        That(Atk(WeaponType.Sword, 1f, 10, Quality.A, 0) == 2500, CraftF, "an A +10 sword should be 2,500");
+        That(Atk(WeaponType.Sword, 1f, 10, Quality.A, 115) == 2875, CraftF, "an A +10 sword at a 115% roll should be 50 × 1.15 × 50 = 2,875");
+        That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, 108) == 54, CraftF, "a 108% roll should be a base of 54");
+        var staff = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, MaterialKind.None, 0, Quality.Raw, 0, 1200, 500);
         That(staff.attack == 0 && staff.magicAttack == 60, CraftF, "a staff's base should be 60 magic attack, got " + staff.magicAttack);
         var based = CraftingMath.BaseNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 108, 1000, 500);
         That(based.attack == 54, CraftF, "a sword's Base line at 108% should be 54, got " + based.attack);
 
-        // AN ARMOUR BODY IS ONE SIXTH OF A SWORD'S BASE, split between its material's two stats; head and shoes half.
-        CraftingMath.PieceStats Arm(EquipSlotType s, MaterialKind m, int folds, Quality q) =>
-            CraftingMath.PieceNumbers(s, WeaponType.None, m, folds, q, Rarity.Common, 0, 0, 0);
+        // ARMOUR: HP, MP, attack speed and evasion as before (head and shoes half); HARD DEFENCE the same on every piece,
+        // 7.0% at A +10 at the best ordinary roll (115%), scaled by the roll like every other number (decided 2026-10-18).
+        CraftingMath.PieceStats Arm(EquipSlotType s, MaterialKind m, int folds, Quality q, int roll = 0) =>
+            CraftingMath.PieceNumbers(s, WeaponType.None, m, folds, q, roll, 0, 0);
         var metal = Arm(EquipSlotType.Armor, MaterialKind.Metal, 0, Quality.Raw);
-        That(metal.defense == 4 && metal.hp == 33, CraftF, "Raw +0 metal body armour should be 4 defence and 33 HP, got " + metal.defense + " and " + metal.hp);
+        That(metal.hardDefenseTenths == 1 && metal.hp == 33, CraftF, "Raw +0 metal body armour should be 0.1% hard defence and 33 HP, got " + metal.hardDefenseTenths + " and " + metal.hp);
         var leather = Arm(EquipSlotType.Armor, MaterialKind.Leather, 0, Quality.Raw);
-        That(Math.Abs(leather.attackSpeedPercent - 2.1f) < 0.001f && leather.evasion == 2, CraftF,
+        That(Math.Abs(leather.attackSpeedPercent - 2.1f) < 0.001f && leather.evasion == 2 && leather.hardDefenseTenths == 0, CraftF,
              "Raw +0 leather body armour should be 2.1% attack speed and 2 evasion, got " + leather.attackSpeedPercent + " and " + leather.evasion);
         var cloth = Arm(EquipSlotType.Armor, MaterialKind.Cloth, 0, Quality.Raw);
-        That(cloth.magicDefense == 4 && cloth.mp == 17, CraftF, "Raw +0 cloth body armour should be 4 magic defence and 17 MP");
+        That(cloth.hardMagicDefenseTenths == 1 && cloth.mp == 17 && cloth.hardDefenseTenths == 0, CraftF, "Raw +0 cloth body armour should be 0.1% hard magic defence and 17 MP");
         var shoes = Arm(EquipSlotType.Boots, MaterialKind.Metal, 0, Quality.Raw);
-        That(shoes.defense == 2 && shoes.hp == 17, CraftF, "Raw +0 metal shoes should take half: 2 defence and 17 HP");
-        // The equal-gear check the bases were sized on: a full metal set at A +10 is 25% of a sword's 2,500.
-        int setDef = Arm(EquipSlotType.Armor, MaterialKind.Metal, 10, Quality.A).defense * 2
-                     + Arm(EquipSlotType.Head, MaterialKind.Metal, 10, Quality.A).defense
-                     + Arm(EquipSlotType.Boots, MaterialKind.Metal, 10, Quality.A).defense;
-        That(setDef == 624, CraftF, "a full A +10 metal set should be 624 defence (25% of 2,500, rounded per piece), got " + setDef);
+        That(shoes.hardDefenseTenths == 1 && shoes.hp == 17, CraftF, "Raw +0 metal shoes: the same hard defence as a body, half the HP");
+        int[] climbTop = { 3, 7, 14, 24, 36, 52, 70 };
+        for (int g = 0; g <= (int)Quality.A; g++)
+            That(Arm(EquipSlotType.Armor, MaterialKind.Metal, 10, (Quality)g, 115).hardDefenseTenths == climbTop[g], CraftF,
+                 (Quality)g + " +10 metal at 115% should give " + climbTop[g] + " tenths, got " + Arm(EquipSlotType.Armor, MaterialKind.Metal, 10, (Quality)g, 115).hardDefenseTenths);
+        That(Arm(EquipSlotType.Armor, MaterialKind.Metal, 0, Quality.A, 115).hardDefenseTenths == 60, CraftF, "A +0 metal at 115% should give 6.0%");
+        That(Arm(EquipSlotType.Armor, MaterialKind.Metal, 10, Quality.A).hardDefenseTenths == 61
+             && Arm(EquipSlotType.Armor, MaterialKind.Metal, 10, Quality.A, 85).hardDefenseTenths == 52
+             && Arm(EquipSlotType.Armor, MaterialKind.Metal, 10, Quality.A, 130).hardDefenseTenths == 79, CraftF,
+             "an A +10 piece's hard defence should scale with its roll: 5.2% at 85%, 6.1% at 100%, 7.9% at 130%");
+        int setDef = Arm(EquipSlotType.Armor, MaterialKind.Metal, 10, Quality.A, 115).hardDefenseTenths
+                     + Arm(EquipSlotType.Garment, MaterialKind.Metal, 10, Quality.A, 115).hardDefenseTenths
+                     + Arm(EquipSlotType.Boots, MaterialKind.Metal, 10, Quality.A, 115).hardDefenseTenths;
+        That(setDef == 210, CraftF, "a full A +10 metal set at 115% should give 21% hard defence, got " + setDef + " tenths");
         var bare = Arm(EquipSlotType.Head, MaterialKind.None, 10, Quality.A);
-        That(bare.defense == 0 && bare.hp == 0 && bare.mp == 0, CraftF, "armour with no material should be worth nothing");
-        That(CraftingMath.PieceNumbers(EquipSlotType.None, WeaponType.None, MaterialKind.Metal, 10, Quality.A, Rarity.Common, 0, 0, 0).defense == 0,
+        That(bare.hardDefenseTenths == 0 && bare.hp == 0 && bare.mp == 0, CraftF, "armour with no material should be worth nothing");
+        That(CraftingMath.PieceNumbers(EquipSlotType.None, WeaponType.None, MaterialKind.Metal, 10, Quality.A, 0, 0, 0).hardDefenseTenths == 0,
              CraftF, "a piece with no slot should be worth nothing");
-
-        // RARITY MULTIPLIES THE BASE: Common 100 … Legendary 150 hundredths. Promises, so stated.
-        var rarities = (Rarity[])Enum.GetValues(typeof(Rarity));
-        int[] rarityBase = { 100, 110, 120, 135, 150 };
-        That(rarities.Length == rarityBase.Length, CraftF, "there are " + rarities.Length + " rarities but " + rarityBase.Length + " decided multipliers");
-        for (int r = 0; r < rarities.Length && r < rarityBase.Length; r++)
-            That(CraftingMath.RarityBaseHundredths(rarities[r]) == rarityBase[r], CraftF,
-                 rarities[r] + " multiplies a base by " + CraftingMath.RarityBaseHundredths(rarities[r]) + " hundredths, not " + rarityBase[r]);
         That(CraftingMath.RollOrPar(0) == 100 && CraftingMath.RollOrPar(85) == 85, CraftF, "a piece that never rolled counts as 100");
     }
 
@@ -821,8 +910,10 @@ static class Checks
         // 1 + 5 Temper Dust and 0 + 420 gold.
         int sumDust = 0, sumOil = 0, sumGold = 0;
         var sumInks = new int[6];
-        CraftingMath.AddRecycleYield(Quality.Raw, 0, null, null, ref sumDust, ref sumOil, ref sumGold, sumInks);
-        CraftingMath.AddRecycleYield(Quality.F, 0, null, null, ref sumDust, ref sumOil, ref sumGold, sumInks);
+        CraftingMath.AddRecycleYield(Quality.Raw, 0, null, ref sumDust, ref sumOil, ref sumGold, sumInks);
+        CraftingMath.AddRecycleYield(Quality.F, 0, null, ref sumDust, ref sumOil, ref sumGold, sumInks);
+        // A piece's worth is what recycling it gives back, priced: gold plus each material at its value.
+        That(CraftingMath.WorthOf(100, 3, 20, 2, 50) == 100 + 60 + 100, CraftF, "worth should be gold + dust × value + oil × value");
         That(sumDust == 6 && sumOil == 0 && sumGold == 420, CraftF,
              "a Raw +0 and an F +0 recycled together should give 6 Temper Dust, 0 Quench Oil and 420 gold, got "
              + sumDust + ", " + sumOil + " and " + sumGold);
@@ -884,21 +975,29 @@ static class Checks
     // often as its weight, is silent — the piece simply ends up with a different stat than it should have.
     static void InkRoll()
     {
-        // Every tier is worth more than the one below, for every stat.
+        // An Ink line = the stat's top value x the grade's share (F..A 50..100%) x the tier's share (60..100%), rounded
+        // once (decided 2026-10-18). Sharp on A writes the top value; Defence tops at 6.0% so four pieces make 24%.
+        That(Math.Abs(CraftingMath.InkValue(InkStat.Defense, Quality.A, 5) - 6f) < 0.001f, CraftF, "Sharp Defence on A should be 6.0%");
+        That(Math.Abs(CraftingMath.InkValue(InkStat.Defense, Quality.F, 1) - 1.8f) < 0.001f, CraftF, "Watery Defence on F should be 1.8%");
+        That(Math.Abs(CraftingMath.InkValue(InkStat.Attack, Quality.A, 5) - 10f) < 0.001f, CraftF, "Sharp Attack on A should be 10");
+        That(Math.Abs(CraftingMath.InkValue(InkStat.STR, Quality.D, 4) - 9f) < 0.001f, CraftF, "Clear STR on D should be 9 (9.45 rounded)");
+        That(Math.Abs(CraftingMath.InkValue(InkStat.CritChance, Quality.C, 3) - 1.9f) < 0.001f, CraftF, "Faint crit on C should be 1.9% (1.92 rounded)");
+        That(CraftingMath.InkValue(InkStat.Attack, Quality.Raw, 5) == 0f, CraftF, "a Raw piece has no Ink slot, so Ink on it is worth nothing");
+        // Every tier and every grade is worth at least the one below, and a flat stat is always whole.
         foreach (var stat in CraftingMath.All)
-            for (int tier = 2; tier <= 5; tier++)
-                That(CraftingMath.InkValue(stat, tier) > CraftingMath.InkValue(stat, tier - 1), CraftF,
-                     stat + " at tier " + tier + " is worth no more than at " + (tier - 1));
+            for (int g = (int)Quality.F; g <= (int)Quality.A; g++)
+                for (int tier = 1; tier <= 5; tier++)
+                {
+                    float v = CraftingMath.InkValue(stat, (Quality)g, tier);
+                    if (tier > 1) That(v >= CraftingMath.InkValue(stat, (Quality)g, tier - 1), CraftF, stat + " drops from tier " + (tier - 1) + " to " + tier + " at " + (Quality)g);
+                    if (g > (int)Quality.F) That(v >= CraftingMath.InkValue(stat, (Quality)(g - 1), tier), CraftF, stat + " drops from grade " + (Quality)(g - 1) + " to " + (Quality)g);
+                }
 
-        // THE PRIMARY PREMIUM: a primary is worth clearly more than the Attack line it is priced against.
-        for (int tier = 1; tier <= 5; tier++)
-        {
-            float attack = CraftingMath.InkValue(InkStat.Attack, tier);
-            foreach (var stat in CraftingMath.All)
-                if (CraftingMath.IsPrimary(stat))
-                    That(CraftingMath.InkValue(stat, tier) > attack, CraftF,
-                         stat + " at tier " + tier + " is worth no more than the same tier's Attack");
-        }
+        // THE PRIMARY PREMIUM: a Sharp A primary is worth clearly more than the Attack line it is priced against.
+        foreach (var stat in CraftingMath.All)
+            if (CraftingMath.IsPrimary(stat))
+                That(CraftingMath.InkValue(stat, Quality.A, 5) > CraftingMath.InkValue(InkStat.Attack, Quality.A, 5), CraftF,
+                     stat + " is worth no more than the same Ink's Attack");
 
         // Every stat is reachable on a fresh roll, exactly once each, and the whole table is covered.
         var seen = new HashSet<InkStat>();
@@ -1946,6 +2045,7 @@ static class Checks
         CraftCosts();
         TrademarkRoll();
         KillDropNumbers();
+        WornGearAndSlots();
         QuenchOdds();
         InkRoll();
         MasteryCurve();

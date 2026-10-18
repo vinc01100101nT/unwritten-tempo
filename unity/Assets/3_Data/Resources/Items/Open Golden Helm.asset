@@ -21,7 +21,6 @@ MonoBehaviour:
   equipModel: {fileID: 259079319903760731, guid: 52318a1992659af4e9ae05eef99e4b39, type: 3}
   element: 0
   category: 0
-  cardSlots: 0
   weight: 0
   value: 0
   undroppable: 0
@@ -51,4 +50,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: 
+  description: All the glory of gold, with room for your ego to breathe.

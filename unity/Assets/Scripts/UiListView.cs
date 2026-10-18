@@ -82,7 +82,7 @@ public sealed class UiListView
             var def = entry != null ? entry.def : null;
             var copy = entry != null ? entry.instance : null;
             string name = def == null ? "" : copy != null ? ItemTooltip.CopyTitle(copy) : def.displayName;
-            item.Show(def, copy, def != null ? Rarities.Of(def, copy) : Rarity.Common, name, count, before, beforeColour,
+            item.Show(def, copy, def != null ? Rarities.Of(def) : Rarity.Common, name, count, before, beforeColour,
                       after, price);
         }
 

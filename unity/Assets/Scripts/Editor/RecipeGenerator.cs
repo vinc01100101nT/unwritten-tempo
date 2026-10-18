@@ -336,9 +336,7 @@ public static class RecipeGenerator
             bool isAsset = EditorUtility.IsPersistent(go);   // a prefab picked in the Project window (not a scene instance)
 
             // Full-bend height = the object's own height so only the top third of ANY tree really moves.
-            var b = new Bounds(go.transform.position, Vector3.zero);
-            foreach (var r in rends) b.Encapsulate(r.bounds);
-            float h = Mathf.Max(b.size.y, 0.5f);
+            float h = ModelHeight(go.transform, rends);
 
             bool touched = false;
             foreach (var rend in rends)
@@ -433,9 +431,7 @@ public static class RecipeGenerator
             if (rends.Length == 0) { skipped++; continue; }
 
             // Full-bend height = the prefab's own height so only the crown really moves (trees only).
-            var b = new Bounds(go.transform.position, Vector3.zero);
-            foreach (var r in rends) b.Encapsulate(r.bounds);
-            float h = Mathf.Max(b.size.y, 0.5f);
+            float h = ModelHeight(go.transform, rends);
 
             // A tree with a leaf-named material sways leaves-only; one without falls back to swaying the whole tree.
             bool anyFoliage = false;
@@ -989,6 +985,29 @@ public static class RecipeGenerator
     static GameObject LoadProp(string name) => PropResolver.Load(name);   // resolves by name across Props subfolders
 
     // ── WIND SWAY ──────────────────────────────────────────────────────────────────────────────────────────
+    // The height a prop stands in the world at its own top object's scale — the units the foliage shader reads its
+    // full-bend height in. Read from the meshes, because a prefab in the Project window reports bounds that leave its
+    // scale out: the canopy materials were sized 19.4 for pines that stand 5.9 tall at 0.3, so trees barely moved.
+    static float ModelHeight(Transform top, MeshRenderer[] rends)
+    {
+        float lo = float.MaxValue, hi = float.MinValue;
+        foreach (var r in rends)
+        {
+            var mf = r.GetComponent<MeshFilter>();
+            if (mf == null || mf.sharedMesh == null) continue;
+            var mb = mf.sharedMesh.bounds;
+            var toTop = top.worldToLocalMatrix * r.transform.localToWorldMatrix;
+            for (int c = 0; c < 8; c++)
+            {
+                var corner = new Vector3((c & 1) == 0 ? mb.min.x : mb.max.x, (c & 2) == 0 ? mb.min.y : mb.max.y, (c & 4) == 0 ? mb.min.z : mb.max.z);
+                float y = toTop.MultiplyPoint3x4(corner).y;
+                lo = Mathf.Min(lo, y);
+                hi = Mathf.Max(hi, y);
+            }
+        }
+        return hi > lo ? Mathf.Max((hi - lo) * top.lossyScale.y, 0.5f) : 0.5f;
+    }
+
     // Re-material a prop's renderers onto Unwritten/FoliageWind so its vertices bend with the world wind, reusing
     // one cloned material per (source material, profile) so instances stay batched. Two profiles:
     //   • DECOR  (canopy = false): whole-plant decor (flowers/grass/ferns) — sway EVERY material, snappy default look.

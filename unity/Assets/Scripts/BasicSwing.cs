@@ -57,7 +57,7 @@ public static class BasicSwing
 
         bool crit = attacker.RollBasicCrit(victim);
         int hit = attacker.BasicHit;
-        bool missed = Combat.Missed(crit, hit, victim.Flee);
+        bool missed = Combat.Missed(crit, hit, victim.Flee, victim.PerfectDodgeLuk, MonsterAI3D.AttackersOn(victim));
         // A whiff rolls no damage at all — the miss rides along and the defender only shows it.
         int dmg = missed ? 0
                 : Mathf.Max(1, Mathf.RoundToInt(power.Resolve(vars, Mathf.Max(0f, outer),

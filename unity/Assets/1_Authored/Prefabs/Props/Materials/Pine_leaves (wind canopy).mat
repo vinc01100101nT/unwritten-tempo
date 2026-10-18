@@ -31,7 +31,7 @@ Material:
     m_Floats:
     - _Cutoff: 0.5
     - _SwayAmount: 0.06
-    - _SwayHeight: 19.388874
+    - _SwayHeight: 2.99
     - _SwaySpeed: 0.8
     - _SwayStiffness: 2.2
     m_Colors:

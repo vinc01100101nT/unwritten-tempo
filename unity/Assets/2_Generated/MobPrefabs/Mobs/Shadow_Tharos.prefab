@@ -222,11 +222,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear:
-  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
-  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  - {fileID: 11400000, guid: 5c65838bbb620394296e8e14e37b84ea, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 6
-  gearFolds: 30
-  gearInkTier: 5
 --- !u!114 &2702009346095560551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -242,13 +242,13 @@ MonoBehaviour:
   inputs:
     level: 125
     str: 85
-    agi: 67
-    vit: 84
-    intel: 45
+    agi: 45
+    vit: 99
+    intel: 44
     dex: 67
     luk: 44
-    baseMaxHP: 160
-    hpPerLevel: 6
+    baseMaxHP: 250
+    hpPerLevel: 20
     baseAttack: 4
     attackPerLevel: 1
     baseDefense: 1
@@ -260,7 +260,7 @@ MonoBehaviour:
     baseMagicDefense: 1
     magicDefensePerLevel: 1
   ringRankStats: 000000000400000002000000
-  ringRankValues: 280000002800000028000000
+  ringRankValues: 210000002100000021000000
 --- !u!114 &4678701920155792750
 MonoBehaviour:
   m_ObjectHideFlags: 0

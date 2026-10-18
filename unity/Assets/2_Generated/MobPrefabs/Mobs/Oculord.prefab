@@ -42,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5466217, y: 1.5466217, z: 1.5466217}
+  m_LocalScale: {x: 1.635, y: 1.635, z: 1.635}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -157,7 +157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8410cc1e7179c544bb2d21ae58f3124, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
-  agentRadius: 0.46398652
+  agentRadius: 0.4905
   arriveRadius: 0.1
   repathInterval: 0.35
   repathThreshold: 0.6
@@ -209,7 +209,7 @@ MonoBehaviour:
   level: 1
   preferredRange: 0
   fleeHpFraction: 0
-  size: 3.5
+  size: 3.7
   simulateRadius: 28
 --- !u!114 &6101228549899214778
 MonoBehaviour:
@@ -223,10 +223,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bf9dddf805e5421c871a961b1d0cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
-  startingGear: []
-  gearQuality: 3
-  gearFolds: 3
-  gearInkTier: 3
+  startingGear:
+  - {fileID: 11400000, guid: f1204015c4ba457f8ab0049fecae8d55, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  gearQuality: 4
 --- !u!114 &4700273669131801276
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -240,15 +242,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 14
-    str: 12
-    agi: 6
-    vit: 14
-    intel: 6
-    dex: 10
-    luk: 6
-    baseMaxHP: 160
-    hpPerLevel: 6
+    level: 52
+    str: 5
+    agi: 13
+    vit: 5
+    intel: 5
+    dex: 18
+    luk: 5
+    baseMaxHP: 250
+    hpPerLevel: 20
     baseAttack: 4
     attackPerLevel: 1
     baseDefense: 1
@@ -384,8 +386,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.57225
-  halfWidth: 0.60318244
+  halfHeight: 0.60495
+  halfWidth: 0.63764995
   lift: 0
 --- !u!114 &5620196424794534944
 MonoBehaviour:

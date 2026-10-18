@@ -87,25 +87,11 @@ public static class UnitMitigation
         return true;
     }
 
-    /// <summary>Turn a RAW post-defence figure into the damage that actually LANDS: scale it by the target's damage
-    /// reduction — ONE signed number covering both protection and exposure — then round to a whole point, floored at 1
-    /// so a hit that connects always registers. Takes a float on purpose, so the scaling happens BEFORE rounding
-    /// rather than on an already-rounded number.
-    ///
-    /// <para>Protection and exposure used to be two multipliers applied in sequence (a Guard cut and a Vulnerability
-    /// amplify). One number means 30% of each is exactly neutral, which is what a player reading their own screen
-    /// expects, instead of the 9% net the two-multiplier order happened to produce.</para>
-    ///
-    /// <para><b>THE entry point for every damage path, player and mob alike.</b> Vulnerability used to be written by
-    /// hand into each intake formula — six copies of one term — and a path that forgot it silently ignored the debuff
-    /// with no error to catch it. That is exactly how the player ended up immune: <see cref="Character"/>'s formulas
-    /// were written alongside <see cref="Health"/>'s and never picked the term up. Route new damage paths through here
-    /// and they inherit it for free; don't reintroduce a hand-written multiply.</para></summary>
-    public static int Landed(UnitStates states, float rawAfterDefence)
-    {
-        float mult = states != null ? states.IncomingMult : 1f;
-        return Mathf.Max(1, Mathf.RoundToInt(rawAfterDefence * mult));
-    }
+    /// <summary>Turn a RAW post-defence figure (see <see cref="Combat.Mitigated"/>) into the damage that actually LANDS:
+    /// rounded to a whole point, floored at 1 so a hit that connects always registers. Takes a float on purpose, so the
+    /// element modifier is applied BEFORE rounding rather than to an already-rounded number. The one entry point for
+    /// every damage path, player and mob alike.</summary>
+    public static int Landed(float rawAfterDefence) => Mathf.Max(1, Mathf.RoundToInt(rawAfterDefence));
 
     /// <summary>Drain the Shield barrier before the hit reaches HP. Returns what still gets through, and hands back
     /// how much was eaten so the caller can have it drawn wherever there is a screen. Zero-alloc (int math).</summary>

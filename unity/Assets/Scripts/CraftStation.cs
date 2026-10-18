@@ -1,11 +1,11 @@
 /// <summary>
-/// WHERE A PIECE IS WORKED. Each craft has its own station in town: a smith works metal, a loom cloth, a tannery
-/// leather. <see cref="None"/> is an ordinary townsperson, who only talks.
+/// WHERE A PIECE IS WORKED. One station in town, the smith, works every piece — metal, cloth and leather alike — with
+/// the same four actions: fold, quench, Ink and recycle. <see cref="None"/> is an ordinary townsperson, who only talks.
 ///
-/// <para>The actions are the same at every station — fold, quench, Ink and recycle — and so are the materials they
-/// take. What changes is which pieces a station will take.</para>
+/// <para>2 and 3 were the loom (cloth) and the tannery (leather), merged into the smith on 2026-10-17. Never give
+/// either number to a new station: a townsperson saved with one would silently become it.</para>
 /// </summary>
-public enum CraftStation { None = 0, Smith = 1, Loom = 2, Tannery = 3 }
+public enum CraftStation { None = 0, Smith = 1 }
 
 /// <summary>Which station works on which piece, and which material a piece is made of.</summary>
 public static class CraftStations
@@ -18,23 +18,26 @@ public static class CraftStations
         if (item == null || item.slot == EquipSlotType.None) return CraftStation.None;
         switch (item.madeOf)
         {
-            case MaterialKind.Metal:   return CraftStation.Smith;
-            case MaterialKind.Cloth:   return CraftStation.Loom;
-            case MaterialKind.Leather: return CraftStation.Tannery;
+            case MaterialKind.Metal:
+            case MaterialKind.Cloth:
+            case MaterialKind.Leather: return CraftStation.Smith;
             default:                   return CraftStation.None;
         }
     }
 
-    /// <summary>The material kind a station works in.</summary>
-    public static MaterialKind Works(CraftStation s)
+    /// <summary>The bag position of the strongest material of <paramref name="kind"/> carried (highest step, the first
+    /// of equals), or -1 — the Salt a quench offers and the Ink a write uses, on the server and in the window alike.</summary>
+    public static int StrongestOfKind(System.Collections.Generic.List<BagEntry> bag, MaterialKind kind)
     {
-        switch (s)
+        int best = -1, bestTier = 0;
+        if (bag == null) return best;
+        for (int i = 0; i < bag.Count; i++)
         {
-            case CraftStation.Smith:   return MaterialKind.Metal;
-            case CraftStation.Loom:    return MaterialKind.Cloth;
-            case CraftStation.Tannery: return MaterialKind.Leather;
-            default:                   return MaterialKind.None;
+            var e = bag[i];
+            if (e == null || e.def == null || e.def.materialKind != kind) continue;
+            if (e.def.materialStep > bestTier) { bestTier = e.def.materialStep; best = i; }
         }
+        return best;
     }
 
     /// <summary>What a station is called on screen.</summary>
@@ -43,8 +46,6 @@ public static class CraftStations
         switch (s)
         {
             case CraftStation.Smith:   return "Smith";
-            case CraftStation.Loom:    return "Loom";
-            case CraftStation.Tannery: return "Tannery";
             default:                   return "";
         }
     }

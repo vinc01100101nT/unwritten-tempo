@@ -942,6 +942,12 @@ public partial class Player3DController : MonoBehaviour
             float step = DashStepSpeed(dist) * Time.deltaTime;
             if (step >= dist - dashArriveRange) { step = dist; arrived = true; }
             controller.Move(dir * step + Vector3.down * gravity * Time.deltaTime);
+            // A SKILL GLIDE THAT HITS SOMETHING STOPS THERE (GlideEase.Blocked) — never carried on, never sent back.
+            if (dashToPoint)
+            {
+                Vector3 after = dashPoint - transform.position; after.y = 0f;
+                if (GlideEase.Blocked(dist, after.magnitude, step)) arrived = true;
+            }
         }
         if (arrived)
         {

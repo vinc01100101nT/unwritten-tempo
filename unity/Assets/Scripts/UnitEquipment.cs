@@ -23,11 +23,13 @@ public class UnitEquipment : MonoBehaviour
     [Tooltip("THE GRADE every starting piece comes to life at. A MIRROR of the creature's own catalog entry, which " +
              "owns these three and writes them here as the creature is made (MobSpawner) — never edited on a body.")]
     public Quality gearQuality = Quality.Raw;
-    [Tooltip("How many times every starting piece is folded. Clamped to the grade's cap. A mirror of the catalog entry.")]
-    public int gearFolds;
-    [Tooltip("Which Ink writes the stats on every starting piece, 1 Watery to 5 Sharp. The GRADE decides how many " +
-             "stats are written; this decides what each is worth. A mirror of the catalog entry.")]
-    public int gearInkTier = 1;
+    /// <summary>The creature's kind, which decides how many folds and card slots its pieces roll each life. A mirror
+    /// of its catalog entry, written as the creature is made (MobSpawner); never saved on a body.</summary>
+    [System.NonSerialized] public CreatureKind kind = CreatureKind.Normal;
+
+    /// <summary>Rolls weapon and armour each life (a mirror of the catalog entry): every life picks a random weapon and
+    /// one random armour material instead of <see cref="startingGear"/>.</summary>
+    [System.NonSerialized] public bool rollsGearEachLife;
 
     readonly Dictionary<EquipSlotType, EquipmentInstance> equipped = new Dictionary<EquipSlotType, EquipmentInstance>();
 
@@ -45,25 +47,77 @@ public class UnitEquipment : MonoBehaviour
         SeatStartingGear();
     }
 
-    // Every starting piece as a copy AT THE THREE SETTINGS ABOVE — through the same rolling door a grant and a dropped
-    // piece come through (EquipmentInstance.CreateAt), always Common.
+    // Every starting piece as a copy at the grade above and the Ink that grade is written with, its folds, card slots and base roll drawn by the kind
+    // (EquipmentInstance.CreateWorn). What it drops is a copy of one of these.
     void SeatStartingGear()
     {
         equipped.Clear();
-        if (startingGear != null)
-            for (int i = 0; i < startingGear.Length; i++)
+        var pieces = rollsGearEachLife && !GameNetwork.TheWorldIsElsewhere && Application.isPlaying
+            ? RolledPieces() : startingGear;
+        if (pieces != null)
+            for (int i = 0; i < pieces.Length; i++)
             {
-                var item = startingGear[i];
+                var item = pieces[i];
                 if (item == null || item.slot == EquipSlotType.None) continue;
                 // A WATCHING MACHINE ROLLS NOTHING. Its copy of a creature wears the plain authored pieces, which is all
                 // it needs to draw what is held; the rolled copies live on the server's creature.
                 equipped[item.slot] = GameNetwork.TheWorldIsElsewhere || !Application.isPlaying
                     ? new EquipmentInstance(item)
-                    : EquipmentInstance.CreateAt(item, gearQuality, gearFolds, gearInkTier);
+                    : EquipmentInstance.CreateWorn(item, kind, gearQuality, CreatureLoot.InkTierFor(gearQuality));
             }
         dirty = true;
         version++;
+        // a rolled weapon brings its own build: the stat points are spent again to fit it
+        if (pieces != startingGear && RolledWeapon != WeaponType.None)
+        {
+            var block = GetComponent<UnitStatBlock>();
+            if (block != null)
+            {
+                var w = buildWeights;
+                block.SetSpawnInputs(UnitStatMath.Allocate(block.inputs.level, w[0], w[1], w[2], w[3], w[4], w[5]));
+            }
+        }
         OnChanged?.Invoke();
+    }
+
+    // The pieces a rolling creature wears this life: one weapon of any type, and one material's body, shoes and garment.
+    // Server only (CombatRng). The pools are built once from the catalog.
+    static readonly List<Item> weaponPool = new List<Item>();
+    static readonly Dictionary<MaterialKind, List<Item>> armourPools = new Dictionary<MaterialKind, List<Item>>();
+    static readonly List<MaterialKind> materials = new List<MaterialKind>();
+    readonly List<Item> rolled = new List<Item>(4);
+    Item[] rolledArray = System.Array.Empty<Item>();
+    readonly float[] buildWeights = new float[6];
+
+    /// <summary>The weapon type this life rolled (None for a creature that does not roll), and the stat weights its
+    /// build spends points by.</summary>
+    public WeaponType RolledWeapon { get; private set; }
+
+    Item[] RolledPieces()
+    {
+        if (weaponPool.Count == 0)
+            foreach (var it in ItemCatalog.All)
+            {
+                if (it == null || it.madeOf == MaterialKind.None) continue;
+                if (it.slot == EquipSlotType.Weapon) weaponPool.Add(it);
+                else if (it.slot == EquipSlotType.Armor || it.slot == EquipSlotType.Boots || it.slot == EquipSlotType.Garment)
+                {
+                    if (!armourPools.TryGetValue(it.madeOf, out var list)) { armourPools[it.madeOf] = list = new List<Item>(); materials.Add(it.madeOf); }
+                    list.Add(it);
+                }
+            }
+        rolled.Clear();
+        RolledWeapon = WeaponType.None;
+        if (weaponPool.Count == 0) return rolledArray = System.Array.Empty<Item>();
+        var weapon = weaponPool[CombatRng.Range(0, weaponPool.Count)];
+        rolled.Add(weapon);
+        RolledWeapon = weapon.weaponType;
+        // the armour and the stats follow the weapon, so the whole body is one build
+        var material = CreatureLoot.BuildFor(weapon.weaponType, buildWeights);
+        if (armourPools.TryGetValue(material, out var set)) rolled.AddRange(set);
+        if (rolledArray.Length != rolled.Count) rolledArray = new Item[rolled.Count];
+        rolled.CopyTo(rolledArray);
+        return rolledArray;
     }
 
     /// <summary>Raised whenever the worn set changes — seated, equipped, taken off or wiped. What a body showing the

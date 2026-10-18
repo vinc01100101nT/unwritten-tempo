@@ -121,14 +121,13 @@ public class LootDropper : MonoBehaviour
         var def = MonsterCatalog.ById(health.creatureId);
         int fileLevel = def != null ? def.level : level;
         var gearGrade = def != null ? def.gearQuality : Quality.Raw;
-        int gearFolds = def != null ? def.gearFolds : 0;
+        int gearFolds = def != null ? def.FileFolds : 0;
         WonUnits(MaterialCatalog.TemperDust, CreatureLoot.UnitsPerKill(CreatureLoot.TemperDustPerGrade, fileLevel, lootKind,
                                                                         gearGrade, gearFolds, CombatRng.Range(0, 100)));
         WonUnits(MaterialCatalog.QuenchOil, CreatureLoot.UnitsPerKill(CreatureLoot.QuenchOilPerGrade, fileLevel, lootKind,
                                                                        gearGrade, gearFolds, CombatRng.Range(0, 100)));
 
-        // ONE PIECE OF WHAT IT WEARS, on one kill in ten: a new copy, its rarity rolled by the creature's OWN kind — a
-        // rebel's piece is its creature's, never lifted a kind.
+        // ONE PIECE OF WHAT IT WEARS, on one kill in ten: an exact copy of that piece — grade, folds, Ink, slots, roll.
         if (equipment != null && CombatRng.Chance(CreatureLoot.GearDropChance))
         {
             equipment.CopyWornInto(wornScratch);
@@ -136,9 +135,8 @@ public class LootDropper : MonoBehaviour
                 if (wornScratch[i] == null || !Droppable(wornScratch[i].def)) wornScratch.RemoveAt(i);
             if (wornScratch.Count > 0)
             {
-                var piece = wornScratch[CombatRng.Range(0, wornScratch.Count)].def;
-                var rarity = CreatureLoot.DropRarity(health.kind, CombatRng.Range(0, CreatureLoot.DropRarityRollSize));
-                Won(piece, 1, EquipmentInstance.CreateDropped(piece, rarity), CreatureLoot.GearDropChance / wornScratch.Count);
+                var worn = wornScratch[CombatRng.Range(0, wornScratch.Count)];
+                Won(worn.def, 1, worn.CloneAsNewCopy(), CreatureLoot.GearDropChance / wornScratch.Count);
             }
             wornScratch.Clear();
         }

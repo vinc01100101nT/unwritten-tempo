@@ -57,7 +57,7 @@ public enum StateId
     // APPENDED, never inserted above: a StateId is stored as a plain int in every authored gate and modifier, so a new
     // member in the middle would silently repoint saved data at a different pile. Same signed-bonus rule as the piles
     // in the buff block near the top — these simply had no pile before this change.
-    MPRegen, LifeSteal, DamageReduction,
+    MPRegen, LifeSteal,
     Attack, MagicAttack,
     Defense, MagicDefense,
     Accuracy, Evasion,
@@ -76,6 +76,9 @@ public enum StateId
     BlockChance,
     // The extra-bounce-jumps sub-stat's pile: whole jumps added to every bounce chain the unit starts.
     ExtraBounceJumps,
+    // Plain charges: stacks = CHARGES and nothing else — no stat moves while they are held. Filed under the skill that
+    // gave them; a trigger gate naming that skill and this pile spends them.
+    Charges,
 }
 
 /// <summary>
@@ -85,7 +88,7 @@ public enum StateId
 /// <see cref="Health"/>'s vulnerability — each migrated onto it one family at a time, behaviour-preserving.
 ///
 /// <para><b>Optimized as agreed:</b> one list of active states is the source of truth, but the hot gameplay scalars
-/// (<see cref="MoveMult"/>, <see cref="IncomingMult"/>, the sub-stat table, …) are <b>cached</b> and
+/// (<see cref="MoveMult"/>, the sub-stat table, …) are <b>cached</b> and
 /// recomputed only when the set CHANGES (apply / remove / prune) — so every reader stays <b>O(1)</b>, matching today's
 /// field reads. Entry objects are <b>pooled</b>, so apply/remove is <b>zero-alloc</b>. No per-query list scan, no GC.</para>
 ///
@@ -180,7 +183,7 @@ public class UnitStates : MonoBehaviour
 
     // ---- cached derived scalars (recomputed only on change; every getter below is O(1)) --------------------------
     // DamageBuff is deliberately absent here — DamageBuffMult sums its piles on read.
-    float moveMult = 1f, incomingMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
+    float moveMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
     int shieldPool, parryCharges;
     // The live signed bonus on every sub-stat, refilled by Recompute. One slot per SubStat, allocated once — the
     // alternative (walking the piles on each read) is paid per frame by movement and per hit by damage and leech.
@@ -273,11 +276,6 @@ public class UnitStates : MonoBehaviour
     public bool CannotAct { get { EnsureFresh(); return cannotAct; } }
     /// <summary>Spell-casting blocked (Silence).</summary>
     public bool Silenced { get { EnsureFresh(); return silenced; } }
-    /// <summary>What every incoming hit is multiplied by, from the DamageReduction sub-stat: below 1 while the unit
-    /// is protected, above 1 while it is exposed. ONE number for both directions — a cut and an exposure are the same
-    /// axis pointed opposite ways, so they cancel instead of racing. Floored at 0 (a hit can be fully absorbed but
-    /// never heals).</summary>
-    public float IncomingMult { get { EnsureFresh(); return incomingMult; } }
     /// <summary>Outgoing-damage multiplier summed over EVERY live DamageBuff pile — the one answer to "how much is my
     /// damage buffed", for player and mob alike.
     ///
@@ -537,6 +535,14 @@ public class UnitStates : MonoBehaviour
     {
         if (seconds <= 0f) return;
         Apply(StateId.Parry, seconds);
+    }
+
+    /// <summary>Hold plain charges for <paramref name="seconds"/>. HOW MANY comes from the apply context's
+    /// stacks-per-apply, the same knob Parry's charges use. They change nothing on their own.</summary>
+    public void BeginCharges(float seconds)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.Charges, seconds);
     }
 
     /// <summary>Hold outgoing-damage-boost charges for <paramref name="seconds"/> — each multiplies ONE attack this
@@ -1330,10 +1336,7 @@ public class UnitStates : MonoBehaviour
         aspdBuffMult = Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.AttackSpeed]);
         castBuffMult = Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.CastSpeed]);
         leechPct     = subStatBonus[(int)SubStat.ManaLeech];
-        reflectBonus = subStatBonus[(int)SubStat.Reflect];
-        moveMult     = Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.MovementSpeed]);
-        // Protection SUBTRACTS from what lands, exposure adds to it — one signed number, so 30% of each is simply
-        // neutral rather than two multipliers fighting.
-        incomingMult = Mathf.Max(0f, 1f - subStatBonus[(int)SubStat.DamageReduction]);
+        reflectBonus = UnitStatMath.ReflectFraction(subStatBonus[(int)SubStat.Reflect]);
+        moveMult     = UnitStatMath.MoveMult(subStatBonus[(int)SubStat.MovementSpeed]);
     }
 }

@@ -41,7 +41,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.109000005, y: 0.109000005, z: 0.109000005}
+  m_LocalScale: {x: 0.18166667, y: 0.18166667, z: 0.18166667}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -208,7 +208,7 @@ MonoBehaviour:
   level: 1
   preferredRange: 0
   fleeHpFraction: 0
-  size: 0.3
+  size: 0.5
   simulateRadius: 28
 --- !u!114 &287721816740243283
 MonoBehaviour:
@@ -222,10 +222,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bf9dddf805e5421c871a961b1d0cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
-  startingGear: []
+  startingGear:
+  - {fileID: 11400000, guid: eb821c722710f794881eb933b2236650, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
   gearQuality: 0
-  gearFolds: 1
-  gearInkTier: 1
 --- !u!114 &1930963449700866196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -241,13 +243,13 @@ MonoBehaviour:
   inputs:
     level: 8
     str: 10
-    agi: 8
-    vit: 9
+    agi: 10
+    vit: 4
     intel: 4
-    dex: 7
-    luk: 4
-    baseMaxHP: 160
-    hpPerLevel: 6
+    dex: 4
+    luk: 10
+    baseMaxHP: 250
+    hpPerLevel: 20
     baseAttack: 4
     attackPerLevel: 1
     baseDefense: 1
@@ -383,6 +385,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.04905
-  halfWidth: 0.054500002
-  lift: 0.27795
+  halfHeight: 0.08175
+  halfWidth: 0.090833336
+  lift: 0.24524999

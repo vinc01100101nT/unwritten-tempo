@@ -235,10 +235,16 @@ public enum SkillEffectKind
 
     /// <summary>Sets the unit it lands on down on a random walkable spot of the map it is in, picked evenly among every
     /// spot it could walk back from — the same connected stretch of ground it stands on. What a Fly Wing runs. A unit
-    /// on ground the map has no record of goes nowhere. No numbers.
+    /// on ground the map has no record of goes nowhere. No numbers.</summary>
+    TeleportToRandomSpot,
+
+    /// <summary>Plain charges for <see cref="SkillEffect.seconds"/> → <c>UnitStates.BeginCharges</c>. They change no stat
+    /// and do nothing on their own; HOW MANY comes from stacks-per-apply, so the stacks ARE the charges, as Parry's are.
+    /// They are filed under the skill that gave them, and any skill whose trigger gate names that skill and this pile
+    /// spends them (Crossed Branches gives them; Piercing Gust's basic-attack trigger spends one per lunge).
     ///
     /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
-    TeleportToRandomSpot,
+    Charges,
 }
 
 /// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
@@ -261,9 +267,6 @@ public enum SubStat
     Accuracy, Evasion,
     CritChance, CritDamage,
     MaxHP, MaxMP,
-    // One axis for how hard incoming damage lands: positive CUTS it (what Guard used to be), negative makes it hurt
-    // more (what Vulnerability used to be). They were always the same number pointed two ways.
-    DamageReduction,
     // How far this unit's BASIC ATTACK reaches, in world units, on top of what its weapon gives. Not melee-only:
     // a bow reads the same reach number, so a bonus here lengthens whatever the unit is holding.
     BasicAttackRange,
@@ -305,7 +308,6 @@ public static class SubStats
             case SubStat.CritChance:    return StateId.CritChance;
             case SubStat.CritDamage:    return StateId.CritDamage;
             case SubStat.MaxHP:         return StateId.MaxHP;
-            case SubStat.DamageReduction: return StateId.DamageReduction;
             case SubStat.BasicAttackRange: return StateId.BasicAttackRange;
             case SubStat.BlockChance:   return StateId.BlockChance;
             case SubStat.MaxMP:         return StateId.MaxMP;
@@ -568,6 +570,7 @@ public class SkillEffect
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff: id = SubStats.PileFor(e.subStat); return true;
             case SkillEffectKind.Parry:         id = StateId.Parry;         return true;
+            case SkillEffectKind.Charges: id = StateId.Charges; return true;
             case SkillEffectKind.BoostOutgoingDamage: id = StateId.OutgoingDamageBoost; return true;
             case SkillEffectKind.ReduceOutgoingDamage: id = StateId.OutgoingDamagePenalty; return true;
             case SkillEffectKind.ImmuneToDisables: id = StateId.DisableImmune; return true;
@@ -830,6 +833,7 @@ public static class EffectScaling
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff:
             case SkillEffectKind.Parry:
+            case SkillEffectKind.Charges:
             case SkillEffectKind.Brace:
             case SkillEffectKind.BoostOutgoingDamage:
             case SkillEffectKind.ReduceOutgoingDamage:

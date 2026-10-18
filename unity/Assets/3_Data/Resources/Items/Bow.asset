@@ -21,13 +21,22 @@ MonoBehaviour:
   equipModel: {fileID: 948378878727786455, guid: 665ce33e3e1366a42b1a0e4ba136df43, type: 3}
   element: 0
   category: 0
-  cardSlots: 2
   weight: 60
   value: 8
   undroppable: 0
   unsellable: 0
   unstorable: 0
   untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
   madeOf: 1
   materialKind: 0
   materialStep: 0
@@ -43,4 +52,5 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 1bbafb80233098340940fcf3bb0c7f26, type: 3}
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  description: Keeps its distance. What it becomes is decided at the anvil.
+  description: When Chaos first came, Celestia drifted above it like a cloud nobody
+    could catch, and rained arrows on it until it turned to chase her.

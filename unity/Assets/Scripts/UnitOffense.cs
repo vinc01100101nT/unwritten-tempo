@@ -71,11 +71,15 @@ public static class UnitOffense
         return BareSwingSeconds + SwingSecondsPerWeight * perHand;
     }
 
-    public static float AttackInterval(float baseInterval, float attackSpeedMult)
-    {
-        float m = Mathf.Clamp(attackSpeedMult, 0.01f, UnitStatMath.MaxAttackSpeedMult);
-        return Mathf.Max(0.05f, baseInterval / m);
-    }
+    /// <summary>Seconds between swings: the weapon's base swing time turned into Ragnarok's ASPD by the attack-speed
+    /// multiplier, capped at 190 (0.2 s) and floored at 0 (4 s).</summary>
+    public static float AttackInterval(float baseInterval, float attackSpeedMult) =>
+        UnitStatMath.SwingIntervalFromAspd(UnitStatMath.Aspd(baseInterval, attackSpeedMult));
+
+    /// <summary>The attack-speed multiplier a swing actually plays at once the ASPD cap and floor are applied — what
+    /// the swing animation is sped up by, so the body stays in step with the capped interval.</summary>
+    public static float EffectiveSpeedMult(float baseInterval, float attackSpeedMult) =>
+        baseInterval / AttackInterval(baseInterval, attackSpeedMult);
 
     /// <summary>"AM I CLOSE ENOUGH TO STAND AND FIGHT?" — the single answer, held by whoever is asking.
     ///
