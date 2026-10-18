@@ -203,8 +203,9 @@ public class SignInScreen : MonoBehaviour
 /// drift into two different-looking doors onto the same game.</summary>
 public static class FrontScreen
 {
-    /// <summary>A full-screen canvas above the HUD, with the world dimmed behind it.</summary>
-    public static RectTransform Canvas(Transform owner)
+    /// <summary>A full-screen canvas above the HUD, with the world dimmed behind it. Its pictures take turns when
+    /// <paramref name="slideshow"/> is true; otherwise one is picked at random (<see cref="FrontBackdrop"/>).</summary>
+    public static RectTransform Canvas(Transform owner, bool slideshow = true)
     {
         if (Object.FindAnyObjectByType<EventSystem>() == null)
         {
@@ -256,30 +257,9 @@ public static class FrontScreen
         veil.raycastTarget = true;   // swallow every click so nothing behind the door can be reached
         UiKit.Fill(veil.rectTransform, Vector2.zero, Vector2.zero);
 
-        Backdrop(veil.transform);
+        FrontBackdrop.Place(veil.transform, slideshow);
         TitleLettering.Place(veil.transform);
         return veil.rectTransform;
-    }
-
-    // The picture behind every front screen. It COVERS the screen at its own shape — cropped at the edges on a
-    // screen of another shape, never stretched. Missing, the dark veil under it is the whole backdrop.
-    static void Backdrop(Transform veil)
-    {
-        var art = Resources.Load<Texture2D>("UI/front-screen-background");
-        if (art == null) return;
-
-        var go = new GameObject("Backdrop", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
-        go.transform.SetParent(veil, false);
-        var image = go.GetComponent<RawImage>();
-        image.texture = art;
-        image.raycastTarget = false;
-
-        var rt = (RectTransform)go.transform;
-        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
-        // Added here, at runtime: a layout component saved into a scene rewrites itself in the editor.
-        var fit = go.AddComponent<AspectRatioFitter>();
-        fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
-        fit.aspectRatio = (float)art.width / art.height;
     }
 
     /// <summary>A centred window with <paramref name="title"/> in its blue bar — no close, no minimise, no drag,

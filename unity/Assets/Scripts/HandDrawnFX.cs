@@ -49,11 +49,16 @@ public class HandDrawnFX : MonoBehaviour
     [Range(0f, 0.5f)] [Tooltip("Edge threshold — raise to ink only the strongest edges (less noise on detailed meshes).")]
     public float edgeThreshold = 0f;
     [Tooltip("Ink tint. Slightly warm off-black reads as ink rather than a hard black key-line.")]
-    public Color inkColor = new Color(0.08f, 0.07f, 0.06f, 1f);
+    public Color inkColor = DefaultInkColor;
 
     [Header("Paper")]
     [Range(0f, 1f)] [Tooltip("Faint paper-fibre grain over the whole frame (subtle).")]
-    public float paperGrain = 0.30f;
+    public float paperGrain = DefaultPaperGrain;
+
+    /// <summary>The ink and paper the world starts on. The front screens' pictures (FrontBackdrop) are printed on
+    /// the same paper in the same ink, read from here.</summary>
+    public static readonly Color DefaultInkColor = new Color(0.08f, 0.07f, 0.06f, 1f);
+    public const float DefaultPaperGrain = 0.30f;
 
     [Header("Character preview")]
     [Tooltip("Crease sensitivity for the character-creation preview only. Lower than the world's, so a body there " +

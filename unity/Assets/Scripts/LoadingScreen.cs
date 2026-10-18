@@ -43,6 +43,8 @@ public static class LoadingScreen
     const float BarCatchUpPerSecond = 12f;
     static CanvasGroup group;
     static LoadingScreenTicker ticker;
+    // a new random picture each time the curtain goes up
+    static FrontBackdrop backdrop;
     static bool fading;
 
     // The map the player was standing in when the curtain went up. Lowering it in a DIFFERENT map fades the new one
@@ -70,6 +72,7 @@ public static class LoadingScreen
         shownInMap = MapManager.CurrentMap;
         target = 0f;
         Draw(0f);
+        if (backdrop != null) backdrop.Restart();
         root.gameObject.SetActive(true);
         UiLayers.Raise(root, UiLayers.Layer.Loading);
         ticker.enabled = true;
@@ -168,8 +171,9 @@ public static class LoadingScreen
 
         // THE SIGN-IN SCREEN'S OWN LOOK, borrowed rather than copied — the same opaque ground and the same
         // faint emblem behind it, so a doorway and a sign-in cannot drift into two different-looking screens.
-        root = FrontScreen.Canvas(null);
+        root = FrontScreen.Canvas(null, slideshow: false);
         if (root == null) return;
+        backdrop = root.GetComponentInChildren<FrontBackdrop>(true);
         Object.DontDestroyOnLoad(root.GetComponentInParent<Canvas>().gameObject);
 
         // In the middle of the screen, a little below centre, inside a white border two units wide.

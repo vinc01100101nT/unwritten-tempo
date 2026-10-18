@@ -15,7 +15,8 @@ WHAT IT WRITES, into --out (default builds/patch):
   index.html + its files       the website (website/index.html), so opening this folder's address in a browser
                                shows the site and its Download page offers the launcher. Beside it: ui-tokens.css
                                and fonts/ (the game's own colours and fonts, from prototypes/ui-tokens.css),
-                               content/ and assets/ (the wiki's pages and pictures, copied from wiki/), favicon.ico,
+                               content/ and assets/ (the wiki's pages and pictures, copied from wiki/, plus assets/key-art/
+                               from the game's Resources/UI/KeyArt), favicon.ico,
                                and site.json (the character server's address the status page reads, from
                                settings.env).
   download/unwritten-windows.zip   what a Windows player downloads: the small program that fetches the launcher
@@ -505,6 +506,13 @@ def publish_site(out):
         if os.path.isdir(target):
             shutil.rmtree(target)
         shutil.copytree(os.path.join(REPO, "wiki", folder), target)
+
+    # The key art lives once, in the game (its sign-in and loading screens load it by name); the site gets a copy.
+    key_art = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "UI", "KeyArt")
+    os.makedirs(os.path.join(out, "assets", "key-art"))
+    for name in os.listdir(key_art):
+        if name.endswith(".jpg"):
+            shutil.copy2(os.path.join(key_art, name), os.path.join(out, "assets", "key-art", name))
 
     # The character server the status page reads, as players reach it — the rule tools/build-game.sh writes into the
     # game: the public address once there is one, this machine's until then.

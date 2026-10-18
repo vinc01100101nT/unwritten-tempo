@@ -23,7 +23,6 @@ Shader "Unwritten/InkScreen"
         _EdgeThresh  ("Edge Threshold", Range(0,1)) = 0.12
         _EdgeSoft    ("Edge Softness", Range(0.001,0.5)) = 0.12
         _PaperStrength("Paper Grain", Range(0,1)) = 0.10
-        _PaperScale  ("Paper Scale (px)", Float) = 2.5
     }
     SubShader
     {
@@ -46,10 +45,11 @@ Shader "Unwritten/InkScreen"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "WaterBodies.hlsl"   // the map's water, so ink under a lake fades exactly as the thing it outlines
+            #include "PaperGrain.hlsl"    // the one paper, shared with the front screens
 
             float4 _InkColor;
             float _Intensity, _LineStrength, _DepthEdge, _NormalEdge, _Thickness, _EdgeThresh, _EdgeSoft;
-            float _PaperStrength, _PaperScale;
+            float _PaperStrength;
 
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings   { float4 positionHCS : SV_POSITION; };
@@ -66,13 +66,6 @@ Shader "Unwritten/InkScreen"
             // Linear eye depth at a screen UV (distance from camera). Far-plane (sky) returns a huge value via the
             // raw==far check done by the caller.
             float EyeDepth(float2 uv) { return LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams); }
-
-            float hash21(float2 p)
-            {
-                p = frac(p * float2(123.34, 456.21));
-                p += dot(p, p + 45.32);
-                return frac(p.x * p.y);
-            }
 
             half4 frag (Varyings IN) : SV_Target
             {
@@ -100,8 +93,7 @@ Shader "Unwritten/InkScreen"
                 if (isSky) e = 0.0;
 
                 // Paper grain — faint static fibre noise (screen-space, low strength) so flat areas read as "on paper".
-                float paper = hash21(floor(IN.positionHCS.xy / max(1.0, _PaperScale)));
-                float paperA = (1.0 - paper) * _PaperStrength;
+                float paperA = PaperGrainAlpha(IN.positionHCS.xy, _PaperStrength);
 
                 float a = saturate(max(e * _LineStrength, paperA)) * _Intensity * _InkColor.a;
                 // Under a lake the ink fades with what it outlines: the water shows as much of it as it shows of the body.

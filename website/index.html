@@ -7,7 +7,7 @@
 
     ui-tokens.css + fonts/   the game's own colours and fonts, written by tools/ui-tokens.py
     content/                 the wiki's pages (wiki/content) — JSON block documents listed in content/manifest.json
-    assets/                  the wiki's pictures (wiki/assets)
+    assets/                  the wiki's pictures (wiki/assets), and key-art/ the game's key art (Resources/UI/KeyArt)
     version.txt, news.json   the launcher's own files, so the page can never say something different from what the
                              launcher downloads
     download/                the launchers
@@ -358,7 +358,7 @@
 <!-- ================= HOME ================= -->
 <section class="page" id="p-home">
   <div class="hero">
-    <div class="art" data-kind="Main key art banner" data-src="assets/last-line-frostcap-slime-siege.jpg"
+    <div class="art" data-kind="Main key art banner" data-src="assets/key-art/last-line-frostcap-slime-siege.jpg"
          style="background-position:center 32%"></div>
     <div class="floatpages" aria-hidden="true">
       <div class="floatpage" style="top:12%;animation-duration:26s;animation-delay:-3s"></div>
@@ -416,7 +416,7 @@
         <div class="win"><div class="fill">
           <div class="head">What is Unwritten?</div>
           <div class="body doc">
-            <div class="art doc-art" data-kind="Story illustration" data-src="assets/storybook-ink-monsters.jpg"></div>
+            <div class="art doc-art" data-kind="Story illustration" data-src="assets/key-art/storybook-ink-monsters.jpg"></div>
             <div id="home-what"></div>
             <p><a href="#guide/world">Read the full story &rarr;</a></p>
           </div>
@@ -604,6 +604,8 @@
 <script>
 // Wiki pages the site shows as its own pages, by manifest id. Every other manifest page is a Wiki page.
 const GUIDE = ['world', 'playstyles', 'maps', 'start'];
+// the Guide pages that have their picture made; the rest show the IMAGE ART HERE box
+const GUIDE_ART = { playstyles: 'assets/key-art/playstyles.jpg', start: 'assets/key-art/start.jpg' };
 const SITE_PAGES = { home: 'home', roadmap: 'roadmap', status: 'status' };
 const NOT_IN_WIKI = new Set([...GUIDE, ...Object.values(SITE_PAGES)]);
 
@@ -1167,7 +1169,9 @@ async function route() {
     const g = GUIDE.includes(sub) && PAGES[sub] ? sub : GUIDE.find(x => PAGES[x]);
     document.querySelectorAll('#guide-menu a').forEach(a => a.classList.toggle('on', a.dataset.id === g));
     if (g) await showDoc(g, document.getElementById('guide-title'), document.getElementById('guide-body'),
-      `<div class="art doc-art" data-kind="Guide illustration" data-size="1200 × 500" data-desc="A picture for &ldquo;${esc(PAGES[g].title)}&rdquo;."></div>`);
+      GUIDE_ART[g]
+        ? `<div class="art doc-art" data-kind="Guide illustration" data-src="${GUIDE_ART[g]}"></div>`
+        : `<div class="art doc-art" data-kind="Guide illustration" data-size="1200 × 500" data-desc="A picture for &ldquo;${esc(PAGES[g].title)}&rdquo;."></div>`);
   }
   if (id === 'wiki') {
     const w = sub && PAGES[sub] && !NOT_IN_WIKI.has(sub) ? sub : '';
