@@ -18,8 +18,8 @@ using UnityEngine;
 ///
 /// <para><b>One costume for every body.</b> Every point of the costume that sits inside any of the bodies, or closer to
 /// its skin than <paramref name="margin"/>, is pushed out to that distance. Every point bends with the bones of the
-/// nearest spot of the FIRST body's skin, in the same shares, so a sleeve bends where the arm does. For each body, every
-/// triangle the costume covers is listed, and is not drawn while the costume is worn.</para>
+/// nearest spot of the FIRST body's skin, in the same shares, so a sleeve bends where the arm does. Each body it is
+/// fitted to is listed, and is drawn whole under the costume while it is worn.</para>
 /// </summary>
 public static class CostumeBaker
 {
@@ -31,11 +31,6 @@ public static class CostumeBaker
     // The body's sides are about a ten-thousandth of a unit, which Unity's own vector sums round to zero (see
     // BackPieceBaker); the fitting is worked out at this many times the size and scaled back.
     const float Work = 1000f;
-    // How far out of the skin, in the body's own units, cloth still counts as covering it — about a twentieth of a
-    // body's height (0.031).
-    const float CoverReach = 0.0015f;
-    // How far inside each end of the cloth the body is still drawn — about a fiftieth of a body's height (0.031).
-    const float KeepInsideEnds = 0.0006f;
 
     public static string Bake(string name, string[] bodies, float wide, float tall, float topHeight, float margin)
     {
@@ -94,15 +89,8 @@ public static class CostumeBaker
         cloth.RecalculateTangents();
         cloth = ObjModel.SaveOrUpdate(cloth, OutDir + name + "/" + cloth.name + ".asset");
 
-        // WHAT EACH BODY HIDES UNDER IT.
         var fits = new List<CostumePiece.Fit>();
-        foreach (var body in shapes)
-        {
-            var hidden = Covered(body.sharedMesh, verts, tris, out int cut, out int all);
-            fits.Add(new CostumePiece.Fit { bodyMesh = body.sharedMesh.name, hidden = hidden });
-            report.Append(body.sharedMesh.name).Append(": ").Append(cut).Append(" of ").Append(all)
-                  .Append(" triangles hidden\n");
-        }
+        foreach (var body in shapes) fits.Add(new CostumePiece.Fit { bodyMesh = body.sharedMesh.name });
 
         var boneNames = new string[first.bones.Length];
         for (int i = 0; i < boneNames.Length; i++) boneNames[i] = first.bones[i].name;
@@ -120,9 +108,9 @@ public static class CostumeBaker
                      .Append(" points; prefab ").Append(prefabPath).ToString();
     }
 
-    /// <summary>Fit the baked costume <paramref name="name"/> to more bodies — work out what each hides under the
-    /// costume — without changing the costume's shape. <paramref name="bodies"/> null = every body in the cast. A body
-    /// already fitted is fitted again. Split into batches of five: each body took 0.3-0.5 s, and a call of ten sometimes came back with no answer.</summary>
+    /// <summary>Fit the baked costume <paramref name="name"/> to more bodies — each must have every bone the costume
+    /// bends with — without changing the costume's shape. <paramref name="bodies"/> null = every body in the cast. A body
+    /// already fitted is fitted again.</summary>
     public static string FitBodies(string name, string[] bodies)
     {
         var prefabPath = OutDir + name + "/" + name + ".prefab";
@@ -131,9 +119,6 @@ public static class CostumeBaker
         var report = new System.Text.StringBuilder();
         try
         {
-            var verts = new List<Vector3>();
-            piece.costume.GetVertices(verts);
-            var tris = new List<int>(piece.costume.triangles);
             if (bodies == null)
             {
                 var all = new List<string>();
@@ -150,10 +135,9 @@ public static class CostumeBaker
                 var missing = MissingBone(piece.bones, body.bones);
                 if (missing != null) { report.Append(bodyName).Append(": no bone ").Append(missing).Append("\n"); continue; }
                 var plain = body.sharedMesh;
-                var hidden = Covered(plain, verts, tris, out int cut, out int count);
                 fits.RemoveAll(f => f.bodyMesh == plain.name);
-                fits.Add(new CostumePiece.Fit { bodyMesh = plain.name, hidden = hidden });
-                report.Append(bodyName).Append(": ").Append(cut).Append(" of ").Append(count).Append(" hidden\n");
+                fits.Add(new CostumePiece.Fit { bodyMesh = plain.name });
+                report.Append(bodyName).Append(": fitted\n");
             }
             piece.fits = fits.ToArray();
             PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
@@ -211,75 +195,11 @@ public static class CostumeBaker
         return weights;
     }
 
-    // THE BODY UNDER THE COSTUME: a body point is covered when looking straight out of the skin there meets the cloth
-    // within `CoverReach`, and a triangle with any corner covered is hidden — it would only poke through when the two
-    // bend apart. (Asking which side of the nearest cloth a point is on hid only 216 of the soldier's 2,594 triangles
-    // under a tunic and trousers, measured 2026-10-16.) One bit per triangle, part by part in the body's own order.
-    // THE ENDS STAY: a covered body point within `KeepInsideEnds` of an uncovered one — just inside a wrist, the neck,
-    // a trouser end — stays drawn, so looking into the end of the cloth shows the arm, neck or leg, not a hole. (The
-    // cloth's own edges cannot find the ends: the model is closed, its outer sheet turning into the inner one there.)
-    static byte[] Covered(Mesh plain, List<Vector3> verts, List<int> tris, out int cut, out int all)
-    {
-        var bodyN = plain.normals;
-        var bigBody = Big(plain.vertices);
-        var big = Big(verts.ToArray());
-        var tArr = tris.ToArray();
-        var covered = new bool[bigBody.Length];
-        for (int i = 0; i < bigBody.Length; i++) covered[i] = Hits(big, tArr, bigBody[i], bodyN[i], CoverReach * Work);
-        float keep2 = KeepInsideEnds * Work * KeepInsideEnds * Work;
-        var inside = new bool[bigBody.Length];
-        for (int i = 0; i < bigBody.Length; i++)
-        {
-            if (!covered[i]) continue;
-            inside[i] = true;
-            for (int j = 0; j < bigBody.Length; j++)
-                if (!covered[j] && (bigBody[j] - bigBody[i]).sqrMagnitude <= keep2) { inside[i] = false; break; }
-        }
-
-        all = plain.triangles.Length / 3;
-        var bits = new byte[(all + 7) / 8];
-        cut = 0;
-        int triangle = 0;
-        for (int s = 0; s < plain.subMeshCount; s++)
-        {
-            var part = plain.GetTriangles(s);
-            for (int i = 0; i < part.Length; i += 3, triangle++)
-            {
-                if (!inside[part[i]] && !inside[part[i + 1]] && !inside[part[i + 2]]) continue;
-                bits[triangle >> 3] |= (byte)(1 << (triangle & 7));
-                cut++;
-            }
-        }
-        return bits;
-    }
-
     static Vector3[] Big(Vector3[] v)
     {
         var big = new Vector3[v.Length];
         for (int i = 0; i < v.Length; i++) big[i] = v[i] * Work;
         return big;
-    }
-
-    // Does the ray from `from` along `dir` meet any triangle of the surface within `reach`? (Moller-Trumbore.)
-    static bool Hits(Vector3[] v, int[] t, Vector3 from, Vector3 dir, float reach)
-    {
-        for (int i = 0; i < t.Length; i += 3)
-        {
-            Vector3 a = v[t[i]], e1 = v[t[i + 1]] - a, e2 = v[t[i + 2]] - a;
-            var p = Vector3.Cross(dir, e2);
-            float det = Vector3.Dot(e1, p);
-            if (Mathf.Abs(det) < 1e-12f) continue;
-            float inv = 1f / det;
-            var s = from - a;
-            float u = Vector3.Dot(s, p) * inv;
-            if (u < 0f || u > 1f) continue;
-            var q = Vector3.Cross(s, e1);
-            float w = Vector3.Dot(dir, q) * inv;
-            if (w < 0f || u + w > 1f) continue;
-            float d = Vector3.Dot(e2, q) * inv;
-            if (d > 0f && d < reach) return true;
-        }
-        return false;
     }
 
     // The nearest spot of the surface (points, triangles) to `p`: which triangle, where, and its corners' shares.

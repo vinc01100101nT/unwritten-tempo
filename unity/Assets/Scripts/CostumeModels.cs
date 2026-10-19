@@ -28,8 +28,7 @@ public static class CostumeModels
         if (piece == null || plain == null || body == null) return null;
         if (!made.TryGetValue((piece, plain), out var m))
         {
-            var fit = piece.FitFor(plain.name);
-            var mesh = fit != null ? Join(piece, fit, plain, body.bones) : null;
+            var mesh = piece.FitFor(plain.name) != null ? Join(piece, plain, body.bones) : null;
             if (mesh == null) return null;
             m = new Made { mesh = mesh };
             made[(piece, plain)] = m;
@@ -48,10 +47,11 @@ public static class CostumeModels
         if (m.mesh != null) Object.Destroy(m.mesh);
     }
 
-    /// <summary>The body's own parts with the triangles <paramref name="fit"/> hides left out, then the costume as one
-    /// more part, its bone weights pointed at the body's own bones by name. Null when the body lacks a bone the costume
-    /// bends with.</summary>
-    public static Mesh Join(CostumePiece piece, CostumePiece.Fit fit, Mesh plain, Transform[] bodyBones)
+    /// <summary>The body's own parts, every triangle kept, then the costume as one more part, its bone weights pointed
+    /// at the body's own bones by name. Null when the body lacks a bone the costume bends with.</summary>
+    /// <remarks>The whole body stays under the cloth on purpose: leaving the covered skin out opened holes at the ends
+    /// of the cloth (neck, wrists, waist) that showed the sky through the body from some angles.</remarks>
+    public static Mesh Join(CostumePiece piece, Mesh plain, Transform[] bodyBones)
     {
         var costume = piece.costume;
         if (costume == null) return null;
@@ -103,19 +103,7 @@ public static class CostumeModels
             mesh.SetTangents(tangents);
         }
         mesh.subMeshCount = plain.subMeshCount + 1;
-        int triangle = 0;
-        var kept = new List<int>();
-        for (int s = 0; s < plain.subMeshCount; s++)
-        {
-            var part = plain.GetTriangles(s);
-            kept.Clear();
-            for (int i = 0; i < part.Length; i += 3, triangle++)
-            {
-                if (Hidden(fit.hidden, triangle)) continue;
-                kept.Add(part[i]); kept.Add(part[i + 1]); kept.Add(part[i + 2]);
-            }
-            mesh.SetTriangles(kept, s);
-        }
+        for (int s = 0; s < plain.subMeshCount; s++) mesh.SetTriangles(plain.GetTriangles(s), s);
         var cloth = costume.triangles;
         for (int i = 0; i < cloth.Length; i++) cloth[i] += bodyCount;
         mesh.SetTriangles(cloth, plain.subMeshCount);
@@ -124,7 +112,4 @@ public static class CostumeModels
         mesh.RecalculateBounds();
         return mesh;
     }
-
-    static bool Hidden(byte[] bits, int triangle) =>
-        (triangle >> 3) < bits.Length && (bits[triangle >> 3] & (1 << (triangle & 7))) != 0;
 }
