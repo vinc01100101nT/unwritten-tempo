@@ -93,10 +93,14 @@ public static class TerminalGm
                  + "Weather and time are held once for all of them.");
 
         var tod = TimeOfDay.Instance;
-        Heard(p, tod == null
-            ? "Time of day: this server has no clock."
-            : $"Time of day: {tod.time01:0.000} ({(tod.IsDay ? "day" : "night")}), day {tod.DayIndex} — "
-              + "0 is sunrise, 0.25 noon, 0.5 sunset, 0.75 midnight.");
+        if (tod == null) Heard(p, "Time of day: this server has no clock.");
+        else
+        {
+            string clock = RealCalendar.ClockDigits(tod.MinuteOfDay, out bool pm);
+            Heard(p, $"Time of day: {clock} {(pm ? "PM" : "AM")} GMT+8, "
+                     + $"{RealCalendar.DateText(RealCalendar.DateOf(tod.DayIndex))} ({(tod.IsDay ? "day" : "night")}, "
+                     + $"{tod.time01:0.000} — 0 is sunrise, 0.25 noon, 0.5 sunset, 0.75 midnight).");
+        }
 
         var wd = WeatherDirector.Instance;
         if (wd == null) Heard(p, "Weather: this server has no weather.");

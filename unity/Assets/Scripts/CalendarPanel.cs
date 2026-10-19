@@ -2,15 +2,13 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Season = GameCalendar.Season;
 using Preset = WeatherDirector.Preset;
 
 /// <summary>
 /// The full browsable CALENDAR window (toggled with the L key / by clicking the top-right date widget).
-/// One page = one season = 12 days (the locked 48-day-year design), laid out as a 4×3 grid of day-cells.
-/// Each cell shows its day number and that day's weather tag ("Sunny / Rainy / Snow / …"), coloured by
-/// weather; <b>today</b> is highlighted. Prev/Next arrows scrub seasons (and roll into the next/previous
-/// year); "Today" snaps back to the current season.
+/// One page = one real month (GMT+8), laid out as a week-per-row grid (Sun … Sat) of day-cells.
+/// Each cell shows its day of the month and that day's weather tag ("Sunny / Rainy / Snow / …"), coloured by
+/// weather; <b>today</b> is highlighted. Prev/Next arrows step a month; "Today" snaps back to this month.
 ///
 /// <para>Every cell's weather comes from <see cref="WeatherDirector.PresetForDay"/> — the same deterministic
 /// (worldSeed, dayIndex) hash the live sky uses — so the calendar shows real <b>past and future</b> weather
@@ -18,12 +16,14 @@ using Preset = WeatherDirector.Preset;
 ///
 /// <para>Mirrors <see cref="StatPanel"/>: lives on the persistent GameUICanvas, builds its widgets at runtime
 /// into the "CalendarPanel/Content" that <see cref="UIShellBuilder"/> created. Per-frame cost while open is a
-/// single day-index compare; the 12 cells are rebuilt only on open, navigation, or a day rollover — never per
+/// single day-index compare; the cells are rebuilt only on open, navigation, or a day rollover — never per
 /// frame — so there's no steady-state string/GC churn.</para>
 /// </summary>
 public class CalendarPanel : MonoBehaviour
 {
-    const int Days = GameCalendar.DaysPerSeason;   // 12 cells per page
+    // Six weeks of seven days: the most rows any month can touch.
+    const int Columns = 7, Days = 42;
+    static readonly string[] WeekdayShort = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
     [Header("Weather icons — Ninja Adventure 'Meteo' set, assigned by UIShellBuilder at bake time")]
     public Sprite sunIcon;       // Clear (and dimmed for Cloudy)
@@ -39,7 +39,7 @@ public class CalendarPanel : MonoBehaviour
     readonly TMP_Text[] cellDay = new TMP_Text[Days];
     readonly TMP_Text[] cellTag = new TMP_Text[Days];
 
-    long viewDayStart;           // DayIndex of day-of-season 0 for the page currently shown
+    int viewYear, viewMonth;     // the month on the page
     long lastTodayShown = long.MinValue;
     bool built, wasActive;
 
@@ -63,7 +63,7 @@ public class CalendarPanel : MonoBehaviour
         }
 
         bool active = UiAnim.IsOpen(panel);
-        if (active && !wasActive) GoToToday();           // every time it opens, snap to the current season
+        if (active && !wasActive) GoToToday();           // every time it opens, snap to this month
         wasActive = active;
 
         // If the in-game day rolls over while the window is open, move the "today" highlight.
@@ -84,7 +84,7 @@ public class CalendarPanel : MonoBehaviour
         panel = window.gameObject;
         UiKit.ClickShield(panel.transform as RectTransform);   // catch clicks over the whole window (no leak to world)
 
-        // Header: [<]  Season · Year  [Today]  [>]
+        // Header: [<]  Month Year  [Today]  [>]
         var header = UiKit.Img("Image", content, new Color(0, 0, 0, 0)).rectTransform;
         header.name = "Header";
         header.anchorMin = new Vector2(0, 1); header.anchorMax = new Vector2(1, 1);
@@ -96,23 +96,42 @@ public class CalendarPanel : MonoBehaviour
         hl.childForceExpandWidth = false;   // keep button preferredWidths; the title's flexibleWidth eats the slack
         hl.childForceExpandHeight = true; hl.childAlignment = TextAnchor.MiddleCenter;
 
-        prevBtn = NewButton(header, "<", 40, () => Shift(-Days));
-        titleText = NewText(header, "Season", 20, FontStyle.Bold, TextAnchor.MiddleCenter);
+        prevBtn = NewButton(header, "<", 40, () => Shift(-1));
+        titleText = NewText(header, "Month", 20, FontStyle.Bold, TextAnchor.MiddleCenter);
         titleText.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
         NewButton(header, "Today", 72, GoToToday);
-        nextBtn = NewButton(header, ">", 40, () => Shift(Days));
+        nextBtn = NewButton(header, ">", 40, () => Shift(1));
 
-        // Grid: 4×3 day-cells filling the area under the header.
+        // The weekday names over the columns, laid out exactly like the grid below them.
+        var namesGo = UiKit.Img("Image", content, new Color(0, 0, 0, 0)).rectTransform;
+        namesGo.name = "Weekdays";
+        namesGo.anchorMin = new Vector2(0, 1); namesGo.anchorMax = new Vector2(1, 1);
+        namesGo.pivot = new Vector2(0.5f, 1);
+        namesGo.sizeDelta = new Vector2(0, 18);
+        namesGo.anchoredPosition = new Vector2(0, -40);
+        var names = namesGo.gameObject.AddComponent<GridLayoutGroup>();
+        names.cellSize = new Vector2(CellWidth, 18);
+        names.spacing = new Vector2(CellGap, 0);
+        names.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        names.constraintCount = Columns;
+        names.childAlignment = TextAnchor.MiddleCenter;
+        for (int i = 0; i < Columns; i++)
+        {
+            var n = NewText(namesGo, WeekdayShort[i], 12, FontStyle.Bold, TextAnchor.MiddleCenter);
+            UiKit.Paint(n, UiKit.TextDim);
+        }
+
+        // Grid: one row per week, filling the area under the weekday names.
         var gridGo = UiKit.Img("Image", content, new Color(0, 0, 0, 0)).rectTransform;
         gridGo.name = "Grid";
         gridGo.anchorMin = Vector2.zero; gridGo.anchorMax = Vector2.one;
-        gridGo.offsetMin = new Vector2(0, 0); gridGo.offsetMax = new Vector2(0, -42);   // sit below the header
+        gridGo.offsetMin = new Vector2(0, 0); gridGo.offsetMax = new Vector2(0, -62);   // sit below the weekday names
         var grid = gridGo.gameObject.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(120, 92);
-        grid.spacing = new Vector2(8, 8);
+        grid.cellSize = new Vector2(CellWidth, CellHeight);
+        grid.spacing = new Vector2(CellGap, CellGap);
         grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = 4;
-        grid.childAlignment = TextAnchor.MiddleCenter;
+        grid.constraintCount = Columns;
+        grid.childAlignment = TextAnchor.UpperCenter;
 
         for (int i = 0; i < Days; i++) BuildCell(gridGo, i);
 
@@ -144,6 +163,8 @@ public class CalendarPanel : MonoBehaviour
         }
     }
 
+    const float CellWidth = 70f, CellHeight = 50f, CellGap = 5f;
+
     void BuildCell(Transform parent, int i)
     {
         var bg = UiKit.Img("Image", parent, UiKit.PanelRaise);
@@ -153,30 +174,33 @@ public class CalendarPanel : MonoBehaviour
         ring.effectColor = new Color(0, 0, 0, 0);
         ring.effectDistance = new Vector2(2, -2);
 
-        var day = NewText(bg.transform, "Day 1", 13, FontStyle.Bold, TextAnchor.UpperCenter);
+        var day = NewText(bg.transform, "1", 12, FontStyle.Bold, TextAnchor.UpperLeft);
         var drt = day.rectTransform;
         drt.anchorMin = new Vector2(0, 1); drt.anchorMax = new Vector2(1, 1); drt.pivot = new Vector2(0.5f, 1);
-        drt.sizeDelta = new Vector2(0, 18); drt.anchoredPosition = new Vector2(0, -6);
+        drt.sizeDelta = new Vector2(-8, 16); drt.anchoredPosition = new Vector2(0, -3);
 
-        // The weather icon sits in the cell centre (sprite + tint set per day in Refresh).
+        // The weather icon sits at the cell's right (sprite + tint set per day in Refresh).
         var icon = UiKit.Img("Image", bg.transform, Color.white);
         icon.preserveAspect = true; icon.raycastTarget = false;
         var irt = icon.rectTransform;
-        irt.anchorMin = irt.anchorMax = irt.pivot = new Vector2(0.5f, 0.5f);
-        irt.sizeDelta = new Vector2(34, 34); irt.anchoredPosition = new Vector2(0, 5);
+        irt.anchorMin = irt.anchorMax = irt.pivot = new Vector2(1, 1);
+        irt.sizeDelta = new Vector2(20, 20); irt.anchoredPosition = new Vector2(-4, -3);
 
-        var tag = NewText(bg.transform, "Sunny", 14, FontStyle.Bold, TextAnchor.LowerCenter);
+        var tag = NewText(bg.transform, "Sunny", 11, FontStyle.Bold, TextAnchor.LowerCenter);
         var trt = tag.rectTransform;
         trt.anchorMin = new Vector2(0, 0); trt.anchorMax = new Vector2(1, 0); trt.pivot = new Vector2(0.5f, 0);
-        trt.sizeDelta = new Vector2(0, 20); trt.anchoredPosition = new Vector2(0, 7);
+        trt.sizeDelta = new Vector2(0, 16); trt.anchoredPosition = new Vector2(0, 4);
 
         cellBg[i] = bg; cellRing[i] = ring; cellIcon[i] = icon; cellDay[i] = day; cellTag[i] = tag;
     }
 
     // ── Navigation ───────────────────────────────────────────────────────────────────────────────────────────────
-    void Shift(int days)
+    void Shift(int months)
     {
-        viewDayStart = Math.Max(0, viewDayStart + days);   // don't page before the epoch (Spring · Year 1)
+        RealCalendar.StepMonth(ref viewYear, ref viewMonth, months);
+        // Not before the first month the world's calendar counts from.
+        var first = RealCalendar.DateOf(0);
+        if (viewYear < first.Year || (viewYear == first.Year && viewMonth < first.Month)) { viewYear = first.Year; viewMonth = first.Month; }
         Refresh();
     }
 
@@ -184,11 +208,12 @@ public class CalendarPanel : MonoBehaviour
     {
         var cal = GameCalendar.Instance;
         if (cal == null) return;
-        viewDayStart = cal.DayIndex - cal.DayOfSeason;     // first day of the season we're currently in
+        viewYear = cal.Date.Year;
+        viewMonth = cal.Date.Month;
         Refresh();
     }
 
-    // ── Paint the 12 cells for the current page ──────────────────────────────────────────────────────────────────
+    // ── Paint the cells for the month on the page ────────────────────────────────────────────────────────────────
     void Refresh()
     {
         var cal = GameCalendar.Instance;
@@ -198,21 +223,34 @@ public class CalendarPanel : MonoBehaviour
         long today = cal.DayIndex;
         lastTodayShown = today;
 
-        long doy    = ((viewDayStart % GameCalendar.DaysPerYear) + GameCalendar.DaysPerYear) % GameCalendar.DaysPerYear;
-        var  season = (Season)((int)doy / GameCalendar.DaysPerSeason);
-        long year   = viewDayStart / GameCalendar.DaysPerYear;    // viewDayStart >= 0, so plain integer division
-        titleText.text = $"{season} · Year {year + 1}";
+        titleText.text = RealCalendar.MonthTitle(viewYear, viewMonth);
+        var first = RealCalendar.DateOf(0);
+        if (prevBtn != null) prevBtn.interactable = viewYear > first.Year || viewMonth > first.Month;
 
-        if (prevBtn != null) prevBtn.interactable = viewDayStart > 0;   // can't go before the epoch
+        var monthStart = new DateTime(viewYear, viewMonth, 1);
+        long firstDay = RealCalendar.DayOf(monthStart);
+        int lead = (int)monthStart.DayOfWeek;
+        int length = DateTime.DaysInMonth(viewYear, viewMonth);
 
         for (int i = 0; i < Days; i++)
         {
-            long day = viewDayStart + i;
+            int dayOfMonth = i - lead + 1;
+            if (dayOfMonth < 1 || dayOfMonth > length)
+            {
+                cellDay[i].text = "";
+                cellTag[i].text = "";
+                cellIcon[i].enabled = false;
+                cellBg[i].color = new Color(0, 0, 0, 0);
+                cellRing[i].effectColor = new Color(0, 0, 0, 0);
+                continue;
+            }
+
+            long day = firstDay + dayOfMonth - 1;
             Preset p = wx != null ? wx.PresetForDay(day) : Preset.Clear;
             Color c  = WeatherDirector.ColorOf(p);
             bool isToday = day == today;
 
-            cellDay[i].text  = isToday ? $"Day {i + 1}  ★" : $"Day {i + 1}";
+            cellDay[i].text  = isToday ? dayOfMonth + " ★" : dayOfMonth.ToString();
             cellTag[i].text  = WeatherDirector.TagOf(p);
             UiKit.PaintReadable(cellTag[i], c);
             // Weather icon (sprite + tint). Hide gracefully if the art wasn't assigned (e.g. pre-rebake).

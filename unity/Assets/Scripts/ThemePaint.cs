@@ -5,7 +5,8 @@ using UnityEngine.UI;
 /// Remembers which interface palette row (<see cref="UiKit.Row"/>) an element was painted with, so
 /// <see cref="UiKit.SetDarkMode"/> can paint it again in the other set. Added only by <see cref="UiKit.Paint{T}(T, ThemeColor)"/>
 /// and <see cref="UiKit.PaintReadable{T}(T, Color, ThemeColor)"/>; never by hand. It has no Update: it runs only when
-/// the element is painted and when the theme switches.
+/// the element is painted, when the game loads it, and when the theme switches. The row is SAVED, so a piece the editor
+/// built into the HUD prefab (Build UI Shell) follows the theme exactly like a window built while the game runs.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class ThemePaint : MonoBehaviour
@@ -13,16 +14,24 @@ public sealed class ThemePaint : MonoBehaviour
     enum Kind { None, Row, Readable, ReadableRow }
 
     Graphic graphic;
-    Kind kind;
-    UiKit.Row row;
-    Color meaning;
-    UiKit.Row meaningRow;
+    [SerializeField] Kind kind;
+    [SerializeField] UiKit.Row row;
+    [SerializeField] Color meaning;
+    [SerializeField] UiKit.Row meaningRow;
     // Below 0: the row's own alpha. Otherwise the alpha the element is drawn at (a see-through window body).
-    float alpha = -1f;
+    [SerializeField] float alpha = -1f;
     // The colour this last gave the element. Anything else on it now means a screen painted it with something that is
     // no theme row (a weather wash, a rarity tint) — the theme leaves it alone from then on.
     Color applied;
     bool hasApplied;
+
+    // A saved piece holds the colour of whichever theme was in use when it was built; it takes the one in use now.
+    // Only while the game runs — in the editor nothing saved is written.
+    void Awake()
+    {
+        if (!Application.isPlaying) return;
+        Apply();
+    }
 
     internal void SetRow(Graphic g, UiKit.Row r)
     {

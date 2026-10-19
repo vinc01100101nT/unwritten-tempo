@@ -57,10 +57,8 @@ public class WeatherDirector : MonoBehaviour
     /// <see cref="forcedPreset"/> (a forced preset is a live-sky dev override, not the world's weather record).</summary>
     public Preset PresetForDay(long day)
     {
-        // Floor-mod so days before the epoch still resolve to a valid season (matches GameCalendar.Recompute).
-        long doy = ((day % GameCalendar.DaysPerYear) + GameCalendar.DaysPerYear) % GameCalendar.DaysPerYear;
-        var season = (Season)((int)doy / GameCalendar.DaysPerSeason);
-        return Pick(season, day);
+        // The season of that day's real month, the same one GameCalendar shows.
+        return Pick(RealCalendar.SeasonOf(RealCalendar.DateOf(day).Month), day);
     }
 
     /// <summary>Short player-facing weather tag for HUD/calendar, e.g. "Sunny" / "Rainy" / "Snow".</summary>

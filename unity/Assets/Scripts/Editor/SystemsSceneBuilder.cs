@@ -89,8 +89,8 @@ public static class SystemsSceneBuilder
         RigBuilder25D.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
         gameSystems.AddComponent<MusicDirector>();      // persistent BGM: crossfades to each map's BgmTrack, survives map swaps
-        gameSystems.AddComponent<TimeOfDay>();          // real-UTC-anchored day/night clock (2-hour cycle, 12×) + DayIndex + live tuner
-        gameSystems.AddComponent<GameCalendar>();       // 4-season / 48-day calendar derived from TimeOfDay.DayIndex (+ OnNewDay/OnSeasonChange)
+        gameSystems.AddComponent<TimeOfDay>();          // the real GMT+8 day/night clock (24-hour day) + DayIndex + live tuner
+        gameSystems.AddComponent<GameCalendar>();       // the real GMT+8 date + its month's season, from TimeOfDay.DayIndex (+ OnNewDay/OnSeasonChange)
         gameSystems.AddComponent<WeatherChannels>();    // the 4 independent weather channels (rain/cloud/snow/puddle) every renderer follows
         gameSystems.AddComponent<WeatherDirector>();    // deterministic per-day weather: season-gated weighted pick → plays a composed WeatherSequence on the channels
         gameSystems.AddComponent<HoverPlate>();        // whoever is under the cursor: name, HP, MP and buff icons, floating over them
