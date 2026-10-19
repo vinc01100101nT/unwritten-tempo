@@ -970,6 +970,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public string ShortLabel => def != null ? def.HotbarLabel : SkillDef.DefaultShortLabel;
     public string KeyLabel => def != null ? def.keyLabel : "";
     public string Symbol => def != null ? def.Symbol : "";
+    public Sprite Icon => SkillSymbol.IconFor(def);
     public Color SymbolColor => SkillSymbol.ColorFor(def);
     public int ManaCost => def != null ? def.manaCost : 0;
     public bool Affordable => !CasterGone && def != null && Caster.CurrentMP >= def.manaCost;

@@ -15,12 +15,11 @@ MonoBehaviour:
   id: skill.sword.lunge
   displayName: Piercing Gust
   symbol: Pg
+  icon: {fileID: 21300000, guid: e504f0240786b60448fb704f216855e8, type: 3}
   weaponType: 1
   masteryLevel: 1
   needsSkillId: 
   published: 1
-  trademarkRarity: 0
-  trademarkRaritySet: 1
   maxLevel: 10
   description: 'Close the distance.
 
@@ -117,6 +116,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0
@@ -252,6 +258,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0

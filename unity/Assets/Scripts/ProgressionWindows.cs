@@ -560,16 +560,6 @@ public class ProgressionWindows : MonoBehaviour
         var body = UiKit.Label("Body", content, "", 13, FontStyle.Normal, TextAnchor.UpperLeft);
         body.raycastTarget = false;
 
-        // Horizontal strip that ItemTooltip fills with the weapon's granted-skill icons (V2: weapon owns its kit),
-        // under the details so it scrolls with them.
-        var skillRow = new GameObject("SkillIcons", typeof(RectTransform)).GetComponent<RectTransform>();
-        skillRow.SetParent(content, false);
-        var hlg = skillRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 3; hlg.childAlignment = TextAnchor.MiddleLeft;
-        hlg.childControlWidth = hlg.childControlHeight = true;
-        hlg.childForceExpandWidth = hlg.childForceExpandHeight = false;
-        skillRow.gameObject.SetActive(false);
-
         var scroll = details.GetComponent<ScrollRect>();
         scroll.verticalScrollbar = MakeCardScrollbar(border.transform, scroll, CardW - Pad - BarW, detailsTop, detailsHeight);
         scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
@@ -612,7 +602,7 @@ public class ProgressionWindows : MonoBehaviour
         name.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
         var tip = border.gameObject.AddComponent<ItemTooltip>();
-        tip.panel = rt; tip.titleText = title; tip.bodyText = body; tip.skillRow = skillRow;
+        tip.panel = rt; tip.titleText = title; tip.bodyText = body;
         tip.icon = icon;
         tip.look = look;
         tip.badge = badge; tip.badgeText = badgeText;

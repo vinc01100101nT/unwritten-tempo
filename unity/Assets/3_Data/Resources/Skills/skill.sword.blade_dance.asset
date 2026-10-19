@@ -15,6 +15,7 @@ MonoBehaviour:
   id: skill.sword.blade_dance
   displayName: Thousand Petals
   symbol: Tp
+  icon: {fileID: 21300000, guid: 496aa5975e4c25047ae086f2f4baa058, type: 3}
   weaponType: 1
   masteryLevel: 60
   needsSkillId: 
@@ -72,6 +73,11 @@ MonoBehaviour:
     projectileCount: 1
     projectileSpread: 0
     stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
     effects:
     - kind: 0
       useStacks: 0
@@ -83,13 +89,33 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0
@@ -211,13 +237,33 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 8
@@ -333,13 +379,33 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 8
@@ -455,13 +521,33 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0

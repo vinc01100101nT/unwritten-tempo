@@ -15,6 +15,7 @@ MonoBehaviour:
   id: skill.sword.deathblow
   displayName: Last Petal
   symbol: Lp
+  icon: {fileID: 21300000, guid: 63b2868406a55f94197000c24136bd64, type: 3}
   weaponType: 1
   masteryLevel: 30
   needsSkillId: skill.sword.momentum
@@ -70,6 +71,11 @@ MonoBehaviour:
     projectileCount: 1
     projectileSpread: 0
     stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
     effects:
     - kind: 0
       useStacks: 1
@@ -81,13 +87,33 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 0.4
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0

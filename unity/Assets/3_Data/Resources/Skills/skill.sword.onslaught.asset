@@ -15,12 +15,11 @@ MonoBehaviour:
   id: skill.sword.onslaught
   displayName: Petal Storm
   symbol: Ps
+  icon: {fileID: 21300000, guid: a05c121cd763c5f46b3f1389f4c2bfdc, type: 3}
   weaponType: 1
   masteryLevel: 23
   needsSkillId: 
   published: 1
-  trademarkRarity: 1
-  trademarkRaritySet: 1
   maxLevel: 10
   description: "Don't let up.\nArms 5 stacks of +1% damage for 5s, then spends them
     as real basic attacks, two per swing \u2014 so every blow feeds Rising Breeze."
@@ -106,6 +105,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 5
@@ -241,6 +247,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0

@@ -40,6 +40,11 @@ public static class SkillExport
     /// carries the symbol and the numbers and names the weapon's colour as a hex code.</summary>
     public static string DocsTablePath => Path.Combine(RepoRoot, "data", "skills.md");
 
+    /// <summary>Where the wiki's copies of the skill icons go — one picture per skill, named by its id. Regenerated
+    /// whole on every export: a skill whose icon was cleared loses its copy here too.</summary>
+    public static string WikiIconDir => Path.Combine(RepoRoot, "wiki", "assets", "skill-icons");
+    const string WikiIconUrl = "assets/skill-icons/";
+
     [MenuItem("Tools/unwritten/Skills/Export Skill Data (wiki + docs)")]
     public static void ExportMenu()
     {
@@ -83,6 +88,7 @@ public static class SkillExport
 
         json.Append("  \"skills\": [\n");
 
+        var iconsWritten = new HashSet<string>();
         int count = 0;
         for (int i = 0; i < defs.Count; i++)
         {
@@ -100,6 +106,9 @@ public static class SkillExport
             // authored one", and Symbol's fallback to the whole display name hides it. Empty = unauthored, and each
             // surface decides what to draw in a space too small for a name.
             Field(json, "symbol", d.symbol, true);
+            // The skill's icon as the wiki serves it, or empty when it has none — then the page falls back exactly
+            // as a tile does: the symbol, and with no symbol, the name.
+            Field(json, "icon", CopyIconToWiki(d, iconsWritten), true);
             Field(json, "weapon", WeaponTypes.Label(d.weaponType), true);
             // "Blossom Wind — 13th Form" — the same line the in-game card shows, empty for a skill that is no form.
             Field(json, "form", SkillForms.Line(d), true);
@@ -135,7 +144,42 @@ public static class SkillExport
         WriteIfChanged(ExportPath, text);
         WriteIfChanged(WikiCopyPath, text);
         WriteIfChanged(DocsTablePath, BuildDocsTable(defs, colors));
+        RemoveStaleWikiIcons(iconsWritten);
         return count;
+    }
+
+    // Copy the icon's own picture file into the wiki, byte for byte, and say where the page finds it. Copied only
+    // when the bytes differ, so an export that changed nothing rewrites nothing.
+    static string CopyIconToWiki(SkillDef d, HashSet<string> written)
+    {
+        if (d.icon == null || string.IsNullOrEmpty(d.id)) return "";
+        string src = AssetDatabase.GetAssetPath(d.icon);
+        if (string.IsNullOrEmpty(src) || !src.EndsWith(".png", System.StringComparison.OrdinalIgnoreCase)) return "";
+        string srcFull = Path.Combine(RepoRoot, "unity", src);
+        if (!File.Exists(srcFull)) return "";
+
+        string name = d.id + ".png";
+        string dst = Path.Combine(WikiIconDir, name);
+        Directory.CreateDirectory(WikiIconDir);
+        byte[] bytes = File.ReadAllBytes(srcFull);
+        if (!File.Exists(dst) || !BytesEqual(File.ReadAllBytes(dst), bytes)) File.WriteAllBytes(dst, bytes);
+        written.Add(name);
+        return WikiIconUrl + name;
+    }
+
+    static bool BytesEqual(byte[] a, byte[] b)
+    {
+        if (a.Length != b.Length) return false;
+        for (int i = 0; i < a.Length; i++) if (a[i] != b[i]) return false;
+        return true;
+    }
+
+    // A skill that lost its icon, or was renamed, leaves a copy nobody points at; it goes.
+    static void RemoveStaleWikiIcons(HashSet<string> written)
+    {
+        if (!Directory.Exists(WikiIconDir)) return;
+        foreach (var f in Directory.GetFiles(WikiIconDir, "*.png"))
+            if (!written.Contains(Path.GetFileName(f))) File.Delete(f);
     }
 
     // The design docs' copy. Same data, same describer — a table instead of prose, so a doc can point at it rather

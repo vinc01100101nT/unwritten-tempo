@@ -152,6 +152,7 @@
   .doc .dbscroll td.long { white-space: normal; width: 22em; }
   .doc .dbscroll ul { margin: 0; padding-left: 1.1em; }
   .doc .dbscroll li { margin: 0; }
+  .doc .skicon { width: 28px; height: 28px; margin-right: 6px; border-radius: 3px; vertical-align: middle; }
   .doc .sym { display: inline-block; min-width: 2.4em; margin-right: 6px; padding: 0 4px; border: 1px solid; border-radius: 3px; text-align: center; font-weight: 700; }
   .doc .xscroll { overflow-x: auto; margin: 8px 0 22px; }
   .doc .xscroll table { margin: 0; font-size: 13px; width: auto; }
@@ -783,7 +784,9 @@ function skillDatabase() {
   const order = { ultimate: 0, active: 1, passive: 2 }, label = { ultimate: 'Ultimate', active: 'Active', passive: 'Passive' };
   const colors = SKILLS.weaponColors || {};
   all.sort((a, b) => a.weapon.localeCompare(b.weapon) || order[skillGroup(a)] - order[skillGroup(b)] || (a.name || '').localeCompare(b.name || ''));
-  const sym = s => { const c = colors[s.weapon]; const tint = c ? ` style="color:${esc(c)};border-color:${esc(c)}"` : '';
+  // The same order a tile in the game uses: the skill's icon, else its symbol, else its name alone (already beside it).
+  const sym = s => { if (s.icon) return `<img class="skicon" src="${esc(s.icon)}" alt="">`;
+                     const c = colors[s.weapon]; const tint = c ? ` style="color:${esc(c)};border-color:${esc(c)}"` : '';
                      return s.symbol ? `<span class="sym"${tint}>${esc(s.symbol)}</span>` : ''; };
   return '<div class="dbscroll"><table><thead><tr>' +
     ['Name', 'Description', 'Weapon', 'Form', 'Type', 'Trigger', 'MP', 'CD', 'Cast', 'Range', 'Effects'].map(h => `<th>${h}</th>`).join('') +
@@ -811,7 +814,7 @@ function skillTable(b) {
   if (b.source) {
     const all = (SKILLS && SKILLS.skills) || [];
     list = all.filter(s => s.weapon === b.source && (!b.group || skillGroup(s) === b.group))
-      .map(s => ({ name: s.name, form: s.form, symbol: s.symbol, color: (SKILLS.weaponColors || {})[s.weapon], cost: s.cost,
+      .map(s => ({ name: s.name, form: s.form, symbol: s.symbol, icon: s.icon, color: (SKILLS.weaponColors || {})[s.weapon], cost: s.cost,
                    flavor: s.description, effects: s.effects || [], trigger: s.trigger, trademark: s.trademark, unpublished: !s.published }));
     if (!list.length) return h + `<p class="skill-sub"><em>No ${esc(b.group || '')} skills exported for ${esc(b.source)} yet — run the Skill Composer's export.</em></p>`;
   }

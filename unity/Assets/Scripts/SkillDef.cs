@@ -496,6 +496,9 @@ public class SkillDef : ScriptableObject
     [Tooltip("Two letters that stand for this skill on a tile, the way Au stands for gold: \"Committed Strike\" " +
              "becomes \"Cs\". Blank = the tile shows the skill's whole name instead.")]
     public string symbol = "";
+    [Tooltip("The skill's painted icon. Every tile that shows this skill draws it; empty = the tile shows the " +
+             "symbol letters instead.")]
+    public Sprite icon;
     [Tooltip("WHICH weapon this skill belongs to. It is learned with that weapon's mastery points and may only be " +
              "used while holding one. Also the middle segment of the id: skill.sword.<name>. None = belongs to no " +
              "weapon, so nobody can learn it.")]

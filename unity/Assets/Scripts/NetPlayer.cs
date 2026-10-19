@@ -1219,9 +1219,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     //
     // A person's own buffs go only to them (above), because only they need to know how long their own window has
     // left. But a watcher who has selected somebody has to be able to see what is on them, and a single answer sent
-    // once would be a lie two seconds later. So this is a SUBSCRIPTION with a scope: while one unit is on your target
-    // panel, the server tells you about that unit's buffs — once straight away, and again on every change — and the
-    // moment the panel lets it go it stops. Nothing is sent about anybody nobody is looking at, so the cost is
+    // once would be a lie two seconds later. So this is a SUBSCRIPTION with a scope: while you point at one unit (the
+    // hover plate's choice — under the cursor, or your locked target), the server tells you about that unit's buffs —
+    // once straight away, and again on every change — and the moment you point elsewhere it stops. Nothing is sent about anybody nobody is looking at, so the cost is
     // one watcher times one unit, not everybody times everybody.
     //
     // It serves a creature and a person identically, because what is being watched is only ever "a unit".
@@ -1243,7 +1243,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     NetworkIdentity lastPointedSent;
 
     /// <summary>Tell the server which unit's details the person at this keyboard has up, named by the body this
-    /// machine drew for it — or nothing at all. Nothing on screen calls this today. The server
+    /// machine drew for it — or nothing at all. The hover plate calls it for the unit you point at. The server
     /// then keeps sending that unit's buffs and debuffs. Safe to call every frame: it sends only when the answer
     /// changes.
     ///
@@ -1258,7 +1258,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         Mine.CmdPointAt(shell);
     }
 
-    /// <summary>Point at a unit, or at nothing. Called by the target panel; the answer comes back on
+    /// <summary>Point at a unit, or at nothing. Called through <see cref="PointAt"/>; the answer comes back on
     /// <see cref="TargetPointedAtStates"/> and keeps coming until this is called again.</summary>
     [Command]
     public void CmdPointAt(NetworkIdentity who)
@@ -1288,6 +1288,14 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     {
         if (pointedAtStates == null || pointedAt == null || connectionToClient == null) return;
         pointedAtStates.SnapshotForOwner(statesScratch);
+        // A watcher's machine draws only the tiles, so the sentences describing each state stay behind — they are the
+        // longest part of the message, and it goes out again on every change to that unit, to everyone pointing at it.
+        for (int i = 0; i < statesScratch.Count; i++)
+        {
+            var m = statesScratch[i];
+            m.description = "";
+            statesScratch[i] = m;
+        }
         TargetPointedAtStates(connectionToClient, pointedAt, statesScratch);
     }
 

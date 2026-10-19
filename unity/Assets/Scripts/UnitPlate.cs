@@ -3,14 +3,15 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// ONE FLOATING PLATE over one unit. Three things, stacked, sitting just clear of its head:
+/// ONE FLOATING PLATE over one unit, stacked, sitting just clear of its head:
 /// <list type="number">
 /// <item>its name — a creature's portrait on its left, its element on its right as a coloured tile with its letters</item>
 /// <item>a smaller line under the name saying what it is — a townsperson's trade, say — for a unit that has one</item>
+/// <item>a row of small tiles — the buffs and debuffs running on the unit, each wearing the face the buff tray gives
+/// it (<see cref="StateFace"/>) — for the unit whose states the owner hands in</item>
 /// <item>a health bar — left off for a unit with no health to show, a townsperson, whose plate is its name alone</item>
 /// <item>a mana bar under it, for a unit that has mana</item>
 /// </list>
-/// A unit's buffs and debuffs are not drawn here.
 ///
 /// <para><b>Drawing only.</b> Whoever owns a plate decides which unit it rides and hands it the numbers the server
 /// sent; nothing here works a number out. <see cref="HoverPlate"/> owns one and points it at whatever is under the
@@ -45,6 +46,10 @@ public sealed class UnitPlate
     const float ElementSize = 11f;
     const float ElementGap = 2f;
 
+    // A running buff or debuff: a tile the size of the element tile, wrapped into as many rows as the bar's width needs.
+    const float StateSize = 11f;
+    const float StateGap = 1f;
+
     // The narrowest a bar may be drawn, in UI pixels. A body width is honoured above this; below it the bar would
     // be a couple of pixels of nothing, which reads as a glitch rather than as a small creature.
     const float MinBarW = 24f;
@@ -78,6 +83,17 @@ public sealed class UnitPlate
     int lastMP = int.MinValue;
     int lastMaxMP = int.MinValue;
 
+    // The buffs and debuffs row. The store is listened to only while it is handed in; tiles are pooled and redrawn
+    // when the store changes or the soonest one shown runs out — never per frame.
+    sealed class StateTile { public Image back, icon; public TextMeshProUGUI letters; }
+    RectTransform stateRow;
+    readonly System.Collections.Generic.List<StateTile> stateTiles = new System.Collections.Generic.List<StateTile>(4);
+    UnitStates stateStore;
+    readonly System.Action onStatesChanged;
+    bool statesDirty;
+    int stateCount;
+    float statesNextExpiry = float.PositiveInfinity;
+
     float barW = MinBarW;
     bool hasMana;
     // False for a unit with no health to show — a townsperson — whose plate is its name and nothing else.
@@ -85,7 +101,11 @@ public sealed class UnitPlate
 
     /// <param name="objectName">What the plate's object is called in the scene, so a person reading the hierarchy
     /// can tell one owner's plates from another's.</param>
-    public UnitPlate(string objectName) { this.objectName = objectName; }
+    public UnitPlate(string objectName)
+    {
+        this.objectName = objectName;
+        onStatesChanged = () => statesDirty = true;
+    }
 
     public bool Shown => shown && root != null;
 
@@ -219,6 +239,94 @@ public sealed class UnitPlate
         mpFill.fillAmount = Mathf.Clamp01((float)current / Mathf.Max(1, max));
     }
 
+    /// <summary>Draw the buffs and debuffs held in <paramref name="store"/> — what the server sent about this unit —
+    /// or none for null. Safe to call every frame: it redraws only when the store changes or a shown one runs out.
+    /// Hand in null before letting go of a plate, so it stops listening to a store that is no longer its unit's.</summary>
+    public void ShowStates(UnitStates store)
+    {
+        if (store != stateStore)
+        {
+            if (stateStore != null) stateStore.OnChanged -= onStatesChanged;
+            stateStore = store;
+            if (stateStore != null) stateStore.OnChanged += onStatesChanged;
+            statesDirty = true;
+        }
+        if (root == null || (!statesDirty && Time.time < statesNextExpiry)) return;
+        statesDirty = false;
+        DrawStates();
+    }
+
+    void DrawStates()
+    {
+        int n = 0;
+        float now = Time.time;
+        statesNextExpiry = float.PositiveInfinity;
+        if (stateStore != null)
+        {
+            // Reading the list sweeps out what has run out on this copy; a state the server let go of early is gone
+            // with the next message it sends.
+            var list = stateStore.Active;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s.endTime <= now) continue;
+                PaintState(StateTileAt(n++), s);
+                if (s.endTime < statesNextExpiry) statesNextExpiry = s.endTime;
+            }
+        }
+        for (int i = n; i < stateTiles.Count; i++)
+            if (stateTiles[i].back.gameObject.activeSelf) stateTiles[i].back.gameObject.SetActive(false);
+
+        if (n != stateCount) { stateCount = n; Layout(); }
+        else PlaceStateTiles();
+    }
+
+    StateTile StateTileAt(int i)
+    {
+        while (stateTiles.Count <= i)
+        {
+            var back = NewImage("State", stateRow, Color.white);
+            var icon = NewImage("Icon", back.rectTransform, Color.white);
+            icon.preserveAspect = true;
+            StretchFull(icon.rectTransform);
+            var letters = NewText("Letters", back.rectTransform, 6);
+            letters.enableAutoSizing = true;
+            letters.fontSizeMin = 3f;
+            letters.fontSizeMax = 6f;
+            StretchFull(letters.rectTransform);
+            stateTiles.Add(new StateTile { back = back, icon = icon, letters = letters });
+        }
+        return stateTiles[i];
+    }
+
+    static void PaintState(StateTile t, UnitStates.State s)
+    {
+        if (!t.back.gameObject.activeSelf) t.back.gameObject.SetActive(true);
+        t.back.color = StateFace.Back(s);
+        var sprite = StateFace.Icon(s);
+        bool pictured = sprite != null;
+        t.icon.gameObject.SetActive(pictured);
+        t.letters.gameObject.SetActive(!pictured);
+        if (pictured) { t.icon.sprite = sprite; t.icon.color = StateFace.Tint(s); }
+        else { t.letters.text = StateFace.Letters(s); t.letters.color = StateFace.Tint(s); }
+    }
+
+    int StatesPerRow => Mathf.Max(1, Mathf.FloorToInt((barW + StateGap) / (StateSize + StateGap)));
+
+    // The tiles centred row by row inside the states row. Runs on a redraw or a layout — never per frame.
+    void PlaceStateTiles()
+    {
+        int perRow = StatesPerRow;
+        for (int i = 0; i < stateCount; i++)
+        {
+            int row = i / perRow, col = i % perRow;
+            int inRow = Mathf.Min(perRow, stateCount - row * perRow);
+            float x = (col - (inRow - 1) * 0.5f) * (StateSize + StateGap);   // server-math: a tile's place in screen pixels, not a game number
+            Place(stateTiles[i].back.rectTransform, new Vector2(x, -row * (StateSize + StateGap)),
+                  new Vector2(StateSize, StateSize));
+        }
+    }
+
     // Green when healthy, through yellow, to red when nearly dead — the same reading as the target panel's bar,
     // because a player should not have to learn two colour languages for one number.
     static Color HpColor(float f)
@@ -242,6 +350,9 @@ public sealed class UnitPlate
         hasMana = false;
         shown = false;
         lastHP = lastMaxHP = lastMP = lastMaxMP = int.MinValue;
+        stateTiles.Clear();
+        stateCount = 0;
+        statesDirty = true;
 
         root = NewRect(objectName, MobNameplate.SharedHost);
         root.localScale = Vector3.one * WorldScale;
@@ -280,6 +391,9 @@ public sealed class UnitPlate
         Place(portrait.rectTransform, Vector2.zero, new Vector2(NameH, NameH));
         portrait.gameObject.SetActive(false);
 
+        stateRow = NewRect("States", root);
+        stateRow.gameObject.SetActive(false);
+
         var hpTrack = NewImage("HpTrack", root, TrackBg);
         hpFill = NewBarFill("HpFill", hpTrack.rectTransform, HpColor(1f));
         FillInside(hpFill.rectTransform);
@@ -300,6 +414,17 @@ public sealed class UnitPlate
 
         bool mana = hasBars && hasMana;
         float top = hasDescription ? NameH + DescriptionH : NameH;
+
+        // The buffs and debuffs sit between the name and the health bar.
+        int stateRows = stateCount == 0 ? 0 : (stateCount + StatesPerRow - 1) / StatesPerRow;
+        if (stateRow.gameObject.activeSelf != stateRows > 0) stateRow.gameObject.SetActive(stateRows > 0);
+        if (stateRows > 0)
+        {
+            float rowsH = stateRows * StateSize + (stateRows - 1) * StateGap;   // server-math: screen pixels, not a game number
+            Place(stateRow, new Vector2(0f, -(top + RowGap)), new Vector2(barW, rowsH));
+            top += RowGap + rowsH;
+            PlaceStateTiles();
+        }
 
         // The plate is only as tall as what it is showing.
         float h = top + (hasBars ? RowGap + HpBarH : 0f) + (mana ? RowGap + MpBarH : 0f);   // server-math: the plate's height in screen pixels, not a game number

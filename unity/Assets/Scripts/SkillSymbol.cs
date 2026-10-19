@@ -13,6 +13,12 @@ public static class SkillSymbol
     /// <summary>The two letters, falling back to the skill's whole name when nobody authored a symbol.</summary>
     public static string TextFor(SkillDef def) => def != null ? def.Symbol : "";
 
+    /// <summary>The skill's painted icon, or null when it has none — then the tile shows <see cref="TextFor(SkillDef)"/>.</summary>
+    public static Sprite IconFor(SkillDef def) => def != null ? def.icon : null;
+
+    public static Sprite IconFor(string skillId)
+        => string.IsNullOrEmpty(skillId) ? null : IconFor(SkillCatalog.Get(skillId));
+
     /// <summary>The colour of the skill's weapon, or <see cref="NoWeapon"/> when it belongs to none — or when nobody
     /// has picked that weapon's colour yet.</summary>
     public static Color ColorFor(SkillDef def)
@@ -28,4 +34,32 @@ public static class SkillSymbol
 
     public static Color ColorFor(string skillId)
         => string.IsNullOrEmpty(skillId) ? NoWeapon : ColorFor(SkillCatalog.Get(skillId));
+}
+
+/// <summary>
+/// THE one answer to "what does this running buff or debuff look like on a tile" — the buff tray and the plates over
+/// other units both ask here, so a state can never wear one face in the tray and another over a head.
+/// </summary>
+public static class StateFace
+{
+    /// <summary>The tile behind a state from no skill — an ailment a creature's swing put on, say.</summary>
+    public static readonly Color NoSkillBack = new Color(0.10f, 0.10f, 0.13f, 0.9f);
+
+    /// <summary>The tile's colour: the granting skill's weapon colour, or <see cref="NoSkillBack"/>.</summary>
+    public static Color Back(UnitStates.State s)
+    {
+        if (string.IsNullOrEmpty(s.sourceSkillId)) return NoSkillBack;
+        var w = SkillSymbol.ColorFor(s.sourceSkillId);
+        return new Color(w.r, w.g, w.b, NoSkillBack.a);
+    }
+
+    /// <summary>The granting skill's painted icon, or null — then the tile shows <see cref="Letters"/>.</summary>
+    public static Sprite Icon(UnitStates.State s) => SkillSymbol.IconFor(s.sourceSkillId);
+
+    /// <summary>The granting skill's two letters, else the state's name, else its id.</summary>
+    public static string Letters(UnitStates.State s)
+        => !string.IsNullOrEmpty(s.symbol) ? s.symbol : string.IsNullOrEmpty(s.name) ? s.id.ToString() : s.name;
+
+    /// <summary>The state's own colour on the face — how an armed charge and the debt it becomes are told apart.</summary>
+    public static Color Tint(UnitStates.State s) => s.tint == default ? Color.white : s.tint;
 }

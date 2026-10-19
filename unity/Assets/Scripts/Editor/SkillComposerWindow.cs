@@ -964,6 +964,15 @@ public class SkillComposerWindow : EditorWindow
                 EditorUtility.SetDirty(sel);
             }
 
+            var pickedIcon = (Sprite)EditorGUILayout.ObjectField(new GUIContent("icon",
+                "The skill's painted icon, drawn on every tile that shows this skill. Blank = the tile shows the " +
+                "symbol instead, and with no symbol either, the skill's whole name."), sel.icon, typeof(Sprite), false);
+            if (pickedIcon != sel.icon)
+            {
+                sel.icon = pickedIcon;
+                EditorUtility.SetDirty(sel);
+            }
+
             sel.published = EditorGUILayout.Toggle(new GUIContent("published",
                 "PUBLISHED = a new weapon may roll this as its trademark, and a creature may draw it as its extra " +
                 "skill. Unpublished or not, it is learned by mastering its weapon. " +

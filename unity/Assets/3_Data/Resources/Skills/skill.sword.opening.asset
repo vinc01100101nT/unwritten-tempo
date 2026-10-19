@@ -15,12 +15,11 @@ MonoBehaviour:
   id: skill.sword.opening
   displayName: Parting Clouds
   symbol: Pc
+  icon: {fileID: 21300000, guid: b01f6721681097942802b854c0075ce4, type: 3}
   weaponType: 1
   masteryLevel: 25
   needsSkillId: skill.sword.parry
   published: 1
-  trademarkRarity: 2
-  trademarkRaritySet: 1
   maxLevel: 5
   description: "Find the weakness.\nA parry has a 50% chance to charge your next
     attack with +200% damage, within 5s \u2014 spent whether it hits or misses."
@@ -106,6 +105,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 5

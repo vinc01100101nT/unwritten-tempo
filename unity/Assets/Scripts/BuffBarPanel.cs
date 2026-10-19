@@ -40,7 +40,6 @@ public class BuffBarPanel : MonoBehaviour
         return a;
     }
 
-    static readonly Color CellBg = new Color(0.10f, 0.10f, 0.13f, 0.9f);
     static readonly Color Shade  = new Color(0f, 0f, 0f, 0.5f);
 
     Canvas canvas;
@@ -116,9 +115,7 @@ public class BuffBarPanel : MonoBehaviour
     Cell BuildCell(UnitStates.State buff)
     {
         // The cell wears the granting skill's weapon colour; a state from no skill falls back to the plain backdrop.
-        var weapon = SkillSymbol.ColorFor(buff.sourceSkillId);
-        var frame = UiKit.Img("Buff", holder,
-            string.IsNullOrEmpty(buff.sourceSkillId) ? CellBg : new Color(weapon.r, weapon.g, weapon.b, CellBg.a));
+        var frame = UiKit.Img("Buff", holder, StateFace.Back(buff));
         frame.rectTransform.sizeDelta = new Vector2(44f, 44f);
         var le = frame.gameObject.AddComponent<LayoutElement>();
         le.preferredWidth = le.preferredHeight = 44f;
@@ -126,11 +123,22 @@ public class BuffBarPanel : MonoBehaviour
 
         // The granting skill's two letters are the face. Tinted by the state's own colour, which is how an armed
         // charge and the debt it becomes stay told apart without a second thing to draw.
-        string face = !string.IsNullOrEmpty(buff.symbol) ? buff.symbol
-                    : string.IsNullOrEmpty(buff.name) ? buff.id.ToString() : buff.name;
-        var lbl = UiKit.MakeText("Symbol", frame.transform, face, face.Length <= 2 ? 20 : 9, FontStyle.Bold, TextAnchor.MiddleCenter);
-        lbl.color = buff.tint == default ? Color.white : buff.tint; lbl.raycastTarget = false;
-        UiKit.Fill(lbl.rectTransform, Vector2.zero, Vector2.zero);
+        // A granting skill with a painted icon shows the icon instead, tinted the same way.
+        Color faceTint = StateFace.Tint(buff);
+        var iconSprite = StateFace.Icon(buff);
+        if (iconSprite != null)
+        {
+            var icon = ItemIcon.Make(frame.transform, 2f);
+            ItemIcon.Show(icon, iconSprite);
+            icon.color = faceTint;
+        }
+        else
+        {
+            string face = StateFace.Letters(buff);
+            var lbl = UiKit.MakeText("Symbol", frame.transform, face, face.Length <= 2 ? 20 : 9, FontStyle.Bold, TextAnchor.MiddleCenter);
+            lbl.color = faceTint; lbl.raycastTarget = false;
+            UiKit.Fill(lbl.rectTransform, Vector2.zero, Vector2.zero);
+        }
 
         // Shade that fills IN (radial) as the buff runs down — a "time left" ring, like an inverse cooldown.
         var fill = UiKit.Img("Fill", frame.transform, Shade);

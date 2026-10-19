@@ -9,7 +9,10 @@ using UnityEngine;
 /// <para><b>Not over people.</b> Every person already wears a plate of their own all the time
 /// (<see cref="CharacterPlates"/>), so pointing at one adds nothing.</para>
 ///
-/// <para><b>No buff icons.</b> Another unit's buffs and debuffs are not drawn anywhere.</para>
+/// <para><b>Whose buffs are shown.</b> The unit you point at — the one under the cursor, a person included, or your
+/// locked target when the cursor is over nobody — never yourself. That unit is <see cref="Pointed"/>: this asks the
+/// server for its buffs and debuffs (<see cref="NetPlayer.PointAt"/>), which sends them for that one unit only, and
+/// its plate draws them — this one for a creature, <see cref="CharacterPlates"/> for a person.</para>
 ///
 /// <para><b>ONE widget, not one per unit.</b> Only one thing can be under the cursor, so this keeps a single plate and
 /// re-points it.</para>
@@ -27,9 +30,13 @@ public class HoverPlate : MonoBehaviour
     UnitStates subscribed;
     bool elementDirty;
 
-    // What the cursor found last, and whether that was a person — asked once per change, not per frame.
+    // What the cursor found last, and whether that was a person or yourself — asked once per change, not per frame.
     Health lastPicked;
     bool pickedIsPerson;
+    bool pickedIsMe;
+
+    /// <summary>The unit whose buffs and debuffs are on screen, or null. Never your own body.</summary>
+    public static Health Pointed { get; private set; }
 
     // The locked target's bar shows whenever the cursor is over nobody. The rig is found once per player body.
     StatusController lastPlayer;
@@ -50,6 +57,7 @@ public class HoverPlate : MonoBehaviour
     void OnDestroy()
     {
         Unsubscribe();
+        plate.ShowStates(null);
     }
 
     void LateUpdate()
@@ -66,14 +74,20 @@ public class HoverPlate : MonoBehaviour
         {
             lastPicked = unit;
             pickedIsPerson = unit != null && NetPlayer.ShellForBody(unit.gameObject) != null;
+            var avatar = PersistentPlayer3D.Instance;
+            pickedIsMe = unit != null && avatar != null && unit.transform.IsChildOf(avatar.transform);
         }
+        var locked = LockedTarget();
+        PointAt(unit != null && !pickedIsMe ? unit : locked);
+
         if (pickedIsPerson) unit = null;
-        if (unit == null) unit = LockedTarget();
+        if (unit == null) unit = locked;
         if (unit != tracked) Bind(unit);
 
         // NOTHING UNDER THE CURSOR, AND NO LOCKED TARGET.
         if (tracked == null || tracked.IsDead)
         {
+            plate.ShowStates(null);
             plate.Show(false);
             return;
         }
@@ -85,6 +99,7 @@ public class HoverPlate : MonoBehaviour
         plate.Follow(tracked.transform, camT.rotation);
         plate.SetHealth(tracked.Current, tracked.maxHealth);
         plate.SetMana(tracked.CurrentMP, tracked.MaxMP);
+        plate.ShowStates(tracked == Pointed ? tracked.States : null);
 
         if (shell != null && shell.Level != lastLevel)
         {
@@ -94,6 +109,18 @@ public class HoverPlate : MonoBehaviour
 
         // An armour converter starting or ending is a state change, and it changes the element the tile shows.
         if (elementDirty) { elementDirty = false; DrawElement(); }
+    }
+
+    // Ask the server for this unit's buffs and debuffs, and stop asking about the last one. Sends only on a change.
+    // A new connection (a map change, a reconnect) has asked the server about nobody yet, so it is told again.
+    static NetPlayer pointedVia;
+
+    static void PointAt(Health unit)
+    {
+        if (unit == Pointed && NetPlayer.Mine == pointedVia) return;
+        Pointed = unit;
+        pointedVia = NetPlayer.Mine;
+        NetPlayer.PointAt(unit != null ? unit.gameObject : null);
     }
 
     Health LockedTarget()

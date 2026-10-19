@@ -15,12 +15,11 @@ MonoBehaviour:
   id: skill.sword.momentum
   displayName: Rising Breeze
   symbol: Rb
+  icon: {fileID: 21300000, guid: d56bfbf1d853ae440b0d1b5d414ddf89, type: 3}
   weaponType: 1
   masteryLevel: 3
   needsSkillId: 
   published: 1
-  trademarkRarity: 0
-  trademarkRaritySet: 1
   maxLevel: 10
   description: 'Every hit adds up.
 
@@ -108,6 +107,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 5

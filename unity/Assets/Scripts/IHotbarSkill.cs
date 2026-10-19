@@ -19,6 +19,8 @@ public interface IHotbarSkill
     string KeyLabel { get; }
     /// <summary>The two letters the slot wears, falling back to the skill's whole name when none was authored.</summary>
     string Symbol { get; }
+    /// <summary>The skill's painted icon, or null — then the slot wears <see cref="Symbol"/>.</summary>
+    Sprite Icon { get; }
 
     /// <summary>The colour of the weapon this skill belongs to — the slot's background.</summary>
     Color SymbolColor { get; }

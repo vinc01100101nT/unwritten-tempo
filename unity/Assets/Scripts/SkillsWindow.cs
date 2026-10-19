@@ -28,6 +28,7 @@ public class SkillsWindow : MonoBehaviour
     static ThemeColor LineBg     => UiKit.Rule;
     static ThemeColor LockedTile => UiKit.Rule;
     static ThemeColor LockedText => UiKit.TextDim;
+    static readonly Color LockedIcon = new Color(0.4f, 0.4f, 0.4f, 1f);
     static ThemeColor NodeBg     => UiKit.PanelRaise;
 
     GameObject root;
@@ -287,9 +288,20 @@ public class SkillsWindow : MonoBehaviour
         tile.raycastTarget = false;
         TopLeft(tile.rectTransform, 4, 3, TileSize, TileSize);
         tile.gameObject.AddComponent<DragFace>();   // dragging this skill carries its badge, not the whole card
-        var sym = UiKit.Label("Symbol", tile.transform, def.Symbol, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
-        UiKit.Fill(sym.rectTransform, Vector2.zero, Vector2.zero);
-        UiKit.Paint(sym, learned ? UiKit.TextOnDim : LockedText); sym.raycastTarget = false;
+        var iconSprite = SkillSymbol.IconFor(def);
+        if (iconSprite != null)
+        {
+            // An unlearned skill shows its icon darkened, the way its tile is greyed.
+            var icon = ItemIcon.Make(tile.transform, 0f);
+            ItemIcon.Show(icon, iconSprite);
+            if (!learned) icon.color = LockedIcon;
+        }
+        else
+        {
+            var sym = UiKit.Label("Symbol", tile.transform, def.Symbol, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
+            UiKit.Fill(sym.rectTransform, Vector2.zero, Vector2.zero);
+            UiKit.Paint(sym, learned ? UiKit.TextOnDim : LockedText); sym.raycastTarget = false;
+        }
 
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         var title = UiKit.Label("Name", node.transform, name, 11, FontStyle.Bold, TextAnchor.UpperLeft);

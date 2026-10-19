@@ -34,7 +34,7 @@ public class HotbarPanel : MonoBehaviour
         public string itemId;           // Kind.Item
         public bool itemNoneLeft;       // Kind.Item with none carried: the slot is kept, drawn red
         public string copyId;           // Kind.Gear
-        public Image cell, cooldown;
+        public Image cell, cooldown, icon;
         public TMP_Text mp, label, cdNum;
         public GameObject hideOnCd;     // the center label to hide while counting down
         public int lastSecs = -1;
@@ -311,6 +311,13 @@ public class HotbarPanel : MonoBehaviour
         s.skill = skill;
         var cell = s.cell;
 
+        // The skill's painted icon, under the cooldown shade so the sweep darkens it.
+        if (skill.Icon != null)
+        {
+            s.icon = ItemIcon.Make(cell.transform, 3f);
+            ItemIcon.Show(s.icon, skill.Icon);
+        }
+
         // Radial cooldown shade.
         s.cooldown = NewImage("Cooldown", cell.transform, CdShade);
         s.cooldown.sprite = whiteSprite;
@@ -322,12 +329,16 @@ public class HotbarPanel : MonoBehaviour
         s.cooldown.raycastTarget = false;
         Stretch(s.cooldown.rectTransform, 3, 3);
 
-        // The symbol IS the face of the slot — two letters on the weapon's colour, the way Au stands for gold.
+        // The slot wears the weapon's colour; a skill with no icon writes its two letters on it, the way Au stands
+        // for gold. The letters hide under the countdown; an icon stays, darkened by the shade.
         s.weaponColor = skill.SymbolColor;
         cell.color = s.weaponColor;
-        s.label = NewText("Label", cell.transform, skill.Symbol, 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-        Stretch(s.label.rectTransform, 2, 2);
-        s.hideOnCd = s.label.gameObject;
+        if (s.icon == null)
+        {
+            s.label = NewText("Label", cell.transform, skill.Symbol, 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            Stretch(s.label.rectTransform, 2, 2);
+            s.hideOnCd = s.label.gameObject;
+        }
 
         // MP cost (bottom-right) for a skill that costs mana.
         if (skill.ManaCost > 0)
@@ -466,6 +477,7 @@ public class HotbarPanel : MonoBehaviour
         if (aff != s.lastAff)
         {
             s.cell.color = aff == 1 ? s.weaponColor : Dim(s.weaponColor);
+            if (s.icon != null) s.icon.color = aff == 1 ? CellReady : Dim(CellReady);
             if (s.mp != null) s.mp.color = aff == 1 ? MpColor : MpNoColor;
             s.lastAff = aff;
         }

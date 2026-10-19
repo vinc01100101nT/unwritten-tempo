@@ -15,12 +15,11 @@ MonoBehaviour:
   id: skill.sword.pressure
   displayName: Headwind
   symbol: Hd
+  icon: {fileID: 21300000, guid: 2b8dfc37545b2d947b3afbf28fb3b174, type: 3}
   weaponType: 1
   masteryLevel: 33
   needsSkillId: 
   published: 1
-  trademarkRarity: 2
-  trademarkRaritySet: 1
   maxLevel: 5
   description: 'Never let them recover.
 
@@ -108,6 +107,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 5

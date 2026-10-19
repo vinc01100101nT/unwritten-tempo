@@ -85,7 +85,7 @@ The folders match the sections below, so the file tree and this index say the sa
 ## Art & animation pipeline
 
 - [GPT Concept Prompts — Paste-Me](4-art/gpt-concept-prompts.md) — props + weapons image-generation prompt sets.
-- [Website Art Prompts — Paste-Me](4-art/website-art-prompts.md) — one prompt per art box on the website, as Ragnarok-style anime illustration caught mid-moment, plus the character reference sheets they attach.
+- [Art Prompts — the Standard](4-art/website-art-prompts.md) — the one art style and Leonardo settings for every generated picture, with a prompt for every website box and the skill icon sheets, each weapon's icons built from its Kashira's theme.
 - [Mixamo Animation Integration — Workflow](4-art/mixamo-animation-workflow.md) — no-code animation import.
 
 ## AI learnings & improvements

@@ -6,7 +6,8 @@ using UnityEngine;
 /// screen show their name, their health and their mana; every townsperson shows their name, and under it in smaller
 /// letters what they are. The plate is the same
 /// <see cref="UnitPlate"/> a creature gets when you point at it (<see cref="HoverPlate"/>, which leaves people alone).
-/// A player's buffs and debuffs are not shown here.
+/// Another player's buffs and debuffs show on their plate while you point at them (<see cref="HoverPlate.Pointed"/>);
+/// your own stay in the buff tray.
 ///
 /// <para><b>Nothing is worked out here.</b> Your own numbers are the ones the server sent your character; another
 /// person's are the ones it sent the copy of their body this machine draws; a townsperson's name is the one the server
@@ -148,6 +149,7 @@ public class CharacterPlates : MonoBehaviour
             // A dead person's plate goes, the same as a creature's does.
             if (h.IsDead)
             {
+                w.plate.ShowStates(null);
                 w.plate.Show(false);
                 continue;
             }
@@ -169,6 +171,7 @@ public class CharacterPlates : MonoBehaviour
             w.plate.Follow(h.transform, facing);
             w.plate.SetHealth(h.Current, h.maxHealth);
             w.plate.SetMana(h.CurrentMP, h.MaxMP);
+            w.plate.ShowStates(h == HoverPlate.Pointed ? h.States : null);
         }
 
         // A PERSON WHO HAS GONE — logged out, walked to another map, or their body was rebuilt — is no longer in the
@@ -177,6 +180,7 @@ public class CharacterPlates : MonoBehaviour
         {
             var w = others[i];
             if (w.seenFrame == frame) continue;
+            w.plate.ShowStates(null);
             w.plate.Show(false);
             spare.Push(w.plate);
             if (!ReferenceEquals(w.body, null)) byBody.Remove(w.body);

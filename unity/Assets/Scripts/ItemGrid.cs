@@ -80,9 +80,11 @@ public static class ItemIcon
     }
 
     /// <summary>Show <paramref name="def"/>'s icon, or nothing. False when it has none, so the caller writes its name.</summary>
-    public static bool Show(Image icon, Item def)
+    public static bool Show(Image icon, Item def) => Show(icon, def != null ? def.icon : null);
+
+    /// <summary>Show <paramref name="s"/>, or nothing. False when it is null.</summary>
+    public static bool Show(Image icon, Sprite s)
     {
-        var s = def != null ? def.icon : null;
         if (icon.sprite != s) icon.sprite = s;
         bool on = s != null;
         if (icon.enabled != on) icon.enabled = on;
@@ -193,7 +195,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         edge.color = new Color(0, 0, 0, 0);   // still caught by the pointer, so a drop on an empty box lands
         UiKit.Paint(fill, UiKit.SlotEmpty);
         shownFill = UiKit.SlotFill;
-        ItemIcon.Show(icon, null);
+        ItemIcon.Show(icon, (Sprite)null);
         GradeGlow.Show(glow, null);
         Write(title, "");
         Write(count, "");

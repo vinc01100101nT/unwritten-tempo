@@ -15,6 +15,7 @@ MonoBehaviour:
   id: skill.sword.retribution
   displayName: Returning Wind
   symbol: Rw
+  icon: {fileID: 21300000, guid: d46f548ad01edd24bad6b0a3781e7804, type: 3}
   weaponType: 1
   masteryLevel: 45
   needsSkillId: skill.sword.brace
@@ -22,9 +23,9 @@ MonoBehaviour:
   maxLevel: 10
   description: 'Answer all of it at once.
 
-    Cashes the damage Held Breath banked: five
-    strikes, each landing 100% Attack plus 250% of the banked total, and the debt
-    is erased. With an empty bank it still casts, landing five plain attacks.'
+    Cashes the damage Held Breath banked:
+    five strikes, each landing 100% Attack plus 250% of the banked total, and the
+    debt is erased. With an empty bank it still casts, landing five plain attacks.'
   archetype: 0
   family: 0
   shape: 0
@@ -71,6 +72,11 @@ MonoBehaviour:
     projectileCount: 1
     projectileSpread: 0
     stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
     effects:
     - kind: 0
       useStacks: 1
@@ -82,13 +88,33 @@ MonoBehaviour:
         op: 0
         read: 1
         scaler: 2.5
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0

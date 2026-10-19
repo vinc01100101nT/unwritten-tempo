@@ -29,10 +29,6 @@ public class ItemTooltip : MonoBehaviour
     public TMP_Text titleText;
     public TMP_Text bodyText;
 
-    [Tooltip("Horizontal strip (HorizontalLayoutGroup) filled with the weapon's granted-skill icons. Optional.")]
-    public RectTransform skillRow;
-    readonly List<Image> skillIcons = new List<Image>();   // lazily-grown pool of icon cells under skillRow
-
     [Tooltip("Pixel offset from the cursor, before screen clamping.")]
     public Vector2 cursorOffset = new Vector2(18, -18);
 
@@ -110,7 +106,6 @@ public class ItemTooltip : MonoBehaviour
         Instance.titleText.text = title ?? "";
         Instance.titleText.color = titleColour;
         Instance.bodyText.text = body ?? "";
-        Instance.ShowSkillIcons(null);
         Instance.ShowPicture(null, null);
         Instance.ShowSlots(null, null);
         Instance.FitDetails();
@@ -183,6 +178,9 @@ public class ItemTooltip : MonoBehaviour
     void ShowBadge(SkillDef def)
     {
         ShowPicture(null, null);
+        // A skill with a painted icon shows it where an item's picture goes; the letter badge is for the rest.
+        var skillIcon = SkillSymbol.IconFor(def);
+        if (skillIcon != null && icon != null) { ItemIcon.Show(icon, skillIcon); return; }
         if (badge == null) return;
         badge.gameObject.SetActive(true);
         badge.color = SkillSymbol.ColorFor(def);
@@ -228,7 +226,6 @@ public class ItemTooltip : MonoBehaviour
         titleText.text = item.displayName;
         UiKit.Paint(titleText, Rarities.Color(Rarities.Of(item)));
         bodyText.text = Describe(item);
-        ShowSkillIcons(null);   // a kit belongs to a COPY, not the shared def — nothing to show without an instance
         ShowPicture(item, null);
         ShowSlots(item, null);
         FitDetails();
@@ -244,7 +241,6 @@ public class ItemTooltip : MonoBehaviour
         titleText.text = CopyTitle(inst);
         UiKit.Paint(titleText, Rarities.Color(Rarities.Of(def)));
         bodyText.text = DescribeInstance(inst);
-        ShowSkillIcons(null);
         ShowPicture(def, inst);
         ShowSlots(def, inst);
         FitDetails();
@@ -266,7 +262,6 @@ public class ItemTooltip : MonoBehaviour
         previewing = inst;
         previewingSlot = previewSlot;
         DrawPreviewBody();
-        ShowSkillIcons(null);
         ShowPicture(inst.def, inst);
         ShowSlots(inst.def, inst);
         group.alpha = 1f;
@@ -321,40 +316,6 @@ public class ItemTooltip : MonoBehaviour
         }
         bodyText.text = body;
         FitDetails();
-    }
-
-    // Fill the icon strip with THIS copy's rolled skill icons, or hide it for items that carry none.
-    void ShowSkillIcons(List<string> ids)
-    {
-        if (skillRow == null) return;
-        int shown = 0;
-        if (ids != null)
-            for (int i = 0; i < ids.Count; i++)
-            {
-                var def = SkillCatalog.Get(ids[i]);
-                if (def == null) continue;
-                var cell = GetIcon(shown++);
-                cell.sprite = null;
-                cell.color = SkillSymbol.ColorFor(def);
-            }
-        for (int i = 0; i < skillIcons.Count; i++) skillIcons[i].gameObject.SetActive(i < shown);
-        skillRow.gameObject.SetActive(shown > 0);
-    }
-
-    // Pooled icon cell i under skillRow — grows the pool on demand (only on hover, so no hot-path alloc).
-    Image GetIcon(int i)
-    {
-        while (skillIcons.Count <= i)
-        {
-            var go = new GameObject("SkillIcon", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(skillRow, false);
-            var im = go.GetComponent<Image>();
-            im.preserveAspect = true; im.raycastTarget = false;
-            var le = go.AddComponent<LayoutElement>();
-            le.preferredWidth = le.preferredHeight = 22;
-            skillIcons.Add(im);
-        }
-        return skillIcons[i];
     }
 
     void Update()
