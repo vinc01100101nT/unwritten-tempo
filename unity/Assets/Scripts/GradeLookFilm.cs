@@ -65,6 +65,11 @@ public static class GradeLookFilm
         return ((int)theme - 1) * 3 + level - 1;
     }
 
+    /// <summary>How opaque <paramref name="look"/> is drawn over a picture: its enchant theme's
+    /// (<see cref="GradeGlow.PictureOpacity"/>), and full for the armour aura.</summary>
+    public static float Opacity(int look) =>
+        look < 0 || look >= FirstAura ? 1f : GradeGlow.PictureOpacity((GradeGlow.Enchant)(look / 3 + 1));
+
     /// <summary>The shared picture, built on first use. Null on a server, which draws nothing.</summary>
     public static Texture Film => Ensure() ? film : null;
 
@@ -169,6 +174,7 @@ public class GradeLookWatcher : MonoBehaviour
                 var img = GetComponent<RawImage>();
                 if (img.texture == null) img.texture = GradeLookFilm.Film;
                 img.uvRect = GradeLookFilm.Cell(look);
+                img.color = new Color(1f, 1f, 1f, GradeLookFilm.Opacity(look));
             }
         }
         bool on = look >= 0;

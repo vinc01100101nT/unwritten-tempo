@@ -62,6 +62,11 @@ public static class AccountSession
     public static string AccessToken { get; private set; }
     public static string AccountId { get; private set; }
 
+    /// <summary>What trades for a fresh <see cref="AccessToken"/> once that one runs out — it lasts minutes, this
+    /// lasts days. Thrown away until 2026-10-19, so anybody online past the first pass's life came back to the
+    /// character list to be told "sign in first" (<see cref="AccountClient"/> spends it).</summary>
+    public static string RefreshToken { get; private set; }
+
     public static string CharacterId { get; private set; }
     public static string CharacterName { get; private set; }
 
@@ -97,10 +102,11 @@ public static class AccountSession
     /// world is not brought up until this says somebody is actually playing.</summary>
     public static event Action OnChanged;
 
-    public static void SignIn(string accountId, string accessToken)
+    public static void SignIn(string accountId, string accessToken, string refreshToken)
     {
         AccountId = accountId;
         AccessToken = accessToken;
+        RefreshToken = refreshToken;
         IsGm = false;   // a fresh sign-in is untrusted until the account service says otherwise
 
         // NOT WHERE THE WORLD'S CLOCK COMES FROM ANY MORE. It used to be asked of the account service here,
@@ -108,6 +114,14 @@ public static class AccountSession
         // read off two different clocks. The world's time now comes from the machine running the world, and it
         // arrives at the one moment that machine speaks to this one: when it hands over a body.
         OnChanged?.Invoke();
+    }
+
+    /// <summary>Swap in the fresh pair a refresh answered with. The same person, still signed in, so nothing is
+    /// raised: a listener would read it as a new sign-in and reopen the character list mid-game.</summary>
+    public static void Renew(string accessToken, string refreshToken)
+    {
+        AccessToken = accessToken;
+        RefreshToken = refreshToken;
     }
 
     /// <summary>Choose the character to play. The appearance comes from the list the server answered with,
@@ -138,7 +152,7 @@ public static class AccountSession
 
     public static void SignOut()
     {
-        AccessToken = AccountId = CharacterId = CharacterName = ModelName = HairStyle = HairColour = null;
+        AccessToken = RefreshToken = AccountId = CharacterId =CharacterName = ModelName = HairStyle = HairColour = null;
         DyeSources = DyeTargets = null;
         IsGm = false;   // signed out is nobody, and nobody is trusted with commands
         OnChanged?.Invoke();

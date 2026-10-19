@@ -10,8 +10,9 @@ using TMPro;
 /// edge sits on the mastery level that opens it, a skill and every skill that needs it share rows joined by wires,
 /// and a line marks the mastery the server last sent.
 ///
-/// <para>Three looks: a skill the mastery has not reached is faint; one in reach with no point in it is solid but
-/// grey; one with a point in it wears its weapon's colour. Its <b>+</b> asks the server to spend one point on it —
+/// <para>Three looks: a skill the mastery has not reached is grey and faint (30% opacity); one in reach with no point
+/// in it is grey at full opacity; one with a point in it wears its own colours. A skill's icon always shows — grey
+/// until a point is in it (the user, 2026-10-19). Its <b>+</b> asks the server to spend one point on it —
 /// the server decides and sends the whole picture back. A learned active can be dragged onto the hotbar; hovering
 /// any skill shows the shared skill card.</para>
 ///
@@ -28,7 +29,9 @@ public class SkillsWindow : MonoBehaviour
     static ThemeColor LineBg     => UiKit.Rule;
     static ThemeColor LockedTile => UiKit.Rule;
     static ThemeColor LockedText => UiKit.TextDim;
-    static readonly Color LockedIcon = new Color(0.4f, 0.4f, 0.4f, 1f);
+    static Material grey;
+    // The material a skill's icon is drawn grey with until a point is in it.
+    static Material Grey => grey != null ? grey : (grey = Resources.Load<Material>("UI/GrayscaleUI"));
     static ThemeColor NodeBg     => UiKit.PanelRaise;
 
     GameObject root;
@@ -291,10 +294,10 @@ public class SkillsWindow : MonoBehaviour
         var iconSprite = SkillSymbol.IconFor(def);
         if (iconSprite != null)
         {
-            // An unlearned skill shows its icon darkened, the way its tile is greyed.
+            // An unlearned skill shows its whole icon in grey, at the brightness it was painted.
             var icon = ItemIcon.Make(tile.transform, 0f);
             ItemIcon.Show(icon, iconSprite);
-            if (!learned) icon.color = LockedIcon;
+            if (!learned) icon.material = Grey;
         }
         else
         {

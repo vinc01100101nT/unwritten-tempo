@@ -104,6 +104,12 @@ public static class GradeGlow
         }
     }
 
+    /// <summary>How opaque a theme's enchant is drawn over an item's picture in a window. Ice, Water and Dark film as
+    /// big bright clouds that covered the whole weapon (the user, 2026-10-19), so they are drawn see-through; Fire and
+    /// Nature stream thin and stay full.</summary>
+    public static float PictureOpacity(Enchant theme) =>
+        theme == Enchant.Ice || theme == Enchant.Water || theme == Enchant.Dark ? 0.4f : 1f;
+
     /// <summary>The enchant's level for a grade: 0 at Raw (none), 1 at F and E, 2 at D and C, 3 at B and A.</summary>
     public static int EnchantLevel(Quality grade) => grade <= Quality.Raw ? 0 : grade <= Quality.E ? 1 : grade <= Quality.C ? 2 : 3;
 

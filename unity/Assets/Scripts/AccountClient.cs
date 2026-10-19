@@ -19,9 +19,74 @@ public static class AccountClient
     [Serializable] class ErrorBody { public string error; }
 
     /// <summary>Send a request to the account service. <paramref name="body"/> null = no payload;
-    /// <paramref name="authorize"/> attaches the signed-in player's token.</summary>
+    /// <paramref name="authorize"/> attaches the signed-in player's token.
+    ///
+    /// <para><b>A pass refused as out of date is renewed and the request sent once more.</b> The pass lasts minutes
+    /// (the account service's ACCESS_TOKEN_SECONDS) and a player stays online for hours, so without this the first
+    /// request after it ran out — going back to the character list — was answered "sign in first". A refused pass is
+    /// turned away before the request does anything, so sending it again cannot do anything twice.</para></summary>
     public static void Send(string method, string path, string body, bool authorize, Reply onDone)
-        => SendAs(method, path, body, authorize ? AccountSession.AccessToken : null, onDone);
+    {
+        if (!authorize) { SendCore(method, path, body, null, (ok, text, error, _) => onDone?.Invoke(ok, text, error)); return; }
+
+        string sentWith = AccountSession.AccessToken;
+        SendCore(method, path, body, sentWith, (ok, text, error, status) =>
+        {
+            if (ok || status != 401 || string.IsNullOrEmpty(AccountSession.RefreshToken))
+            {
+                onDone?.Invoke(ok, text, error);
+                return;
+            }
+            RenewThen(sentWith, renewed =>
+            {
+                if (!renewed) { onDone?.Invoke(false, text, error); return; }
+                SendCore(method, path, body, AccountSession.AccessToken, (ok2, text2, error2, _) => onDone?.Invoke(ok2, text2, error2));
+            });
+        });
+    }
+
+    // ---- renewing the pass ------------------------------------------------------------------------------
+    //
+    // ONE renewal at a time. A refresh token is spent the moment it is used, so two requests refused together that
+    // each renewed would spend it twice — the second is refused, and the player is signed out by their own game.
+    // Everybody refused while a renewal is under way waits for that one.
+
+    [Serializable] class RefreshBody { public string refreshToken; }
+
+    static readonly System.Collections.Generic.List<Action<bool>> waitingForRenewal = new System.Collections.Generic.List<Action<bool>>();
+    static bool renewing;
+
+    // Renew the pass that <paramref name="refused"/> was, then answer whether there is a fresh one to send.
+    static void RenewThen(string refused, Action<bool> then)
+    {
+        // Somebody else already renewed it while this request was out.
+        if (!string.IsNullOrEmpty(AccountSession.AccessToken) && AccountSession.AccessToken != refused) { then(true); return; }
+
+        waitingForRenewal.Add(then);
+        if (renewing) return;
+        renewing = true;
+
+        string account = AccountSession.AccountId;
+        SendCore("POST", "/sessions/refresh", JsonUtility.ToJson(new RefreshBody { refreshToken = AccountSession.RefreshToken }), null,
+                 (ok, text, _, _) =>
+        {
+            bool renewed = false;
+            // Signed out, or signed in as somebody else, while it was out: this answer belongs to nobody now.
+            if (ok && AccountSession.AccountId == account)
+            {
+                var session = JsonUtility.FromJson<SessionReply>(text);
+                if (session != null && !string.IsNullOrEmpty(session.accessToken) && session.accountId == account)
+                {
+                    AccountSession.Renew(session.accessToken, session.refreshToken);
+                    renewed = true;
+                }
+            }
+            renewing = false;
+            var waiting = waitingForRenewal.ToArray();
+            waitingForRenewal.Clear();
+            foreach (var w in waiting) w(renewed);
+        });
+    }
 
     /// <summary>Which server answers this path. Anything about a CHARACTER — the list, one character's save,
     /// the models one may be created with — belongs to the character server; signing in, refreshing and signing
@@ -49,6 +114,10 @@ public static class AccountClient
     /// account service scopes every answer to whoever the proof belongs to, so this can only ever fetch what its
     /// holder was already entitled to.</para></summary>
     public static void SendAs(string method, string path, string body, string bearerToken, Reply onDone)
+        => SendCore(method, path, body, bearerToken, (ok, text, error, _) => onDone?.Invoke(ok, text, error));
+
+    // The request itself, answering with the reply's status code too, so a refused pass can be told apart.
+    static void SendCore(string method, string path, string body, string bearerToken, Action<bool, string, string, long> onDone)
     {
         var request = new UnityWebRequest(WhereThisGoes(path) + path, method)
         {
@@ -71,8 +140,9 @@ public static class AccountClient
             string text = request.downloadHandler != null ? request.downloadHandler.text : null;
             bool ok = request.result == UnityWebRequest.Result.Success;
             string error = ok ? null : ReadError(request, text);
+            long status = request.responseCode;
             request.Dispose();
-            onDone?.Invoke(ok, text, error);
+            onDone?.Invoke(ok, text, error, status);
         };
     }
 
@@ -97,7 +167,7 @@ public static class AccountClient
     // ---- the calls the screens make -------------------------------------------------------------------
 
     [Serializable] class Credentials { public string email; public string password; }
-    [Serializable] class SessionReply { public string accountId; public string accessToken; }
+    [Serializable] class SessionReply { public string accountId; public string accessToken; public string refreshToken; }
 
     /// <summary>Create an account. Does NOT sign in — the screen signs in afterwards with the same details,
     /// so there is one path that establishes a session rather than two that must agree.</summary>
@@ -119,7 +189,7 @@ public static class AccountClient
                 onDone?.Invoke(false, "The server's reply made no sense.");
                 return;
             }
-            AccountSession.SignIn(session.accountId, session.accessToken);
+            AccountSession.SignIn(session.accountId, session.accessToken, session.refreshToken);
             onDone?.Invoke(true, null);
         });
     }
