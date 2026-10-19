@@ -8,6 +8,7 @@
     ui-tokens.css + fonts/   the game's own colours and fonts, written by tools/ui-tokens.py
     content/                 the wiki's pages (wiki/content) — JSON block documents listed in content/manifest.json
     assets/                  the wiki's pictures (wiki/assets), and key-art/ the game's key art (Resources/UI/KeyArt)
+                             with index.json, the list of them the Media page shows
     version.txt, news.json   the launcher's own files, so the page can never say something different from what the
                              launcher downloads
     download/                the launchers
@@ -217,6 +218,8 @@
   .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .gallery .art { height: 190px; }
   .gallery .art.wide { grid-column: span 3; height: 320px; }
+  .gallery .piece { display: flex; flex-direction: column; gap: 4px; color: var(--text-main); font-size: 13px; }
+  .gallery .piece:hover { text-decoration: none; color: var(--title-text); }
 
   .dl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 10px 0 6px; }
   .dl-grid .opt { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 4px; padding: 14px; text-align: center; }
@@ -518,6 +521,7 @@
 <!-- ================= MEDIA ================= -->
 <section class="page" id="p-media">
   <div class="wrap" style="padding-top:18px">
+    <div class="win"><div class="fill"><div class="head">Artwork</div><div class="body"><div class="gallery" id="media-art"></div></div></div></div>
     <div class="win"><div class="fill"><div class="head">Wallpapers</div><div class="body"><div class="gallery">
       <div class="art wide" data-kind="Wallpaper — key art" data-size="2560 × 1440" data-desc="The main key art without any text, for desktops."></div>
       <div class="art" data-kind="Wallpaper — a Kashira" data-size="2560 × 1440" data-desc="One of the fourteen weapons, with its epithet."></div>
@@ -981,6 +985,29 @@ async function showDoc(id, titleEl, bodyEl, art) {
   if (boxes.length) startLiveStats(() => boxes.forEach(fillStatusBox));
 }
 
+// The Kashira showcase's picture for each weapon that has one; the rest keep their placeholder.
+const KASHIRA_ART = { sword: 'assets/key-art/veyra-blossom-wind.jpg', scythe: 'assets/key-art/morwen-chapel-lilies.jpg' };
+
+// A caption for a picture whose file name does not read well; any other is captioned from its file name.
+const ART_TITLES = {
+  'last-line-frostcap-slime-siege.jpg': 'The Last Line', 'start.jpg': 'Getting Started', 'playstyles.jpg': 'Playstyles & Builds',
+  'veyra-blossom-wind.jpg': 'Veyra, the Last Petal', 'veyra-footbridge-tea.jpg': 'Veyra at Rest', 'morwen-chapel-lilies.jpg': 'Morwen, the Last Bloom',
+};
+
+// Every picture in the game's key art folder, listed by the publish into assets/key-art/index.json.
+async function buildMedia() {
+  const names = await getJson('assets/key-art/index.json', []);
+  const box = document.getElementById('media-art');
+  const title = n => ART_TITLES[n] || n.replace(/\.jpg$/, '').split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+  box.innerHTML = (Array.isArray(names) ? names : []).map(n => {
+    const src = 'assets/key-art/' + n;
+    return `<a class="piece" href="${esc(src)}" target="_blank" rel="noopener">` +
+      `<div class="art" data-kind="${esc(title(n))}" data-src="${esc(src)}"></div><span>${esc(title(n))}</span></a>`;
+  }).join('');
+  fillArt(box);
+  watchReveal(box);
+}
+
 async function buildHome() {
   const home = PAGES[SITE_PAGES.home] && await pageDoc(PAGES[SITE_PAGES.home]);
   if (home) {
@@ -1008,6 +1035,9 @@ async function buildHome() {
     document.getElementById('k-deed').innerHTML = inline(r[2]);
     const a = document.getElementById('k-art');
     a.dataset.done = '';
+    const standing = KASHIRA_ART[strip(r[0]).toLowerCase()];
+    a.classList.remove('filled'); a.style.backgroundImage = ''; a.innerHTML = '';
+    if (standing) a.dataset.src = standing; else delete a.dataset.src;
     a.dataset.desc = `An unwritten hero — charcoal body, a first hint of colour — holding a ${esc(strip(r[0]).toLowerCase())}, posed the way ${esc(strip(r[1]))} fought. One picture per weapon, fourteen in all.`;
     fillArt(a.parentElement);
   };
@@ -1028,7 +1058,8 @@ async function buildHome() {
       picker.append(b);
     });
     fillArt(picker);
-    pick(0);
+    // open on a weapon whose picture is made, so the showcase starts with art rather than a placeholder
+    pick(Math.max(0, kTable.rows.findIndex(r => KASHIRA_ART[strip(r[0]).toLowerCase()])));
   }
 
   const maps = PAGES.maps && await pageDoc(PAGES.maps);
@@ -1213,6 +1244,7 @@ async function boot() {
   }).catch(() => {});
 
   await buildHome();
+  buildMedia();
   addEventListener('hashchange', route);
   route();
 }

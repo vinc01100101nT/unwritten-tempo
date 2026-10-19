@@ -509,10 +509,12 @@ def publish_site(out):
 
     # The key art lives once, in the game (its sign-in and loading screens load it by name); the site gets a copy.
     key_art = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "UI", "KeyArt")
+    # The list beside them is how the Media page shows every one: a page cannot list a folder itself.
     os.makedirs(os.path.join(out, "assets", "key-art"))
-    for name in os.listdir(key_art):
-        if name.endswith(".jpg"):
-            shutil.copy2(os.path.join(key_art, name), os.path.join(out, "assets", "key-art", name))
+    pictures = sorted(name for name in os.listdir(key_art) if name.endswith(".jpg"))
+    for name in pictures:
+        shutil.copy2(os.path.join(key_art, name), os.path.join(out, "assets", "key-art", name))
+    write_json(os.path.join(out, "assets", "key-art", "index.json"), pictures)
 
     # The character server the status page reads, as players reach it — the rule tools/build-game.sh writes into the
     # game: the public address once there is one, this machine's until then.
