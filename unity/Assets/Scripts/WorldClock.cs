@@ -1,13 +1,16 @@
 using System;
 
 /// <summary>
-/// What time it is in the world. THE one answer, and it is the clock of the machine running the SERVER.
+/// What time it is in the world. THE one answer, and it is the clock of the machine running the SERVER, set from
+/// the internet's real time once when the server starts.
 ///
-/// <para><b>There is no second source and no fallback.</b> A server reads its own machine's clock directly — it
-/// IS the world's clock, so there is nothing to ask and nothing to correct. A player's machine is TOLD that time
-/// at the moment the server hands it a body, and counts forward from there against its own steady clock. A
-/// machine that has not been told does not guess: <see cref="Synced"/> stays false, and nothing that has to
-/// outlive the moment may be stamped until it is true.</para>
+/// <para><b>How the server's clock is set.</b> As a server starts, before any map is up, it asks the internet
+/// what time it really is (<see cref="InternetTime"/>) and keeps how far its own machine's clock is off. From then
+/// on its time is its machine's steady clock plus that correction, so a machine whose clock runs fast or slow
+/// does not move the world. If nothing answers, the server says so in its log and runs on its machine's clock
+/// as it is. A player's machine is TOLD the server's time at the moment the server hands it a body, and counts
+/// forward from there against its own steady clock. A machine that has not been told does not guess:
+/// <see cref="Synced"/> stays false, and nothing that has to outlive the moment may be stamped until it is true.</para>
 ///
 /// <para><b>Why every lasting timer is anchored here.</b> Unity's <c>Time.time</c> counts from the instant THAT
 /// process started, so it is a different number in every process and begins again at zero on every restart. A
@@ -19,24 +22,25 @@ using System;
 /// only as the value it is derived from and saved as. Timing that lives and dies inside one action — a wind-up,
 /// an animation blend, a cast bar — never comes here at all; it outlives nothing, so it needs nothing.</para>
 ///
-/// <para><b>The price of having no fallback, paid deliberately.</b> Nothing reconciles two server machines. If
-/// the world is ever split across more than one, their clocks have to be kept in step by the machines
-/// themselves, or a moment stamped by one is wrong when read by the other.</para>
+/// <para><b>Two server machines agree because both ask the internet.</b> Each sets itself from the real time on
+/// its own; one whose question went unanswered runs on its machine's clock and can disagree by however far that
+/// clock is off — its log says so when it starts.</para>
 /// </summary>
 public static class WorldClock
 {
     static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-    // Seconds to ADD to this machine's own UTC clock to reach the server's. Always zero on a server, which is
-    // the literal statement that a server's own clock IS the world's.
+    // Seconds to ADD to this machine's own UTC clock to reach the server's. Unused on a server.
     static double offsetSeconds;
+    // Seconds to ADD to a server machine's own UTC clock to reach the real time, asked of the internet at start.
+    static double serverCorrectionSeconds;
 
     /// <summary>True when this machine knows the world's time. Always true on a server, which owns it.</summary>
     public static bool Synced { get; private set; } = GameServer.IsServer;
 
     /// <summary>The world's current UTC time.</summary>
     public static DateTime UtcNow =>
-        GameServer.IsServer ? DateTime.UtcNow : DateTime.UtcNow.AddSeconds(offsetSeconds);
+        DateTime.UtcNow.AddSeconds(GameServer.IsServer ? serverCorrectionSeconds : offsetSeconds);
 
     /// <summary>Seconds between <paramref name="epoch"/> and now, as the world counts them.</summary>
     public static double SecondsSince(DateTime epoch) => (UtcNow - epoch).TotalSeconds;
@@ -55,6 +59,20 @@ public static class WorldClock
     {
         double left = (moment - UtcNow).TotalSeconds;
         return left <= 0d ? 0f : (float)left;
+    }
+
+    // Once, as a server starts and before any map is up — so every moment it ever stamps is on the corrected clock.
+    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void SetServerClockFromInternet()
+    {
+        if (!GameServer.IsServer) return;
+        if (InternetTime.TryFetchOffset(out double correction, out string source))
+        {
+            serverCorrectionSeconds = correction;
+            GameLog.Info(LogCat.Server, $"World clock set from {source}: this machine's clock was {correction:+0.000;-0.000}s off.");
+        }
+        else
+            GameLog.Warn(LogCat.Server, "World clock: no internet time server answered — running on this machine's own clock.");
     }
 
     /// <summary>The server saying what time it is, as it hands this machine a body. A server ignores it: it is

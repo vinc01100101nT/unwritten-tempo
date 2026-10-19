@@ -2,14 +2,13 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// The game's single day/night clock, <b>anchored to real-world UTC</b>. Lives on the persistent
+/// The game's single day/night clock: <b>the real time in GMT+8</b> (<see cref="RealCalendar"/>). Lives on the persistent
 /// <c>Systems</c> layer so the light (<see cref="DayNightLight"/>) and the audio beds (<see cref="MusicDirector"/>
-/// surroundings, <see cref="RainAudio"/>) share ONE source of time instead of each running its own. The cycle is split evenly:
-/// <see cref="halfCycleSeconds"/> of day (incl. sunrise) then the same of night (incl. sunset) — default
-/// 3600s each = a 1-hour day + a 1-hour night = a <b>2-hour full cycle (12× real)</b>.
+/// surroundings, <see cref="RainAudio"/>) share ONE source of time instead of each running its own. A day is 24 real
+/// hours: day from 6 AM (sunrise) to 6 PM (sunset), night from 6 PM to 6 AM.
 ///
-/// <para><b>Why real-UTC-anchored:</b> in MMO play every client derives the SAME <see cref="time01"/> and
-/// <see cref="DayIndex"/> from <see cref="Epoch"/> + the system clock, so the world's time-of-day, calendar,
+/// <para><b>Why real-clock-anchored:</b> in MMO play every client derives the SAME <see cref="time01"/> and
+/// <see cref="DayIndex"/> from <see cref="Epoch"/> + the server's clock, so the world's time-of-day, calendar,
 /// and (seeded) weather agree on every machine — and the world keeps advancing while logged out. The one part
 /// that travels over the network is a GM's <c>/time</c> shift (<see cref="ShiftSeconds"/>). <see cref="GameCalendar"/> reads <see cref="DayIndex"/>; <see cref="WeatherDirector"/> seeds
 /// off it.</para>
@@ -25,14 +24,9 @@ public class TimeOfDay : MonoBehaviour
 {
     public static TimeOfDay Instance { get; private set; }
 
-    /// <summary>Game "year zero" — the fixed UTC instant <see cref="DayIndex"/>/<see cref="time01"/> count from.
-    /// MUST be identical on every client (it's the shared world epoch), so it's a hard-coded constant, not tunable.</summary>
-    public static readonly DateTime Epoch = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-    [Header("Cycle")]
-    [Tooltip("Real seconds for ONE HALF of the cycle. 3600 = a 1-hour day + a 1-hour night = a 2-hour full " +
-             "cycle (12× real). The full day length (this × 2) also defines how long an in-game DAY lasts.")]
-    public float halfCycleSeconds = 3600f;
+    /// <summary>The fixed instant <see cref="DayIndex"/> counts from: midnight, 1 January 2026, GMT+8. MUST be identical
+    /// on every client (it's the shared world epoch), so it's a hard-coded constant, not tunable.</summary>
+    public static readonly DateTime Epoch = RealCalendar.EpochUtc;
 
     [Header("Real-world anchor")]
     [Tooltip("ON (production): derive the time-of-day from the real UTC clock + Epoch, so every client agrees. " +
@@ -45,7 +39,7 @@ public class TimeOfDay : MonoBehaviour
     [Tooltip("Fast-forward multiplier — ONLY applies in override mode (real clock off or paused off-real). " +
              "Crank it to race through days/seasons while testing.")]
     public float testSpeed = 1f;
-    [Range(0f, 1f)] [Tooltip("Time of day. 0 = sunrise, 0.25 = noon, 0.5 = sunset, 0.75 = midnight.")]
+    [Range(0f, 1f)] [Tooltip("Time of day. 0 = sunrise (6 AM), 0.25 = noon, 0.5 = sunset (6 PM), 0.75 = midnight.")]
     public float time01 = 0f;
     [SerializeField] [Tooltip("Read-only live readout.")]
     string _readout = "";
@@ -66,9 +60,9 @@ public class TimeOfDay : MonoBehaviour
     public static double SecondsToReach(double elapsedSeconds, double dayLengthSeconds, double target01)
     {
         double intoDay = elapsedSeconds - Math.Floor(elapsedSeconds / dayLengthSeconds) * dayLengthSeconds;
-        // 1 is the same moment as 0; kept in [0, 1) so asking for 1 cannot step into the next day.
-        double target = target01 - Math.Floor(target01);
-        return target * dayLengthSeconds - intoDay;
+        // The calendar day starts at midnight and time01 at sunrise; the fraction is kept in [0, 1) so asking for 1
+        // cannot step into the next day.
+        return RealCalendar.DayFraction(target01) * dayLengthSeconds - intoDay;
     }
 
     /// <summary>Seconds since <see cref="Epoch"/> as the time of day counts them: the world clock plus the shift.</summary>
@@ -79,8 +73,11 @@ public class TimeOfDay : MonoBehaviour
     /// so it's identical on every client; in override mode a synthetic counter advances by <see cref="testSpeed"/>.</summary>
     public long DayIndex { get; private set; }
 
-    /// <summary>Length of one full in-game day (day + night) in real seconds — <see cref="halfCycleSeconds"/> × 2.</summary>
-    public double DayLengthSeconds => Math.Max(1.0, halfCycleSeconds * 2.0);
+    /// <summary>Length of one full in-game day (day + night) in real seconds: a real day.</summary>
+    public double DayLengthSeconds => RealCalendar.DaySeconds;
+
+    /// <summary>Minutes past midnight on the world's clock, 0..1439 — what the HUD clock reads.</summary>
+    public int MinuteOfDay => RealCalendar.MinuteOfDay(time01);
 
     // Synthetic seconds-since-epoch used in OVERRIDE mode (real clock off/paused) so DayIndex keeps ticking while
     // testing. Seeded from time01+DayIndex on pause so resuming continues from where you scrubbed (no jump).
@@ -124,22 +121,22 @@ public class TimeOfDay : MonoBehaviour
 
             double elapsed = ElapsedForTimeOfDay;
             overrideElapsed = elapsed;                                   // keep synced so toggling to override doesn't jump
-            DayIndex = (long)Math.Floor(elapsed / dayLen);
-            time01 = (float)((elapsed - DayIndex * dayLen) / dayLen);    // mod into [0,1)
+            DayIndex = RealCalendar.DayIndex(elapsed);
+            time01 = RealCalendar.Time01(RealCalendar.DayFractionAt(elapsed));
         }
         else if (!paused)
         {
             // OVERRIDE (real clock off): advance a synthetic clock by testSpeed so DayIndex still rolls over for testing.
             overrideElapsed += Time.deltaTime * Mathf.Max(0f, testSpeed);
-            DayIndex = (long)Math.Floor(overrideElapsed / dayLen);
-            time01 = (float)((overrideElapsed - DayIndex * dayLen) / dayLen);
+            DayIndex = RealCalendar.DayIndex(overrideElapsed);
+            time01 = RealCalendar.Time01(RealCalendar.DayFractionAt(overrideElapsed));
         }
         else
         {
             // PAUSED: time01 is scrubbed by hand. Keep the synthetic clock consistent with it so an un-pause
             // continues from the scrubbed moment (within the current day) instead of snapping back.
             time01 = Mathf.Repeat(time01, 1f);
-            overrideElapsed = DayIndex * dayLen + time01 * dayLen;
+            overrideElapsed = (DayIndex + RealCalendar.DayFraction(time01)) * dayLen;
         }
 #if UNITY_EDITOR
         // Inspector-only debug string — building it every frame allocates; a build has no inspector to show it.
@@ -175,7 +172,7 @@ public class TimeOfDay : MonoBehaviour
         useRealClock = false;
         double dayLen = DayLengthSeconds;
         overrideElapsed = Math.Max(0.0, overrideElapsed + delta * dayLen);
-        DayIndex = (long)Math.Floor(overrideElapsed / dayLen);
-        time01 = (float)((overrideElapsed - DayIndex * dayLen) / dayLen);
+        DayIndex = RealCalendar.DayIndex(overrideElapsed);
+        time01 = RealCalendar.Time01(RealCalendar.DayFractionAt(overrideElapsed));
     }
 }

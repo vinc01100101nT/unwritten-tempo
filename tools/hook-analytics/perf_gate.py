@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse gate: block an edit until the rulebook for that KIND of file has been read this session, and log
-every gate decision to hook-analytics.jsonl for the dashboard.
+"""PreToolUse gate: block an edit until the rulebook for that KIND of file has been read this session.
 
 Three rulebooks, one gate (the table is GATES below):
   · runtime C# under Assets/Scripts             -> unity/Assets/Scripts/PERFORMANCE.md
@@ -25,14 +24,13 @@ CLAUDE.md. CLAUDE.md is auto-injected into the transcript whenever you edit a sc
 so any line it shares with PERFORMANCE.md would be a false "already read" — we exclude
 those. The literal phrase never lives in this file, so reading this file can't trip it.
 """
-import sys, os, re, json, datetime
+import sys, os, re, json
 
 import guard_check   # sibling file — the heartbeat that proves this gate really ran
 import order_gate    # sibling file — a heavy or outward action runs only when the user ordered it
 import tool_writes   # sibling file — the one answer to 'which files does this call write?'
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LOG = os.path.join(HERE, "hook-analytics.jsonl")
 
 _WS = re.compile(r"\s+")
 _NONALNUM = re.compile(r"[^a-z0-9]+")
@@ -174,21 +172,6 @@ def transcript_has(sentinel: str, transcript_path: str) -> bool:
     return fingerprint(sentinel) in fingerprint(read_text(transcript_path))
 
 
-def log(session_id: str, file_path: str, outcome: str, doc: str = "PERFORMANCE.md") -> None:
-    rec = {
-        "ts": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
-        "session_id": session_id,
-        "file": file_path,
-        "outcome": outcome,  # "blocked" | "passed"
-        "doc": doc,
-    }
-    try:
-        with open(LOG, "a", encoding="utf-8") as f:
-            f.write(json.dumps(rec) + "\n")
-    except OSError:
-        pass  # analytics must never break the gate
-
-
 def allow():
     sys.exit(0)
 
@@ -238,21 +221,20 @@ def main():
                                         data.get("tool_input") or {},
                                         data.get("cwd") or "")
     repo = repo_root()
-    # (matcher, rulebook path, the auto-injected file whose lines must not count as "read", the refusal, log name)
+    # (matcher, rulebook path, the auto-injected file whose lines must not count as "read", the refusal)
     GATES = [
         (is_runtime_cs, None, None,
          "Performance is a hard constraint here. Read unity/Assets/Scripts/PERFORMANCE.md before editing "
-         "runtime C#, then retry this edit.", "PERFORMANCE.md"),
+         "runtime C#, then retry this edit."),
         (is_asset_file, os.path.join(repo, "unity", "Assets", "ASSETS.md"), os.path.join(repo, "CLAUDE.md"),
          "An import setting, prefab, project setting or package is a number that fails silently. Read "
-         "unity/Assets/ASSETS.md before editing it, then retry this edit.", "ASSETS.md"),
+         "unity/Assets/ASSETS.md before editing it, then retry this edit."),
         (is_server_file, os.path.join(repo, "SERVER.md"), os.path.join(repo, "CLAUDE.md"),
          "The two services have rules that failed silently once already. Read SERVER.md (repo root) before "
-         "editing accounts/, charserver/ or a migration, then retry this edit.", "SERVER.md"),
+         "editing accounts/, charserver/ or a migration, then retry this edit."),
     ]
-    session_id = data.get("session_id") or ""
     transcript = data.get("transcript_path") or ""
-    for matcher, doc, exclusion, refusal, doc_name in GATES:
+    for matcher, doc, exclusion, refusal in GATES:
         gated = [f for f in written if matcher(f)]
         if not gated:
             continue
@@ -262,9 +244,7 @@ def main():
             doc, exclusion = root + "PERFORMANCE.md", root + "CLAUDE.md"
         sentinel = derive_sentinel(doc, exclusion)
         if transcript_has(sentinel, transcript):
-            log(session_id, file_path, "passed", doc_name)
             continue
-        log(session_id, file_path, "blocked", doc_name)
         deny(refusal)
         return
     allow()

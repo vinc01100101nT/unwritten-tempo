@@ -296,7 +296,7 @@ public static class GmCommands
         Register(new GmCommand("tp", "tp <map id> [spawnId]", "Travel to another map.", "tp lst_fild01", CmdTp, false, true, "warp", "goto"));
         // THE SERVER'S TOO. Run on one machine these changed one person's sky and nobody else's; held on the server,
         // everybody on it — and everybody who arrives later — sees the same one.
-        Register(new GmCommand("time", "time <0..1>", "Set time of day (0=midnight, 0.5=noon).", "time 0.5", CmdTime, false, true) { worksWithNobody = true });
+        Register(new GmCommand("time", "time <0..1 | reset>", "Set time of day (0=sunrise 6 AM, 0.25=noon, 0.5=sunset 6 PM, 0.75=midnight), or reset it to the real server time.", "time 0.25", CmdTime, false, true) { worksWithNobody = true });
         Register(new GmCommand("weather", "weather <clear|cloudy|rain|storm|snow>", "Force the weather preset.", "weather rain", CmdWeather, false, true) { worksWithNobody = true });
         // A WORLD EVENT: every map server, not only this one — the character server holds the list and hands it to
         // all of them (see WorldEvents). Everyone online is told when it starts and when it ends.
@@ -1135,8 +1135,15 @@ public static class GmCommands
 
     static void CmdTime(GmContext c)
     {
-        if (!c.TryFloat(0, out var t)) { c.ReplyUsage(); return; }
         var tod = TimeOfDay.Instance;
+        if (string.Equals(c.Arg(0), "reset", StringComparison.OrdinalIgnoreCase))
+        {
+            TimeOfDay.TakeShift(0);
+            GameNetwork.TellEveryoneTheTimeOfDay();
+            c.Reply($"Time → the real server time, on every map this server holds: {MapServerLink.HeldMapsText()}.");
+            return;
+        }
+        if (!c.TryFloat(0, out var t)) { c.ReplyUsage(); return; }
         if (tod == null) { c.Reply("No clock."); return; }
         t = Mathf.Clamp01(t);
         TimeOfDay.TakeShift(TimeOfDay.ShiftSeconds

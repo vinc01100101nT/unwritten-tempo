@@ -418,17 +418,27 @@ def mine_only(body, touched):
     return "\n".join(kept).strip() if saw_fault else ""
 
 
-def learnings_index():
-    """The symptom lines out of the AI-learnings index, read fresh so this can never drift from
-    the folder it points at. A fix that did not take is exactly the moment those pages are for,
-    and a blocked turn is the one place in a session where that moment is visible to a machine
-    instead of only to memory."""
+# Words too common in commands and checker names to say what went wrong.
+_ABOUT_NOISE = {"tools", "check", "checker", "with", "this", "that", "from", "into", "these", "before", "does",
+                "fix", "turn", "finish", "your", "game", "unwritten", "app"}
+LEARNINGS_SHOWN = 5
+
+
+def learnings_index(about=""):
+    """The few AI-learnings symptom lines that share words with what just went wrong, plus where the whole
+    index lives — read fresh so this can never drift from the folder it points at. A fix that did not take is
+    exactly the moment those pages are for, and a blocked turn is the one place in a session where that moment
+    is visible to a machine instead of only to memory.
+
+    Only the matching lines, never all of them: the whole index is over a hundred lines, about five thousand
+    tokens pasted into every blocked turn, and a session that needs more opens the README itself."""
     try:
         with io.open(LEARNINGS, encoding="utf-8") as f:
             text = f.read()
     except OSError:
         return ""
-    rows = []
+    words = {w for w in re.findall(r"[a-z]{4,}", about.lower()) if w not in _ABOUT_NOISE}
+    scored = []
     for line in text.splitlines():
         line = line.strip()
         if not line.startswith("|") or line.startswith("| ---"):
@@ -439,12 +449,18 @@ def learnings_index():
         link = re.match(r"\[([^\]]+)\]\(([^)]+)\)", cells[1])
         if not link:
             continue
-        rows.append("  \u00b7 %s\n      -> docs/5-ai-learnings/%s" % (cells[0], link.group(2)))
+        symptom = cells[0].lower()
+        score = sum(1 for w in words if w in symptom)
+        if score:
+            scored.append((-score, len(scored), "  \u00b7 %s\n      -> docs/5-ai-learnings/%s" % (cells[0], link.group(2))))
+    rows = [r for _, _, r in sorted(scored)[:LEARNINGS_SHOWN]]
+    pointer = ("the whole index, one symptom line per page, is docs/5-ai-learnings/README.md \u2014 open it if "
+               "nothing here fits")
     if not rows:
-        return ""
+        return "\n\nThis is a second attempt now. Before making one, check whether a lesson already covers it: " + pointer + "."
     return ("\n\nThis is a second attempt now. Before making one, check whether one of these "
             "already covers what went wrong \u2014 open the page, do not work from the line:\n"
-            + "\n".join(rows))
+            + "\n".join(rows) + "\n  (" + pointer + ")")
 
 
 def load_state():
@@ -518,7 +534,7 @@ def main():
                   "says to stop and read — before trying a third time. A repeat means the "
                   "last attempt did not settle it, and the pages below were paid for by rounds "
                   "already lost to this." +
-                  learnings_index() +
+                  learnings_index(" ".join(fresh)) +
                   "\n\nIf none of them fit, say so in one line and carry on — but do not "
                   "simply try again on a new theory. Get a measurement first.")
         print(json.dumps({"decision": "block", "reason": reason}))
@@ -596,7 +612,7 @@ def main():
         reason = ("\n\n".join(findings) +
                   "\n\nFix these, then finish the turn. If any of it was already broken before "
                   "this turn's work, say so plainly instead of quietly repairing it." +
-                  learnings_index())
+                  learnings_index(" ".join(f.split("\n", 1)[0] for f in findings)))
         print(json.dumps({"decision": "block", "reason": reason}))
         sys.stderr.write(reason + "\n")
         return 2

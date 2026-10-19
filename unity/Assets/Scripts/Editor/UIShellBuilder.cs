@@ -71,7 +71,7 @@ public static class UIShellBuilder
 
         // The Inventory (B) and Character (C) windows. Builds itself into this canvas at runtime.
         var prog = canvasGO.AddComponent<ProgressionWindows>();   // also pulls in InventoryStore (RequireComponent)
-        var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
+        var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: a month grid w/ per-day weather (+ click the clock plate)
         // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the
         // Sprite refs into the prefab now — same pattern as the skill-icon Sprites the hotbar reads).
         calPanel.sunIcon  = AssetDatabase.LoadAssetAtPath<Sprite>(METEO + "/Sun.png");
@@ -113,14 +113,14 @@ public static class UIShellBuilder
         // Minimap — top-right corner (the map's picture + player/mob blips).
         BuildMinimap(canvas);
 
-        // Calendar + weather readout — continues the top-right stack (minimap ▸ date/weather).
-        // CalendarWeatherHUD.cs wires the two text lines to GameCalendar.DateString + WeatherDirector.CurrentName.
+        // Clock + date + weather readout — continues the top-right stack (minimap ▸ clock plate).
+        // CalendarWeatherHUD.cs adds the clock when the game starts and writes the date + weather lines here.
         var calPanel = NewPlate("HUD_CalendarPanel", canvas);
         Anchor(calPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
         calPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8));
-        calPanel.rectTransform.sizeDelta = new Vector2(150, 42);
+        calPanel.rectTransform.sizeDelta = CalendarWeatherHUD.PlateSize;
         calPanel.raycastTarget = false;   // purely informational — never eats clicks
-        var calLabel = NewText("HUD_Calendar", calPanel.transform, "Spring · Day 1\nClear", 13, FontStyle.Bold, TextAnchor.MiddleCenter);
+        var calLabel = NewText("HUD_Calendar", calPanel.transform, "Jan 1, 2026\nSunny", 13, FontStyle.Bold, TextAnchor.MiddleCenter);
         Fill(calLabel.rectTransform, new Vector2(4, 2), new Vector2(-4, -2));
         calLabel.raycastTarget = false;
         calLabel.gameObject.AddComponent<CalendarWeatherHUD>();
@@ -169,7 +169,7 @@ public static class UIShellBuilder
 
     // ---- Panels ---------------------------------------------------------------
 
-    // Empty themed window — CalendarPanel.cs builds the header + 4×3 day-cell grid into Content at runtime
+    // Empty themed window — CalendarPanel.cs builds the header + a month's day-cell grid into Content at runtime
     // (each cell shows that day's deterministic weather). Toggled by L / clicking the top-right date widget.
     static GameObject BuildCalendarPanel(Transform canvas)
     {
