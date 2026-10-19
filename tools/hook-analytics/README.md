@@ -1,7 +1,8 @@
 # hook-analytics — the read-first gate
 
 A `PreToolUse` hook that **blocks an edit until the rulebook for that kind of file has been read in the current
-session**, and logs every gate decision so we can visualize how often the hook actually had to intervene.
+session**. The folder keeps its old name; it holds the project's hooks and their provers, and no longer logs
+anything.
 
 Three rulebooks, one gate (the `GATES` table in `perf_gate.py`; the file keeps its original name):
 
@@ -23,12 +24,7 @@ class and demands: refused unread, allowed read, untouched otherwise.
   2. Greps the session `transcript_path` for a sentinel phrase from inside that rulebook.
      Present → the doc was genuinely read this session → **allow**.
      Absent → **deny** with a "read it first" reason.
-  3. Appends one JSON line to `hook-analytics.jsonl` either way.
 - **`prove-read-first-gate.py`** — the proof that the gate still refuses and still allows, per class.
-- **`hook-analytics.jsonl`** — append-only log. One line per gated edit:
-  `{ts, session_id, file, outcome: "blocked"|"passed", doc}`.
-- **`dashboard.html`** — open in a browser. Shows forced-vs-passed counts, forced-rate,
-  a per-week bar chart, a "sessions since last miss" streak, and recent decisions.
 
 ## Why a content sentinel (not the filename)
 
@@ -43,17 +39,11 @@ hardcoded string once, which meant reading the gate's own source poisoned the tr
 disabled the gate for the rest of the session; deriving it is what fixed that. Either way it
 fails *safe* — the gate over-blocks; it never lets an unread edit through.
 
-## Viewing the dashboard
-
-Browsers block `file://` fetches, so either:
-- `cd tools/hook-analytics && python -m http.server` then open the served `dashboard.html`, or
-- open `dashboard.html` directly and use the file-picker to load `hook-analytics.jsonl`.
-
 ## Activating / changing the hook
 
 Configured in `.claude/settings.json` — the COMMITTED project settings, not the gitignored
 machine-local file, so it applies to anyone who opens this repo. It sits under `PreToolUse`
-with the `Edit|Write` matcher, alongside the `Stop` entry that runs `tools/check-before-done.py`
+with the `Edit|Write|Bash|mcp__unity-editor-mcp__build` matcher, alongside the `Stop` entry that runs `tools/check-before-done.py`
 (the compile + skill-data check that fires when a turn tries to end). After first creating a
 settings file you must open `/hooks` once (or restart Claude Code) for the settings watcher to
 pick it up. Review or disable either hook anytime via `/hooks`.
@@ -79,8 +69,7 @@ the launcher.** A settings entry that names an interpreter is a bug.
 The gate above was configured to start with `python`, which does not exist on macOS. It
 therefore failed to start on every edit from the day this project moved machines, and a hook
 that fails to start fails **silently** — the edit proceeds exactly as if the gate had allowed
-it. It guarded nothing for five weeks (last log entry: 24 Jul, Windows paths) and nothing in
-any session could notice.
+it. It guarded nothing for five weeks and nothing in any session could notice.
 
 `guard_check.py` runs at **SessionStart** and asks two different questions about every hook
 configured on this machine — the user's global settings included, not just this repo's:
@@ -94,14 +83,15 @@ configured on this machine — the user's global settings included, not just thi
    app never loaded — shows up as one nobody has seen in `UNSEEN_DAYS` (14) days.
 
 Runnable is not the same as running; either question alone misses a whole class of dead guard.
+
+**In a cloud session** (`CLAUDE_CODE_REMOTE=true`, `in_cloud()`) the second question is skipped: every
+container starts from a fresh clone with no heartbeat file, so "never reported" would be a false alarm every
+time. The first question still runs there. On the user's own machines it also makes sure the git-ignored
+`CLAUDE.local.md` imports `docs/0-process/local-machine-rules.md`, and hands that session the rules itself the
+one time it has to add the import.
 Healthy machine → one line (`guards: N configured, all able to run and reporting in`). A fault
 → it lands in the session's context with an instruction to tell the user in the first reply.
 
-`prove-guard-check.py` keeps it honest: seven planted faults it must catch, two healthy setups
-it must stay quiet about. The `Stop` gate re-runs that proof automatically whenever
+`prove-guard-check.py` keeps it honest: planted faults it must catch, healthy setups it must stay
+quiet about, the end-of-turn and cloud cases, and the `CLAUDE.local.md` import written exactly once. The `Stop` gate re-runs that proof automatically whenever
 `guard_check.py` is edited, so the checker can never quietly go blind.
-
-## Scope
-
-Single rule for now: `PERFORMANCE.md` ⇄ runtime C#. To generalize later, replace the
-single `SENTINEL`/path check with a doc→glob table.

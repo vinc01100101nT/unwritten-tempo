@@ -23,6 +23,10 @@ spec.loader.exec_module(gc)
 
 WORK = tempfile.mkdtemp(prefix="prove-guards-")
 
+# Every case below is about the user's own machine unless it says otherwise, so a run inside a cloud container
+# must not quietly turn them all into cloud cases.
+os.environ.pop("CLAUDE_CODE_REMOTE", None)
+
 # A fenced role's file, cut to the only part this checker reads: the gate in its frontmatter.
 ROLE_FILE = """---
 name: a-fenced-role
@@ -161,11 +165,50 @@ for case in CASES:
     if not must_catch and found:
         failures.append("FALSE ALARM on %s -> %s" % (name, found))
 
+# In the cloud the diary is git-ignored and every container starts from a fresh clone, so "never reported" is the
+# ordinary state there and must stay quiet. Whether a guard can START is still a fault in the cloud.
+CLOUD = [
+    ("a hook of ours that has never reported running, in the cloud", hooks(OURS), {}, False),
+    ("a launched hook that stopped running weeks ago, in the cloud",
+     hooks(LAUNCHED % "tools/check-before-done.py"), {"check-before-done.py": ago(gc.UNSEEN_DAYS + 3)}, False),
+    ("a script the command points at is gone, in the cloud",
+     hooks('python3 "$CLAUDE_PROJECT_DIR/tools/no-such-file.py"'), FRESH, True),
+    ("the launcher pointing at a hook file that is gone, in the cloud",
+     hooks(LAUNCHED % "tools/no-such-hook.py"), FRESH, True),
+]
+os.environ["CLAUDE_CODE_REMOTE"] = "true"
+for name, settings, beats, must_catch in CLOUD:
+    setup(settings, beats)
+    found = gc.problems()
+    if must_catch and not found:
+        failures.append("MISSED: %s" % name)
+    if not must_catch and found:
+        failures.append("FALSE ALARM on %s -> %s" % (name, found))
+
+# The local-machine rules import: written once on the user's machine, appended without touching what the file
+# already says, and never in the cloud.
+gc.CLAUDE_LOCAL = os.path.join(WORK, "CLAUDE.local.md")
+if gc.ensure_local_rules() or os.path.exists(gc.CLAUDE_LOCAL):
+    failures.append("the cloud was given a CLAUDE.local.md")
+os.environ.pop("CLAUDE_CODE_REMOTE")
+if not gc.ensure_local_rules():
+    failures.append("a machine with no CLAUDE.local.md was not given the import")
+if gc.ensure_local_rules():
+    failures.append("the import was written a second time")
+with io.open(gc.CLAUDE_LOCAL, "w", encoding="utf-8") as f:
+    f.write("my own note, no newline at the end")
+if not gc.ensure_local_rules():
+    failures.append("a CLAUDE.local.md of the user's own was not given the import")
+with io.open(gc.CLAUDE_LOCAL, encoding="utf-8") as f:
+    kept = f.read()
+if kept != "my own note, no newline at the end\n" + gc.LOCAL_RULES_IMPORT + "\n":
+    failures.append("the user's own CLAUDE.local.md was not kept as it was: %r" % kept)
+
 if failures:
     print("The guard check is no longer trustworthy:")
     for f in failures:
         print("  ·", f)
     sys.exit(1)
 print("guard check proven: catches %d planted faults, quiet on %d healthy setups, "
-      "and %d end-of-turn cases behaved"
-      % (sum(1 for c in CASES if c[3]), sum(1 for c in CASES if not c[3]), len(END_OF_TURN)))
+      "%d end-of-turn cases and %d cloud cases behaved, and the local rules import is written once"
+      % (sum(1 for c in CASES if c[3]), sum(1 for c in CASES if not c[3]), len(END_OF_TURN), len(CLOUD)))

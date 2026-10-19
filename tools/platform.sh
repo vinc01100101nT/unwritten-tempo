@@ -12,6 +12,7 @@
 #
 # QUESTIONS:
 #   os                      mac | windows | linux
+#   where                   cloud | local — cloud when Claude Code runs in a claude.ai cloud container (exit 0 = cloud)
 #   python                  a Python command that actually RUNS (Windows ships a "python3" that only prints an error)
 #   unity-data              the folder holding Unity's own compiler and libraries, for this project's Unity version
 #   unity-cli               the Unity command-line link to the running editor
@@ -44,6 +45,13 @@ EXE=""; [ "$PLATFORM" = windows ] && EXE=".exe"
 
 # A script that loads this sets REPO first, as it does for load-settings.sh; run as a command, it is this file's own.
 __PLATFORM_REPO="${REPO:-$(CDPATH= cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd)}"
+
+# A cloud session has no Unity editor, no running servers and no settings.env, so a few local-only guards stand
+# down there. Claude Code sets CLAUDE_CODE_REMOTE=true in every cloud container and never on the user's own
+# machines, so nothing has to be switched by hand. The Python twin is guard_check.in_cloud() — same variable.
+in_cloud() {
+  [ "${CLAUDE_CODE_REMOTE:-}" = true ]
+}
 
 native_path() {
   if [ "$PLATFORM" = windows ] && command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s\n' "$1"; fi
@@ -302,6 +310,7 @@ if [ "$(basename -- "$0")" = platform.sh ]; then
   __q="${1:-}"; [ $# -gt 0 ] && shift
   case "$__q" in
     os)           echo "$PLATFORM" ;;
+    where)        if in_cloud; then echo cloud; else echo local; exit 1; fi ;;
     python)       find_python || { echo "No working Python found (tried python3, python, py)." >&2; exit 1; } ;;
     unity-data)   unity_data "$@" ;;
     unity-cli)    unity_cli ;;

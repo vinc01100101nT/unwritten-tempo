@@ -58,6 +58,45 @@ SHELL_CHARS = "|;&<>()`"
 LAUNCHER_NAME = "run-hook.sh"
 PYTHONS = ("python3", "python", "py")
 
+# The rules only the user's own machines can follow, and the git-ignored file that loads them there.
+LOCAL_RULES = "docs/0-process/local-machine-rules.md"
+LOCAL_RULES_IMPORT = "@" + LOCAL_RULES
+CLAUDE_LOCAL = os.path.join(REPO, "CLAUDE.local.md")
+
+
+def in_cloud():
+    """True in a claude.ai cloud container. Claude Code sets CLAUDE_CODE_REMOTE=true there and never on the user's
+    own machines; the shell twin is `in_cloud` in tools/platform.sh, reading the same variable. Read at call time,
+    so a prover can try both answers in one run."""
+    return os.environ.get("CLAUDE_CODE_REMOTE") == "true"
+
+
+def ensure_local_rules():
+    """On the user's own machine, make sure CLAUDE.local.md imports the local-machine rules. True when the import
+    had to be added just now — Claude Code read the memory files before this hook ran, so the caller then hands
+    this session the rules itself. Never in the cloud, and never rewrites what the file already says."""
+    if in_cloud() or not os.path.isfile(os.path.join(REPO, LOCAL_RULES)):
+        return False
+    try:
+        with io.open(CLAUDE_LOCAL, encoding="utf-8") as f:
+            text = f.read()
+    except FileNotFoundError:
+        text = None
+    except OSError:
+        return False
+    if text is not None and any(line.strip() == LOCAL_RULES_IMPORT for line in text.splitlines()):
+        return False
+    try:
+        with io.open(CLAUDE_LOCAL, "a", encoding="utf-8") as f:
+            if text and not text.endswith("\n"):
+                f.write("\n")
+            if not text:
+                f.write("# This machine only (git-ignored). The local-machine rules, which a cloud session never loads.\n")
+            f.write(LOCAL_RULES_IMPORT + "\n")
+    except OSError:
+        return False
+    return True
+
 
 def beat(name, session=""):
     """Called BY a hook, at the top of its own run, before any early-out: 'I ran.' Written at
@@ -342,6 +381,10 @@ def problems():
         script = _target_of(hook["command"])
         if not script or not script.startswith(REPO):
             continue                    # not ours; it cannot stamp a heartbeat, so we can't ask
+        if in_cloud():
+            # A cloud container starts from a fresh clone, and the diary is git-ignored, so every hook would read
+            # as "never reported". Whether it CAN START, asked above, still holds there.
+            continue
         if hook.get("scope") == "agent":
             # Whether it CAN START is asked above, and that is the question that protects it
             # from dying quietly. The heartbeat questions below are not askable of it: a gate
@@ -426,20 +469,34 @@ def main():
         payload = {}
     beat(os.path.basename(__file__), payload.get("session_id", ""))
 
+    context = []
+    if ensure_local_rules():
+        try:
+            with io.open(os.path.join(REPO, LOCAL_RULES), encoding="utf-8") as f:
+                context.append("CLAUDE.local.md was just made to import %s, so it loads by itself from the next "
+                               "session on. For THIS session, here it is — it ranks with CLAUDE.md:\n\n%s"
+                               % (LOCAL_RULES, f.read()))
+        except OSError:
+            pass
+
     found = problems()
     if not found:
-        print(json.dumps({"suppressOutput": True, "systemMessage": summary()}))
+        out = {"suppressOutput": True, "systemMessage": summary()}
+        if context:
+            out["hookSpecificOutput"] = {"hookEventName": "SessionStart", "additionalContext": "\n\n".join(context)}
+        print(json.dumps(out))
         return 0
 
     text = ("A guard configured for this project is not doing its job:\n  · "
             + "\n  · ".join(found))
+    context.insert(0, text + "\n\nTELL THE USER THIS IN YOUR FIRST REPLY, in plain "
+                         "words, before anything else they asked for. A guard that "
+                         "fails silently is exactly how the performance gate went "
+                         "five weeks unnoticed.")
     print(json.dumps({
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": text + "\n\nTELL THE USER THIS IN YOUR FIRST REPLY, in plain "
-                                 "words, before anything else they asked for. A guard that "
-                                 "fails silently is exactly how the performance gate went "
-                                 "five weeks unnoticed.",
+            "additionalContext": "\n\n".join(context),
         },
         "systemMessage": "⚠ " + found[0] + (" (+%d more)" % (len(found) - 1) if len(found) > 1 else ""),
     }))
