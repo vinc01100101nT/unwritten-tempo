@@ -316,6 +316,39 @@ public static class UiKit
         }
     }
 
+    // The HUD saved in GameUICanvas.prefab (the minimap's plate, the date plate, the Calendar window) was painted by
+    // UIShellBuilder before the theme could switch, so its pieces hold the LIGHT rows' colours and no ThemePaint. Every
+    // one is a palette row, so when a scene loads each is matched back to its row and follows the theme from then on.
+    // Only while the game runs — nothing saved is written.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void AdoptSavedHudOnLoad()
+    {
+        if (Application.isBatchMode) return;
+        AdoptSavedHud();
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += (scene, mode) => AdoptSavedHud();
+    }
+
+    static void AdoptSavedHud()
+    {
+        var canvas = HudCanvas;
+        if (canvas == null) return;
+        var graphics = canvas.GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            var g = graphics[i];
+            // A picture (the minimap's map) is drawn white on purpose and is no palette row.
+            if (g is RawImage || g.TryGetComponent(out ThemePaint _)) continue;
+            bool text = g is TMP_Text;
+            if (!text && !(g is Image)) continue;
+            for (int r = 0; r < LightSet.Length; r++)
+                if (IsTextRow((Row)r) == text && SameColour(g.color, LightSet[r])) { Paint(g, new ThemeColor((Row)r)); break; }
+        }
+    }
+
+    static bool SameColour(Color a, Color b)
+        => Mathf.Abs(a.r - b.r) < 0.004f && Mathf.Abs(a.g - b.g) < 0.004f && Mathf.Abs(a.b - b.b) < 0.004f
+           && Mathf.Abs(a.a - b.a) < 0.004f;
+
     public static ThemeColor PanelFill => new ThemeColor(Row.PanelFill);
     public static ThemeColor PanelRaise => new ThemeColor(Row.PanelRaise);
     public static ThemeColor SlotFill => new ThemeColor(Row.SlotFill);
