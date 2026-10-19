@@ -510,7 +510,7 @@ public class ProgressionWindows : MonoBehaviour
         UiKit.Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
         fill.raycastTarget = false;
 
-        var picture = UiKit.Round(UiKit.Img("Picture", border.transform, Color.white), 3);
+        var picture = UiKit.Round(UiKit.Img("Picture", border.transform, UiKit.SlotFill), 3);
         picture.raycastTarget = false;
         Place(picture.rectTransform, Pad, Pad, PicW - Pad, TopH - Pad);
         var icon = ItemIcon.Make(picture.transform, 8f);
@@ -564,8 +564,8 @@ public class ProgressionWindows : MonoBehaviour
         scroll.verticalScrollbar = MakeCardScrollbar(border.transform, scroll, CardW - Pad - BarW, detailsTop, detailsHeight);
         scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 
-        // THE CARD SLOTS, as Ragnarok draws them: a white strip with a diamond per slot the piece has.
-        var slots = UiKit.Round(UiKit.Img("Slots", border.transform, Color.white), 3);
+        // THE CARD SLOTS, as Ragnarok draws them: a strip in the slot colour with a diamond per slot the piece has.
+        var slots = UiKit.Round(UiKit.Img("Slots", border.transform, UiKit.SlotFill), 3);
         slots.raycastTarget = false;
         Place(slots.rectTransform, Pad, TopH + 2f, CardW - 2f * Pad, SlotsH);
         var diamonds = new Image[ItemTooltip.MostCardSlots];
