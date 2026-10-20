@@ -56,6 +56,11 @@ public class Health : MonoBehaviour, ICombatUnit
     /// what it wears and what it drops (<see cref="CreatureKinds"/>).</summary>
     [System.NonSerialized] public CreatureKind kind = CreatureKind.Normal;
 
+    /// <summary>This creature's typed multiplier (<see cref="MonsterDef.multiplier"/>) — copied from its creature data by
+    /// <see cref="MobSpawner"/>, like <see cref="kind"/>. Multiplies its health, its attack by the cube root, and
+    /// everything its kill pays (<see cref="CreaturePay"/>). ×1 on anything not made from a creature file.</summary>
+    [System.NonSerialized] public float multiplier = CreaturePay.LeastMultiplier;
+
     /// <summary>SERVER: which creature this is, by its catalog id (e.g. "mob.plopling") — copied from its data by
     /// <see cref="MobSpawner"/>, like <see cref="kind"/>. What a quest step "defeat N of …" counts.</summary>
     [System.NonSerialized] public string creatureId = "";

@@ -1,33 +1,43 @@
 /// <summary>
-/// WHAT A CREATURE'S GEAR MULTIPLIES ITS PAY BY — plain arithmetic, so it can be checked by calling it. Everything a
-/// kill is worth is multiplied by it: the kill's experience, what the creature's own materials sell for, and the gold a
-/// saved character pays. Design: docs/3-world/what-a-kill-pays.md.
+/// WHAT A CREATURE'S MULTIPLIER MULTIPLIES ITS PAY BY — plain arithmetic, so it can be checked by calling it. Everything
+/// a kill is worth is multiplied by it: the kill's experience, the Temper Dust and Quench Oil it drops, the chance of
+/// its Salts, Inks and own material, and the gold a saved character pays. Design: docs/3-world/what-a-kill-pays.md.
 ///
-/// <para>A creature's level sets its body; the grade and the folds of its gear are the only difficulty dial, and
-/// they are two separate terms: <b>pay = what the level and kind give × the grade's percent × the folds' percent</b>.
-/// Raw gear with no folds is exactly 100% of both. Nothing is measured and nothing is capped.</para>
+/// <para>A creature's level sets its body and the gear it wears; its MULTIPLIER (<see cref="MonsterDef.multiplier"/>) is
+/// the one difficulty dial, typed per creature: it multiplies the creature's health, its attack by the cube root
+/// (<see cref="CreatureKinds.AttackMultiplier"/>), and its pay, equal to the health it adds (decided 2026-10-20). ×1 pays
+/// exactly what the level gives.</para>
 /// </summary>
 public static class CreaturePay
 {
-    /// <summary>How much more each grade above Raw pays, in percent.</summary>
-    public const int PercentPerGrade = 25;
+    /// <summary>The lowest multiplier a creature can have: ×1, an ordinary creature of its level.</summary>
+    public const float LeastMultiplier = 1f;
 
-    /// <summary>How much more each fold pays, in percent.</summary>
-    public const int PercentPerFold = 5;
+    /// <summary>A typed multiplier held to <see cref="LeastMultiplier"/> or more.</summary>
+    public static float Clamp(float multiplier) => multiplier >= LeastMultiplier ? multiplier : LeastMultiplier;
 
-    /// <summary>What the grade alone pays, in percent: 100 at Raw, 250 at A.</summary>
-    public static int GradePercent(Quality grade) => 100 + PercentPerGrade * (CraftingMath.Band(grade) - 1);
-
-    /// <summary>What the folds alone pay, in percent: 100 with none. Folds past the grade's cap are not worn, so they
-    /// are not paid.</summary>
-    public static int FoldPercent(Quality grade, int folds) =>
-        100 + PercentPerFold * System.Math.Min(System.Math.Max(0, folds), CraftingMath.FoldCap(grade));
-
-    /// <summary>An amount multiplied by both percents, rounded half up in whole numbers — the one rounding the price
-    /// writer, the server and the offline check all use.</summary>
-    public static long Scaled(long amount, Quality grade, int folds)
+    /// <summary>An amount times the multiplier, rounded half up in whole numbers — the one rounding the price writer, the
+    /// server and the offline check all use.</summary>
+    public static long Scaled(long amount, float multiplier)
     {
         if (amount <= 0) return 0;
-        return (amount * GradePercent(grade) * FoldPercent(grade, folds) + 5000) / 10000;
+        return (long)System.Math.Floor(amount * (double)Clamp(multiplier) + 0.5);
     }
+
+    /// <summary>How many of a thing a kill gives up on average: its ×1 chance times the multiplier. Past 1 it is more
+    /// than one piece, never a chance held at certain — so a kill always pays its full multiplier.</summary>
+    public static float ExpectedPieces(float chanceAtOne, float multiplier) =>
+        chanceAtOne > 0f ? chanceAtOne * Clamp(multiplier) : 0f;
+
+    /// <summary>The pieces one kill gives up for an average of <paramref name="expected"/>: the whole pieces, and one
+    /// more when <paramref name="roll01"/> (0 to 1) falls under what is left over.</summary>
+    public static int PiecesFor(float expected, float roll01)
+    {
+        if (expected <= 0f) return 0;
+        int whole = (int)System.Math.Floor(expected);
+        return whole + (roll01 < expected - whole ? 1 : 0);
+    }
+
+    /// <summary>The chance a kill gives up at least one, for an average of <paramref name="expected"/>.</summary>
+    public static float ChanceOfAny(float expected) => expected <= 0f ? 0f : expected >= 1f ? 1f : expected;
 }

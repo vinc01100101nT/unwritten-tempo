@@ -70,20 +70,21 @@ def main():
         print(out)
         return 1
 
-    # A Raw normal creature, a normal creature above Raw, and an elite — found, never named here.
+    # A x1 normal creature of a level that wears Raw, a x1 normal of a higher level, and an elite (x30, so a rarer
+    # tier) — found, never named here.
     raw = graded = elite = None
     for path in sorted(glob.glob(os.path.join(REPO, RES, "Monsters", "*.asset"))):
         rel = os.path.relpath(path, REPO)
         text = read(rel)
-        kind, grade = line(text, "kind")[-1], line(text, "gearQuality")[-1]
-        if kind == "0" and grade == "0" and raw is None:
+        kind, level = line(text, "kind")[-1], int(line(text, "level").split(":")[1])
+        if kind == "0" and level <= 14 and raw is None:
             raw = (rel, text)
-        elif kind == "0" and grade != "0" and graded is None:
+        elif kind == "0" and level >= 15 and graded is None:
             graded = (rel, text)
         elif kind == "1" and elite is None:
             elite = (rel, text)
     if not (raw and graded and elite):
-        print(RED + "no Raw normal creature, graded normal creature or elite to plant into" + OFF)
+        print(RED + "no x1 normal creature wearing Raw, x1 normal of a higher level or elite to plant into" + OFF)
         return 1
 
     def item_of(creature_text, key):
@@ -95,7 +96,7 @@ def main():
         return None, None
 
     ord_rel, ord_text = item_of(raw[1], "material")
-    rare_rel, rare_text = item_of(graded[1], "material")
+    rare_rel, rare_text = item_of(elite[1], "material")
     spawns_rel = os.path.join(RES, "WorldSpawns.asset")
     spawns = read(spawns_rel)
     newbie = re.search(r"(?m)^  - map: lst_fild01\r?\n    creature: (\S+)", spawns)
@@ -111,25 +112,25 @@ def main():
                 "but the rule says")
     bad += case("a creature with its material taken away", raw[0], line(raw[1], "material"), "  material: {fileID: 0}",
                 "has no material of its own")
-    bad += case("a Raw creature's material given a Rare tier", ord_rel, line(ord_text, "materialStep"), "  materialStep: 3",
-                "its grade Raw gives Common")
-    bad += case("a graded creature's material made Common", rare_rel, line(rare_text, "materialStep"), "  materialStep: 1",
-                "but is Common; its grade")
+    bad += case("a x1 creature's material given a Rare tier", ord_rel, line(ord_text, "materialStep"), "  materialStep: 3",
+                "its multiplier x1 gives Common")
+    bad += case("an elite's material made Common", rare_rel, line(rare_text, "materialStep"), "  materialStep: 1",
+                "but is Common; its multiplier")
     bad += case("a material with no tier at all", rare_rel, line(rare_text, "materialStep"), "  materialStep: 0",
                 "has no rarity tier")
-    bad += case("two creatures naming one material", graded[0], line(graded[1], "material"), line(raw[1], "material"),
+    bad += case("two creatures naming one material", elite[0], line(elite[1], "material"), line(raw[1], "material"),
                 "a material belongs to one creature")
     bad += case("a creature naming a second material again", raw[0], line(raw[1], "material"),
                 line(raw[1], "material") + "\n  rareMaterial: {fileID: 0}", "still names a second material")
-    bad += case("an elite below grade D", elite[0], line(elite[1], "gearQuality"), "  gearQuality: 2",
-                "never wears")
-    bad += case("a normal creature at grade B", graded[0], line(graded[1], "gearQuality"), "  gearQuality: 5",
-                "never wears")
+    bad += case("a creature's multiplier raised with its material left behind", raw[0], line(raw[1], "multiplier"),
+                "  multiplier: 3", "its multiplier x3 gives Uncommon")
+    bad += case("a creature with a typed gear grade again", raw[0], line(raw[1], "multiplier"),
+                line(raw[1], "multiplier") + "\n  gearQuality: 2", "still carries a typed gear grade")
     bad += case("an elite spawning on a newbie map passes (elites roam every map)", spawns_rel, newbie.group(0),
                 "  - map: lst_fild01\n    creature: " + elite_id, None, must_pass=True)
     graded_id = line(graded[1], "id").split(":", 1)[1].strip()
-    bad += case("a graded normal creature spawning on a newbie map", spawns_rel, newbie.group(0),
-                "  - map: lst_fild01\n    creature: " + graded_id, "a newbie map's own creatures are Raw +0 normals")
+    bad += case("a normal creature of a higher level spawning on a newbie map", spawns_rel, newbie.group(0),
+                "  - map: lst_fild01\n    creature: " + graded_id, "a newbie map's own creatures are x1")
     geared = None
     for path in sorted(glob.glob(os.path.join(REPO, RES, "Monsters", "*.asset"))):
         rel = os.path.relpath(path, REPO)
@@ -144,8 +145,8 @@ def main():
     level_now = int(line(graded[1], "level").split(":")[1])
     bad += case("a creature whose level changed and whose prices did not follow", graded[0], line(graded[1], "level"),
                 "  level: %d" % (level_now + 1), "but the rule says")
-    bad += case("a creature with its gear grade removed", graded[0], line(graded[1], "gearQuality"),
-                "  gearQualityGone: 0", "has no gear grade")
+    bad += case("a creature with its multiplier removed", graded[0], line(graded[1], "multiplier"),
+                "  multiplierGone: 1", "has no multiplier")
     bad += case("a creature carrying a saved toughness again", geared[0], line(geared[1], "level"),
                 line(geared[1], "level") + "\n  toughnessPercent: 235", "still carries a saved toughness")
     shadow_level = int(line(geared[1], "level").split(":")[1])

@@ -573,14 +573,15 @@ public class ItemTooltip : MonoBehaviour
           .Append(ArmourWords.Describe(inst.word, inst.wordAmount));
     }
 
-    // A weapon says which of the two physical attacks it swings with; nothing else about it is spelled out.
+    // A weapon says what its ordinary attack is — melee, ranged, or a ranged magic shot; nothing else about it is spelled out.
     static void AppendAttackKind(StringBuilder sb, Item item)
     {
         if (item.slot != EquipSlotType.Weapon || item.weaponType == WeaponType.None) return;
         if (WeaponTypes.RangedByStat(item.weaponType))
             sb.Append('\n').Append("MELEE or RANGED attack — whichever of STR or DEX is higher");
         else
-            sb.Append('\n').Append(WeaponTypes.SwingsRanged(item.weaponType, 0, 0) ? "RANGED attack" : "MELEE attack");
+            sb.Append('\n').Append(WeaponTypes.ShootsMagic(item.weaponType) ? "RANGED MAGIC attack"
+                                   : WeaponTypes.SwingsRanged(item.weaponType, 0, 0) ? "RANGED attack" : "MELEE attack");
     }
 
     // THIS COPY's numbers, in two groups a blank line apart: first what the piece itself gives (the folds' numbers,

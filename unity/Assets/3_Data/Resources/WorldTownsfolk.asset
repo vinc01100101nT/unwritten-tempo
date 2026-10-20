@@ -270,9 +270,9 @@ MonoBehaviour:
     description: Save Point, Storage, Teleport
     model: Suit_Female
     map: lastline
-    home: {x: -16.51, y: 0, z: -1.08}
+    home: {x: -0.05, y: 0, z: -2}
     wanderRadius: 0
-    facing: 123
+    facing: 180
     station: 0
     shop: 
     keeper: 1

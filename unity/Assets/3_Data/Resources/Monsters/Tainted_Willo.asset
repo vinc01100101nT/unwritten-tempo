@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Tainted_Willo
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.tainted-willo
+  displayName: Tainted Willo
+  versionOf: {fileID: 11400000, guid: 6e93988960819034bb4ac9b980b97afa, type: 2}
+  kind: 0
+  size: 1.1
+  flies: 0
+  moveSpeed: 1
+  aggressive: 0
+  biome: 2
+  artFolder: d9248a858b0d46048b1792486239dc22
+  faceset: {fileID: 2800000, guid: ee31566248bba4c48b5123f9caa79e03, type: 3}
+  weight: 4
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 54
+  str: 37
+  agi: 36
+  vit: 28
+  intel: 18
+  dex: 28
+  luk: 17
+  startingGear:
+  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  multiplier: 5
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 3
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 75e41f0e93896974e8db643377275610, type: 2}
+  itemDropNames: []
+  itemDropChances: []

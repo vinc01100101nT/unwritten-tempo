@@ -985,21 +985,26 @@ async function showDoc(id, titleEl, bodyEl, art) {
   if (boxes.length) startLiveStats(() => boxes.forEach(fillStatusBox));
 }
 
-// The Kashira showcase's picture for each weapon that has one; the rest keep their placeholder.
-const KASHIRA_ART = { sword: 'assets/key-art/veyra-blossom-wind.jpg', scythe: 'assets/key-art/morwen-chapel-lilies.jpg' };
-
 // A caption for a picture whose file name does not read well; any other is captioned from its file name.
 const ART_TITLES = {
   'last-line-frostcap-slime-siege.jpg': 'The Last Line', 'start.jpg': 'Getting Started', 'playstyles.jpg': 'Playstyles & Builds',
-  'veyra-blossom-wind.jpg': 'Veyra, the Last Petal', 'veyra-footbridge-tea.jpg': 'Veyra at Rest', 'morwen-chapel-lilies.jpg': 'Morwen, the Last Bloom',
+  'veyra-blossom-wind.jpg': 'Veyra, the Last Petal',
 };
 
+const artBase = n => n.replace(/\.[^.]+$/, '');
+
 // Every picture in the game's key art folder, listed by the publish into assets/key-art/index.json.
+let keyArt;
+async function keyArtNames() {
+  if (!keyArt) keyArt = getJson('assets/key-art/index.json', []).then(n => Array.isArray(n) ? n : []);
+  return keyArt;
+}
+
 async function buildMedia() {
-  const names = await getJson('assets/key-art/index.json', []);
+  const names = await keyArtNames();
   const box = document.getElementById('media-art');
-  const title = n => ART_TITLES[n] || n.replace(/\.jpg$/, '').split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
-  box.innerHTML = (Array.isArray(names) ? names : []).map(n => {
+  const title = n => ART_TITLES[n] || artBase(n).split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+  box.innerHTML = names.map(n => {
     const src = 'assets/key-art/' + n;
     return `<a class="piece" href="${esc(src)}" target="_blank" rel="noopener">` +
       `<div class="art" data-kind="${esc(title(n))}" data-src="${esc(src)}"></div><span>${esc(title(n))}</span></a>`;
@@ -1025,6 +1030,13 @@ async function buildHome() {
   const kHead = wb.findIndex(b => b.type === 'heading' && b.text === 'The Fourteen Kashira');
   if (kHead >= 0 && wb[kHead + 1]) document.getElementById('k-intro').innerHTML = inline(wb[kHead + 1].text);
   const picker = document.getElementById('k-picker');
+  // A Kashira's picture is the key art named after them (veyra.png for Veyra); a Kashira with none keeps the placeholder.
+  const art = await keyArtNames();
+  const standingOf = r => {
+    const name = artBase(strip(r[1]).split(',')[0].toLowerCase());
+    const file = art.find(n => artBase(n).toLowerCase() === name);
+    return file && 'assets/key-art/' + file;
+  };
   const pick = n => {
     const r = kTable.rows[n];
     [...picker.children].forEach((b, k) => b.classList.toggle('on', k === n));
@@ -1035,7 +1047,7 @@ async function buildHome() {
     document.getElementById('k-deed').innerHTML = inline(r[2]);
     const a = document.getElementById('k-art');
     a.dataset.done = '';
-    const standing = KASHIRA_ART[strip(r[0]).toLowerCase()];
+    const standing = standingOf(r);
     a.classList.remove('filled'); a.style.backgroundImage = ''; a.innerHTML = '';
     if (standing) a.dataset.src = standing; else delete a.dataset.src;
     a.dataset.desc = `An unwritten hero — charcoal body, a first hint of colour — holding a ${esc(strip(r[0]).toLowerCase())}, posed the way ${esc(strip(r[1]))} fought. One picture per weapon, fourteen in all.`;
@@ -1059,7 +1071,7 @@ async function buildHome() {
     });
     fillArt(picker);
     // open on a weapon whose picture is made, so the showcase starts with art rather than a placeholder
-    pick(Math.max(0, kTable.rows.findIndex(r => KASHIRA_ART[strip(r[0]).toLowerCase()])));
+    pick(Math.max(0, kTable.rows.findIndex(standingOf)));
   }
 
   const maps = PAGES.maps && await pageDoc(PAGES.maps);

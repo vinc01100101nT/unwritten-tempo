@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Blighted_Frostcap
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.blighted-frostcap
+  displayName: Blighted Frostcap
+  versionOf: {fileID: 11400000, guid: 05b10e025f33dd146925eb273970725f, type: 2}
+  kind: 0
+  size: 0.9
+  flies: 0
+  moveSpeed: 0.4
+  aggressive: 1
+  biome: 14
+  artFolder: 799e82d5070d11b45884ea406cbb1deb
+  faceset: {fileID: 2800000, guid: b99cc3109fefbbd49bbe6e101fd59ec1, type: 3}
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 93
+  str: 49
+  agi: 32
+  vit: 63
+  intel: 74
+  dex: 32
+  luk: 31
+  startingGear:
+  - {fileID: 11400000, guid: e2921b3c64336c846905dd34a8af73e1, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  multiplier: 10
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 8
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 2265ae0c36a5d654f8d2d5599fadcd49, type: 2}
+  itemDropNames: []
+  itemDropChances: []

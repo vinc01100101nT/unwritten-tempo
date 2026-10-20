@@ -511,7 +511,7 @@ def publish_site(out):
     key_art = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "UI", "KeyArt")
     # The list beside them is how the Media page shows every one: a page cannot list a folder itself.
     os.makedirs(os.path.join(out, "assets", "key-art"))
-    pictures = sorted(name for name in os.listdir(key_art) if name.endswith(".jpg"))
+    pictures = sorted(name for name in os.listdir(key_art) if name.lower().endswith((".jpg", ".jpeg", ".png")))
     for name in pictures:
         shutil.copy2(os.path.join(key_art, name), os.path.join(out, "assets", "key-art", name))
     write_json(os.path.join(out, "assets", "key-art", "index.json"), pictures)

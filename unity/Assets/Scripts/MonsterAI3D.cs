@@ -485,12 +485,12 @@ public class MonsterAI3D : MonoBehaviour
                 // The kill's experience also trains the killer's weapon mastery — Character.AddXP pays both.
                 if (paysExperience)
                 {
-                    // The gear that pays is its FILE's; a creature with no file (a hand-placed one) pays as ungeared.
+                    // The level that pays is its FILE's; a creature with no file (a hand-placed one) pays at the level
+                    // it stands at. Its multiplier is the one it was made with.
                     var file = MonsterCatalog.ById(Health.creatureId);
                     int level = Health.Level;
-                    Rewards.PayKill(Health, CreatureKinds.KillExperience(Health.kind, level, file != null ? file.level : level,
-                                                                         file != null ? file.gearQuality : Quality.Raw,
-                                                                         file != null ? file.FileFolds : 0));
+                    Rewards.PayKill(Health, CreatureKinds.KillExperience(level, file != null ? file.level : level,
+                                                                         Health.multiplier));
                 }
             });
 

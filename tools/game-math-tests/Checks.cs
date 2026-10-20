@@ -84,12 +84,12 @@ static class Checks
         That(UnitStatMath.KillXp(1) == 2, StatMath, "a level-1 kill no longer pays 2: " + UnitStatMath.KillXp(1));
         That(UnitStatMath.KillXp(30) == 508, StatMath, "a level-30 kill no longer pays 508: " + UnitStatMath.KillXp(30));
         That(UnitStatMath.KillXp(90) == 15191, StatMath, "a level-90 kill no longer pays 15,191: " + UnitStatMath.KillXp(90));
-        That(CreatureKinds.KillExperience(CreatureKind.Normal, 50, 50, Quality.Raw, 0) == UnitStatMath.KillXp(50), StatMath,
-             "a normal creature does not pay its level's amount");
-        That(CreatureKinds.KillExperience(CreatureKind.Elite, 50, 50, Quality.Raw, 0) == 10 * UnitStatMath.KillXp(50), StatMath,
-             "an elite does not pay ten times its level's amount");
-        That(CreatureKinds.KillExperience(CreatureKind.Shadow, 150, 150, Quality.Raw, 0) == 20 * UnitStatMath.KillXp(150), StatMath,
-             "a shadow does not pay twenty times its level's amount");
+        That(CreatureKinds.KillExperience(50, 50, 1f) == UnitStatMath.KillXp(50), StatMath,
+             "a x1 creature does not pay its level's amount");
+        That(CreatureKinds.KillExperience(50, 50, 30f) == 30 * UnitStatMath.KillXp(50), StatMath,
+             "a x30 creature does not pay thirty times its level's amount");
+        That(CreatureKinds.KillExperience(150, 150, 122f) == 122L * UnitStatMath.KillXp(150), StatMath,
+             "a x122 creature does not pay 122 times its level's amount");
 
         // THE RING IS PAID A THIRD OF EVERY KILL, on the character's own curve and with no cap: a third of what a
         // climb to 99 earns stands the ring at 93, and it keeps climbing after.
@@ -201,7 +201,8 @@ static class Checks
         That(UnitStatMath.TensSquared(99) == 81 && UnitStatMath.TensSquared(9) == 0, StatMath, "a leading stat should add (stat÷10)²");
         That(UnitStatMath.MinMagicAttack(1000, 99) == 1000 - (19 * 19 - 14 * 14), StatMath, "magic spread should be (INT÷5)² − (INT÷7)²");
         var vit = UnitStatInputs.Default(1); vit.vit = 50;
-        That(UnitStatMath.MaxHP(vit, default(EquipBonuses), 0f) == 375, StatMath, "VIT should give +1% max HP a point (250 × 1.5)");
+        That(UnitStatMath.MaxHP(vit, default(EquipBonuses), 0f) == UnityEngine.Mathf.RoundToInt(UnitStatMath.BaseHealth(1) * 1.5f), StatMath,
+             "VIT should give +1% max HP a point (level 1's base health × 1.5)");
 
         // A crit's chance can reach 100% (no lower ceiling), held inside [0, 100%] whatever LUK either side has.
         for (int luk = 0; luk <= 1000; luk += 50)
@@ -225,17 +226,36 @@ static class Checks
         That(UnitStatMath.MoveMult(5f) == 2.5f && UnitStatMath.MoveMult(-3f) == 0f, StatMath, "movement speed left [0, 250%]");
         That(UnitStatMath.LifeStealFraction(0.9f) == 0.25f && UnitStatMath.ReflectFraction(0.9f) == 0.5f, StatMath,
              "life steal should stop at 25% and reflect at 50%");
-        // Creature kinds: elite 30x health, a shadow 90x at level 105 to 150x at level 170; attack the cube root.
-        That(CreatureKinds.HealthMultiplier(CreatureKind.Normal, 50) == 1 && CreatureKinds.HealthMultiplier(CreatureKind.Elite, 50) == 30,
-             StatMath, "an elite should have 30x health, a normal creature 1x");
-        int[] shadowLevels = { 105, 110, 140, 165, 170, 200 };
-        int[] shadowHealth = { 90, 95, 122, 145, 150, 150 };
-        for (int i = 0; i < shadowLevels.Length; i++)
-            That(CreatureKinds.HealthMultiplier(CreatureKind.Shadow, shadowLevels[i]) == shadowHealth[i], StatMath,
-                 "a level " + shadowLevels[i] + " shadow should have " + shadowHealth[i] + "x health, got "
-                 + CreatureKinds.HealthMultiplier(CreatureKind.Shadow, shadowLevels[i]));
-        That(Math.Abs(CreatureKinds.AttackMultiplier(CreatureKind.Elite, 50) - 3.107f) < 0.001f, StatMath, "an elite should hit about 3.107x");
-        That(CreatureKinds.AttackMultiplier(CreatureKind.Normal, 50) == 1f, StatMath, "a normal creature should hit 1x");
+        // The multiplier: health times it, attack the cube root, never below x1.
+        That(UnitStatMath.CreatureMaxHP(2000, 1f) == 2000 && UnitStatMath.CreatureMaxHP(2000, 30f) == 60000
+             && UnitStatMath.CreatureMaxHP(2000, 1.5f) == 3000 && UnitStatMath.CreatureMaxHP(2000, 0.2f) == 2000,
+             StatMath, "a creature's health should be its x1 health times its multiplier, never below x1");
+        That(Math.Abs(CreatureKinds.AttackMultiplier(30f) - 3.107f) < 0.001f, StatMath, "a x30 creature should hit about 3.107x");
+        That(CreatureKinds.AttackMultiplier(1f) == 1f && CreatureKinds.AttackMultiplier(0f) == 1f, StatMath, "a x1 creature should hit 1x");
+        // The look a multiplier wears: none to x2, the dark enchant's level 1 from x3, 2 from x10, 3 from x30, the smoke
+        // from x90 (decided 2026-10-20).
+        That(DifficultyLook.LookOf(1f) == 0 && DifficultyLook.LookOf(2.9f) == 0 && DifficultyLook.LookOf(3f) == 1
+             && DifficultyLook.LookOf(9.9f) == 1 && DifficultyLook.LookOf(10f) == 2 && DifficultyLook.LookOf(29f) == 2
+             && DifficultyLook.LookOf(30f) == 3 && DifficultyLook.LookOf(89f) == 3 && DifficultyLook.LookOf(90f) == 4
+             && DifficultyLook.LookOf(150f) == 4, StatMath, "a multiplier's look should step at x3, x10, x30 and x90");
+        // THE HEALTH CURVE: a x1 creature of the reference build takes ReferenceHits ordinary hits from a player of its
+        // level with the same build, at every level the curve covers — never fewer, and never more than a quarter hit
+        // past them (the curve never goes down, so the first level of a grade, whose new armour would have let its own
+        // figure dip, keeps the one below it) — and no level-up ever lowers base health.
+        That(UnitStatMath.ReferenceHits == 5, StatMath, "a same-level fight should last 5 ordinary hits");
+        for (int level = 1; level <= UnitStatMath.HealthCurveTop; level++)
+        {
+            int hp = ReferenceCreatureHP(level), hit = UnitStatMath.ReferenceHit(level, level);
+            double hits = hp / (double)hit;
+            That(hits > UnitStatMath.ReferenceHits - 1 && hits <= UnitStatMath.ReferenceHits + 0.25, StatMath,
+                 "a level-" + level + " x1 creature (" + hp + " health) takes " + hits.ToString("0.00") + " hits of " + hit
+                 + " from a level-" + level + " player, not " + UnitStatMath.ReferenceHits);
+            That(level == 1 || UnitStatMath.BaseHealth(level) >= UnitStatMath.BaseHealth(level - 1), StatMath,
+                 "base health goes down from level " + (level - 1) + " to " + level);
+        }
+        That(UnitStatMath.ExpectedFolds(1) == 0 && UnitStatMath.ExpectedFolds(14) == 10 && UnitStatMath.ExpectedFolds(15) == 0
+             && UnitStatMath.ExpectedFolds(50) == 5 && UnitStatMath.ExpectedFolds(99) == 10 && UnitStatMath.ExpectedFolds(150) == 10,
+             StatMath, "expected folds should climb +0 to +10 through each grade's levels");
     }
 
     // ---- a strike that grows ------------------------------------------------------------------------------
@@ -672,9 +692,12 @@ static class Checks
         That(normalOne == 25 && eliteTwo == 50 && shadowTwo == 100, LootF, "armour slots: normal 1 on 25, elite 2 on 50, shadow 2 on 100 of 100 rolls");
         That(CreatureLoot.RollWornCardSlots(EquipSlotType.Head, CreatureKind.Shadow, 99) == 0, LootF, "a hat should never get a slot");
 
-        That(CreatureLoot.GradeForNormal(1) == Quality.Raw && CreatureLoot.GradeForNormal(24) == Quality.Raw && CreatureLoot.GradeForNormal(25) == Quality.F
-             && CreatureLoot.GradeForNormal(50) == Quality.E && CreatureLoot.GradeForNormal(75) == Quality.D && CreatureLoot.GradeForNormal(99) == Quality.D,
-             LootF, "a normal creature's grade by level should be Raw 1-24, F 25-49, E 50-74, D 75+");
+        int[] gradeEdges = { 1, 14, 15, 28, 29, 42, 43, 56, 57, 70, 71, 84, 85, 99, 170 };
+        Quality[] gradeAt = { Quality.Raw, Quality.Raw, Quality.F, Quality.F, Quality.E, Quality.E, Quality.D, Quality.D,
+                              Quality.C, Quality.C, Quality.B, Quality.B, Quality.A, Quality.A, Quality.A };
+        for (int i = 0; i < gradeEdges.Length; i++)
+            That(CreatureLoot.WornGrade(gradeEdges[i]) == gradeAt[i], LootF, "a level-" + gradeEdges[i] + " creature should wear "
+                 + gradeAt[i] + ", not " + CreatureLoot.WornGrade(gradeEdges[i]));
         That(CreatureLoot.InkTierFor(Quality.Raw) == 0 && CreatureLoot.InkTierFor(Quality.F) == 1 && CreatureLoot.InkTierFor(Quality.C) == 4
              && CreatureLoot.InkTierFor(Quality.B) == 5 && CreatureLoot.InkTierFor(Quality.A) == 5, LootF, "worn Ink tier by grade is off");
 
@@ -705,54 +728,39 @@ static class Checks
     static void KillDropNumbers()
     {
         That(Math.Abs(CreatureLoot.GearDropChance - 0.10f) < 1e-6f, LootF, "a kill should drop a worn piece one time in ten");
-        That(CreatureLoot.TemperDustPerGrade == 60 && CreatureLoot.QuenchOilPerGrade == 6, LootF,
-             "a kill should drop 0.60 Temper Dust and 0.06 Quench Oil a grade");
+        That(CreatureLoot.TemperDustPerKill == 60 && CreatureLoot.QuenchOilPerKill == 2, LootF,
+             "a x1 kill should drop 0.60 Temper Dust and 0.02 Quench Oil");
         // Over the hundred rolls, a kill pays exactly its hundredths: whole units always, and the rest that often.
-        foreach (CreatureKind kind in Enum.GetValues(typeof(CreatureKind)))
-            foreach (int level in new[] { 1, 15, 50, 99, 120 })
-                foreach (var gear in new[] { (Quality.Raw, 0), (Quality.C, 20), (Quality.A, 35) })
-                    foreach (int perGrade in new[] { CreatureLoot.TemperDustPerGrade, CreatureLoot.QuenchOilPerGrade })
-                    {
-                        long want = CreaturePay.Scaled((long)perGrade * CreatureLoot.GradeForLevel(level) * CreatureKinds.ExperienceMultiplier(kind),
-                                                       gear.Item1, gear.Item2);
-                        long got = 0;
-                        for (int roll = 0; roll < 100; roll++)
-                            got += CreatureLoot.UnitsPerKill(perGrade, level, kind, gear.Item1, gear.Item2, roll);
-                        That(got == want, LootF, "a level " + level + " " + kind + " in " + gear.Item1 + " +" + gear.Item2 + " pays "
-                             + got + " hundredths over 100 kills at " + perGrade + " a grade, not " + want);
-                    }
-        // The pinned cases: a level-1 normal creature in Raw drops a Temper Dust on 60 kills in 100 and a Quench Oil on 6;
-        // a level-99 one 4 Temper Dust, a fifth on 20 in 100; a level-50 elite in C +10 exactly 72.
-        That(CreatureLoot.UnitsPerKill(60, 1, CreatureKind.Normal, Quality.Raw, 0, 59) == 1
-             && CreatureLoot.UnitsPerKill(60, 1, CreatureKind.Normal, Quality.Raw, 0, 60) == 0, LootF,
-             "a level-1 creature should drop a Temper Dust on rolls 0 to 59 only");
-        That(CreatureLoot.UnitsPerKill(6, 1, CreatureKind.Normal, Quality.Raw, 0, 5) == 1
-             && CreatureLoot.UnitsPerKill(6, 1, CreatureKind.Normal, Quality.Raw, 0, 6) == 0, LootF,
-             "a level-1 creature should drop a Quench Oil on rolls 0 to 5 only");
-        That(CreatureLoot.UnitsPerKill(60, 99, CreatureKind.Normal, Quality.Raw, 0, 19) == 5
-             && CreatureLoot.UnitsPerKill(60, 99, CreatureKind.Normal, Quality.Raw, 0, 20) == 4, LootF,
-             "a level-99 creature should drop 4 Temper Dust, and a fifth on rolls 0 to 19");
-        That(CreatureLoot.UnitsPerKill(60, 50, CreatureKind.Elite, Quality.C, 10, 0) == 72
-             && CreatureLoot.UnitsPerKill(60, 50, CreatureKind.Elite, Quality.C, 10, 99) == 72, LootF,
-             "a level-50 elite in C +10 should drop exactly 72 Temper Dust");
-        // A Salt drops from the levels it is used at and above: Coarse from 15, Fine from 57, Pure from 71.
-        foreach (var line in CreatureLoot.LinesFor(CreatureKind.Normal))
-        {
-            if (line.kind != MaterialKind.Salt) continue;
-            int from = line.step == 1 ? 15 : line.step == 2 ? 57 : 71;
-            That(!CreatureLoot.DropsAt(line, from - 1) && CreatureLoot.DropsAt(line, from) && CreatureLoot.DropsAt(line, 99), LootF,
-                 "Salt tier " + line.step + " should drop from level " + from + " up, and not below");
-        }
-        // An Ink drops from the grade it is used at: Watery from 15, Thin from 43; an elite's Faint from 57, Clear from 71,
-        // Sharp from 85.
-        foreach (var kind in new[] { CreatureKind.Normal, CreatureKind.Elite })
-            foreach (var line in CreatureLoot.LinesFor(kind))
+        foreach (float m in new[] { 1f, 1.5f, 3f, 30f, 122f })
+            foreach (int perKill in new[] { CreatureLoot.TemperDustPerKill, CreatureLoot.QuenchOilPerKill })
             {
-                if (line.kind != MaterialKind.Ink) continue;
-                int from = line.step == 1 ? 15 : line.step == 2 ? 43 : line.step == 3 ? 57 : line.step == 4 ? 71 : 85;
-                That(!CreatureLoot.DropsAt(line, from - 1) && CreatureLoot.DropsAt(line, from), LootF,
-                     "Ink tier " + line.step + " should drop from level " + from + " up, and not below");
+                long want = (long)Math.Floor(perKill * (double)m + 0.5);
+                long got = 0;
+                for (int roll = 0; roll < 100; roll++) got += CreatureLoot.UnitsPerKill(perKill, m, roll);
+                That(got == want, LootF, "a x" + m + " creature pays " + got + " hundredths over 100 kills at " + perKill
+                     + " a kill, not " + want);
             }
+        // The pinned cases: a x1 creature drops a Temper Dust on 60 kills in 100 and a Quench Oil on 2; a x30 one 18
+        // Temper Dust; a creature's level changes nothing.
+        That(CreatureLoot.UnitsPerKill(60, 1f, 59) == 1 && CreatureLoot.UnitsPerKill(60, 1f, 60) == 0, LootF,
+             "a x1 creature should drop a Temper Dust on rolls 0 to 59 only");
+        That(CreatureLoot.UnitsPerKill(2, 1f, 1) == 1 && CreatureLoot.UnitsPerKill(2, 1f, 2) == 0, LootF,
+             "a x1 creature should drop a Quench Oil on rolls 0 and 1 only");
+        That(CreatureLoot.UnitsPerKill(60, 30f, 0) == 18 && CreatureLoot.UnitsPerKill(60, 30f, 99) == 18, LootF,
+             "a x30 creature should drop exactly 18 Temper Dust");
+        // Each Salt and Ink opens from its multiplier — Coarse and Watery x1, Fine and Thin x3, Faint x10, Pure and Clear
+        // x30, Sharp x90 — and falls its x1 chance times the multiplier on average, past 1 as more than one.
+        foreach (var line in CreatureLoot.Lines)
+        {
+            float from = line.kind == MaterialKind.Salt ? (line.step == 1 ? 1f : line.step == 2 ? 3f : 30f)
+                       : (line.step == 1 ? 1f : line.step == 2 ? 3f : line.step == 3 ? 10f : line.step == 4 ? 30f : 90f);
+            That(line.fromMultiplier == from && (from <= 1f || CreatureLoot.ExpectedAt(line, from - 0.01f) == 0f)
+                 && CreatureLoot.ExpectedAt(line, from) > 0f, LootF,
+                 line.kind + " tier " + line.step + " should open from x" + from + ", not x" + line.fromMultiplier);
+            That(Math.Abs(CreatureLoot.ExpectedAt(line, 150f) - line.chance * 150f) < 1e-4f, LootF,
+                 line.kind + " tier " + line.step + " does not fall its x1 chance times the multiplier");
+        }
+        That(Math.Abs(CreatureLoot.ExpectedAt(CreatureLoot.Lines[4], 90f) - 0.15f) < 1e-5f, LootF, "Sharp Ink should drop 15% at x90");
     }
 
     // ---- what a quality grade is worth ------------------------------------------------------------------
@@ -797,7 +805,10 @@ static class Checks
         That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, 0) == 50, CraftF, "a Raw +0 sword should be worth its base, 50");
         That(Atk(WeaponType.Sword, 1f, 0, Quality.Raw, 100) == 50, CraftF, "a roll of 100 and no roll should be the same");
         That(Atk(WeaponType.TwoHandSword, 1.3f, 0, Quality.Raw, 0) == 65, CraftF, "a Greatsword's base should be 65");
-        That(Atk(WeaponType.Firearm, 1.4f, 0, Quality.Raw, 0) == 70, CraftF, "a Sniper's base should be 70");
+        var sniperBase = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Firearm, MaterialKind.Metal, 0, Quality.Raw, 0,
+                                                   CraftingMath.Thousandths(1.4f), CraftingMath.Thousandths(0.5f));
+        That(sniperBase.magicAttack == 70 && sniperBase.attack == 0, CraftF,
+             "a Sniper's base should be 70 MAGIC attack and no attack — its ordinary attack is a magic shot");
         That(Atk(WeaponType.Shuriken, 0.9f, 0, Quality.Raw, 0) == 45, CraftF, "a Shuriken's base should be 45");
         That(Atk(WeaponType.Katar, 0.85f, 0, Quality.Raw, 0) == 28, CraftF, "a Katar, a pair, should be 28.3 → 28");
         That(Atk(WeaponType.Axe, 1.1f, 0, Quality.Raw, 0) == 37, CraftF, "an Axe, a pair, should be 36.7 → 37");
@@ -1463,32 +1474,38 @@ static class Checks
              "a creature that heals half its missing health back no longer halves every claim on it");
     }
 
-    // WHAT A CREATURE'S GEAR PAYS: 25% more a grade, 5% more a fold, two separate terms. Pinned from
-    // docs/3-world/what-a-kill-pays.md, agreed 2026-10-13.
+    // WHAT A CREATURE'S MULTIPLIER PAYS: everything a kill is worth, times the multiplier, half up (decided 2026-10-20).
     static void CreaturePayNumbers()
     {
         const string F = "unity/Assets/Scripts/CreaturePay.cs";
-        That(CreaturePay.GradePercent(Quality.Raw) == 100 && CreaturePay.GradePercent(Quality.F) == 125 && CreaturePay.GradePercent(Quality.D) == 175
-             && CreaturePay.GradePercent(Quality.A) == 250, F, "a grade does not pay 25% more for each grade above Raw");
-        That(CreaturePay.FoldPercent(Quality.A, 0) == 100 && CreaturePay.FoldPercent(Quality.F, 10) == 150 && CreaturePay.FoldPercent(Quality.A, 35) == 150, F,
-             "a fold does not pay 5% more");
-        That(CreaturePay.FoldPercent(Quality.Raw, 15) == CreaturePay.FoldPercent(Quality.Raw, 10) && CreaturePay.FoldPercent(Quality.Raw, -3) == 100, F,
-             "folds past the grade's cap, which nothing wears, are paid — or a negative count pays less than none");
-        That(CreaturePay.Scaled(1000, Quality.Raw, 0) == 1000, F, "Raw gear with no folds does not pay exactly what the level gives");
-        That(CreaturePay.Scaled(1000, Quality.D, 10) == 2625 && CreaturePay.Scaled(1000, Quality.C, 8) == 2800 && CreaturePay.Scaled(1000, Quality.A, 9) == 3625, F,
-             "pay is not the amount x the grade's percent x the folds' percent");
-        That(CreaturePay.Scaled(1000, Quality.B, 0) == 2250 && CreaturePay.Scaled(1000, Quality.Raw, 5) == 1250, F, "grade and folds are not two separate terms");
-        That(CreaturePay.Scaled(20, Quality.F, 8) == 35 && CreaturePay.Scaled(2, Quality.Raw, 5) == 3 && CreaturePay.Scaled(0, Quality.A, 10) == 0, F,
-             "an amount x the two percents is not rounded half up");
-        // What a kill pays: gear on the file level's experience; levels grown in the fight add their plain difference.
+        That(CreaturePay.Scaled(1000, 1f) == 1000 && CreaturePay.Scaled(1000, 30f) == 30000 && CreaturePay.Scaled(1000, 0f) == 1000, F,
+             "x1 does not pay exactly what the level gives, or a multiplier below 1 pays less");
+        That(CreaturePay.Scaled(3, 1.5f) == 5 && CreaturePay.Scaled(1, 1.4f) == 1 && CreaturePay.Scaled(0, 30f) == 0, F,
+             "an amount x the multiplier is not rounded half up");
+        That(Math.Abs(CreaturePay.ExpectedPieces(0.04f, 30f) - 1.2f) < 1e-5f && Math.Abs(CreaturePay.ExpectedPieces(0.01f, 3f) - 0.03f) < 1e-6f
+             && CreaturePay.ExpectedPieces(0f, 90f) == 0f, F, "a chance x the multiplier is not how many fall on average");
+        That(CreaturePay.PiecesFor(1.2f, 0.19f) == 2 && CreaturePay.PiecesFor(1.2f, 0.21f) == 1 && CreaturePay.PiecesFor(0.03f, 0.02f) == 1
+             && CreaturePay.PiecesFor(0.03f, 0.04f) == 0 && CreaturePay.PiecesFor(0f, 0f) == 0, F,
+             "an average of pieces is not rolled as the whole pieces and one more on what is left over");
+        // What a kill pays: the file level's experience and the levels grown in the fight, together times the multiplier.
         int at50 = UnitStatMath.KillXp(50), at60 = UnitStatMath.KillXp(60);
-        That(CreatureKinds.KillExperience(CreatureKind.Normal, 50, 50, Quality.C, 10) == 3 * at50, F, "a creature in C +10 does not pay 3 times");
-        That(CreatureKinds.KillExperience(CreatureKind.Normal, 60, 50, Quality.C, 10) == 3 * at50 + (at60 - at50), F,
-             "levels a creature grew in the fight are multiplied by its gear");
-        That(CreatureKinds.KillExperience(CreatureKind.Elite, 50, 50, Quality.C, 10) == 30 * at50, F, "an elite's ten times and its gear do not multiply");
-        That(CreatureMaterials.SellValue(40, Rarity.Common, Quality.Raw, 0) == 800 && CreatureMaterials.SellValue(40, Rarity.Common, Quality.D, 10) == 2100
-             && CreatureMaterials.SellValue(1, Rarity.Uncommon, Quality.Raw, 1) == 105, F, "a material's price is not its plain price x what the gear pays, half up");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, Quality.C, 10) == 600, F, "a rescue from a creature in C +10 does not pay 3 times");
+        That(CreatureKinds.KillExperience(50, 50, 3f) == 3 * at50, F, "a x3 creature does not pay 3 times");
+        That(CreatureKinds.KillExperience(60, 50, 3f) == 3 * at60, F,
+             "levels a creature grew in the fight are not multiplied with the rest");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, 3f) == 600, F, "a rescue from a x3 creature does not pay 3 times");
+        That(SavedCharacterRules.LootMultiplierOfRebel(CreatureKind.Normal, 1f) == 30f && SavedCharacterRules.LootMultiplierOfRebel(CreatureKind.Elite, 30f) == 90f
+             && SavedCharacterRules.LootMultiplierOfRebel(CreatureKind.Normal, 50f) == 50f, F,
+             "a rebel's materials should drop one kind up — x30 from a normal, x90 from an elite — never below its own");
+    }
+
+    // The total health of a x1 creature of the reference build at its level's +0 metal armour — what the health curve
+    // is checked against, worked out through the game's own functions.
+    static int ReferenceCreatureHP(int level)
+    {
+        var eb = default(EquipBonuses);
+        foreach (var slot in new[] { EquipSlotType.Armor, EquipSlotType.Boots, EquipSlotType.Garment, EquipSlotType.Head })
+            eb.hp += CraftingMath.PieceNumbers(slot, WeaponType.None, MaterialKind.Metal, 0, CreatureLoot.WornGrade(level), 100, 0, 0).hp;
+        return UnitStatMath.MaxHP(UnitStatMath.ReferenceBuild(level), eb, 0f);
     }
 
     // A CREATURE'S OWN MATERIAL: the tier its grade gives it, what a tier sells for, how often it falls and in how many
@@ -1502,54 +1519,34 @@ static class Checks
              && CreatureMaterials.SellValue(40, Rarity.Epic) == 80000 && CreatureMaterials.SellValue(40, Rarity.Legendary) == 400000, F,
              "a rarer material sells for 100, 500, 2,000 or 10,000 x level by its tier");
         That(CreatureMaterials.SellValue(0, Rarity.Common) == 20, F, "a creature with no level still sells as level 1");
-        That(CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Common) == 0.5f && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Uncommon) == 0.1f
-             && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Rare) == 0.02f && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Epic) == 0.005f
-             && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Legendary) == 0.001f, F,
-             "a normal creature drops its tiers at 1 in 2, 10, 50, 200 and 1,000");
-        That(CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Common) == 0f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Uncommon) == 0f
-             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Rare) == 1f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Epic) == 0.5f
-             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Legendary) == 0.1f, F,
-             "an elite drops no Common or Uncommon, a sure Rare, a 1 in 2 Epic and a 1 in 10 Legendary");
+        That(CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Common, 1f) == 0.5f && CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Uncommon, 1f) == 0.1f
+             && CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Rare, 1f) == 0.02f && CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Epic, 1f) == 0.005f
+             && CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Legendary, 1f) == 0.001f, F,
+             "a x1 creature drops its tiers at 1 in 2, 10, 50, 200 and 1,000");
         foreach (Rarity tier in System.Enum.GetValues(typeof(Rarity)))
-            That(CreatureMaterials.Chance(CreatureKind.Shadow, tier) == 0f, F, "a shadow dropped a " + tier + " material of its own");
-        // The rule the whole table rests on: a normal kill's material is worth 10 gold x level on average at EVERY tier,
-        // and an elite kill's 100 times that, so rarity changes how the value arrives and never how much.
-        foreach (Rarity tier in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary })
-            That(System.Math.Abs(CreatureMaterials.Chance(CreatureKind.Normal, tier) * CreatureMaterials.SellValue(40, tier) - 400.0) < 0.01, F,
-                 "a normal creature's " + tier + " material is no longer worth 10 gold x level a kill");
-        foreach (Rarity tier in new[] { Rarity.Rare, Rarity.Epic, Rarity.Legendary })
-        {
-            CreatureMaterials.Piles(CreatureKind.Elite, tier, out int piles, out int _);
-            That(System.Math.Abs(CreatureMaterials.Chance(CreatureKind.Elite, tier) * piles * CreatureMaterials.SellValue(40, tier) - 40000.0) < 0.01, F,
-                 "an elite's " + tier + " material is no longer worth 100 normal kills");
-        }
-        CreatureMaterials.Piles(CreatureKind.Elite, Rarity.Rare, out int pMin, out int pMax);
-        CreatureMaterials.PileSize(CreatureKind.Elite, Rarity.Rare, out int sMin, out int sMax);
-        That(pMin == 2 && pMax == 2 && sMin == 1 && sMax == 1, F, "a grade-D elite's Rare does not fall as 2 piles of 1");
-        CreatureMaterials.Piles(CreatureKind.Elite, Rarity.Legendary, out pMin, out pMax);
-        CreatureMaterials.PileSize(CreatureKind.Elite, Rarity.Legendary, out sMin, out sMax);
-        That(pMin == 1 && pMax == 1 && sMin == 1 && sMax == 1, F, "an elite's Legendary is not one single drop");
-        // THE GRADE DECIDES THE TIER: a normal creature Raw..C gives Common..Legendary, an elite D/C/B gives Rare/Epic/
-        // Legendary, and nothing else is allowed.
+            That(CreatureMaterials.ExpectedPieces(CreatureKind.Shadow, tier, 120f) == 0f, F, "a shadow dropped a " + tier + " material of its own");
+        // The rule the whole table rests on: a kill's material is worth 10 gold x level x its multiplier on average at
+        // the tier its multiplier gives, whatever the kind, so rarity changes how the value arrives and never how much.
+        foreach (var kind in new[] { CreatureKind.Normal, CreatureKind.Elite })
+            foreach (float m in new[] { 1f, 2.5f, 3f, 9f, 10f, 29f, 30f, 89f, 90f, 150f })
+            {
+                Rarity tier;
+                That(CreatureMaterials.TierOfMultiplier(kind, m, out tier), F, "a x" + m + " " + kind + " has no material tier");
+                That(System.Math.Abs(CreatureMaterials.ExpectedPieces(kind, tier, m) * CreatureMaterials.SellValue(40, tier) - 400.0 * m) < 0.05 * m, F,
+                     "a x" + m + " " + kind + "'s " + tier + " material is no longer worth 10 gold x level x " + m + " a kill");
+            }
+        // THE MULTIPLIER DECIDES THE TIER: x1 Common, x3 Uncommon, x10 Rare, x30 Epic, x90 Legendary; a shadow none.
         Rarity got;
-        That(CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.Raw, out got) && got == Rarity.Common
-             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.F, out got) && got == Rarity.Uncommon
-             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.E, out got) && got == Rarity.Rare
-             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.D, out got) && got == Rarity.Epic
-             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.C, out got) && got == Rarity.Legendary, F,
-             "a normal creature's grade no longer gives Raw Common .. C Legendary");
-        That(!CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.B, out got) && !CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.A, out got), F,
-             "a normal creature may wear B or A");
-        That(CreatureMaterials.TierOfGrade(CreatureKind.Elite, Quality.D, out got) && got == Rarity.Rare
-             && CreatureMaterials.TierOfGrade(CreatureKind.Elite, Quality.C, out got) && got == Rarity.Epic
-             && CreatureMaterials.TierOfGrade(CreatureKind.Elite, Quality.B, out got) && got == Rarity.Legendary, F,
-             "an elite's grade no longer gives D Rare, C Epic, B Legendary");
-        foreach (var g in new[] { Quality.Raw, Quality.F, Quality.E, Quality.A })
-            That(!CreatureMaterials.TierOfGrade(CreatureKind.Elite, g, out got), F, "an elite may wear " + g);
-        That(!CreatureMaterials.TierOfGrade(CreatureKind.Shadow, Quality.A, out got), F, "a shadow has a material tier");
-        CreatureMaterials.Piles(CreatureKind.Normal, Rarity.Common, out pMin, out pMax);
-        CreatureMaterials.PileSize(CreatureKind.Normal, Rarity.Common, out sMin, out sMax);
-        That(pMin == 1 && pMax == 1 && sMin == 1 && sMax == 1, F, "a normal creature's material is one single drop");
+        float[] tierFrom = { 1f, 3f, 10f, 30f, 90f };
+        for (int t = 0; t < tierFrom.Length; t++)
+        {
+            That(CreatureMaterials.TierOfMultiplier(CreatureKind.Normal, tierFrom[t], out got) && got == (Rarity)t, F,
+                 "a x" + tierFrom[t] + " creature's material should be " + (Rarity)t + ", not " + got);
+            if (t > 0)
+                That(CreatureMaterials.TierOfMultiplier(CreatureKind.Normal, tierFrom[t] - 0.01f, out got) && got == (Rarity)(t - 1), F,
+                     "just under x" + tierFrom[t] + " should still be " + (Rarity)(t - 1));
+        }
+        That(!CreatureMaterials.TierOfMultiplier(CreatureKind.Shadow, 120f, out got), F, "a shadow has a material tier");
         for (int step = 1; step <= 5; step++)
             That(Rarities.OfMaterial(MaterialKind.Creature, step) == (Rarity)(step - 1)
                  && CreatureMaterials.StepOfTier((Rarity)(step - 1)) == step, RarityCheckFile, "a creature material's step " + step + " is not its tier");
@@ -1565,12 +1562,12 @@ static class Checks
         That(SavedCharacterRules.TransformChance == 0.15f, F, "a beaten normal or elite turns back 15% of the time");
         // Decided 2026-10-13: gold worth 4, 8 or 12 kills of the creature (10 gold a level) plus 3, 6 or 9 of its
         // ordinary material (two kills each), so a rescue is worth 10, 20 or 30 kills in all.
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, Quality.Raw, 0) == 200, F, "an ordinary rescue pays gold worth 4 kills");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Helpless, 5, Quality.Raw, 0) == 400, F, "a helpless rescue pays gold worth 8 kills");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Wealthy, 5, Quality.Raw, 0) == 600, F, "a wealthy rescue pays gold worth 12 kills");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 0, Quality.Raw, 0) == 40, F, "a creature with no level pays as level 1");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.Ally, GoldTier.Wealthy, 5, Quality.Raw, 0) == 0, F, "an ally pays no gold");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.Rebel, GoldTier.Ordinary, 5, Quality.Raw, 0) == 0, F, "a rebel pays no gold");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, 1f) == 200, F, "an ordinary rescue pays gold worth 4 kills");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Helpless, 5, 1f) == 400, F, "a helpless rescue pays gold worth 8 kills");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Wealthy, 5, 1f) == 600, F, "a wealthy rescue pays gold worth 12 kills");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 0, 1f) == 40, F, "a creature with no level pays as level 1");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.Ally, GoldTier.Wealthy, 5, 1f) == 0, F, "an ally pays no gold");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.Rebel, GoldTier.Ordinary, 5, 1f) == 0, F, "a rebel pays no gold");
         That(SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Ordinary) == 3
              && SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Helpless) == 6
              && SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Wealthy) == 9, F,

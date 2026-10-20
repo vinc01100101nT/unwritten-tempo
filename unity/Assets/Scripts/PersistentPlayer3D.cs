@@ -150,7 +150,7 @@ public class PersistentPlayer3D : MonoBehaviour
         }
 
         // NOBODY NAMED ONE, in the map the defaultless stand back up in: its default arrival point, so a new
-        // character and a death with no save point both come out at the same door (decided 2026-09-30).
+        // character and a death with no save point both come out at the same spot (SavePoint).
         if (MapManager.CurrentMap == SavePoint.DefaultMap)
             foreach (var sp in points)
                 if (sp.id == SavePoint.DefaultSpawnId) return sp;

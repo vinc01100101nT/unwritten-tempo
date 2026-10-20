@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Tainted_Chomper
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.tainted-chomper
+  displayName: Tainted Chomper
+  versionOf: {fileID: 11400000, guid: a134a218cda059f4d912c841b6d18f87, type: 2}
+  kind: 0
+  size: 3
+  flies: 0
+  moveSpeed: 1.1
+  aggressive: 1
+  biome: 9
+  artFolder: 99952580f86eb7249bf2dba9a117717e
+  faceset: {fileID: 2800000, guid: 2b3f43cd8d454df498da8e3258b10066, type: 3}
+  weight: 4
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 48
+  str: 33
+  agi: 33
+  vit: 15
+  intel: 15
+  dex: 15
+  luk: 32
+  startingGear:
+  - {fileID: 11400000, guid: eb821c722710f794881eb933b2236650, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  multiplier: 3
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 2
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 0291ae14511e92a44b416641b0ca4508, type: 2}
+  itemDropNames: []
+  itemDropChances: []

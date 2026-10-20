@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
+  m_Name: Blighted Willo Heartflame
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.blighted-willo-heartflame
+  displayName: Blighted Willo Heartflame
+  icon: {fileID: 21300000, guid: d2c01fffcffd1c04b9860ecc2ab7be7a, type: 3}
+  slot: 0
+  weaponType: 0
+  attackRange: 0
+  equipModel: {fileID: 0}
+  element: 0
+  category: 3
+  weight: 10
+  value: 40500
+  undroppable: 0
+  unsellable: 0
+  unstorable: 0
+  untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
+  madeOf: 0
+  materialKind: 6
+  materialStep: 3
+  mergesInto: {fileID: 0}
+  useSkillId: 
+  attackSfx:
+    clips: []
+    volume: 0.8
+    pitch: {x: 0.95, y: 1.05}
+  hitSfx:
+    clips: []
+    volume: 0.9
+    pitch: {x: 0.95, y: 1.05}
+  description: 'Willo''s flame burned bright. Now it fits in your pocket.
+
+    Dropped
+    only by Willo.'

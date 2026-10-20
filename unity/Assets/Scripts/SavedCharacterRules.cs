@@ -50,12 +50,12 @@ public static class SavedCharacterRules
     /// <summary>The gold paid for saving a character of <paramref name="tier"/> that came out of a creature whose FILE
     /// says <paramref name="creatureLevel"/> — never the level it grew to in the fight, so feeding a creature blows
     /// cannot raise the pay. A kill is worth <see cref="CreatureMaterials.GoldPerLevel"/> gold a level. Only a
-    /// never-fights character pays, and a kill of a creature in better gear is worth more by its grade and folds
+    /// never-fights character pays, and a kill of a creature of a higher multiplier is worth that many times more
     /// (<see cref="CreaturePay"/>).</summary>
-    public static long RescueGold(SavedBehaviour behaviour, GoldTier tier, int creatureLevel, Quality gearGrade, int gearFolds)
+    public static long RescueGold(SavedBehaviour behaviour, GoldTier tier, int creatureLevel, float multiplier)
         => behaviour == SavedBehaviour.NeverFights
             ? CreaturePay.Scaled((long)RescueKills(tier) * CreatureMaterials.GoldPerLevel * System.Math.Max(1, creatureLevel),
-                                 gearGrade, gearFolds)
+                                 multiplier)
             : 0;
 
     /// <summary>How many COMMON pieces' worth of its creature's material a saved never-fights character of
@@ -86,9 +86,23 @@ public static class SavedCharacterRules
         return (int)(parts / 10000) + (roll0To9999 < parts % 10000 ? 1 : 0);
     }
 
-    /// <summary>The kind whose drops a rebel from a creature of <paramref name="kind"/> gives up: one kind up.</summary>
+    /// <summary>The kind whose find a rebel from a creature of <paramref name="kind"/> gives up: one kind up.</summary>
     public static CreatureKind LootKindOfRebel(CreatureKind kind) =>
         kind == CreatureKind.Normal ? CreatureKind.Elite : CreatureKind.Shadow;
+
+    /// <summary>The multiplier a rebel's Temper Dust, Quench Oil, Inks and Salts drop at — one kind up, as its find is:
+    /// a normal's rebel at ×30, an elite's at ×90, and never below the creature's own <paramref name="multiplier"/>.
+    /// Its own material keeps the creature's own multiplier.</summary>
+    public static float LootMultiplierOfRebel(CreatureKind kind, float multiplier)
+    {
+        float lifted = kind == CreatureKind.Normal ? RebelLootFromNormal : RebelLootFromElite;
+        float own = CreaturePay.Clamp(multiplier);
+        return own > lifted ? own : lifted;
+    }
+
+    /// <summary>What a rebel's materials drop at, from a normal creature and from an elite: one kind up (decided
+    /// 2026-10-20 with the multiplier).</summary>
+    public const float RebelLootFromNormal = 30f, RebelLootFromElite = 90f;
 
     /// <summary>The side a character of <paramref name="behaviour"/> stands on while it is here.</summary>
     public static Side SideOf(SavedBehaviour behaviour) =>

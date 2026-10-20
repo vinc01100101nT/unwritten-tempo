@@ -246,7 +246,11 @@ public partial class Player3DController
             if (mode == HuntMode.Standing && (attacker == null || !attacker.InRange(h))) continue;
             if (mode == HuntMode.Radius && !AutoCombatMath.MayStartFightAt(autoAnchor, at)) continue;
             float sqr = AutoCombatMath.FlatSqr(me, at);
-            if (sqr < bestSqr) { bestSqr = sqr; best = h; }
+            if (sqr >= bestSqr) continue;
+            // NOT ACROSS A CLIFF: a creature no walk reaches is skipped unless it is already within reach of the weapon
+            // — the hunt would only walk to the edge, stand there for GiveUpAfterSeconds and pick the next one.
+            if (Pathfinder3D.KnownUnreachable(me, at) && (attacker == null || !attacker.InRange(h))) continue;
+            bestSqr = sqr; best = h;
         }
         return best;
     }

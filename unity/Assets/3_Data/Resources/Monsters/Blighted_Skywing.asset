@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Blighted_Skywing
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.blighted-skywing
+  displayName: Blighted Skywing
+  versionOf: {fileID: 11400000, guid: e2476b6e267de4d4c8709b641c7040a4, type: 2}
+  kind: 0
+  size: 0.5
+  flies: 1
+  moveSpeed: 1.6
+  aggressive: 1
+  biome: 12
+  artFolder: 9833de26a22b1744e97e0f8e1eda6d08
+  faceset: {fileID: 2800000, guid: d54eac920f4143e4abaa870fc7725962, type: 3}
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 87
+  str: 59
+  agi: 30
+  vit: 59
+  intel: 30
+  dex: 58
+  luk: 29
+  startingGear:
+  - {fileID: 11400000, guid: 67c79ac3f007e7f46b8b27bff6ccedfd, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
+  multiplier: 10
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 6
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 57261f080292cbf43be7961be083d57c, type: 2}
+  itemDropNames: []
+  itemDropChances: []

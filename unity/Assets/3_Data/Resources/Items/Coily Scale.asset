@@ -22,7 +22,7 @@ MonoBehaviour:
   element: 0
   category: 3
   weight: 10
-  value: 8063
+  value: 1290
   undroppable: 0
   unsellable: 0
   unstorable: 0
@@ -39,7 +39,7 @@ MonoBehaviour:
   wornSkillId: 
   madeOf: 0
   materialKind: 6
-  materialStep: 2
+  materialStep: 1
   mergesInto: {fileID: 0}
   useSkillId: 
   attackSfx:

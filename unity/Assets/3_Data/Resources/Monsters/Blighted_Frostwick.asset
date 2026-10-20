@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Blighted_Frostwick
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.blighted-frostwick
+  displayName: Blighted Frostwick
+  versionOf: {fileID: 11400000, guid: df2468b30356d79479182953beda215d, type: 2}
+  kind: 0
+  size: 0.9
+  flies: 0
+  moveSpeed: 0.9
+  aggressive: 1
+  biome: 14
+  artFolder: 8e32b274087b9f640a25d7885a6ae988
+  faceset: {fileID: 2800000, guid: 2b0514da0d42191499203ee44758bb2d, type: 3}
+  weight: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 95
+  str: 64
+  agi: 33
+  vit: 76
+  intel: 33
+  dex: 50
+  luk: 32
+  startingGear:
+  - {fileID: 11400000, guid: 5c65838bbb620394296e8e14e37b84ea, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  multiplier: 10
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 8
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: c4d2f2062c5eccf4885e16d747ce12ad, type: 2}
+  itemDropNames: []
+  itemDropChances: []

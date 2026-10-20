@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Blighted_Crawlet
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.blighted-crawlet
+  displayName: Blighted Crawlet
+  versionOf: {fileID: 11400000, guid: 0ad2d3bd9af9b034dad005e48b748742, type: 2}
+  kind: 0
+  size: 0.5
+  flies: 0
+  moveSpeed: 0.6
+  aggressive: 1
+  biome: 6
+  artFolder: 649e841555aff094ba432b9e1d4a7c38
+  faceset: {fileID: 2800000, guid: 6b709ce552a6aaa4eb90a43e7e761f72, type: 3}
+  weight: 2
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 4
+  str: 8
+  agi: 10
+  vit: 4
+  intel: 3
+  dex: 6
+  luk: 3
+  startingGear:
+  - {fileID: 11400000, guid: 897c7d54c6280f348b0c74364aa9f64e, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  multiplier: 10
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 0
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 57d1197342c8f63439c5405e8ca9a6bc, type: 2}
+  itemDropNames: []
+  itemDropChances: []

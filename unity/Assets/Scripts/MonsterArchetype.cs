@@ -28,8 +28,8 @@ public struct MonsterArchetype
 
     // What the mob SPAWNS WEARING, plus its ring's invested ranks. Nothing worn is ever dropped (see LootDropper).
     public Item[] startingGear;
-    /// <summary>The grade, folds and Ink strength every worn piece comes to life at — the creature's own three
-    /// settings, carried through untouched.</summary>
+    /// <summary>The grade every worn piece comes to life at — the one the creature's level gives
+    /// (<see cref="MonsterDef.WornGrade"/>), carried through untouched.</summary>
     public Quality gearQuality;
     public StatId[] ringRankStats;
     public int[] ringRankValues;

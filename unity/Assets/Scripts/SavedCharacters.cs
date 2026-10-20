@@ -128,7 +128,7 @@ public static class SavedCharacters
         // The creature's own material comes with it, never multiplied: into the saver's bag, and whatever the bag has
         // no room for falls where the character stands, kept for them like any drop.
         int rescued = (int)System.Math.Min(int.MaxValue,
-            SavedCharacterRules.RescueGold(behaviour, c.who.goldTier, c.def.level, c.def.gearQuality, c.def.FileFolds));
+            SavedCharacterRules.RescueGold(behaviour, c.who.goldTier, c.def.level, c.def.multiplier));
         int gold = KillComboMath.Paid(rescued, c.combo);
         bool saverHere = !PlayerUnits.Gone(c.saver);
         restItems.Clear();

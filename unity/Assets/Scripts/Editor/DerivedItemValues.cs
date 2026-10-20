@@ -51,14 +51,22 @@ public class DerivedItemValues : AssetModificationProcessor
         var said = new StringBuilder();
         var changed = new List<string>();
         int n = Apply(write, said, changed);
-        if (write && n > 0) AssetDatabase.SaveAssets();
+        // ONLY WHAT THIS CHANGED IS SAVED: saving everything would also write whatever else happens to be unsaved in
+        // the editor — on 2026-10-20 that was a font atlas filled during a play session.
+        if (write)
+            foreach (var path in changed)
+            {
+                var asset = AssetDatabase.LoadMainAssetAtPath(path);
+                if (asset != null) AssetDatabase.SaveAssetIfDirty(asset);
+            }
         said.Append(write ? "wrote " : "would write ").Append(n).Append(" item(s)");
         return said.ToString();
     }
 
     static int Apply(bool write, StringBuilder said, List<string> changedPaths)
     {
-        int n = 0;
+        // The versions first: a version's material is priced from the level it copies from its original.
+        int n = CreatureVersions.Apply(write, said, changedPaths);
         foreach (var d in MonsterCatalog.All)
         {
             if (d == null || d.material == null || d.material.materialKind != MaterialKind.Creature) continue;

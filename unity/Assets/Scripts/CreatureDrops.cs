@@ -6,19 +6,15 @@ using System.Collections.Generic;
 /// </summary>
 public static class CreatureDrops
 {
-    /// <summary>One thing a kill may give up: the item, its chance, how many come in a pile when it does, and how many
-    /// separate piles of it fall (one for everything but a grade-D elite's two Rare).</summary>
+    /// <summary>One thing a kill may give up: the item, its chance, and how many come when it does.</summary>
     public readonly struct Drop
     {
         public readonly Item item;
         public readonly float chance;
         public readonly int min, max;
-        public readonly int pilesMin, pilesMax;
-        public Drop(Item item, float chance, int min, int max) : this(item, chance, min, max, 1, 1) { }
-        public Drop(Item item, float chance, int min, int max, int pilesMin, int pilesMax)
+        public Drop(Item item, float chance, int min, int max)
         {
             this.item = item; this.chance = chance; this.min = min; this.max = max;
-            this.pilesMin = pilesMin; this.pilesMax = pilesMax;
         }
     }
 
@@ -37,16 +33,12 @@ public static class CreatureDrops
                 var item = ByAssetName(def.itemDropNames[i]);
                 if (item != null) into.Add(new Drop(item, def.itemDropChances[i], 1, 1));
             }
-        AddOwnMaterial(def.material, def.kind, into);
-        var lines = CreatureLoot.LinesFor(def.kind);
+        AddOwnMaterial(def.material, def.kind, def.multiplier, into);
+        var lines = CreatureLoot.Lines;
         for (int i = 0; i < lines.Count; i++)
-        {
-            if (!CreatureLoot.DropsAt(lines[i], def.level)) continue;
-            var item = LootDropper.MaterialFor(lines[i], def.level);
-            if (item != null) into.Add(new Drop(item, lines[i].chance, lines[i].min, lines[i].max));
-        }
-        AddUnits(MaterialCatalog.TemperDust, CreatureLoot.TemperDustPerGrade, def, into);
-        AddUnits(MaterialCatalog.QuenchOil, CreatureLoot.QuenchOilPerGrade, def, into);
+            AddExpected(LootDropper.MaterialFor(lines[i]), CreatureLoot.ExpectedAt(lines[i], def.multiplier), into);
+        AddUnits(MaterialCatalog.TemperDust, CreatureLoot.TemperDustPerKill, def, into);
+        AddUnits(MaterialCatalog.QuenchOil, CreatureLoot.QuenchOilPerKill, def, into);
         // THE PIECES IT WEARS — what its body seats, one per slot, the last authored for a slot winning — one of them on
         // one kill in ten.
         wornScratch.Clear();
@@ -68,28 +60,33 @@ public static class CreatureDrops
     static readonly Dictionary<EquipSlotType, Item> wornScratch = new Dictionary<EquipSlotType, Item>();
 
     // Temper Dust or Quench Oil on every kill: the fewest and the most units the roll can give.
-    static void AddUnits(Item material, int perGrade, MonsterDef def, List<Drop> into)
+    static void AddUnits(Item material, int perKill, MonsterDef def, List<Drop> into)
     {
         if (material == null) return;
-        int least = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.FileFolds, 99);
-        int most = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.FileFolds, 0);
+        int least = CreatureLoot.UnitsPerKill(perKill, def.multiplier, 99);
+        int most = CreatureLoot.UnitsPerKill(perKill, def.multiplier, 0);
         if (most <= 0) return;
         // Under one whole unit a kill, it is a CHANCE of one, not one every kill.
         if (least == 0)
-            into.Add(new Drop(material, CreatureLoot.HundredthsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.FileFolds) / 100f, 1, 1));
+            into.Add(new Drop(material, CreatureLoot.HundredthsPerKill(perKill, def.multiplier) / 100f, 1, 1));
         else into.Add(new Drop(material, 1f, least, most));
     }
 
     // The same chance and amounts LootDropper rolls a creature's own material at.
-    static void AddOwnMaterial(Item item, CreatureKind kind, List<Drop> into)
+    static void AddOwnMaterial(Item item, CreatureKind kind, float multiplier, List<Drop> into)
     {
         if (!CreatureMaterials.Is(item)) return;
-        var tier = CreatureMaterials.TierOfStep(item.materialStep);
-        float chance = CreatureMaterials.Chance(kind, tier);
-        if (chance <= 0f) return;
-        CreatureMaterials.Piles(kind, tier, out int pilesMin, out int pilesMax);
-        CreatureMaterials.PileSize(kind, tier, out int sizeMin, out int sizeMax);
-        into.Add(new Drop(item, chance, sizeMin, sizeMax, pilesMin, pilesMax));
+        AddExpected(item, CreatureMaterials.ExpectedPieces(kind, CreatureMaterials.TierOfStep(item.materialStep), multiplier), into);
+    }
+
+    // A drop that falls <paramref name="expected"/> times a kill on average, as LootDropper rolls it: under one, a chance
+    // of one; from one up, certain, the whole pieces and one more on what is left over.
+    static void AddExpected(Item item, float expected, List<Drop> into)
+    {
+        if (item == null || expected <= 0f) return;
+        if (expected < 1f) { into.Add(new Drop(item, expected, 1, 1)); return; }
+        int whole = (int)System.Math.Floor(expected);
+        into.Add(new Drop(item, 1f, whole, expected > whole ? whole + 1 : whole));
     }
 
     /// <summary>Everything a kill of <paramref name="def"/> may give up, written as one line — "Raw Metal 20%, …,
@@ -105,7 +102,6 @@ public static class CreatureDrops
             if (i > 0) sb.Append(", ");
             sb.Append(drop.item.displayName).Append(' ').Append(LootDropper.ChanceText(drop.chance));
             if (drop.max > 1) sb.Append(" ×").Append(CountText(drop.min, drop.max));
-            if (drop.pilesMax > 1) sb.Append(" in ").Append(CountText(drop.pilesMin, drop.pilesMax)).Append(" piles");
         }
         lineScratch.Clear();
         return sb.ToString();

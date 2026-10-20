@@ -1,8 +1,11 @@
 ---
 name: no-typed-sub-stats-on-any-unit
-description: "HARD LAW 2026-10-02 — no unit carries a hand-typed sub-stat; every one is computed from level, primaries, gear, ring or a shared spec. ONE exception the user made 2026-10-14: a creature's own movement speed (0 to 2)."
+description: "HARD LAW 2026-10-02 — no unit carries a hand-typed sub-stat; every one is computed from level, primaries, gear, ring or a shared spec. Two exceptions the user made: a creature's own movement speed (0 to 2, 2026-10-14) and its difficulty multiplier (2026-10-20)."
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: b449c404-9be3-4ad2-9a7c-6c809db8a6cf
+  modified: 2026-10-20T08:04:31.189Z
 ---
 
 **No unit carries a hand-typed sub-stat. Ever.** Defence, armour cut, health, attack, accuracy, evasion, crit,
@@ -16,6 +19,12 @@ bug we must remove. delete any fields that allows inputting substats manually."
 entry (0 to 2, default 1, a slider in the Mob Table beside size) and multiplies the shared pace. The user asked for
 it in those words; it is not a precedent for typing any other sub-stat. Players have no such number: they move at the
 shared pace, changed only by timed effects, and no gear gives movement speed.
+
+**The second exception, made by the user on 2026-10-20:** a creature's MULTIPLIER is typed on its catalog entry
+(1 or more, a column in the Mob Table) — the one difficulty dial for every kind: health × it, attack × its cube root,
+and everything a kill pays × it (experience, Temper Dust, Quench Oil, Salt/Ink/own-material amounts; rarer tiers open
+from ×3/×10/×30/×90). Its gear grade is NOT typed: it follows its level (seven even level ranges). Normals ×1,
+elites started at ×30, shadows at their old 90–150. Newbie maps hold only ×1.
 
 **Why:** a typed number is a second answer the formulas never see. The scar: every creature carried a typed "armour
 cut" (hard DEF %, 0–32%) that nothing computed and no player could ever get, which alone turned a fresh player's

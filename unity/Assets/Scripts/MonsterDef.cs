@@ -18,6 +18,11 @@ public class MonsterDef : ScriptableObject
     public string id = "mob.new";
     [Tooltip("In-game name shown on the nameplate (the display name; can be renamed freely without breaking references).")]
     public string displayName = "Monster";
+    [Tooltip("THE CREATURE THIS ONE IS A VERSION OF — a Tainted or Blighted creature. It wears that creature's body, " +
+             "and everything but its id, name, multiplier and material is copied from it whenever a creature file is " +
+             "saved (CreatureVersions), never typed here. A version is never drawn into a map's mix: a row of the world " +
+             "spawn list names it. Empty = an original.")]
+    public MonsterDef versionOf;
     [Tooltip("Normal fills the field and is drawn into a map's mix. Elite and Shadow are never drawn into a mix — a " +
              "row of the world spawn list names them. The kind sets how many summons it keeps, gear, respawn and drops " +
              "(see CreatureKinds); strength still comes from level and stats alone.")]
@@ -91,15 +96,19 @@ public class MonsterDef : ScriptableObject
 
     [Header("Equipment — the SAME items the player wears")]
     [Tooltip("Gear this creature spawns wearing, one piece per slot (the slot comes from the Item itself). Every " +
-             "piece comes to life at the three settings below, and none of it drops: a creature gives up materials " +
-             "and consumables, never what it is wearing.")]
+             "piece comes to life at the grade its level gives, with folds rolled each life.")]
     public Item[] startingGear = System.Array.Empty<Item>();
-    [Tooltip("THE GRADE every piece this creature wears comes to life at — Raw through A, the same ladder a quench " +
-             "climbs. It decides the fold cap and HOW MANY stats Ink writes on each piece (Raw none, F one, up to A six).")]
-    public Quality gearQuality = Quality.Raw;
-    /// <summary>The folds this creature's pay and value are worked out at: the fewest its kind wears (0, 4 or 7). The
-    /// folds it actually wears are rolled each life (<see cref="CreatureLoot.RollWornFolds"/>).</summary>
+    /// <summary>THE GRADE every piece this creature wears comes to life at: the one its LEVEL gives
+    /// (<see cref="CreatureLoot.WornGrade"/>) — the gear a player of that level is expected to have. Never typed.</summary>
+    public Quality WornGrade => CreatureLoot.WornGrade(level);
+    /// <summary>The folds this creature's sheet shows its gear at: the fewest its kind wears (0, 4 or 7). The folds it
+    /// actually wears are rolled each life (<see cref="CreatureLoot.RollWornFolds"/>).</summary>
     public int FileFolds => CreatureLoot.FileFolds(kind);
+    [Tooltip("HOW MUCH HARDER THAN AN ORDINARY CREATURE OF ITS LEVEL THIS ONE IS — the one difficulty dial, typed per " +
+             "creature, 1 or more. It multiplies its health, its attack by the cube root (×30 hits about 3.1× as hard), " +
+             "and everything its kill pays: experience, Temper Dust, Quench Oil, and the chance of its Salts, Inks and " +
+             "own material. The rarer Salts, Inks and own-material tiers only drop from a high enough multiplier.")]
+    [Min(1f)] public float multiplier = CreaturePay.LeastMultiplier;
     [Tooltip("This creature's Weapon Mastery in the ONE weapon it holds — the same mastery a player earns, put on that " +
              "weapon when the creature is made. It raises that weapon's three stats by 0.5% a level, counting only " +
              "what the weapon's grade allows. A creature has mastery in one weapon only, so with no weapon it is 0.")]
@@ -160,8 +169,8 @@ public class MonsterDef : ScriptableObject
     public float onHitAilmentMagnitude = 0f;
 
     [Header("Loot")]
-    [Tooltip("The ONE material only this creature drops. Its tier must be the one this creature's gear grade gives " +
-             "(CreatureMaterials.TierOfGrade); its chance and amount follow from that tier and the creature's kind. " +
+    [Tooltip("The ONE material only this creature drops. Its tier must be the one this creature's multiplier gives " +
+             "(CreatureMaterials.TierOfMultiplier); its chance follows from that tier and the multiplier. " +
              "Empty = it has none (a shadow).")]
     public Item material;
     [Tooltip("Item drops. Each entry is rolled independently on death. Names must match a Resources/Items/*.asset.")]
@@ -195,7 +204,7 @@ public class MonsterDef : ScriptableObject
             // here, so there is no second copy able to disagree with the formulas.
             stats = u,
             startingGear = startingGear,
-            gearQuality = gearQuality,
+            gearQuality = WornGrade,
             ringRankStats = ringRankStats,
             ringRankValues = ringRankValues,
             name = string.IsNullOrEmpty(displayName) ? name : displayName,

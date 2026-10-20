@@ -43,6 +43,19 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
             return;
         }
 
+        // Front-screen pictures: FrontBackdrop sizes each one from its own width and height, so a rescale to a
+        // power of two (1376x768 -> 1024x1024) squashes its shape and blurs it. Kept at their real size, drawn
+        // once at screen size, so no mipmaps either.
+        if (path.Contains("/UI/KeyArt/"))
+        {
+            importer.textureType = TextureImporterType.Default;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.mipmapEnabled = false;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            return;
+        }
+
         // Only touch the art folder; leave UI/editor/imported-package textures alone.
         if (!path.Contains("/Art/")) return;
 

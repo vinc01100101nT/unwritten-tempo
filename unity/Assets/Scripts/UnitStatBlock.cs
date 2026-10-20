@@ -195,8 +195,8 @@ public class UnitStatBlock : MonoBehaviour
         var eb = Bonuses;
         var u = inputs.WithGear(eb);
 
-        health.maxHealth    = UnitStatMath.MaxHP(u, eb, Lift(StatId.HP, SubStat.MaxHP))
-                              * CreatureKinds.HealthMultiplier(health.kind, inputs.level);
+        health.maxHealth    = UnitStatMath.CreatureMaxHP(UnitStatMath.MaxHP(u, eb, Lift(StatId.HP, SubStat.MaxHP)),
+                                                         health.multiplier);
         health.softDefense      = UnitStatMath.SoftDefense(u);
         health.softMagicDefense = UnitStatMath.SoftMagicDefense(u);
         health.hardDefenseTenths      = UnitStatMath.HardDefenseTenths(RingPercent(StatId.Def), eb.hardDefTenths, SubBonus(SubStat.Defense));
@@ -209,7 +209,7 @@ public class UnitStatBlock : MonoBehaviour
         {
             ai.level        = inputs.level;
             var held        = Gear != null ? Gear.WeaponType : WeaponType.None;
-            float kindAttack = CreatureKinds.AttackMultiplier(health.kind, inputs.level);
+            float kindAttack = CreatureKinds.AttackMultiplier(health.multiplier);
             ai.attack       = Mathf.RoundToInt(UnitStatMath.PhysicalAttack(held, u, eb, Lift(StatId.Atk, SubStat.Attack)) * kindAttack);
             ai.swingsRanged = WeaponTypes.SwingsRanged(held, u.str, u.dex);
             ai.hit          = UnitStatMath.Hit(u, eb, Lift(StatId.Accuracy, SubStat.Accuracy));

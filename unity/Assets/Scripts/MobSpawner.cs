@@ -61,8 +61,9 @@ public static class MobSpawner
         LoadAndClone(def, foot, map, onSpawned);
     }
 
+    // A TAINTED OR BLIGHTED VERSION WEARS ITS ORIGINAL'S BODY: one baked body per original, shared by its versions.
     static void LoadAndClone(MonsterDef def, Vector3 foot, Scene map, Action<GameObject> onSpawned)
-        => AddressablePrefabs.Load(AddressPrefix + def.id, prefab =>
+        => AddressablePrefabs.Load(AddressPrefix + (def.versionOf != null ? def.versionOf.id : def.id), prefab =>
         {
             var go = prefab != null ? Clone(prefab, foot, map, def) : null;
             onSpawned?.Invoke(go);
@@ -128,6 +129,7 @@ public static class MobSpawner
         if (health != null)
         {
             health.kind = def.kind;
+            health.multiplier = CreaturePay.Clamp(def.multiplier);
             health.creatureId = def.id;
             // ITS ELEMENT AND LEVEL, from its data, on every machine — so the server and a watching copy can never
             // disagree about what a hit on it does. The prefab's baked element is only the baker's copy of this.
@@ -154,11 +156,11 @@ public static class MobSpawner
             // perf-ok: once per creature made
             if (block != null && !block.inputs.Equals(authored)) block.SetSpawnInputs(authored);
             // The pieces themselves too, not only their settings: the weapon picked in the table is worn without a re-bake.
-            if (gear != null && (gear.gearQuality != def.gearQuality || gear.kind != def.kind || gear.rollsGearEachLife != def.rollsGearEachLife ||
+            if (gear != null && (gear.gearQuality != def.WornGrade || gear.kind != def.kind || gear.rollsGearEachLife != def.rollsGearEachLife ||
                                  !SamePieces(gear.startingGear, def.startingGear)))
             {
                 gear.startingGear = def.startingGear ?? Array.Empty<Item>();
-                gear.gearQuality = def.gearQuality;
+                gear.gearQuality = def.WornGrade;
                 gear.kind = def.kind;
                 gear.rollsGearEachLife = def.rollsGearEachLife;
                 gear.ReseatForNewLife();
@@ -183,9 +185,9 @@ public static class MobSpawner
             // A SUMMONING KIND HOLDS THE SUMMON SKILL whatever weapon it wields, or none: it is the kind's, not a weapon's.
             if (health != null && CreatureKinds.Summons(def.kind))
                 health.Mastery.GrantCreatureSkill(CreatureKinds.SummonSkillId, 1);
-            // Its health and attack are multiplied by its kind (CreatureKinds.HealthMultiplier, AttackMultiplier), and the kind
-            // was only set above.
-            if (def.kind != CreatureKind.Normal) rederive = true;
+            // Its health and attack are multiplied by its multiplier (UnitStatMath.CreatureMaxHP,
+            // CreatureKinds.AttackMultiplier), which was only set above.
+            if (health != null && health.multiplier != CreaturePay.LeastMultiplier) rederive = true;
             if (rederive && block != null) block.Rederive(healToFull: true);
         }
         // ITS SIZE, from its data, on every machine — how tall it stands, its body, and the melee reach both read it, so

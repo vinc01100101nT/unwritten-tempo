@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.mossnail
   displayName: Mossnail
+  versionOf: {fileID: 0}
   kind: 0
   size: 0.5
   flies: 0
@@ -41,13 +42,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
   - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
   - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
-  gearQuality: 0
+  multiplier: 1
   weaponMastery: 0
   rollsGearEachLife: 0
   ringRankStats: 
   ringRankValues: 
   aggroRadius: 6
-  leashRadius: 11
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0

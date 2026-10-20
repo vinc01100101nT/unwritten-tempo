@@ -541,8 +541,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // A WIND-UP IN PROGRESS: its bar over the body and its ring on the ground, drawn from the shared clock.
         watchedCast.Tick(view.transform, mapName);
 
-        // THE SMOKE AT THE LEVEL CAP, from the level the server sent — the same one every kind of unit wears.
-        levelAura.Show(netLevel, view.transform);
+        // THE LOOK ITS MULTIPLIER GIVES IT, read from this machine's own copy of the creature list.
+        difficultyLook.Show(Multiplier, view.transform);
 
         // WHAT THE BODY IS DOING, handed over rather than guessed at. Its mover and its brain are switched off on
         // this machine, so the two things its animation used to read from both answer "nothing" forever — which is
@@ -623,7 +623,24 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     // This creature's casts, as a watcher sees them — drawn by the same code a person's shell draws theirs with.
     readonly WatchedCast watchedCast = new WatchedCast();
 
-    readonly LevelCapAura levelAura = new LevelCapAura();
+    readonly DifficultyLook difficultyLook = new DifficultyLook();
+
+    // This creature's multiplier, read from the creature list once per creature this shell speaks for.
+    string multiplierOf;
+    float multiplier = CreaturePay.LeastMultiplier;
+    float Multiplier
+    {
+        get
+        {
+            if (!ReferenceEquals(multiplierOf, defId))
+            {
+                multiplierOf = defId;
+                var def = MonsterCatalog.Get(defId);
+                multiplier = def != null ? def.multiplier : CreaturePay.LeastMultiplier;
+            }
+            return multiplier;
+        }
+    }
 
     /// <summary>Play a skill this creature cast, on the body this machine draws for it. Called when the server says so.</summary>
     public void ShowCast(SkillDef def, Transform aimedAt, Vector3 aimPointInMap, int seed)
@@ -843,7 +860,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // the body it is attached to, and this body is about to be banked for the next creature to use — so a
         // poisoned creature you walked away from would hand its glow to whatever came back in its place.
         VfxCue.ForgetAurasOn(netId);
-        levelAura.Stop();
+        difficultyLook.Stop();
         // …and a move being drawn on it, with any see-through fade that move put on it.
         watchedMove.Stop();
         // …and the shape it was drawn through scenery with: the next creature to wear this body has fought nobody.

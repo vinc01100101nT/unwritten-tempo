@@ -5,9 +5,11 @@ using System.Collections.Generic;
 /// creature, so adding or re-levelling a creature re-pairs everything with nobody remembering to. Plain lists in, plain
 /// lists out, so the rule can be checked by calling it. Design: docs/3-world/mob-roster.md.
 ///
-/// <para><b>An elite</b> calls the three normals nearest its level at or below it — from its own home biome first, so an
-/// elite calls the creatures that live where it lives, and from anywhere only when its biome has too few — in the shares
-/// <see cref="CreatureKinds.EliteSummonShares"/> (five of the nearest, three of the next, two of the one after).</para>
+/// <para><b>An elite</b> calls the three normals of ×5 to ×10 (<see cref="CreatureKinds.EliteCallsFrom"/>) nearest its
+/// level at or below it — from its own home biome first, so an elite calls the creatures that live where it lives, and
+/// from anywhere only when its biome has too few — in the shares <see cref="CreatureKinds.EliteSummonShares"/> (five of
+/// the nearest, three of the next, two of the one after). When none at its level or below is ×5 to ×10, it calls the
+/// plain normals instead, so it never stands alone.</para>
 ///
 /// <para><b>A shadow</b> calls one elite: the shadows ranked from the highest level down pair with the elites ranked the
 /// same way, so the level-170 shadow calls the level-99 elite and each step down the shadows is a step down the elites.</para>
@@ -45,8 +47,15 @@ public static class SummonPicks
         for (int i = 0; i < roster.Count; i++)
         {
             var m = roster[i];
-            if (m != null && m.kind == CreatureKind.Normal && m.level <= eliteLevel) scratch.Add(m);
+            if (m != null && m.kind == CreatureKind.Normal && m.level <= eliteLevel
+                && m.multiplier >= CreatureKinds.EliteCallsFrom && m.multiplier <= CreatureKinds.EliteCallsUpTo) scratch.Add(m);
         }
+        if (scratch.Count == 0)
+            for (int i = 0; i < roster.Count; i++)
+            {
+                var m = roster[i];
+                if (m != null && m.kind == CreatureKind.Normal && m.level <= eliteLevel) scratch.Add(m);
+            }
         home = elite.biome;
         scratch.Sort(OwnBiomeThenHighestLevel);
 

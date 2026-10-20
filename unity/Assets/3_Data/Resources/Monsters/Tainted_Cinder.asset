@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Tainted_Cinder
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.tainted-cinder
+  displayName: Tainted Cinder
+  versionOf: {fileID: 11400000, guid: b47e3396c641cd344a1887444ac9beaf, type: 2}
+  kind: 0
+  size: 0.9
+  flies: 0
+  moveSpeed: 1.1
+  aggressive: 1
+  biome: 3
+  artFolder: 244fce15a754d85438f263ba05b731df
+  faceset: {fileID: 2800000, guid: a1c63f2586e852c408d426dfe87fa758, type: 3}
+  weight: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 67
+  str: 22
+  agi: 22
+  vit: 45
+  intel: 54
+  dex: 35
+  luk: 22
+  startingGear:
+  - {fileID: 11400000, guid: b363337599ac3d8409304145e366dfa1, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  multiplier: 3
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 3
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 6d217c1d158b5e041acdb4e021ebaa59, type: 2}
+  itemDropNames: []
+  itemDropChances: []

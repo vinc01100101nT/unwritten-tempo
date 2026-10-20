@@ -59,6 +59,7 @@ public class MobTableWindow : EditorWindow
             "name"   => (a, b) => string.Compare(a.displayName, b.displayName, System.StringComparison.OrdinalIgnoreCase),
             "biome"  => (a, b) => a.biome.CompareTo(b.biome),
             "lvl"    => (a, b) => a.level.CompareTo(b.level),
+            "mult"   => (a, b) => a.multiplier.CompareTo(b.multiplier),
             "gear"   => (a, b) => GearCount(a).CompareTo(GearCount(b)),
             // Sort by how far off-budget a mob is, so the mis-authored ones surface together.
             "pts"    => (a, b) => (UnitStatMath.PointsSpent(a.StatInputs) - UnitStatMath.PointsEarnedByLevel(a.level))
@@ -111,6 +112,8 @@ public class MobTableWindow : EditorWindow
         new Col("name",  "name",   120),
         new Col("biome", "biome",  90),
         new Col("kind",  null,     64),
+        // THE ONE DIFFICULTY DIAL, typed: health × it, attack × its cube root, pay × it, rarer drops from a high one.
+        new Col("multiplier", "mult", 70),
         new Col("size",  null,     100),
         new Col("movement speed", null, 150),
         // The AUTHORED stat block — a mob is a level and six primaries, exactly like the player.
@@ -590,6 +593,7 @@ public class MobTableWindow : EditorWindow
         // Biome.None = biome-agnostic (spawns in any biome); it's just another choice in the dropdown.
         var biome    = (Biome)EditorGUI.EnumPopup(VCenter(Next(), 18), def.biome);
         var kind     = (CreatureKind)EditorGUI.EnumPopup(VCenter(Next(), 18), def.kind);
+        float mult   = EditorGUI.FloatField(VCenter(Next(), 18), def.multiplier);
         // Size is one number, times a character's height; its group (Small / Medium / Large) is worked out from it and
         // shown beside it, never typed. A shadow is always 1 whatever its entry says (MobSizes.Of), so it is locked.
         var sizeCell = Next();
@@ -622,13 +626,14 @@ public class MobTableWindow : EditorWindow
         var elem     = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.element);
         int elemLv   = EditorGUI.IntField(VCenter(Next(), 18), def.elementLevel);
         int wt       = EditorGUI.IntField(VCenter(Next(), 18), def.weight);
-        // What a kill pays is worked out from the level and kind, never typed (decided 2026-09-30).
+        // What a kill pays is worked out from the level and the multiplier, never typed.
         DrawDerived(Next(), CreatureKinds.KillExperience(def));
         if (EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(def, "Edit Mob");
             def.id = id; def.displayName = name; def.biome = biome;
             def.kind = kind;
+            def.multiplier = CreaturePay.Clamp(mult);
             def.size = MobSizes.Clamp(size);
             def.moveSpeed = Mathf.Clamp(moveSpeed, UnitStatMath.MinCreatureMoveSpeed, UnitStatMath.MaxCreatureMoveSpeed);
             def.level = Mathf.Max(1, lvl);
@@ -747,14 +752,14 @@ public class MobTableWindow : EditorWindow
             if (i % perRow == perRow - 1 || i == GearSlots.Length - 1) EditorGUILayout.EndHorizontal();
         }
 
-        // --- what state every piece comes to life at: one set for the whole creature ---
+        // --- what state every piece comes to life at: one set for the whole creature, from its level ---
         GUILayout.Space(4);
         EditorGUILayout.LabelField("   gear state  (every piece this creature wears comes to life at these)",
                                    EditorStyles.miniBoldLabel);
-        var quality = def.gearQuality;
+        var quality = def.WornGrade;
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Grade", EditorStyles.miniLabel, GUILayout.Width(74));
-        quality = (Quality)EditorGUILayout.EnumPopup(quality, GUILayout.Width(80));
+        EditorGUILayout.LabelField(quality + " (its level's)", EditorStyles.miniLabel, GUILayout.Width(110));
         GUILayout.Space(8);
         // folds and Ink are not authored: the kind rolls the folds each life, the grade decides the Ink
         EditorGUILayout.LabelField("Folds " + CreatureLoot.FileFolds(def.kind) + "–10, rolled each life",
@@ -797,7 +802,6 @@ public class MobTableWindow : EditorWindow
             def.startingGear = gear.ToArray();
             // No weapon, no mastery: it is mastery IN a weapon, so it cannot outlive the weapon it belongs to.
             if (def.Weapon == null) def.weaponMastery = 0;
-            def.gearQuality = quality;
             def.ringRankStats  = stats.ToArray();
             def.ringRankValues = vals.ToArray();
             EditorUtility.SetDirty(def);

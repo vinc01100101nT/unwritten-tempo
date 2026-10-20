@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// THE SMOKE A UNIT AT THE LEVEL CAP WEARS — every person, creature (normal, epic, shadow), rescued character and
-/// townsperson at level 99 or above, on every screen that draws them. Each shell holds one of these and hands it,
+/// THE SMOKE A PERSON AT THE LEVEL CAP WEARS — every player and townsperson at level 99 or above, on every screen that
+/// draws them, until its own aura replaces it. A creature's look comes from its multiplier instead (<see cref="DifficultyLook"/>). Each shell holds one of these and hands it,
 /// every frame, the level the server sent and the body this machine draws; nothing else decides whether it shows.
 ///
 /// <para>Comparing a level the server SENT against the cap chooses a picture and produces no number, so it is

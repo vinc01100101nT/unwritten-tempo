@@ -108,6 +108,8 @@ public static class Pathfinder3D
         if (!HeightAware) return BlockedAt(center, radius, ProbeY);
         float gy = SampleGroundYWorld(center);
         if (float.IsNaN(gy)) return true;   // no ground under this cell = void = unwalkable
+        // A CLIFF FACE IS GROUND, so the obstacle probe below never sees it; a body this wide would press against it.
+        if (AgainstLedge(center, radius)) return true;
         return BlockedAt(center, radius, gy + ProbeY);   // probe obstacles relative to the local ground height
     }
 
@@ -335,6 +337,9 @@ public static class Pathfinder3D
         // byLabel[firstOf[L + 1]]. Built once at load so a random landing is one lookup — 4 bytes per walkable cell.
         public int[] byLabel;
         public int[] firstOf;
+        // How many cells each cell stands from the nearest LEDGE cell — one beside a rise or drop no body walks
+        // (a cliff face, either side of it). 0 = a ledge cell itself; capped at MaxLedgeSteps.
+        public byte[] ledgeSteps;
         public ushort At(int x, int y)
         {
             x -= x0; y -= y0;
@@ -397,8 +402,72 @@ public static class Pathfinder3D
             }
         }
         g.byLabel = KeeperMath.GroupByLabel(g.label, next, out g.firstOf);
+        if (HeightAware) g.ledgeSteps = LedgeSteps(g, height, slope, open, queue);
         areaGrids.Add(g);
         return g;
+    }
+
+    // Distances are kept only this far out: no body is wider than this many cells from its middle to its edge.
+    const int MaxLedgeSteps = 8;
+
+    // Every cell's distance, in whole cells, from the nearest ledge cell: an open cell with a neighbour that has ground
+    // but cannot be stepped to (GroundElevation.Walkable says no). Worked out once with the labels, in one sweep.
+    static byte[] LedgeSteps(AreaGrid g, float[] height, float[] slope, bool[] open, int[] queue)
+    {
+        int n = g.nx * g.ny;
+        var steps = new byte[n];
+        int head = 0, tail = 0;
+        for (int i = 0; i < n; i++)
+        {
+            steps[i] = MaxLedgeSteps;
+            if (!open[i]) continue;
+            int cx = i % g.nx, cy = i / g.nx;
+            foreach (var (dx, dy) in N8)
+            {
+                int x = cx + dx, y = cy + dy;
+                if (x < 0 || y < 0 || x >= g.nx || y >= g.ny) continue;
+                int j = y * g.nx + x;
+                if (!open[j]) continue;
+                if (GroundElevation.Walkable(height[j] - height[i], (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize,
+                                             slope[i], slope[j])) continue;
+                steps[i] = 0;
+                queue[tail++] = i;
+                break;
+            }
+        }
+        while (head < tail)
+        {
+            int cur = queue[head++];
+            int next = steps[cur] + 1;
+            if (next >= MaxLedgeSteps) continue;
+            int cx = cur % g.nx, cy = cur / g.nx;
+            foreach (var (dx, dy) in N8)
+            {
+                int x = cx + dx, y = cy + dy;
+                if (x < 0 || y < 0 || x >= g.nx || y >= g.ny) continue;
+                int j = y * g.nx + x;
+                if (steps[j] <= next) continue;
+                steps[j] = (byte)next;
+                queue[tail++] = j;
+            }
+        }
+        return steps;
+    }
+
+    /// <summary>Would a body <paramref name="radius"/> wide standing at <paramref name="c"/> press against a ledge — a
+    /// cliff face beside it, or a drop under its edge? A ledge lies half a cell past its ledge cell's middle, so a
+    /// cell's clearance is (its steps + ½) cells. FALSE on a map with no labels. One lookup.</summary>
+    static bool AgainstLedge(Vector2 c, float radius)
+    {
+        int x = Floor(c.x), y = Floor(c.y);
+        for (int i = 0; i < areaGrids.Count; i++)
+        {
+            var g = areaGrids[i];
+            if (g.ledgeSteps == null || !g.Holds(x, y)) continue;
+            int s = g.ledgeSteps[(y - g.y0) * g.nx + (x - g.x0)];
+            return s < MaxLedgeSteps && (s + 0.5f) * CellSize < radius;
+        }
+        return false;
     }
 
     /// <summary>A random walkable spot on the same connected stretch of ground as <paramref name="from"/> — so whoever
@@ -444,6 +513,12 @@ public static class Pathfinder3D
     {
         if (labels is AreaGrid g) areaGrids.Remove(g);
     }
+
+    /// <summary>TRUE when the map's area labels say no walk joins these two spots — a cliff top and the ground below it.
+    /// FALSE when they share an area, or when it cannot be told (no labels, or a spot off the walkable ground). Two
+    /// array lookups; no search.</summary>
+    public static bool KnownUnreachable(Vector3 from, Vector3 to) =>
+        KnownApart(Floor(from.x), Floor(from.z), Floor(to.x), Floor(to.z), out _, out _);
 
     // Are these two cells in one labelled map but in areas no route joins? A cell that is not walkable (label 0) is
     // never judged: the search has its own ways of starting from, or aiming near, such a cell.

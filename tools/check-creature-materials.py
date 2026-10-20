@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""Every creature's own material is whole, and its grade is one its kind may wear: each normal creature and elite
-names exactly ONE material, whose tier is the one its gear grade gives (CreatureMaterials.TierOfGrade: a normal Raw..C
-gives Common..Legendary, an elite only D/C/B, giving Rare/Epic/Legendary), no material belongs to two creatures, every
-material sells for exactly what the rule says for its creature's level, its tier and the grade and folds of the
-creature's gear (folds fixed by its kind, CreatureLoot.FileFolds), every piece of gear is worth what a brand-new piece
-is (CraftingMath.NewPieceWorth), and the NEWBIE MAPS hold only Raw +0 normal creatures (elites, which roam every map,
-excepted). The tier tables and the price
-multiples are read out of CreatureMaterials.cs, the two gear percents out of CreaturePay.cs, the folds out of
-CreatureLoot.cs and the new-piece worth out of CraftingMath.cs, so the rule has one owner and this only proves the saved
-files still agree with it. The editor writes these numbers itself on every save (DerivedItemValues); nobody types them.
-Design: docs/3-world/creature-materials.md, docs/3-world/what-a-kill-pays.md.
+"""Every creature's own material is whole: each normal creature and elite has its multiplier written and names exactly
+ONE material, whose tier is the one its multiplier gives (CreatureMaterials.TierOfMultiplier: x1 Common, x3 Uncommon,
+x10 Rare, x30 Epic, x90 Legendary), no material belongs to two creatures, every material sells for exactly what the
+rule says for its creature's level and its tier, every piece of gear is worth what a brand-new piece is
+(CraftingMath.NewPieceWorth), and the NEWBIE MAPS hold only x1 normal creatures of a level that wears Raw (elites,
+which roam every map, excepted). The tier openings and the price multiples are read out of CreatureMaterials.cs, the
+level-to-grade ladder out of CreatureLoot.cs and the new-piece worth out of CraftingMath.cs, so the rule has one owner
+and this only proves the saved files still agree with it. The editor writes these numbers itself on every save
+(DerivedItemValues); nobody types them. Design: docs/3-world/creature-materials.md, docs/3-world/what-a-kill-pays.md.
 
 USAGE:   tools/check-creature-materials.py [--root <repo>]
 EXIT:    0 = every creature material agrees with the rule; 1 = something does not (each fault is named).
@@ -24,9 +22,9 @@ TIER = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary"}
 CREATURE_KIND = "6"
 ETC_TAB = "3"
 WEIGHT = "10"
-# The maps a brand-new player starts on: the creatures that live there are Raw +0 normals, so a level 1 player in the
-# starter armour survives at least 5 blows from them (docs/3-world/creature-gear.md, decided 2026-10-16). Elites roam
-# every map whatever its level and are not held to it (decided 2026-10-18).
+# The maps a brand-new player starts on: the creatures that live there are x1 normals of a level that wears Raw, so a
+# newbie map is all easy (decided 2026-10-20). Elites roam every map whatever its level and are not held to it
+# (decided 2026-10-18).
 NEWBIE_MAPS = ("lst_fild01", "prl_fild01")
 
 
@@ -56,39 +54,33 @@ def multiples(root):
     return out if len(out) == 5 else None
 
 
-def tier_tables(root):
-    """(normal, elite): the material tier each grade gives, -1 where that kind may not wear it, read from the game."""
+def tier_openings(root):
+    """The multiplier each tier, Common .. Legendary, opens from, read from the game."""
     src = open(os.path.join(root, "unity", "Assets", "Scripts", "CreatureMaterials.cs"), encoding="utf-8").read()
-    out = []
-    for name in ("NormalTierByGrade", "EliteTierByGrade"):
-        m = re.search(name + r"\s*=\s*\{([^}]*)\}", src)
-        if m is None:
-            return None
-        row = [int(v) for v in m.group(1).split(",")]
-        if len(row) != 7:
-            return None
-        out.append(row)
-    return tuple(out)
+    m = re.search(r"TierFromMultiplier\s*=\s*\{([^}]*)\}", src)
+    if m is None:
+        return None
+    row = [float(v.strip().rstrip("f")) for v in m.group(1).split(",")]
+    return row if len(row) == 5 else None
 
 
 def gear_rule(root):
-    """(percent per grade, percent per fold, fold cap per grade, folds by kind "0"/"1"/"2", least recycled dust), read
-    from the functions that decide them."""
+    """(grades, ladder top, least recycled dust), read from the functions that decide them. CraftingMath.cs is read
+    forgivingly: only a number is searched for in it, and a stray badly-encoded character elsewhere must not hide it."""
     scripts = os.path.join(root, "unity", "Assets", "Scripts")
-    pay = open(os.path.join(scripts, "CreaturePay.cs"), encoding="utf-8").read()
-    craft = open(os.path.join(scripts, "CraftingMath.cs"), encoding="utf-8").read()
+    craft = open(os.path.join(scripts, "CraftingMath.cs"), encoding="utf-8", errors="replace").read()
     loot = open(os.path.join(scripts, "CreatureLoot.cs"), encoding="utf-8").read()
-    grade = re.search(r"const int PercentPerGrade = (\d+);", pay)
-    fold = re.search(r"const int PercentPerFold = (\d+);", pay)
-    caps = re.search(r"int\[\] FoldCaps\s*=\s*\{([^}]*)\}", craft)
     least = re.search(r"const int RecycleLeastDust = (\d+);", craft)
-    kinds = re.search(r"FileFolds\(CreatureKind kind\) =>\s*kind == CreatureKind\.Shadow \? (\d+) : "
-                      r"kind == CreatureKind\.Elite \? (\d+) : (\d+);", loot)
-    if grade is None or fold is None or caps is None or least is None or kinds is None:
+    grades = re.search(r"const int Grades = (\d+);", loot)
+    top = re.search(r"const int LadderTop = (\d+);", loot)
+    if least is None or grades is None or top is None:
         return None
-    caps = [int(c) for c in caps.group(1).split(",")]
-    by_kind = {"2": int(kinds.group(1)), "1": int(kinds.group(2)), "0": int(kinds.group(3))}
-    return (int(grade.group(1)), int(fold.group(1)), caps, by_kind, int(least.group(1))) if len(caps) == 7 else None
+    return int(grades.group(1)), int(top.group(1)), int(least.group(1))
+
+
+def worn_grade(level, grades, top):
+    """CreatureLoot.WornGrade: 0 = Raw .. grades - 1 = A."""
+    return min(grades, max(1, -(-max(1, level) * grades // top))) - 1
 
 
 def main():
@@ -102,13 +94,13 @@ def main():
         return 1
     rule = gear_rule(root)
     if rule is None:
-        print("could not read the gear percents out of CreaturePay.cs, the fold caps or least recycled dust out of "
-              "CraftingMath.cs, or the folds by kind out of CreatureLoot.cs, so nothing can be checked")
+        print("could not read least recycled dust out of CraftingMath.cs, or the grade ladder out of CreatureLoot.cs, "
+              "so nothing can be checked")
         return 1
-    per_grade, per_fold, fold_caps, folds_by_kind, least_dust = rule
-    tables = tier_tables(root)
-    if tables is None:
-        print("could not read the two grade-to-tier tables out of CreatureMaterials.cs, so nothing can be checked")
+    grade_count, ladder_top, least_dust = rule
+    openings = tier_openings(root)
+    if openings is None:
+        print("could not read the five tier openings out of CreatureMaterials.cs, so nothing can be checked")
         return 1
     grades = "Raw F E D C B A".split()
 
@@ -130,27 +122,24 @@ def main():
         own = guid_of(field(text, "material"))
         if re.search(r"^  rareMaterial:", text, re.M):
             faults.append("%s still names a second material; a creature has one" % name)
-        # No creature carries a measured number of its own: what its gear pays is read off its grade and folds.
+        # No creature carries a measured number of its own: what it pays is read off its typed multiplier.
         if re.search(r"^  toughnessPercent:", text, re.M):
             faults.append("%s still carries a saved toughness, which nothing reads" % name)
-        grade = field(text, "gearQuality")
-        if not re.fullmatch(r"[0-6]", grade):
-            faults.append("%s has no gear grade" % name)
-            grade = "0"
-        grade, folds = int(grade), folds_by_kind.get(kind, 0)
-        grade_percent = 100 + per_grade * grade
-        fold_percent = 100 + per_fold * min(folds, fold_caps[grade])
-        creature_rows[field(text, "id")] = (name, kind, grade, folds)
+        if re.search(r"^  gearQuality:", text, re.M):
+            faults.append("%s still carries a typed gear grade; the grade it wears comes from its level" % name)
+        try:
+            multiplier = float(field(text, "multiplier"))
+        except ValueError:
+            faults.append("%s has no multiplier" % name)
+            multiplier = 1.0
+        grade = worn_grade(level, grade_count, ladder_top)
+        creature_rows[field(text, "id")] = (name, kind, grade, multiplier)
         if kind == "2":
             if own:
                 faults.append("%s is a shadow and names a material of its own; shadows have none" % name)
             continue
         creatures += 1
-        want_tier = (tables[0] if kind == "0" else tables[1])[grade]
-        if want_tier < 0:
-            faults.append("%s is %s and wears grade %s, which %s never wears" % (
-                name, "an elite" if kind == "1" else "a normal creature", grades[grade],
-                "an elite (never below D, never A)" if kind == "1" else "a normal creature (never B or A)"))
+        want_tier = max([t for t, at in enumerate(openings) if max(1.0, multiplier) >= at] or [0])
         if not own:
             faults.append("%s has no material of its own" % name)
             continue
@@ -166,17 +155,16 @@ def main():
         if step not in TIER:
             faults.append("%s has no rarity tier (step %d)" % (item_name, step))
             continue
-        if want_tier >= 0 and step != want_tier + 1:
-            faults.append("%s is %s's material but is %s; its grade %s gives %s" % (
-                item_name, name, TIER[step], grades[grade], TIER[want_tier + 1]))
-        # The game's own rounding: whole numbers, half up (CreaturePay.Scaled).
-        sells = (per_level[step] * max(1, level) * grade_percent * fold_percent + 5000) // 10000
+        if step != want_tier + 1:
+            faults.append("%s is %s's material but is %s; its multiplier x%g gives %s" % (
+                item_name, name, TIER[step], multiplier, TIER[want_tier + 1]))
+        sells = per_level[step] * max(1, level)
         # The rule names what a shop PAYS; the item keeps the value that pays exactly that once the Tax is taken
         # (ShopMath.ValueForSellPrice: the price and half of it again, rounded up).
         want = 0 if sells <= 0 else sells + (sells + 1) // 2
         if field(item, "value") != str(want):
-            faults.append("%s is worth %s but the rule says %d, to sell for %d (%d x level %d of %s, x %d%% for its grade, x %d%% for its folds)"
-                          % (item_name, field(item, "value"), want, sells, per_level[step], level, name, grade_percent, fold_percent))
+            faults.append("%s is worth %s but the rule says %d, to sell for %d (%d x level %d of %s)"
+                          % (item_name, field(item, "value"), want, sells, per_level[step], level, name))
         if field(item, "category") != ETC_TAB:
             faults.append("%s is not in the Etc tab" % item_name)
         if field(item, "weight") != WEIGHT:
@@ -188,14 +176,14 @@ def main():
         row = creature_rows.get(m.group(2))
         if row is None:
             continue
-        name, kind, grade, folds = row
+        name, kind, grade, multiplier = row
         # ELITES ROAM EVERY MAP, whatever its level (decided 2026-10-18), so the rule is for the creatures that live there.
         if kind == "1":
             continue
-        if kind != "0" or grade != 0 or folds != 0:
-            faults.append("%s spawns on newbie map %s but is %s %s +%d; a newbie map's own creatures are Raw +0 normals"
-                          % (name, m.group(1), {"0": "a normal", "1": "an elite", "2": "a shadow"}.get(kind, "?"),
-                             grades[grade], folds))
+        if kind != "0" or grade != 0 or multiplier != 1.0:
+            faults.append("%s spawns on newbie map %s but is %s x%g wearing %s; a newbie map's own creatures are x1 "
+                          "normals wearing Raw" % (name, m.group(1), {"0": "a normal", "1": "an elite", "2": "a shadow"}.get(kind, "?"),
+                                                   multiplier, grades[grade]))
     for guid, (item_name, _) in sorted(creature_items.items(), key=lambda kv: kv[1][0]):
         if guid not in owner:
             faults.append("%s is a creature material that no creature drops" % item_name)

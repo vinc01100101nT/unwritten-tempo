@@ -62,9 +62,9 @@ public class LootDropper : MonoBehaviour
 
     /// <summary>The item a material line gives up for a creature of <paramref name="level"/> — read by the roll below
     /// and by <c>/mobinfo</c>, so what a creature is said to drop is what it drops.</summary>
-    public static Item MaterialFor(in CreatureLoot.Line line, int level)
+    public static Item MaterialFor(in CreatureLoot.Line line)
     {
-        int step = CreatureLoot.StepFor(line, level);
+        int step = line.step;
         switch (line.kind)
         {
             case MaterialKind.Ink:  return MaterialCatalog.Ink(step);
@@ -89,7 +89,8 @@ public class LootDropper : MonoBehaviour
         if (PlayerUnits.Gone(winner) || winner is not Character) return;
         // A SUMMON CARRIES NOTHING — see Rewards.PayForKill for why.
         if (health.IsSummoned) return;
-        // A SAVED CHARACTER carries something only if it is a rebel, and then it carries what one kind up carries —
+        // A SAVED CHARACTER carries something only if it is a rebel, and then it carries what one kind up carries — its
+        // find by the kind above, its materials at the multiplier above (SavedCharacterRules.LootMultiplierOfRebel) —
         // the rare encounter a rebel is. One that helped or left carries nothing.
         var saved = health.savedAs;
         if (saved != null && saved.behaviour != SavedBehaviour.Rebel) return;
@@ -104,28 +105,27 @@ public class LootDropper : MonoBehaviour
             if (Random.value <= entry.chance) Won(entry.item, 1, null, entry.chance);
         }
 
-        // THE CHANCE OF AN INK OR A SALT — what its kind says it carries.
-        int level = block != null ? block.Level : 1;
-        var lines = CreatureLoot.LinesFor(lootKind);
+        // ITS MULTIPLIER decides every material below — never its level or its gear. A rebel drops at its lifted one.
+        float lootMultiplier = saved != null ? SavedCharacterRules.LootMultiplierOfRebel(health.kind, health.multiplier)
+                                             : health.multiplier;
+
+        // THE CHANCE OF AN INK OR A SALT — each opens from its own multiplier and is multiplied by it.
+        var lines = CreatureLoot.Lines;
         for (int i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
-            if (!CreatureLoot.DropsAt(line, level) || !CombatRng.Chance(line.chance)) continue;
-            var item = MaterialFor(line, level);
-            if (item == null) continue;
-            Won(item, CombatRng.Range(line.min, line.max + 1), null, line.chance);
+            float expected = CreatureLoot.ExpectedAt(line, lootMultiplier);
+            int pieces = CreaturePay.PiecesFor(expected, CombatRng.Value01());
+            if (pieces <= 0) continue;
+            var item = MaterialFor(line);
+            if (item != null) Won(item, pieces, null, CreaturePay.ChanceOfAny(expected));
         }
 
-        // TEMPER DUST AND QUENCH OIL, on every kill — by its FILE's level, never a level it grew by hitting people (the
-        // same guard its experience has), its loot kind and its file's gear. A creature with no file pays as ungeared.
-        var def = MonsterCatalog.ById(health.creatureId);
-        int fileLevel = def != null ? def.level : level;
-        var gearGrade = def != null ? def.gearQuality : Quality.Raw;
-        int gearFolds = def != null ? def.FileFolds : 0;
-        WonUnits(MaterialCatalog.TemperDust, CreatureLoot.UnitsPerKill(CreatureLoot.TemperDustPerGrade, fileLevel, lootKind,
-                                                                        gearGrade, gearFolds, CombatRng.Range(0, 100)));
-        WonUnits(MaterialCatalog.QuenchOil, CreatureLoot.UnitsPerKill(CreatureLoot.QuenchOilPerGrade, fileLevel, lootKind,
-                                                                       gearGrade, gearFolds, CombatRng.Range(0, 100)));
+        // TEMPER DUST AND QUENCH OIL, on every kill.
+        WonUnits(MaterialCatalog.TemperDust, CreatureLoot.UnitsPerKill(CreatureLoot.TemperDustPerKill, lootMultiplier,
+                                                                        CombatRng.Range(0, 100)));
+        WonUnits(MaterialCatalog.QuenchOil, CreatureLoot.UnitsPerKill(CreatureLoot.QuenchOilPerKill, lootMultiplier,
+                                                                       CombatRng.Range(0, 100)));
 
         // ONE PIECE OF WHAT IT WEARS, on one kill in ten: an exact copy of that piece — grade, folds, Ink, slots, roll.
         if (equipment != null && CombatRng.Chance(CreatureLoot.GearDropChance))
@@ -150,19 +150,16 @@ public class LootDropper : MonoBehaviour
             if (find != null) Won(find, 1, null, findChance);
         }
 
-        // THE MATERIAL ONLY THIS CREATURE DROPS. A rebel rolls it AGAIN at the creature's own chances — its own kind,
-        // never the one-kind-up its grade loot above is lifted to, or a normal creature's rare material would fall
-        // fifty times as often from its rebel.
-        pileItems.Clear();
-        pileCounts.Clear();
-        if (def != null) RollOwnMaterial(def.material, health.kind);
+        // THE MATERIAL ONLY THIS CREATURE DROPS. A rebel rolls it AGAIN at the creature's own multiplier, never the
+        // lifted one its other materials above use, or a normal creature's own material would fall thirty times as
+        // often from its rebel.
+        var def = MonsterCatalog.ById(health.creatureId);
+        if (def != null) RollOwnMaterial(def.material, health.kind, health.multiplier);
 
         // NOTHING AN ELITE DROPS IS AUTO-LOOTED: all of it falls, so an elite is hunted by hand and never farmed by
         // standing in its field with auto-combat on.
-        Rewards.PayLoot(winner, won, health.kind == CreatureKind.Elite, 0, health, pileItems, pileCounts);
+        Rewards.PayLoot(winner, won, health.kind == CreatureKind.Elite, 0, health);
         won.Clear();
-        pileItems.Clear();
-        pileCounts.Clear();
     }
 
     // Some units of a material every kill drops — certain, so its chance is 1. Nothing when it rounded to none.
@@ -171,25 +168,11 @@ public class LootDropper : MonoBehaviour
         if (material != null && units > 0) Won(material, units, null, 1f);
     }
 
-    // Piles that go down APART, one entry each — a grade-D elite's two Rare. Filled and emptied inside one death.
-    static readonly List<Item> pileItems = new List<Item>(8);
-    static readonly List<int> pileCounts = new List<int>(8);
-
-    void RollOwnMaterial(Item item, CreatureKind kind)
+    void RollOwnMaterial(Item item, CreatureKind kind, float multiplier)
     {
         if (!CreatureMaterials.Is(item)) return;
-        var tier = CreatureMaterials.TierOfStep(item.materialStep);
-        float chance = CreatureMaterials.Chance(kind, tier);
-        if (chance <= 0f || !CombatRng.Chance(chance)) return;
-        if (!CreatureMaterials.InPiles(kind, tier)) { Won(item, 1, null, chance); return; }
-
-        CreatureMaterials.Piles(kind, tier, out int pilesMin, out int pilesMax);
-        CreatureMaterials.PileSize(kind, tier, out int sizeMin, out int sizeMax);
-        int piles = CombatRng.Range(pilesMin, pilesMax + 1);
-        for (int p = 0; p < piles; p++)
-        {
-            pileItems.Add(item);
-            pileCounts.Add(CombatRng.Range(sizeMin, sizeMax + 1));
-        }
+        float expected = CreatureMaterials.ExpectedPieces(kind, CreatureMaterials.TierOfStep(item.materialStep), multiplier);
+        int pieces = CreaturePay.PiecesFor(expected, CombatRng.Value01());
+        if (pieces > 0) Won(item, pieces, null, CreaturePay.ChanceOfAny(expected));
     }
 }

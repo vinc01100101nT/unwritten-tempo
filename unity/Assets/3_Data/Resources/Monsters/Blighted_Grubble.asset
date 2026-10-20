@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Blighted_Grubble
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.blighted-grubble
+  displayName: Blighted Grubble
+  versionOf: {fileID: 11400000, guid: b6ae06a33400e1441b6255883d4bfa05, type: 2}
+  kind: 0
+  size: 0.5
+  flies: 0
+  moveSpeed: 0.6
+  aggressive: 1
+  biome: 4
+  artFolder: c9664ae77de347e408bf3ee98233d479
+  faceset: {fileID: 2800000, guid: 871c5dc5e31e744489ce488a20c1c4dd, type: 3}
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 90
+  str: 61
+  agi: 31
+  vit: 72
+  intel: 31
+  dex: 47
+  luk: 30
+  startingGear:
+  - {fileID: 11400000, guid: 5c65838bbb620394296e8e14e37b84ea, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  multiplier: 10
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 5
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: cc5ab1247df6fdd41be800b7f3c9bd81, type: 2}
+  itemDropNames: []
+  itemDropChances: []

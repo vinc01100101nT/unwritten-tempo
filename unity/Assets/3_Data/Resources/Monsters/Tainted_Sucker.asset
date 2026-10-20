@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Tainted_Sucker
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.tainted-sucker
+  displayName: Tainted Sucker
+  versionOf: {fileID: 11400000, guid: 2412ebac72011ea4abf46ebe406172f8, type: 2}
+  kind: 0
+  size: 1.1
+  flies: 0
+  moveSpeed: 0.8
+  aggressive: 1
+  biome: 3
+  artFolder: 3fc9061c701991048b09a96389351daa
+  faceset: {fileID: 2800000, guid: 55237ec97bf80dd4da29e616ca0d51d5, type: 3}
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 78
+  str: 53
+  agi: 62
+  vit: 26
+  intel: 26
+  dex: 41
+  luk: 26
+  startingGear:
+  - {fileID: 11400000, guid: 897c7d54c6280f348b0c74364aa9f64e, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
+  multiplier: 5
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 3
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 9dd1ab171984db543aba91a12a9aded4, type: 2}
+  itemDropNames: []
+  itemDropChances: []

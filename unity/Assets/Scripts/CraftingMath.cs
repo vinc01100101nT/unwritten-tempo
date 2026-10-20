@@ -201,7 +201,7 @@ public static class CraftingMath
             long hands = WeaponTypes.IsDualWield(weapon) ? 1000 + Mathf.Max(0, offHandThousandths) : 1000;
             int ms = swingMs > 0 ? swingMs : 1000;
             int atk = HalfUp((long)WeaponBase * ms * scale, hands * Percents);
-            if (IsCasterWeapon(weapon)) p.magicAttack = atk;
+            if (PowerIsMagic(weapon)) p.magicAttack = atk;
             else p.attack = atk;
             return p;
         }
@@ -232,8 +232,11 @@ public static class CraftingMath
     /// <summary><paramref name="num"/> Ã· <paramref name="den"/>, rounded half UP, in whole numbers.</summary>
     static int HalfUp(long num, long den) => (int)((2 * num + den) / (2 * den));
 
-    /// <summary>A caster's weapon gains MAGIC attack from a fold rather than attack.</summary>
-    public static bool IsCasterWeapon(WeaponType w) => w == WeaponType.Staff || w == WeaponType.Wand || w == WeaponType.Scythe;
+    /// <summary>A weapon whose own power is MAGIC attack rather than attack: a caster's weapon, and any weapon whose
+    /// ordinary attack is a magic shot (<see cref="WeaponTypes.ShootsMagic"/>) — a power that attack would carry is one
+    /// that shot never reads.</summary>
+    public static bool PowerIsMagic(WeaponType w) =>
+        w == WeaponType.Staff || w == WeaponType.Wand || w == WeaponType.Scythe || WeaponTypes.ShootsMagic(w);
 
     // ---- the fold's luck ----------------------------------------------------------------------------------
     /// <summary>Folds up to this many always succeed, and a failed fold never takes a piece below it.</summary>

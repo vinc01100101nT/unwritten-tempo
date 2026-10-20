@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Tainted_Capling
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.tainted-capling
+  displayName: Tainted Capling
+  versionOf: {fileID: 11400000, guid: 44950b05246effd448db02b082cf7ae2, type: 2}
+  kind: 0
+  size: 0.9
+  flies: 0
+  moveSpeed: 0.4
+  aggressive: 0
+  biome: 6
+  artFolder: 889406a585982384eac8e75b10b52771
+  faceset: {fileID: 2800000, guid: 7824e953b210d344b8764db2d7a2a6ed, type: 3}
+  weight: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 5
+  str: 4
+  agi: 4
+  vit: 3
+  intel: 11
+  dex: 8
+  luk: 6
+  startingGear:
+  - {fileID: 11400000, guid: 5eee4763f7f459b429a5738a204808a8, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  multiplier: 3
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 2
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: a7a18f7f0a5f43748a03dfb0cef4e2c4, type: 2}
+  itemDropNames: []
+  itemDropChances: []

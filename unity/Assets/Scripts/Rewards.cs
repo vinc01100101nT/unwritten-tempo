@@ -156,7 +156,7 @@ public static class Rewards
     /// kill, hunted by hand.
     ///
     /// <para><paramref name="pileItems"/> and <paramref name="pileCounts"/>, index for index, are piles that go down
-    /// APART and are never auto-looted — a grade-D elite's two Rare, so they lie as two piles. Everything in <paramref name="entries"/> lands as one pile per item.</para>
+    /// APART and are never auto-looted — what a saved character carries beyond what its saver's bag can hold. Everything in <paramref name="entries"/> lands as one pile per item.</para>
     ///
     /// <para>ONE CALL PER KILL, not one per thing dropped: on a server the purse is handed to its owner and written down
     /// every time it changes, so paying piece by piece would send and write it several times for one dead creature.</para></summary>

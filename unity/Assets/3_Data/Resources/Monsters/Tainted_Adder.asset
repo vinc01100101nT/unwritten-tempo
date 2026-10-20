@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Tainted_Adder
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.tainted-adder
+  displayName: Tainted Adder
+  versionOf: {fileID: 11400000, guid: 60616b0f21e38384bb4004c0d7b90fa6, type: 2}
+  kind: 0
+  size: 0.5
+  flies: 0
+  moveSpeed: 1.3
+  aggressive: 1
+  biome: 2
+  artFolder: 3ada79b7aeda0e744baacd850ea88d13
+  faceset: {fileID: 2800000, guid: 89df8bafe47f89b4a8b7f9cb054a44ab, type: 3}
+  weight: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 57
+  str: 46
+  agi: 39
+  vit: 19
+  intel: 18
+  dex: 18
+  luk: 30
+  startingGear:
+  - {fileID: 11400000, guid: 6d2ebac137a76e34f9f470f698bcffbb, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
+  multiplier: 5
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 2
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 95c7b84b2f4b6e6428ce34bce4d3e05a, type: 2}
+  itemDropNames: []
+  itemDropChances: []

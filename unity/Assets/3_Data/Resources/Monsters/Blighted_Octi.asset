@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Blighted_Octi
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.blighted-octi
+  displayName: Blighted Octi
+  versionOf: {fileID: 11400000, guid: 153714150f3708d44969228b1db9e119, type: 2}
+  kind: 0
+  size: 1.1
+  flies: 0
+  moveSpeed: 0.8
+  aggressive: 1
+  biome: 10
+  artFolder: be8742476b86fcd458160722ff9fd575
+  faceset: {fileID: 2800000, guid: 72d3f68f92568de429fd324a4251852a, type: 3}
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 63
+  str: 51
+  agi: 21
+  vit: 42
+  intel: 21
+  dex: 21
+  luk: 32
+  startingGear:
+  - {fileID: 11400000, guid: 2d080866095130541b53ce9bb733fb2a, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
+  multiplier: 10
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 1
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: ab62f921e62568241b30d40af31e577e, type: 2}
+  itemDropNames: []
+  itemDropChances: []

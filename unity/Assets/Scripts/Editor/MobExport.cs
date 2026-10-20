@@ -82,7 +82,7 @@ public static class MobExport
                 flee = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee),
                 xp = CreatureKinds.KillExperience(d),
                 weapon = d.Weapon != null ? d.Weapon.displayName : "",
-                gear = d.startingGear != null && d.startingGear.Length > 0 ? d.gearQuality + " +" + d.FileFolds : "",
+                gear = d.startingGear != null && d.startingGear.Length > 0 ? d.WornGrade + " +" + d.FileFolds : "",
                 str = d.str, agi = d.agi, vit = d.vit, intel = d.intel, dex = d.dex, luk = d.luk,
                 drops = CreatureDrops.Line(d),
                 homes = h,

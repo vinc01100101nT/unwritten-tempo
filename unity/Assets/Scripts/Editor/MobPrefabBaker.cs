@@ -66,6 +66,8 @@ public static class MobPrefabBaker
             {
                 var def = defs[i];
                 if (def == null || string.IsNullOrWhiteSpace(def.name) || string.IsNullOrWhiteSpace(def.id)) continue;
+                // A Tainted or Blighted version wears its original's body (MobSpawner), so it has none of its own.
+                if (def.versionOf != null) continue;
                 EditorUtility.DisplayProgressBar("Bake Mob Prefabs", def.name, (float)i / defs.Count);
 
                 var go = RigBuilder25D.BuildMonster(def.ToArchetype(), Vector3.zero);

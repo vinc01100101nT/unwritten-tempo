@@ -20,8 +20,8 @@ public class UnitEquipment : MonoBehaviour
              "wears has to be authored here.")]
     public Item[] startingGear = System.Array.Empty<Item>();
 
-    [Tooltip("THE GRADE every starting piece comes to life at. A MIRROR of the creature's own catalog entry, which " +
-             "owns these three and writes them here as the creature is made (MobSpawner) — never edited on a body.")]
+    [Tooltip("THE GRADE every starting piece comes to life at. A MIRROR of the grade the creature's level gives " +
+             "(MonsterDef.WornGrade), written here as the creature is made (MobSpawner) — never edited on a body.")]
     public Quality gearQuality = Quality.Raw;
     /// <summary>The creature's kind, which decides how many folds and card slots its pieces roll each life. A mirror
     /// of its catalog entry, written as the creature is made (MobSpawner); never saved on a body.</summary>

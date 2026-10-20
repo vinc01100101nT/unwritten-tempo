@@ -433,8 +433,8 @@ public static class RigBuilder25D
         // onto a curve of its own.
         var equip = go.AddComponent<UnitEquipment>();
         if (arc.startingGear != null) equip.startingGear = arc.startingGear;
-        // A MIRROR of the creature's catalog entry, which owns these three. MobSpawner re-reads them off the entry as
-        // each creature is made, so a prefab baked before an edit corrects itself rather than serving a stale grade.
+        // A MIRROR of the grade the creature's level gives. MobSpawner re-reads it off the entry as each creature is
+        // made, so a prefab baked before an edit corrects itself rather than serving a stale grade.
         equip.gearQuality = arc.gearQuality;
         var block = go.AddComponent<UnitStatBlock>();
         block.inputs = arc.stats.level > 0 ? arc.stats : UnitStatInputs.Default(1);

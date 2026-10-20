@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Tainted_Kappi
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.tainted-kappi
+  displayName: Tainted Kappi
+  versionOf: {fileID: 11400000, guid: 2840c63951ef3b349b7a1a9bca98ef0f, type: 2}
+  kind: 0
+  size: 0.9
+  flies: 0
+  moveSpeed: 0.9
+  aggressive: 1
+  biome: 10
+  artFolder: 107077d1cd181564c9114378e9075886
+  faceset: {fileID: 2800000, guid: 6f7ea68751b744446a68194347b1b413, type: 3}
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 15
+  str: 10
+  agi: 6
+  vit: 13
+  intel: 16
+  dex: 5
+  luk: 5
+  startingGear:
+  - {fileID: 11400000, guid: e2921b3c64336c846905dd34a8af73e1, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  multiplier: 3
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 1
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 3790c849bd8f49247864ac72a5b63347, type: 2}
+  itemDropNames: []
+  itemDropChances: []

@@ -2,7 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// WHICH OF THE THREE KINDS OF CREATURE this is. The kind decides how many summons it may keep out, how long it takes
-/// to come back, what it drops and whether it is a 3D character. How strong it is never comes from here — that is its level and its stats, through the same formulas a player's go through.
+/// to come back and whether it is a 3D character. How strong it is and what it pays never come from here — that is its
+/// level, its stats and its typed multiplier (<see cref="MonsterDef.multiplier"/>), the same for every kind.
 ///
 /// <para>Serialized by int on every creature asset, so order is load-bearing: append, never insert.</para>
 /// </summary>
@@ -38,9 +39,13 @@ public static class CreatureKinds
     /// <summary>May this kind keep summons out at all? It still casts the summon skill only once it has bought it.</summary>
     public static bool Summons(CreatureKind k) => MaxSummons(k) > 0;
 
-    /// <summary>An elite's summons are split across the three normals nearest its level at or below it, in these
-    /// shares: five of the nearest, three of the next, two of the one after. Adds up to <see cref="MaxSummons"/>.</summary>
+    /// <summary>An elite's summons are split across the three creatures it calls nearest its level at or below it, in
+    /// these shares: five of the nearest, three of the next, two of the one after. Adds up to <see cref="MaxSummons"/>.</summary>
     public static readonly int[] EliteSummonShares = { 5, 3, 2 };
+
+    /// <summary>The multipliers an elite calls from, least and most: ×5 to ×10, the Tainted and Blighted the dungeons
+    /// it guards are filled with (decided 2026-10-20).</summary>
+    public const float EliteCallsFrom = 5f, EliteCallsUpTo = 10f;
 
     /// <summary>Seconds a creature of this kind stays gone after it dies. <paramref name="roll01"/> is a die from 0 to 1,
     /// thrown by the caller, so this stays arithmetic. Normal: 5 plus up to 3. Elite: 30 minutes to 3 hours. Shadow: 4 to
@@ -56,51 +61,26 @@ public static class CreatureKinds
         }
     }
 
-    /// <summary>The lowest and highest level a shadow stands at; a shadow's toughness climbs evenly between them.</summary>
-    public const int LowestShadowLevel = 105, HighestShadowLevel = 170;
-    /// <summary>A shadow's health multiple at the lowest and the highest shadow level.</summary>
-    public const int LeastShadowHealth = 90, MostShadowHealth = 150;
-    public const int EliteHealth = 30;
+    /// <summary>How many times harder a creature of <paramref name="multiplier"/> hits than a ×1 creature of the same
+    /// level, stats and gear: the cube root of the health it multiplies, as Ragnarok's bosses do (×30 about 3.1×, ×150
+    /// about 5.3×). Applied to attack and magic attack only; every other stat is a ×1 creature's.</summary>
+    public static float AttackMultiplier(float multiplier) => Mathf.Pow(CreaturePay.Clamp(multiplier), 1f / 3f);
 
-    /// <summary>How many times the health of a normal creature with the same level, stats and gear this kind has,
-    /// applied after everything else is worked out: 30 for an elite (decided 2026-10-17); a shadow ×90 at level 105
-    /// up to ×150 at level 170, evenly by level and held inside that range (decided 2026-10-18).</summary>
-    public static int HealthMultiplier(CreatureKind k, int level)
-    {
-        if (k == CreatureKind.Elite) return EliteHealth;
-        if (k != CreatureKind.Shadow) return 1;
-        float t = Mathf.Clamp01((level - LowestShadowLevel) / (float)(HighestShadowLevel - LowestShadowLevel));
-        return Mathf.FloorToInt(LeastShadowHealth + (MostShadowHealth - LeastShadowHealth) * t + 0.5f);
-    }
-
-    /// <summary>How many times harder this kind hits than a normal creature of the same level, stats and gear: the cube
-    /// root of its health multiple, as Ragnarok's bosses do (an elite about 3.1×, a shadow 4.5× to 5.3×). Applied to
-    /// attack and magic attack only; every other stat is the same as a normal creature's.</summary>
-    public static float AttackMultiplier(CreatureKind k, int level) =>
-        k == CreatureKind.Normal ? 1f : Mathf.Pow(HealthMultiplier(k, level), 1f / 3f);
-
-    /// <summary>How many kills of a normal creature of the same level one kill of this kind is worth: 10 for an elite,
-    /// 20 for a shadow (decided 2026-09-30 — Ragnarok's bosses pay 5 to 10 times a normal creature of their level).</summary>
-    public static int ExperienceMultiplier(CreatureKind k) =>
-        k == CreatureKind.Shadow ? 20 : k == CreatureKind.Elite ? 10 : 1;
-
-    /// <summary>The experience one kill pays. The ONE place a kill's worth is decided — by the creature's kind, its
-    /// level and the grade and folds of its gear (<see cref="CreaturePay"/>), never by a number typed onto the creature.
+    /// <summary>The experience one kill pays. The ONE place a kill's worth is decided — by the creature's level and its
+    /// multiplier (<see cref="CreaturePay"/>), whatever its kind.
     ///
-    /// <para>The gear multiplies the experience of <paramref name="fileLevel"/>, the level in the creature's FILE, only.
-    /// Levels a creature gained by hitting people in this fight add their plain difference on top — letting a geared
-    /// creature hit you never multiplies what its gear pays.</para></summary>
-    public static int KillExperience(CreatureKind k, int level, int fileLevel, Quality gearGrade, int gearFolds)
+    /// <para>The experience of <paramref name="fileLevel"/>, the level in the creature's FILE, and the plain difference
+    /// of any levels it gained by hitting people in this fight, together times the multiplier.</para></summary>
+    public static int KillExperience(int level, int fileLevel, float multiplier)
     {
         long atFile = UnitStatMath.KillXp(fileLevel);
         long grown = System.Math.Max(0L, (long)UnitStatMath.KillXp(level) - atFile);
-        long worth = (CreaturePay.Scaled(atFile, gearGrade, gearFolds) + grown) * ExperienceMultiplier(k);
-        return (int)System.Math.Min(int.MaxValue, worth);
+        return (int)System.Math.Min(int.MaxValue, CreaturePay.Scaled(atFile + grown, multiplier));
     }
 
     /// <summary>The experience a kill of <paramref name="def"/> pays as it spawns.</summary>
     public static int KillExperience(MonsterDef def)
-        => def != null ? KillExperience(def.kind, def.level, def.level, def.gearQuality, def.FileFolds) : 0;
+        => def != null ? KillExperience(def.level, def.level, def.multiplier) : 0;
 
     /// <summary>A shadow is a 3D character; the other two kinds are flat.</summary>
     public static bool Is3D(CreatureKind k) => k == CreatureKind.Shadow;

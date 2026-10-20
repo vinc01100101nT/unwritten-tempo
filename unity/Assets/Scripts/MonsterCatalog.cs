@@ -86,32 +86,37 @@ public static class MonsterCatalog
         return null;
     }
 
-    /// <summary>Pick a field-spawnable mob (a Normal, weight &gt; 0) weighted by <see cref="MonsterDef.weight"/>,
-    /// or null if none are loaded.</summary>
+    /// <summary>Pick a field-spawnable mob (<see cref="InMix"/>) weighted by <see cref="MonsterDef.weight"/>, or null if
+    /// none are loaded.</summary>
     public static MonsterDef WeightedPick()
     {
         EnsureLoaded();
         int total = 0;
-        foreach (var m in _all) if (m != null && m.kind == CreatureKind.Normal) total += Mathf.Max(0, m.weight);
+        foreach (var m in _all) if (InMix(m)) total += m.weight;
         if (total <= 0) return null;
 
         int roll = Random.Range(0, total);
         foreach (var m in _all)
         {
-            if (m == null || m.kind != CreatureKind.Normal) continue;
-            roll -= Mathf.Max(0, m.weight);
+            if (!InMix(m)) continue;
+            roll -= m.weight;
             if (roll < 0) return m;
         }
         return null;
     }
 
+    /// <summary>CAN A MAP'S MIX DRAW THIS CREATURE AT ALL: an original Normal with a weight. An elite, a shadow and a
+    /// Tainted or Blighted version (<see cref="MonsterDef.versionOf"/>) are placed only by a row naming them.</summary>
+    public static bool InMix(MonsterDef m) =>
+        m != null && m.kind == CreatureKind.Normal && m.versionOf == null && m.weight > 0;
+
     /// <summary>Is this mob a field-spawnable candidate for a given biome + LEVEL band? Difficulty is level —
     /// there is no separate tier. Biome-agnostic commons (<see cref="Biome.None"/>) match any biome (when
-    /// <paramref name="includeCommons"/>); everyone else must match <paramref name="biome"/> exactly. Only Normals are
-    /// ever drawn into a mix: an elite or a shadow is placed by naming it.</summary>
+    /// <paramref name="includeCommons"/>); everyone else must match <paramref name="biome"/> exactly. Only what
+    /// <see cref="InMix"/> allows is ever drawn into a mix.</summary>
     static bool Eligible(MonsterDef m, Biome biome, int minLevel, int maxLevel, bool includeCommons)
     {
-        if (m == null || m.kind != CreatureKind.Normal || m.weight <= 0) return false;
+        if (!InMix(m)) return false;
         if (m.level < minLevel || m.level > maxLevel) return false;
         return m.biome == Biome.None ? includeCommons : m.biome == biome;
     }
@@ -127,7 +132,7 @@ public static class MonsterCatalog
         EnsureLoaded();
         foreach (var m in _all) if (Eligible(m, biome, minLevel, maxLevel, includeCommons)) into.Add(m);
         if (into.Count > 0) return;
-        foreach (var m in _all) if (m != null && m.kind == CreatureKind.Normal && m.weight > 0) into.Add(m);
+        foreach (var m in _all) if (InMix(m)) into.Add(m);
     }
 
     static readonly List<MonsterDef> mixScratch = new List<MonsterDef>();

@@ -10,7 +10,6 @@ public struct UnitStatInputs
     public int level;
     public int str, agi, vit, intel, dex, luk;
 
-    public int baseMaxHP, hpPerLevel;
     public int baseAttack, attackPerLevel;
     public int baseDefense, defensePerLevel;
     public int baseMaxMP, mpPerLevel;
@@ -23,10 +22,6 @@ public struct UnitStatInputs
     {
         level = Mathf.Max(1, level),
         str = 1, agi = 1, vit = 1, intel = 1, dex = 1, luk = 1,
-        // 250, not RO's 20 (decided 2026-10-18): a level 1 player in the Raw +5 starter armour must take at least 5
-        // blows from a Raw +0 newbie-map creature, at any creation spread — 250 keeps that once armour gives hard
-        // defence instead of flat (211 is the least that does). 20 a level, not 6 (2026-10-17): fights at high level last longer for everyone.
-        baseMaxHP = 250, hpPerLevel = 20,
         baseAttack = 4, attackPerLevel = 1,
         baseDefense = 1, defensePerLevel = 1,
         baseMaxMP = 10, mpPerLevel = 3,
@@ -366,7 +361,105 @@ public static class UnitStatMath
 
     // ---- vitals -------------------------------------------------------------------------------------------------
     public static int MaxHP(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        Scale(Mathf.RoundToInt((u.baseMaxHP + u.hpPerLevel * (u.level - 1)) * (1f + u.vit * VitHpPercent)) + eb.hp, ringPct);
+        Scale(Mathf.RoundToInt(BaseHealth(u.level) * (1f + u.vit * VitHpPercent)) + eb.hp, ringPct);
+
+    /// <summary>A creature's health: what <see cref="MaxHP"/> gives a ×1 creature of its build, times its
+    /// <paramref name="multiplier"/> (<see cref="MonsterDef.multiplier"/>), rounded half up.</summary>
+    public static int CreatureMaxHP(int maxHPAtOne, float multiplier) =>
+        (int)System.Math.Min(int.MaxValue, CreaturePay.Scaled(maxHPAtOne, multiplier));
+
+    // ---- the health curve: a same-level fight lasts the same number of hits at every level ----------------------
+    // THE BASE HEALTH OF EVERY LEVEL IS WORKED OUT FROM THE DAMAGE A PLAYER OF THAT LEVEL IS EXPECTED TO DO (decided
+    // 2026-10-20): a ×1 creature of the reference build, in the +0 metal of its level's grade, takes ReferenceHits
+    // ordinary hits — no crit, no skill, no ring — from a player of its level with the same build, holding a sword of
+    // that grade folded as far through the grade as that level is (ExpectedFolds). Gear multiplies a weapon up to fifty
+    // times while a level used to add only 20 health, so a higher level barely protected anything; now health follows
+    // the gear ladder. Players and creatures share the curve, and it never goes down from one level to the next.
+    /// <summary>How many ordinary hits a same-level ×1 creature of the reference build takes.</summary>
+    public const int ReferenceHits = 5;
+    /// <summary>The reference weapon's swing, in milliseconds: a sword's (weight 90 — 0.8 s plus 0.005 s a point).</summary>
+    public const int ReferenceSwingMs = 1250;
+    /// <summary>The highest level the curve is worked out for — the highest a player reaches, so the only levels a
+    /// same-level fight exists at. Any level above it (a shadow's) reads this one.</summary>
+    public const int HealthCurveTop = MaxBaseLevel;
+    static int[] baseHealthCurve;
+
+    /// <summary>The base health of <paramref name="level"/>, before VIT, gear and the ring: worked out once per level
+    /// from <see cref="ReferenceHits"/> (see above) and kept.</summary>
+    public static int BaseHealth(int level)
+    {
+        if (baseHealthCurve == null) baseHealthCurve = BuildHealthCurve();
+        return baseHealthCurve[Mathf.Clamp(level, 1, HealthCurveTop)];
+    }
+
+    static int[] BuildHealthCurve()
+    {
+        var curve = new int[HealthCurveTop + 1];
+        // Never lower than the level below: a VIT point the reference build buys would otherwise take a little base
+        // health away on the level it arrives, and a level-up must never cost anybody health.
+        for (int level = 1; level <= HealthCurveTop; level++)
+            curve[level] = Mathf.Max(ReferenceBaseHealth(level), level > 1 ? curve[level - 1] : 0);
+        curve[0] = curve[1];
+        return curve;
+    }
+
+    /// <summary>The folds a player of <paramref name="level"/> is expected to have reached on gear of the grade that
+    /// level wears (<see cref="CreatureLoot.WornGrade"/>): +0 at the grade's first level, rising evenly to the cap at its
+    /// last, so the expected damage climbs level by level instead of only at each new grade.</summary>
+    public static int ExpectedFolds(int level)
+    {
+        var grade = CreatureLoot.WornGrade(level);
+        int first = Mathf.Max(1, level), last = first;
+        while (first > 1 && CreatureLoot.WornGrade(first - 1) == grade) first--;
+        while (last < CreatureLoot.LadderTop && CreatureLoot.WornGrade(last + 1) == grade) last++;
+        int cap = CraftingMath.FoldCap(grade);
+        if (last <= first) return cap;
+        return Mathf.Clamp(Mathf.RoundToInt((float)cap * (level - first) / (last - first)), 0, cap);
+    }
+
+    /// <summary>The reference build: the one a creature holding a sword spends its points on (STR, then VIT and DEX,
+    /// <see cref="CreatureLoot.BuildFor"/>).</summary>
+    public static UnitStatInputs ReferenceBuild(int level) => Allocate(level, 0.45f, 0.1f, 0.25f, 0f, 0.15f, 0.05f);
+
+    /// <summary>One ordinary hit a player of <paramref name="attackerLevel"/> lands on a ×1 creature of
+    /// <paramref name="targetLevel"/>, both of the reference build: the attacker holding a sword of its level's grade
+    /// at <see cref="ExpectedFolds"/>, the target in +0 metal of its own level's grade on body, shoes, garment and head.</summary>
+    public static int ReferenceHit(int attackerLevel, int targetLevel)
+    {
+        var weapon = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal,
+                                               ExpectedFolds(attackerLevel), CreatureLoot.WornGrade(attackerLevel), 100,
+                                               ReferenceSwingMs, 0);
+        var eb = default(EquipBonuses);
+        eb.atk = weapon.attack;
+        int attack = MeleeAttack(ReferenceBuild(attackerLevel), eb, 0f);
+        ReferenceArmour(targetLevel, out _, out int hardTenths);
+        float hit = Combat.Mitigated(attack, hardTenths, SoftDefense(ReferenceBuild(targetLevel)), false);
+        return Mathf.Max(1, Mathf.RoundToInt(hit));
+    }
+
+    static readonly EquipSlotType[] ReferenceArmourSlots =
+        { EquipSlotType.Armor, EquipSlotType.Boots, EquipSlotType.Garment, EquipSlotType.Head };
+
+    static void ReferenceArmour(int level, out int hp, out int hardTenths)
+    {
+        hp = 0; hardTenths = 0;
+        var grade = CreatureLoot.WornGrade(level);
+        for (int i = 0; i < ReferenceArmourSlots.Length; i++)
+        {
+            var piece = CraftingMath.PieceNumbers(ReferenceArmourSlots[i], WeaponType.None, MaterialKind.Metal, 0, grade, 100, 0, 0);
+            hp += piece.hp;
+            hardTenths += piece.hardDefenseTenths;
+        }
+    }
+
+    static int ReferenceBaseHealth(int level)
+    {
+        ReferenceArmour(level, out int armourHP, out _);
+        long total = (long)ReferenceHits * ReferenceHit(level, level);
+        float vitShare = 1f + ReferenceBuild(level).vit * VitHpPercent;
+        // Rounded DOWN, so the finished health never passes the hits it is sized to.
+        return Mathf.Max(1, Mathf.FloorToInt((total - armourHP) / vitShare));
+    }
 
     public static int MaxMP(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(Mathf.RoundToInt((u.baseMaxMP + u.mpPerLevel * (u.level - 1)) * (1f + u.intel * IntSpPercent)) + eb.mp, ringPct);

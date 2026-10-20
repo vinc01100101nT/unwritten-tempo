@@ -1028,7 +1028,8 @@ public partial class Player3DController : MonoBehaviour
             {
                 lastRouteFailed = true;
                 // A fault, not chatter — so it prints whatever the category switches say.
-                GameLog.Warn(LogCat.Hit, string.Concat("NO ROUTE to ", to.ToString("0.##"),
+                GameLog.Warn(LogCat.Hit, string.Concat("NO ROUTE from ", transform.position.ToString("0.##"),
+                                                       " to ", to.ToString("0.##"),
                                                        " — walking straight at it instead. ",
                                                        Pathfinder3D.LastOutcome));
             }

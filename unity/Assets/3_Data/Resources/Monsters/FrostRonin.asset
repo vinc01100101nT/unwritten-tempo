@@ -41,7 +41,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
   - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
   - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
-  gearQuality: 5
+  multiplier: 30
   weaponMastery: 0
   rollsGearEachLife: 1
   ringRankStats: 

@@ -43,8 +43,8 @@ public static class MonsterDefStats
             pieceScratch.cards.Clear();
             // A creature wears what it was given at ITS OWN grade and folds, so the piece's attack or defence counts
             // here exactly as it will in the world.
-            pieceScratch.quality = def.gearQuality;
-            pieceScratch.upgrade = UnityEngine.Mathf.Clamp(def.FileFolds, 0, CraftingMath.FoldCap(def.gearQuality));
+            pieceScratch.quality = def.WornGrade;
+            pieceScratch.upgrade = UnityEngine.Mathf.Clamp(def.FileFolds, 0, CraftingMath.FoldCap(def.WornGrade));
             pieceScratch.Recompute();
             pieceScratch.AccumulateInto(ref gear);
         }
@@ -66,16 +66,16 @@ public static class MonsterDefStats
         bool hasRanks = def.ringRankStats != null && def.ringRankValues != null && def.ringRankStats.Length > 0;
         if (hasRanks) ringScratch.LoadState(def.ringRankStats, def.ringRankValues, def.ringRankStats[0], true, 0);
         // Its weapon mastery lifts the same stat channels the ring does, by the player's rule (UnitStatBlock.Lift).
-        int mastery = UnityEngine.Mathf.Min(def.MasteryOnWeapon, CraftingMath.WeaponMasteryCap(def.gearQuality));
+        int mastery = UnityEngine.Mathf.Min(def.MasteryOnWeapon, CraftingMath.WeaponMasteryCap(def.WornGrade));
         float Ring(StatId stat) => (hasRanks ? ringScratch.Percent(stat) : 0f)
             + (held != WeaponType.None && WeaponMasteryStats.Raises(held, stat) ? MasteryMath.WeaponPercent(mastery) : 0f);
 
         var u = def.StatInputs.WithGear(gear);
         switch (which)
         {
-            case Stat.HP:   return UnitStatMath.MaxHP(u, gear, Ring(StatId.HP)) * CreatureKinds.HealthMultiplier(def.kind, def.level);
+            case Stat.HP:   return UnitStatMath.CreatureMaxHP(UnitStatMath.MaxHP(u, gear, Ring(StatId.HP)), def.multiplier);
             case Stat.Atk:  return UnityEngine.Mathf.RoundToInt(UnitStatMath.PhysicalAttack(held, u, gear, Ring(StatId.Atk))
-                                                    * CreatureKinds.AttackMultiplier(def.kind, def.level));
+                                                    * CreatureKinds.AttackMultiplier(def.multiplier));
             case Stat.Def:  return UnitStatMath.SoftDefense(u);
             case Stat.HardDef: return UnitStatMath.CappedHardDefenseTenths(UnitStatMath.HardDefenseTenths(
                                    hasRanks ? ringScratch.Percent(StatId.Def) : 0f, gear.hardDefTenths, 0f));

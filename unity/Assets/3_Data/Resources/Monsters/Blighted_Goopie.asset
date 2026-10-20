@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Blighted_Goopie
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.blighted-goopie
+  displayName: Blighted Goopie
+  versionOf: {fileID: 11400000, guid: 7eef89eba1b609049b379b05fe684737, type: 2}
+  kind: 0
+  size: 0.5
+  flies: 0
+  moveSpeed: 0.5
+  aggressive: 1
+  biome: 4
+  artFolder: 43a31231774ab594a8824cf8083f2600
+  faceset: {fileID: 2800000, guid: 251fe165edcc59748b533796f76f28bf, type: 3}
+  weight: 2
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
+  level: 94
+  str: 50
+  agi: 33
+  vit: 63
+  intel: 75
+  dex: 32
+  luk: 32
+  startingGear:
+  - {fileID: 11400000, guid: b363337599ac3d8409304145e366dfa1, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  multiplier: 10
+  weaponMastery: 0
+  rollsGearEachLife: 0
+  ringRankStats: 
+  ringRankValues: 
+  aggroRadius: 6
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 7
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  material: {fileID: 11400000, guid: 7cc9791fbd1a35f4d95aee5d2909e72e, type: 2}
+  itemDropNames: []
+  itemDropChances: []

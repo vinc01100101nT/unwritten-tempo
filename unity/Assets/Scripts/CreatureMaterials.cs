@@ -6,37 +6,31 @@ using UnityEngine;
 /// <see cref="LootDropper"/> rolls it and <see cref="CreatureDrops"/> lists it, both from here. Design:
 /// docs/3-world/creature-materials.md.
 ///
-/// <para><b>A kill is worth <see cref="GoldPerLevel"/> gold × the creature's level, and no kill drops gold.</b> THE
-/// CREATURE'S GRADE DECIDES ITS MATERIAL'S TIER (<see cref="TierOfGrade"/>), and every tier is priced so a normal kill's
-/// material is worth that same 10 × level on average, whatever the tier: rarity changes how the value arrives, never
-/// how much. An elite kill is worth <see cref="EliteKillsWorth"/> normal kills, at every tier.</para>
+/// <para><b>A ×1 kill is worth <see cref="GoldPerLevel"/> gold × the creature's level, and no kill drops gold.</b> THE
+/// CREATURE'S MULTIPLIER DECIDES ITS MATERIAL'S TIER (<see cref="TierOfMultiplier"/>), and every tier is priced so a ×1
+/// kill's material is worth that same 10 × level on average, whatever the tier: rarity changes how the value arrives,
+/// never how much. The multiplier multiplies how many fall (<see cref="ExpectedPieces"/>), so a kill is worth 10 × level
+/// × its multiplier.</para>
 /// </summary>
 public static class CreatureMaterials
 {
     /// <summary>What a normal kill is worth on average, per creature level.</summary>
     public const int GoldPerLevel = 10;
 
-    /// <summary>How many normal kills of its level one elite kill's material is worth.</summary>
-    public const int EliteKillsWorth = 100;
+    // THE MULTIPLIER EACH TIER OPENS FROM, Common … Legendary (decided 2026-10-20): ×1, ×3, ×10, ×30, ×90.
+    // tools/check-creature-materials.py reads this line.
+    static readonly float[] TierFromMultiplier = { 1f, 3f, 10f, 30f, 90f };
 
-    /// <summary>How many separate piles of one each a grade-D elite's Rare material falls as. Never scaled by how many
-    /// players fought it.</summary>
-    public const int EliteRarePiles = 2;
-
-    // THE TIER EACH GRADE GIVES ITS CREATURE'S MATERIAL, indexed by (int)Quality: Raw, F, E, D, C, B, A. -1 = no
-    // creature of that kind may wear that grade: an elite is never below D, and nothing is at A but a shadow, which has
-    // no material. tools/check-creature-materials.py reads these two lines.
-    static readonly int[] NormalTierByGrade = { 0, 1, 2, 3, 4, -1, -1 };
-    static readonly int[] EliteTierByGrade  = { -1, -1, -1, 2, 3, 4, -1 };
-
-    /// <summary>The tier a <paramref name="kind"/> in <paramref name="grade"/> gear drops its material at. False when
-    /// that kind may not wear that grade, or has no material of its own (a shadow).</summary>
-    public static bool TierOfGrade(CreatureKind kind, Quality grade, out Rarity tier)
+    /// <summary>The tier a <paramref name="kind"/> of <paramref name="multiplier"/> drops its own material at: the highest
+    /// tier its multiplier opens. False for a shadow, which has no material of its own.</summary>
+    public static bool TierOfMultiplier(CreatureKind kind, float multiplier, out Rarity tier)
     {
-        int[] table = kind == CreatureKind.Normal ? NormalTierByGrade : kind == CreatureKind.Elite ? EliteTierByGrade : null;
-        int g = (int)grade, t = table != null && g >= 0 && g < table.Length ? table[g] : -1;
-        tier = t < 0 ? Rarity.Common : (Rarity)t;
-        return t >= 0;
+        tier = Rarity.Common;
+        if (kind == CreatureKind.Shadow) return false;
+        float m = CreaturePay.Clamp(multiplier);
+        for (int t = TierFromMultiplier.Length - 1; t >= 0; t--)
+            if (m >= TierFromMultiplier[t]) { tier = (Rarity)t; break; }
+        return true;
     }
 
     /// <summary>The tier a material's saved step stands for: 1 is Common … 5 is Legendary. 0 = nobody chose one.</summary>
@@ -48,21 +42,18 @@ public static class CreatureMaterials
     /// <summary>Is <paramref name="item"/> a creature's own material with a tier chosen.</summary>
     public static bool Is(Item item) => item != null && item.materialKind == MaterialKind.Creature && item.materialStep >= 1;
 
-    /// <summary>The chance (0–1) one kill of a <paramref name="kind"/> gives up its material of <paramref name="tier"/>.
-    /// A normal creature's chance × its tier's price is the same 10 × level at every tier. An elite comes back so seldom
-    /// that its chances are per elite kill and sized to <see cref="EliteKillsWorth"/> normal kills: a sure 2 Rare, a 1 in 2
-    /// Epic, a 1 in 10 Legendary. A shadow has no material of its own here.</summary>
-    public static float Chance(CreatureKind kind, Rarity tier)
+    /// <summary>How many pieces of its material of <paramref name="tier"/> one kill of a <paramref name="kind"/> of
+    /// <paramref name="multiplier"/> gives up on average: the tier's ×1 chance times the multiplier — past 1, more than
+    /// one piece. A ×1 chance × its tier's price is the same 10 × level at every tier, so a kill's material is worth
+    /// 10 × level × its multiplier. A shadow has no material of its own here.</summary>
+    public static float ExpectedPieces(CreatureKind kind, Rarity tier, float multiplier)
     {
-        if (kind == CreatureKind.Elite)
-            switch (tier)
-            {
-                case Rarity.Rare:      return 1f;
-                case Rarity.Epic:      return 0.5f;
-                case Rarity.Legendary: return 0.1f;
-                default:               return 0f;
-            }
         if (kind == CreatureKind.Shadow) return 0f;
+        return CreaturePay.ExpectedPieces(ChanceAtOne(tier), multiplier);
+    }
+
+    static float ChanceAtOne(Rarity tier)
+    {
         switch (tier)
         {
             case Rarity.Common:    return 0.5f;
@@ -74,26 +65,20 @@ public static class CreatureMaterials
         }
     }
 
-    /// <summary>What a shop pays for one material of <paramref name="tier"/> from a creature of <paramref name="level"/>
-    /// wearing gear of <paramref name="gearGrade"/> with <paramref name="gearFolds"/> folds — the same multiple of
-    /// level whichever kind of creature dropped it, times what that gear pays (<see cref="CreaturePay"/>).</summary>
-    public static int SellValue(int level, Rarity tier, Quality gearGrade, int gearFolds)
-        => (int)System.Math.Min(int.MaxValue, CreaturePay.Scaled(SellValue(level, tier), gearGrade, gearFolds));
-
     /// <summary>THE TIER AND VALUE <paramref name="d"/>'s own material must have — both worked out from the creature
-    /// (its kind and grade give the tier, then its level, tier, grade and folds give what a shop pays), never typed.
-    /// The value is what pays exactly that once the Tax is taken. False when the creature has no material of its own
-    /// or wears a grade its kind never wears.</summary>
+    /// (its kind and multiplier give the tier, then its level and tier give what a shop pays), never typed. The value is
+    /// what pays exactly that once the Tax is taken. False when the creature has no material of its own.</summary>
     public static bool Derive(MonsterDef d, out int step, out int value)
     {
         step = 0; value = 0;
-        if (d == null || !TierOfGrade(d.kind, d.gearQuality, out Rarity tier)) return false;
+        if (d == null || !TierOfMultiplier(d.kind, d.multiplier, out Rarity tier)) return false;
         step = StepOfTier(tier);
-        value = ShopMath.ValueForSellPrice(SellValue(d.level, tier, d.gearQuality, d.FileFolds));
+        value = ShopMath.ValueForSellPrice(SellValue(d.level, tier));
         return true;
     }
 
-    /// <summary>The same for a creature in Raw gear with no folds — the price before gear.</summary>
+    /// <summary>What a shop pays for one material of <paramref name="tier"/> from a creature of <paramref name="level"/>
+    /// — the same multiple of level whatever the creature's kind or multiplier.</summary>
     public static int SellValue(int level, Rarity tier)
     {
         long perLevel;
@@ -108,19 +93,4 @@ public static class CreatureMaterials
         return (int)System.Math.Min(int.MaxValue, perLevel * System.Math.Max(1, level));
     }
 
-    /// <summary>Does a kill of a <paramref name="kind"/> give up its material of <paramref name="tier"/> as several
-    /// separate piles of one each — only a grade-D elite's Rare does, so the two fall apart on the ground.</summary>
-    public static bool InPiles(CreatureKind kind, Rarity tier) => kind == CreatureKind.Elite && tier == Rarity.Rare;
-
-    /// <summary>How many piles that is, fewest to most; one for everything that is not <see cref="InPiles"/>.</summary>
-    public static void Piles(CreatureKind kind, Rarity tier, out int min, out int max)
-    {
-        min = max = InPiles(kind, tier) ? EliteRarePiles : 1;
-    }
-
-    /// <summary>How many are in each pile, fewest to most: always one.</summary>
-    public static void PileSize(CreatureKind kind, Rarity tier, out int min, out int max)
-    {
-        min = max = 1;
-    }
 }
