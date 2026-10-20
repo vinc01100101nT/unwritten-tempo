@@ -20,6 +20,10 @@ what can never be broken; the doc is the rule.
 - Every person's black skin is written into the prompt every time; monsters are described by look, never by name.
 - A weapon's skill icons are built from its Kashira's theme (the doc's table).
 - Prompts go to the user in ` ```text ` blocks, ready to paste.
+- **A fix for a bad result goes into every prompt it applies to, in the same turn.** When a picture comes back
+  wrong and the fix is not about that one picture (a weapon pasted on like a sticker, a weapon leaning on something
+  that is not beside the hero), sweep every prompt that could make the same mistake and fix them all, then say
+  which ones changed. Fixing only the prompt that failed is how the same bad picture comes back next week.
 
 ## After a sheet comes back
 

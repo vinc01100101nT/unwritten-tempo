@@ -246,7 +246,7 @@ Tall image. A big cheerful mascot: a cute round green slime blob with one red ey
 The small monster that bobs in the corner of every page. Same prompt as the mascot standing art, with "Tall image"
 replaced by "Square image, small and simple, readable at a tiny size". Cut it out of its plain background afterwards.
 
-### Character standing art — one per weapon, 14 in all — box 900 × 1200 — 9:16
+### Character standing art — one per weapon, 14 in all — box 1376 × 768 — 16:9
 
 Pick an outfit from sheet 4 and describe it in place of `[HAIR]` and `[CLOTHES]`. Fill in the weapon and the moment
 from the table — the lore's own words. The Kashira's name never goes into the prompt.
@@ -256,7 +256,7 @@ Hand-drawn anime fantasy illustration in the style of the attached reference, li
 
 The hero has solid matte black skin like black paper: black face, black neck, black arms, black hands, black legs. The face is blank black with only two small white eye marks, no mouth, no nose.
 
-Tall image, full body, plain #f7f8fa background, a small shadow at the feet. The hero has [HAIR] and wears [CLOTHES], holds a [WEAPON], and is caught in this moment: [MOMENT]. Cloth and hair moving, a strong readable silhouette.
+Wide image, full body, plain #f7f8fa background, a small shadow at the feet. The hero has [HAIR] and wears [CLOTHES], holds a [WEAPON], and is caught in this moment: [MOMENT]. Cloth and hair moving, a strong readable silhouette.
 ```
 
 | Weapon | Moment |
