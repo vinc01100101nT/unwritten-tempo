@@ -96,6 +96,12 @@ public class CharacterPlates : MonoBehaviour
         }
 
         var body = avatar.transform;
+        // Away on a teleport: the plate goes with the body.
+        if (TeleportLook.OwnWaitingToAppear)
+        {
+            mine.Show(false);
+            return;
+        }
         if (mine.Ensure() || body != myBody)
         {
             myBody = body;
@@ -146,8 +152,8 @@ public class CharacterPlates : MonoBehaviour
             }
             w.seenFrame = frame;
 
-            // A dead person's plate goes, the same as a creature's does.
-            if (h.IsDead)
+            // A dead person's plate goes, the same as a creature's does — and so does one away on a teleport.
+            if (h.IsDead || TeleportLook.IsHidden(h.transform))
             {
                 w.plate.ShowStates(null);
                 w.plate.Show(false);

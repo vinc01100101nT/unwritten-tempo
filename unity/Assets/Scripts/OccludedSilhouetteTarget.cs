@@ -53,9 +53,11 @@ public class OccludedSilhouetteTarget : MonoBehaviour
         {
             var r = scratch[i];
             if (r == null) continue;
-            // Only solid models take part. An effect riding the body — a weapon's enchant, an armour set's aura, any
-            // particle, trail or line — would be painted as a flat silhouette slab, and would hide the body behind it.
-            bool solid = r is SkinnedMeshRenderer || r is MeshRenderer;
+            // Only solid models take part, and a flat creature's own picture, which IS its body. An effect riding the
+            // body — a weapon's enchant, an armour set's aura, any particle, trail, line or effect sprite — would be
+            // painted as a flat silhouette slab, and would hide the body behind it.
+            bool solid = r is SkinnedMeshRenderer || r is MeshRenderer
+                      || (r is SpriteRenderer && r.GetComponent<BillboardAnimator3D>() != null);
             if (!shown || !solid) { r.renderingLayerMask &= ~(Bit | CoverBit); continue; }
             bool isEquipment = r.GetComponentInParent<WeaponGrip>() != null;
             if (isEquipment)

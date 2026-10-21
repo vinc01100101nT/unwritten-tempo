@@ -228,8 +228,21 @@ public static class GmCommands
         // spent — held 1, so every + press after the real points ran out was silently refused.
         Register(new GmCommand("lvl", "lvl <n>", "Set character level.", "lvl 50", CmdLevel, false, true, "level"));
         Register(new GmCommand("xp", "xp <n>", "Grant character XP.", "xp 1000", CmdXp, false, true, "exp"));
-        Register(new GmCommand("ringxp", "ringxp <n>", "Grant Ring of Progression XP.", "ringxp 500", CmdRingXp, false, true));
+        Register(new GmCommand("ringlvl", "ringlvl <n>", "Set Ring of Progression level. Lowering it takes back every ring point "
+            + "spent, so the points match the level.", "ringlvl 50", CmdRingLevel, false, true, "ringlevel"));
         Register(new GmCommand("statpts", "statpts <n>", "Grant allocatable stat points.", "statpts 20", CmdStatPts, false, true, "sp"));
+        Register(new GmCommand("resetstats", "resetstats", "Put every stat back to 1 and give back every stat point spent.",
+            "resetstats", CmdResetStats, false, true));
+        // A PLAYER'S OWN, like the + buttons on the stats window: it spends their own points, one at a time at the
+        // normal rising cost, on the server, and gives nothing free.
+        foreach (PrimaryStat stat in System.Enum.GetValues(typeof(PrimaryStat)))
+        {
+            var raised = stat;
+            string name = stat.ToString().ToLowerInvariant() + "+";
+            Register(new GmCommand(name, name + " <n>", "Spend your stat points raising " + stat + " by up to n. Asking for more "
+                + "than your points allow raises it as far as they go.", name + " 20", c => CmdRaiseStat(c, raised),
+                anyoneMayRun: true, changesTheWorld: true));
+        }
         Register(new GmCommand("heal", "heal", "Refill your HP and MP (revives if dead).", "heal", CmdHeal, false, true));
         Register(new GmCommand("revive", "revive", "Stand back up from death at full HP/MP.", "revive", CmdRevive, false, true));
         Register(new GmCommand("save", "save", "Make where you stand your save point.", "save", CmdSave, false, true));
@@ -352,19 +365,40 @@ public static class GmCommands
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n) || n <= 0) { c.ReplyUsage(); return; }
         int levelsGained = c.Ch.AddXP(n, out int ringLevelsGained);
-        GameNetwork.TellOwnerTheyEarned(c.Ch, n, 0, levelsGained, ringLevelsGained);
+        GameNetwork.TellOwnerTheyEarned(c.Ch, n, levelsGained, ringLevelsGained);
         GameNetwork.ShellFor(c.Ch)?.SaveSoon();
         c.Reply($"+{n} XP.");
     }
 
-    static void CmdRingXp(GmContext c)
+    static void CmdRingLevel(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        if (!c.TryInt(0, out var n) || n < 1) { c.ReplyUsage(); return; }
+        c.Ch.Ring.SetLevel(n);
+        GameNetwork.TellOwnerTheirProgress(c.Ch);
+        GameNetwork.ShellFor(c.Ch)?.SaveSoon();
+        c.Reply($"Ring level → {c.Ch.Ring.Level} — {c.Ch.Ring.BankedPoints} ring point(s) to spend.");
+    }
+
+    static void CmdResetStats(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        c.Ch.RespecStats();
+        AfterChangingTheirStats(c.Ch);
+        c.Reply($"Stats reset — {c.Ch.StatPoints} stat point(s) to spend.");
+    }
+
+    static void CmdRaiseStat(GmContext c, PrimaryStat stat)
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n) || n <= 0) { c.ReplyUsage(); return; }
-        int ringLevelsGained = c.Ch.AddRingXP(n);
-        GameNetwork.TellOwnerTheyEarned(c.Ch, 0, n, 0, ringLevelsGained);
-        GameNetwork.ShellFor(c.Ch)?.SaveSoon();
-        c.Reply($"+{n} ring XP.");
+        int added = 0;
+        while (added < n && c.Ch.AddStat(stat)) added++;
+        if (added > 0) AfterChangingTheirStats(c.Ch);
+        string asked = added < n ? $" (asked {n})" : "";
+        c.Reply(added == 0
+            ? (c.Ch.CostToRaise(stat) < 0 ? $"{stat} is already at its cap." : $"Not enough stat points to raise {stat} — {c.Ch.StatPoints} left.")
+            : $"{stat} +{added}{asked} — {c.Ch.StatPoints} point(s) left.");
     }
 
     static void CmdStatPts(GmContext c)
@@ -1125,11 +1159,12 @@ public static class GmCommands
     {
         var scene = c.Arg(0);
         if (scene == null) { c.ReplyUsage(); return; }
-        // THROUGH THE DOOR EVERY PORTAL USES. Loading the map on the asker's machine moved nobody: the server
-        // still had them where they stood, and the map they wanted may be held by another process entirely.
+        // THROUGH THE DOOR EVERY PORTAL USES — the very same call a portal makes on the asker's machine, which a GM is
+        // let through from anywhere. Loading the map on the asker's machine alone moved nobody: the server still had
+        // them where they stood, and the map they wanted may be held by another process entirely.
         var shell = GameNetwork.ShellFor(c.Ch);
         if (shell == null) { c.Reply("No character."); return; }
-        shell.MoveToMap(scene, c.Arg(1));
+        shell.WalkThroughDoorOnOwnersMachine(scene, c.Arg(1));
         c.Reply($"Traveling to {scene}…");
     }
 

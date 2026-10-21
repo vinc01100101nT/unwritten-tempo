@@ -5,8 +5,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// Tab moves the keyboard to the next control on a screen, Shift+Tab to the previous, wrapping at both ends.
-/// Attached once to a screen's canvas root, so every box and button that screen builds is reachable without
+/// Tab moves the keyboard to the next text box on a screen, Shift+Tab to the previous, wrapping at both ends —
+/// text boxes only, never a button. Attached once to a screen's canvas root, so every box that screen builds is reachable without
 /// touching the mouse — nothing has to be numbered or listed by hand, and a row inserted into a form takes its
 /// place in the walk on its own.
 ///
@@ -19,7 +19,7 @@ using UnityEngine.UI;
 /// </summary>
 public class TabFocus : MonoBehaviour
 {
-    /// <summary>Give <paramref name="root"/> and everything under it Tab-to-the-next-control. Safe to call twice.</summary>
+    /// <summary>Give <paramref name="root"/> and everything under it Tab-to-the-next-box. Safe to call twice.</summary>
     public static void Attach(GameObject root)
     {
         if (root != null && root.GetComponent<TabFocus>() == null) root.AddComponent<TabFocus>();
@@ -51,7 +51,9 @@ public class TabFocus : MonoBehaviour
         stops.Clear();
     }
 
-    static bool NotAStop(Selectable s) => s == null || !s.IsInteractable();
+    // ONLY TEXT BOXES are stops: a box shows it has the keyboard (its blinking marker), a button shows nothing, so
+    // Tab landing on one left the player not knowing where they were.
+    static bool NotAStop(Selectable s) => s == null || !s.IsInteractable() || s.GetComponent<TMP_InputField>() == null;   // perf-ok: only on a Tab press
 
     static void Focus(Selectable stop, EventSystem events)
     {

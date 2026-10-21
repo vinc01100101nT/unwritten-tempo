@@ -61,7 +61,12 @@ public class GameRoot : MonoBehaviour
         // still trying. Asking to enter can fail before the line above has even returned: with no character server
         // to ask, the answer comes back on the spot, and it signs the player out and puts the front door back up,
         // which takes the curtain down with it.
-        else if (AccountSession.IsActive) LoadingScreen.Show();
+        else if (AccountSession.IsActive)
+        {
+            LoadingScreen.Show();
+            // …and the player arrives the teleport's way once it has faded away.
+            TeleportLook.AppearWhenScreenClears();
+        }
     }
 
     // The wire came up. THIS is the moment a player is allowed to be somewhere.
@@ -74,10 +79,10 @@ public class GameRoot : MonoBehaviour
 
     // Every retry spent. Nobody may be in a world they are not joined to, so the world goes and the player is
     // put back at the front door with a line saying why — not left standing in a town nobody else can see.
-    void OnLostWorld()
+    void OnLostWorld(string why)
     {
         ReconnectNotice.Hide();
-        LogOut("Lost the connection to the world.");
+        LogOut(string.IsNullOrEmpty(why) ? "Lost the connection to the world." : why);
     }
 
     /// <summary>Leave the world and go back to signing in, forgetting who was playing. What the <b>Log out</b>

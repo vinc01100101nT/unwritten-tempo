@@ -77,6 +77,9 @@ def main():
         rel = os.path.relpath(path, REPO)
         text = read(rel)
         kind, level = line(text, "kind")[-1], int(line(text, "level").split(":")[1])
+        # Only originals: a Tainted or Blighted version is kind 0 too, but its tier comes from a higher multiplier.
+        if re.search(r"(?m)^  versionOf: \{fileID: [1-9]", text):
+            continue
         if kind == "0" and level <= 14 and raw is None:
             raw = (rel, text)
         elif kind == "0" and level >= 15 and graded is None:
@@ -100,6 +103,8 @@ def main():
     spawns_rel = os.path.join(RES, "WorldSpawns.asset")
     spawns = read(spawns_rel)
     newbie = re.search(r"(?m)^  - map: lst_fild01\r?\n    creature: (\S+)", spawns)
+    # The mirror reads the file with its line ends turned to \n, so the anchor is matched the same way.
+    newbie_anchor = newbie.group(0).replace("\r", "") if newbie else None
     elite_id = line(elite[1], "id").split(":", 1)[1].strip()
     if newbie is None:
         print(RED + "no spawn on the newbie map lst_fild01 to plant into" + OFF)
@@ -112,8 +117,8 @@ def main():
                 "but the rule says")
     bad += case("a creature with its material taken away", raw[0], line(raw[1], "material"), "  material: {fileID: 0}",
                 "has no material of its own")
-    bad += case("a x1 creature's material given a Rare tier", ord_rel, line(ord_text, "materialStep"), "  materialStep: 3",
-                "its multiplier x1 gives Common")
+    bad += case("an original's Common material given a Rare tier", ord_rel, line(ord_text, "materialStep"), "  materialStep: 3",
+                "gives Common")
     bad += case("an elite's material made Common", rare_rel, line(rare_text, "materialStep"), "  materialStep: 1",
                 "but is Common; its multiplier")
     bad += case("a material with no tier at all", rare_rel, line(rare_text, "materialStep"), "  materialStep: 0",
@@ -126,10 +131,10 @@ def main():
                 "  multiplier: 3", "its multiplier x3 gives Uncommon")
     bad += case("a creature with a typed gear grade again", raw[0], line(raw[1], "multiplier"),
                 line(raw[1], "multiplier") + "\n  gearQuality: 2", "still carries a typed gear grade")
-    bad += case("an elite spawning on a newbie map passes (elites roam every map)", spawns_rel, newbie.group(0),
+    bad += case("an elite spawning on a newbie map passes (elites roam every map)", spawns_rel, newbie_anchor,
                 "  - map: lst_fild01\n    creature: " + elite_id, None, must_pass=True)
     graded_id = line(graded[1], "id").split(":", 1)[1].strip()
-    bad += case("a normal creature of a higher level spawning on a newbie map", spawns_rel, newbie.group(0),
+    bad += case("a normal creature of a higher level spawning on a newbie map", spawns_rel, newbie_anchor,
                 "  - map: lst_fild01\n    creature: " + graded_id, "a newbie map's own creatures are x1")
     geared = None
     for path in sorted(glob.glob(os.path.join(REPO, RES, "Monsters", "*.asset"))):
@@ -166,6 +171,8 @@ def main():
     bad += case("a material moved out of the Etc tab", ord_rel, line(ord_text, "category"), "  category: 2",
                 "is not in the Etc tab")
     bad += case("a material with another weight", ord_rel, line(ord_text, "weight"), "  weight: 1", "weighs 1")
+    bad += case("a Common material showing no box", ord_rel, line(ord_text, "icon"), "  icon: {fileID: 0}",
+                "its icon is not the Common box")
 
     code_after, out_after = run()
     if code_after != 0 or out_after != out:

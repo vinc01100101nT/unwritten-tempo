@@ -233,7 +233,7 @@ public static class CraftingMath
     static int HalfUp(long num, long den) => (int)((2 * num + den) / (2 * den));
 
     /// <summary>A weapon whose own power is MAGIC attack rather than attack: a caster's weapon, and any weapon whose
-    /// ordinary attack is a magic shot (<see cref="WeaponTypes.ShootsMagic"/>) — a power that attack would carry is one
+    /// ordinary attack is a magic shot (<see cref="WeaponTypes.ShootsMagic"/>) â€” a power that attack would carry is one
     /// that shot never reads.</summary>
     public static bool PowerIsMagic(WeaponType w) =>
         w == WeaponType.Staff || w == WeaponType.Wand || w == WeaponType.Scythe || WeaponTypes.ShootsMagic(w);

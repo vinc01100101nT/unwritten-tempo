@@ -2,7 +2,7 @@
 """Every creature's own material is whole: each normal creature and elite has its multiplier written and names exactly
 ONE material, whose tier is the one its multiplier gives (CreatureMaterials.TierOfMultiplier: x1 Common, x3 Uncommon,
 x10 Rare, x30 Epic, x90 Legendary), no material belongs to two creatures, every material sells for exactly what the
-rule says for its creature's level and its tier, every piece of gear is worth what a brand-new piece is
+rule says for its creature's level and its tier, its icon is the box drawn in its tier's colour, every piece of gear is worth what a brand-new piece is
 (CraftingMath.NewPieceWorth), and the NEWBIE MAPS hold only x1 normal creatures of a level that wears Raw (elites,
 which roam every map, excepted). The tier openings and the price multiples are read out of CreatureMaterials.cs, the
 level-to-grade ladder out of CreatureLoot.cs and the new-piece worth out of CraftingMath.cs, so the rule has one owner
@@ -64,6 +64,21 @@ def tier_openings(root):
     return row if len(row) == 5 else None
 
 
+def box_icons(root):
+    """{step: guid} of the box icon each tier's material shows, from the path DerivedItemValues writes them from."""
+    src = open(os.path.join(root, "unity", "Assets", "Scripts", "Editor", "DerivedItemValues.cs"), encoding="utf-8").read()
+    m = re.search(r'const string BoxIconPath = "([^"]+)";', src)
+    if m is None:
+        return None
+    out = {}
+    for step, tier in TIER.items():
+        meta = os.path.join(root, "unity", m.group(1).replace("{0}", tier) + ".meta")
+        if not os.path.exists(meta):
+            return None
+        out[step] = guid_of(open(meta, encoding="utf-8").read())
+    return out
+
+
 def gear_rule(root):
     """(grades, ladder top, least recycled dust), read from the functions that decide them. CraftingMath.cs is read
     forgivingly: only a number is searched for in it, and a stray badly-encoded character elsewhere must not hide it."""
@@ -101,6 +116,11 @@ def main():
     openings = tier_openings(root)
     if openings is None:
         print("could not read the five tier openings out of CreatureMaterials.cs, so nothing can be checked")
+        return 1
+    boxes = box_icons(root)
+    if boxes is None:
+        print("could not read the box icon path out of DerivedItemValues.cs, or a tier's box icon is missing, "
+              "so nothing can be checked")
         return 1
     grades = "Raw F E D C B A".split()
 
@@ -165,6 +185,8 @@ def main():
         if field(item, "value") != str(want):
             faults.append("%s is worth %s but the rule says %d, to sell for %d (%d x level %d of %s)"
                           % (item_name, field(item, "value"), want, sells, per_level[step], level, name))
+        if guid_of(field(item, "icon")) != boxes[step]:
+            faults.append("%s is %s but its icon is not the %s box" % (item_name, TIER[step], TIER[step]))
         if field(item, "category") != ETC_TAB:
             faults.append("%s is not in the Etc tab" % item_name)
         if field(item, "weight") != WEIGHT:

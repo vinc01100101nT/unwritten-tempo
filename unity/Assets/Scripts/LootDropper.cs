@@ -89,72 +89,71 @@ public class LootDropper : MonoBehaviour
         if (PlayerUnits.Gone(winner) || winner is not Character) return;
         // A SUMMON CARRIES NOTHING — see Rewards.PayForKill for why.
         if (health.IsSummoned) return;
-        // A SAVED CHARACTER carries something only if it is a rebel, and then it carries what one kind up carries — its
-        // find by the kind above, its materials at the multiplier above (SavedCharacterRules.LootMultiplierOfRebel) —
-        // the rare encounter a rebel is. One that helped or left carries nothing.
+        // A SAVED CHARACTER carries something only if it is a rebel, and then exactly what the creature it was carries —
+        // never a higher kind's drops. One that helped or left carries nothing.
         var saved = health.savedAs;
         if (saved != null && saved.behaviour != SavedBehaviour.Rebel) return;
-        var lootKind = saved != null ? SavedCharacterRules.LootKindOfRebel(health.kind) : health.kind;
 
         won.Clear();
 
-        // Items — each entry is an independent roll. The table carries MATERIALS and other non-worn drops.
-        foreach (var entry in lootTable)
-        {
-            if (entry.item == null) continue;
-            if (Random.value <= entry.chance) Won(entry.item, 1, null, entry.chance);
-        }
-
-        // ITS MULTIPLIER decides every material below — never its level or its gear. A rebel drops at its lifted one.
-        float lootMultiplier = saved != null ? SavedCharacterRules.LootMultiplierOfRebel(health.kind, health.multiplier)
-                                             : health.multiplier;
-
-        // THE CHANCE OF AN INK OR A SALT — each opens from its own multiplier and is multiplied by it.
-        var lines = CreatureLoot.Lines;
-        for (int i = 0; i < lines.Count; i++)
-        {
-            var line = lines[i];
-            float expected = CreatureLoot.ExpectedAt(line, lootMultiplier);
-            int pieces = CreaturePay.PiecesFor(expected, CombatRng.Value01());
-            if (pieces <= 0) continue;
-            var item = MaterialFor(line);
-            if (item != null) Won(item, pieces, null, CreaturePay.ChanceOfAny(expected));
-        }
-
-        // TEMPER DUST AND QUENCH OIL, on every kill.
-        WonUnits(MaterialCatalog.TemperDust, CreatureLoot.UnitsPerKill(CreatureLoot.TemperDustPerKill, lootMultiplier,
-                                                                        CombatRng.Range(0, 100)));
-        WonUnits(MaterialCatalog.QuenchOil, CreatureLoot.UnitsPerKill(CreatureLoot.QuenchOilPerKill, lootMultiplier,
-                                                                       CombatRng.Range(0, 100)));
-
-        // ONE PIECE OF WHAT IT WEARS, on one kill in ten: an exact copy of that piece — grade, folds, Ink, slots, roll.
-        if (equipment != null && CombatRng.Chance(CreatureLoot.GearDropChance))
-        {
-            equipment.CopyWornInto(wornScratch);
-            for (int i = wornScratch.Count - 1; i >= 0; i--)
-                if (wornScratch[i] == null || !Droppable(wornScratch[i].def)) wornScratch.RemoveAt(i);
-            if (wornScratch.Count > 0)
-            {
-                var worn = wornScratch[CombatRng.Range(0, wornScratch.Count)];
-                Won(worn.def, 1, worn.CloneAsNewCopy(), CreatureLoot.GearDropChance / wornScratch.Count);
-            }
-            wornScratch.Clear();
-        }
-
-        // AND ITS FIND — the food or the converter its element carries — on its kind's chance. A certain find is not
-        // rolled: the roll's top value would lose it.
-        float findChance = CreatureFinds.Chance(lootKind);
-        if (findChance >= 1f || CombatRng.Chance(findChance))
-        {
-            var find = CreatureFinds.Roll(health.element);
-            if (find != null) Won(find, 1, null, findChance);
-        }
-
-        // THE MATERIAL ONLY THIS CREATURE DROPS. A rebel rolls it AGAIN at the creature's own multiplier, never the
-        // lifted one its other materials above use, or a normal creature's own material would fall thirty times as
-        // often from its rebel.
+        // A REBEL PAYS SavedCharacterRules.RebelKills kills of its creature: every roll below, that many times over at
+        // the creature's own multiplier — more of the same drops, never a higher tier.
+        int rolls = saved != null ? SavedCharacterRules.KillsWorth(saved.behaviour) : 1;
+        float lootMultiplier = health.multiplier;
         var def = MonsterCatalog.ById(health.creatureId);
-        if (def != null) RollOwnMaterial(def.material, health.kind, health.multiplier);
+        for (int roll = 0; roll < rolls; roll++)
+        {
+            // Items — each entry is an independent roll. The table carries MATERIALS and other non-worn drops.
+            foreach (var entry in lootTable)
+            {
+                if (entry.item == null) continue;
+                if (Random.value <= entry.chance) Won(entry.item, 1, null, entry.chance);
+            }
+
+            // THE CHANCE OF AN INK OR A SALT — each opens from its own multiplier and is multiplied by it.
+            var lines = CreatureLoot.Lines;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i];
+                float expected = CreatureLoot.ExpectedAt(line, lootMultiplier);
+                int pieces = CreaturePay.PiecesFor(expected, CombatRng.Value01());
+                if (pieces <= 0) continue;
+                var item = MaterialFor(line);
+                if (item != null) Won(item, pieces, null, CreaturePay.ChanceOfAny(expected));
+            }
+
+            // TEMPER DUST AND QUENCH OIL, on every kill.
+            WonUnits(MaterialCatalog.TemperDust, CreatureLoot.UnitsPerKill(CreatureLoot.TemperDustPerKill, lootMultiplier,
+                                                                            CombatRng.Range(0, 100)));
+            WonUnits(MaterialCatalog.QuenchOil, CreatureLoot.UnitsPerKill(CreatureLoot.QuenchOilPerKill, lootMultiplier,
+                                                                           CombatRng.Range(0, 100)));
+
+            // ONE PIECE OF WHAT IT WEARS, on one kill in ten: an exact copy of that piece — grade, folds, Ink, slots, roll.
+            if (equipment != null && CombatRng.Chance(CreatureLoot.GearDropChance))
+            {
+                equipment.CopyWornInto(wornScratch);
+                for (int i = wornScratch.Count - 1; i >= 0; i--)
+                    if (wornScratch[i] == null || !Droppable(wornScratch[i].def)) wornScratch.RemoveAt(i);
+                if (wornScratch.Count > 0)
+                {
+                    var worn = wornScratch[CombatRng.Range(0, wornScratch.Count)];
+                    Won(worn.def, 1, worn.CloneAsNewCopy(), CreatureLoot.GearDropChance / wornScratch.Count);
+                }
+                wornScratch.Clear();
+            }
+
+            // AND ITS FIND — the food or the converter its element carries — on its kind's chance. A certain find is not
+            // rolled: the roll's top value would lose it.
+            float findChance = CreatureFinds.Chance(health.kind);
+            if (findChance >= 1f || CombatRng.Chance(findChance))
+            {
+                var find = CreatureFinds.Roll(health.element);
+                if (find != null) Won(find, 1, null, findChance);
+            }
+
+            // THE MATERIAL ONLY THIS CREATURE DROPS.
+            if (def != null) RollOwnMaterial(def.material, health.kind, health.multiplier);
+        }
 
         // NOTHING AN ELITE DROPS IS AUTO-LOOTED: all of it falls, so an elite is hunted by hand and never farmed by
         // standing in its field with auto-combat on.

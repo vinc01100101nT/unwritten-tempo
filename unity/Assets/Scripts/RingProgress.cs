@@ -76,12 +76,15 @@ public sealed class RingProgress
         OnChanged?.Invoke();
     }
 
-    /// <summary>Dev/testing: set the ring's level directly. Each level gained
-    /// banks one passive draft point, exactly like a normal level-up, so the ring track can be exercised
-    /// without grinding XP. Lowering only sets the level (banked points are left alone).</summary>
+    /// <summary>Dev/testing (the <c>/ringlvl</c> command): set the ring's level directly. Each level gained banks one
+    /// passive draft point, exactly like a normal level-up. LOWERING takes back every point spent on the ring and
+    /// leaves exactly what the lower level has earned banked, its leader cleared, so the points always follow the level.</summary>
     public void SetLevel(int newLevel)
     {
         newLevel = Math.Max(1, newLevel);
+        // A ring starts with one point banked, so a ring of level L has earned L.
+        if (newLevel < Level)
+            Passives.LoadState(null, null, default, false, newLevel);
         while (Level < newLevel) { Level++; Passives.AddPoint(); OnLeveledUp?.Invoke(Level); }
         Level = newLevel;
         XP = 0;

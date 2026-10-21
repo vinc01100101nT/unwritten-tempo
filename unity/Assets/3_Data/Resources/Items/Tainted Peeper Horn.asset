@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-peeper-horn
   displayName: Tainted Peeper Horn
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

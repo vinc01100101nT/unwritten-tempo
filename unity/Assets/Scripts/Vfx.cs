@@ -45,6 +45,9 @@ public static class Vfx
         // What this effect's own particles say about its length — the same three numbers the effect table carries
         // for a machine that never builds one of these (see EffectTiming).
         EffectTiming.Measured measured;
+        // Its renderers, held for hiding it while the person it rides is away on a teleport (TeleportLook.Covers).
+        Renderer[] renderers;
+        bool covered;
         float returnAt;        // Time.time to auto-return at; 0 = never (attached loop, until Stop)
         bool stopping;         // in the fade-out tail after Stop() → next returnAt hits Return, not another Stop
         Transform follow;      // tracked target for Attach (auras/shields); null for a fixed-point one-shot
@@ -71,7 +74,7 @@ public static class Vfx
             // feature's filter and paints the effect flat blue when it passes behind scenery. Strip those
             // two bits here — the one place every pooled effect is born — so no combat VFX can be x-rayed.
             const uint reserved = OccludedSilhouetteTarget.Bit | OccludedSilhouetteTarget.CoverBit;
-            var renderers = GetComponentsInChildren<Renderer>(true);
+            renderers = GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < renderers.Length; i++)
                 renderers[i].renderingLayerMask &= ~reserved;
             baseSpeed = new float[systems.Length];
@@ -114,6 +117,7 @@ public static class Vfx
                             float tailTrim = 0f, float clipStart = 0f)
         {
             generation++;
+            if (covered) Cover(false);
             follow = followTarget;
             offset = followOffset;
             stopping = false;
@@ -209,6 +213,10 @@ public static class Vfx
             {
                 if (follow.gameObject == null) { Stop(); return; }   // target destroyed → tear down
                 transform.position = follow.position + offset;
+                // HIDDEN AND SILENT while the person it rides is away on a teleport — an aura, a regeneration glow,
+                // anything held on them — and back the frame they appear.
+                bool hide = TeleportLook.Covers(follow);
+                if (hide != covered) Cover(hide);
             }
             if (returnAt <= 0f || Time.time < returnAt) return;
             // A one-shot with a looping sub-emitter: stop emitting + fade the tail, THEN return (avoids a hard
@@ -217,8 +225,21 @@ public static class Vfx
             else Return();
         }
 
+        // Switch this effect's drawing and its sound off or back on. Only when it changes, never per frame.
+        void Cover(bool on)
+        {
+            covered = on;
+            if (renderers != null)
+                for (int i = 0; i < renderers.Length; i++)
+                    if (renderers[i] != null) renderers[i].forceRenderingOff = on;
+            if (audioSources != null)
+                for (int i = 0; i < audioSources.Length; i++)
+                    if (audioSources[i] != null) audioSources[i].mute = on;
+        }
+
         void Return()
         {
+            if (covered) Cover(false);
             gameObject.SetActive(false);
             follow = null;
             GetPool(poolKey).Push(this);

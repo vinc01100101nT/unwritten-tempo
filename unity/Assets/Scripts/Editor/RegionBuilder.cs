@@ -35,25 +35,16 @@ public static class RegionBuilder
             n++;
         }
         EditorSceneManager.MarkSceneDirty(scene);
-        Debug.Log($"[unwritten] Fitted {n} portal trigger(s) to their warp visuals in '{scene.name}'.");
+        Debug.Log($"[unwritten] Fitted {n} portal trigger(s) to the warp circle's footprint in '{scene.name}'.");
         EditorUtility.DisplayDialog("Fit Portal Triggers",
-            $"Resized {n} portal trigger(s) to hug their warp ring (root scale reset to 1,1,1).\n\n" +
+            $"Stood {n} portal(s) on the ground and gave each the warp circle's footprint as its trigger (root scale reset to 1,1,1).\n\n" +
             "Save the scene (Ctrl+S) to keep it.", "OK");
     }
 
-    // Fit a portal's BoxCollider EXACTLY to its warp FX, and drop the FX so it sits on the ground (no float).
-    // The ring is a particle effect, so we SIMULATE each system to a steady state and read the real particle
-    // world positions/sizes (Renderer.bounds is unreliable for un-simulated particles) plus any mesh bounds.
-    // Then we shift the WarpFX child down until the visual's bottom meets the portal origin (which is on the
-    // terrain) and size the trigger to the measured bounds 1:1 (portal scale is 1). Falls back to the doorway
-    // default only if nothing measurable exists.
+    // Stand a door on the real ground and give it the circle's footprint as its trigger: the circle's width, and only
+    // a sliver tall, so it is reached by feet standing on the circle and never by a jump over it (Portal3D).
     static void FitTriggerToFx(Transform portal, BoxCollider box)
     {
-        // Find the direct WarpFX child so we can ground it.
-        Transform fx = null;
-        for (int i = 0; i < portal.childCount; i++)
-            if (portal.GetChild(i).name == "WarpFX") { fx = portal.GetChild(i); break; }
-
         // STANDARD: every map's walkable ground is the "Ground" layer (flat at Y≈0). Snap the portal PIVOT
         // down onto that real ground first — so a portal that was hand-dragged onto a roof/prop (e.g. Town's
         // stray Y=0.79) drops back to the floor, and "grounded" below means the actual terrain everywhere.
@@ -64,63 +55,8 @@ public static class RegionBuilder
             Vector3 snapped = WorldBuildUtil.SurfacePoint(portal.position, 1 << gLayer);
             portal.position = new Vector3(portal.position.x, snapped.y, portal.position.z);
         }
-
-        bool has = false; Bounds wb = default;
-        void Add(Bounds b) { if (!has) { wb = b; has = true; } else wb.Encapsulate(b); }
-
-        // Meshes (e.g. a distortion quad) give exact bounds directly.
-        foreach (var mr in portal.GetComponentsInChildren<MeshRenderer>())
-            if (mr.transform != portal) Add(mr.bounds);
-
-        // Particles: simulate each system to a steady state, then collect every live particle (world pos + size).
-        // We measure the RING ONLY — the big core particles — and ignore the thin sparks that shoot outward, so
-        // grounding drops the visible ring to the floor instead of the spark cloud, and the box hugs the ring.
-        var parts = new List<Vector4>();   // xyz = world pos, w = size
-        float maxSize = 0f;
-        ParticleSystem.Particle[] buf = null;
-        foreach (var ps in portal.GetComponentsInChildren<ParticleSystem>())
-        {
-            ps.Simulate(3f, false, true, false);                       // steady-state snapshot of this system
-            int count = ps.particleCount;
-            if (count == 0) { ps.Clear(); continue; }
-            if (buf == null || buf.Length < count) buf = new ParticleSystem.Particle[count];
-            int got = ps.GetParticles(buf);
-            bool worldSpace = ps.main.simulationSpace == ParticleSystemSimulationSpace.World;
-            for (int i = 0; i < got; i++)
-            {
-                Vector3 wp = worldSpace ? buf[i].position : ps.transform.TransformPoint(buf[i].position);
-                float sz = buf[i].GetCurrentSize(ps);
-                parts.Add(new Vector4(wp.x, wp.y, wp.z, sz));
-                maxSize = Mathf.Max(maxSize, sz);
-            }
-            ps.Clear();                                                // leave the system reset, not mid-sim
-        }
-
-        float coreThreshold = 0.4f * maxSize;                          // keep the fat ring, drop the thin sparks
-        foreach (var v in parts)
-        {
-            if (v.w < coreThreshold) continue;
-            float r = Mathf.Max(0.01f, v.w * 0.5f);
-            Add(new Bounds(new Vector3(v.x, v.y, v.z), new Vector3(r * 2f, r * 2f, r * 2f)));
-        }
-
-        if (!has || wb.size.x < 0.05f || wb.size.y < 0.05f)
-        {
-            box.center = TriggerCenter; box.size = TriggerSize;        // truly unmeasurable → safe doorway default
-            return;
-        }
-
-        // Ground it: slide the FX down so the visual's bottom rests on the portal origin (terrain height).
-        if (fx != null)
-        {
-            float floatGap = wb.min.y - portal.position.y;            // >0 ⇒ levitating above the ground
-            fx.position -= new Vector3(0f, floatGap, 0f);
-            wb.center   -= new Vector3(0f, floatGap, 0f);
-        }
-
-        // Exact 1:1 fit (no padding) — portal scale is 1 so world size maps straight to local box size.
-        box.center = portal.InverseTransformPoint(wb.center);
-        box.size = wb.size;
+        box.center = TriggerCenter;
+        box.size = TriggerSize;
     }
 
     // ── HAND-PLACE HELPER: snap dragged-in props onto the terrain ────────────────────────────────────
@@ -172,26 +108,28 @@ public static class RegionBuilder
         return true;
     }
 
-    // The visible warp marker: Hovl Studio's UPRIGHT "Portal" rings, colour-coded BY DESTINATION so a
-    // doorway's colour tells you where it goes (see PortalPrefabFor below).
-    const string PortalsDir   = "Assets/1_Authored/Prefabs/VFX/Portals/";
-    const float  WarpFxScale  = 0.5f;   // tune live in-scene; Hovl portals are ~2 units tall at scale 1
-    const float  WarpFxHeight = 1.0f;   // lift the ring so it stands ON the ground at ~doorway height
+    // The visible warp marker: the magic circle lying FLAT on the ground, colour-coded BY DESTINATION so a doorway's
+    // colour tells you where it goes (see PortalPrefabFor below).
+    const string PortalsDir = "Assets/1_Authored/Prefabs/VFX/Portals/";
+    // TWICE A CHARACTER'S WIDTH ACROSS. The default body measures 0.34 m across at the shared body height
+    // (BaseCharacter, measured 2026-10-21), and the circle's picture is 3 m across at scale 1.
+    const float WarpCircleDiameter = 0.68f;
+    const float WarpCirclePictureDiameter = 3f;
 
-    // The walk-through trigger volume — a doorway, NOT a room. Single source of truth so MakePortal and the
-    // Relink-Region refresh keep every portal's trigger the same modest size (the old 3×2.4×3 was a giant cube).
-    static readonly Vector3 TriggerSize   = new Vector3(1.5f, 2f, 1.5f);
-    static readonly Vector3 TriggerCenter = new Vector3(0f, 1f, 0f);
+    // The walk-through trigger: the circle's footprint, a sliver tall — feet standing on the circle reach it, a jump
+    // over it does not (Portal3D also asks that the walker is on the ground). One shape for every door.
+    static readonly Vector3 TriggerSize   = new Vector3(WarpCircleDiameter, 0.2f, WarpCircleDiameter);
+    static readonly Vector3 TriggerCenter = new Vector3(0f, 0.1f, 0f);
 
     // Destination → ring. The kind of map a door leads to comes from that map's TYPE in the world layout, never its
     // name (MapKinds — the same table the zone map and the arrival flash colour by).
     static string PortalPrefabFor(MapKind kind) => PortalsDir + kind switch
     {
-        MapKind.Town    => "Portal yellow.prefab",
-        MapKind.Field   => "Portal green.prefab",
-        MapKind.Special => "Portal red.prefab",
-        MapKind.Dungeon => "Portal purple.prefab",
-        _               => "Portal green.prefab",
+        MapKind.Town    => "Warp circle yellow.prefab",
+        MapKind.Field   => "Warp circle green.prefab",
+        MapKind.Special => "Warp circle red.prefab",
+        MapKind.Dungeon => "Warp circle purple.prefab",
+        _               => "Warp circle green.prefab",
     };
 
     public static GameObject MakePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, string destinationType)
@@ -214,9 +152,9 @@ public static class RegionBuilder
         return go;
     }
 
-    /// <summary>THE ONE LOOK OF A DOOR: the standing, animated warp ring, coloured by the type of map it leads to.
-    /// Takes off whatever the door wore before (the retired flat disc, or an older ring), puts the ring on, stands it
-    /// on the ground and fits the walk-through trigger to it. Used when a door is made and to re-dress the doors
+    /// <summary>THE ONE LOOK OF A DOOR: the magic circle lying flat on the ground, coloured by the type of map it leads
+    /// to. Takes off whatever the door wore before (an older disc or standing ring), lays the circle on, stands the door
+    /// on the ground and gives it the circle's footprint as its trigger. Used when a door is made and to re-dress the doors
     /// already in a scene, so both always end up identical.
     ///
     /// <para>There is deliberately no flat stand-in when the ring cannot be found: that fallback is what quietly
@@ -242,8 +180,9 @@ public static class RegionBuilder
         var fx = (GameObject)PrefabUtility.InstantiatePrefab(prefab, portal.scene);
         fx.name = "WarpFX";
         fx.transform.SetParent(portal.transform, false);
-        fx.transform.localPosition = new Vector3(0f, WarpFxHeight, 0f);
-        fx.transform.localScale = Vector3.one * WarpFxScale;
+        fx.transform.localPosition = Vector3.zero;
+        fx.transform.localRotation = Quaternion.identity;
+        fx.transform.localScale = Vector3.one * (WarpCircleDiameter / WarpCirclePictureDiameter);
 
         var box = portal.GetComponent<BoxCollider>();
         if (box != null) FitTriggerToFx(portal.transform, box);

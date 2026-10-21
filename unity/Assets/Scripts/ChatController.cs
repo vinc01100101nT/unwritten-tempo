@@ -234,6 +234,8 @@ public class ChatController : MonoBehaviour
         enter = enter || Hotkeys.PressedOnScreen(GameKeys.Chat);
         // Open + focus on Enter — but only when NOT already typing (a submit press has Hotkeys.Typing == true,
         // so this branch is skipped and the InputField's own submit handles it instead).
+        // An Enter that pressed a window's affirming button was that window's, not the chat's.
+        if (enter && EnterKey.TakenThisFrame) enter = false;
         if (enter && !Hotkeys.Typing)
         {
             if (!UiAnim.IsOpen(root)) { UiAnim.Open(root); UISounds.PlayOpen(); }
@@ -354,6 +356,7 @@ public class ChatController : MonoBehaviour
         box.placeholder = placeholder;
         box.lineType = TMP_InputField.LineType.SingleLine;
         UiKit.ClipTyping(box, 8);
+        UiKit.StyleTyping(box);
         return box;
     }
 

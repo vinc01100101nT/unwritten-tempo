@@ -29,8 +29,12 @@ public class Portal3D : MonoBehaviour
     // Each visible child's own turn as placed, kept so facing the centre never piles one turn on another.
     Quaternion[] placedTurns;
 
+    // The trigger whose footprint is the circle, held once.
+    BoxCollider footprint;
+
     void OnEnable()
     {
+        if (footprint == null) footprint = GetComponent<BoxCollider>();
         Active.Add(this);
         FaceMapCentre();
     }
@@ -67,9 +71,15 @@ public class Portal3D : MonoBehaviour
         if (col != null) col.isTrigger = true;
     }
 
-    void OnTriggerEnter(Collider other)
+    // FEET ON THE CIRCLE, NOT A BODY IN THE AIR. The trigger is the circle's footprint and only a sliver tall, and it
+    // is asked while the walker stays in it: a door is taken the moment they stand on the ground inside the circle —
+    // landing on it from a jump counts, flying over it does not. Runs only while somebody is inside the trigger, and
+    // the two cheap checks come before the component lookup.
+    void OnTriggerStay(Collider other)
     {
         if (fired || string.IsNullOrEmpty(targetScene)) return;
+        if (!(other is CharacterController walker) || !walker.isGrounded) return;
+        if (!FeetInsideCircle(other.transform.position)) return;
         if (other.GetComponentInParent<Player3DController>() == null) return;   // only the player triggers it
         fired = true;
 
@@ -83,20 +93,40 @@ public class Portal3D : MonoBehaviour
 
         // THE CURTAIN GOES UP THE MOMENT THE DOOR IS TOUCHED, before anything is asked. The player has already
         // committed by walking into it, and the world behind them must stop being something they can act on —
-        // whether the map on the other side is held by this same server or by another one entirely.
-        LoadingScreen.Show();
+        // whether the map on the other side is held by this same server or by another one entirely. A teleport: the
+        // effect starts and the player vanishes on this frame, the screen fades to black, and only once it is black
+        // is the server asked — the map they are leaving is never seen going.
+        WalkThrough(targetScene, spawnId);
+    }
 
+    /// <summary>THE ONE WAY THROUGH A DOOR — a portal walked into, and a GM's <c>/tp</c>, which the server hands to
+    /// this same call: the effect and the vanish now, the fade to black, and the server asked once it is black.</summary>
+    public static void WalkThrough(string map, string arriveAtSpawnId)
+    {
+        TeleportLook.CoverWithCurtain(() => AskToWalkThrough(map, arriveAtSpawnId));
+    }
+
+    static void AskToWalkThrough(string map, string arriveAtSpawnId)
+    {
         // AND THE SERVER DECIDES, not this machine. The map on the other side may be held by a different
         // process, and only the server can find out which, bring it up, or refuse — so this asks instead of
         // travelling. When the map turns out to be right here, the answer comes straight back and the door is
         // exactly as instant as it has always been.
         var me = GameNetwork.MyPlayer;
-        if (me != null) { me.CmdWalkThroughPortal(targetScene, spawnId); return; }
+        if (me != null) { me.CmdWalkThroughPortal(map, arriveAtSpawnId); return; }
 
         // No world to ask. There is no offline game, so this is a broken state rather than a case to serve —
         // said out loud instead of silently doing nothing at a door the player is standing in.
         LoadingScreen.Hide();
         GameLog.Warn(LogCat.Client, "walked into a door with no world to ask — staying put.");
+    }
+
+    // Within the circle the trigger's square footprint draws, measured flat.
+    bool FeetInsideCircle(Vector3 feet)
+    {
+        float radius = footprint != null ? 0.5f * Mathf.Min(footprint.size.x, footprint.size.z) : 0.5f;
+        float dx = feet.x - transform.position.x, dz = feet.z - transform.position.z;
+        return dx * dx + dz * dz <= radius * radius;
     }
 
     // WALKING BACK OUT MAKES THE DOOR USABLE AGAIN. The latch above only exists to stop the same step through a

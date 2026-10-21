@@ -249,6 +249,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (def.IsPassive) return Refused("it is a passive — it only fires on its own triggers");
         firedBy = def.CastEntry;           // a press always runs the OnCast entry, whatever other triggers this skill has
         if (CasterGone || Caster.IsDead) return Refused("the caster is gone or dead");
+        if (Mine && TeleportLook.OwnWaitingToAppear) return Refused("away on a teleport");
         var gate = Status;
         if (gate != null && gate.Silenced)
         { if (Mine) OverheadNotice.Warn("Silenced"); return Refused("silenced"); }

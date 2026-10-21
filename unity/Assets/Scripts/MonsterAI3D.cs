@@ -489,8 +489,9 @@ public class MonsterAI3D : MonoBehaviour
                     // it stands at. Its multiplier is the one it was made with.
                     var file = MonsterCatalog.ById(Health.creatureId);
                     int level = Health.Level;
-                    Rewards.PayKill(Health, CreatureKinds.KillExperience(level, file != null ? file.level : level,
-                                                                         Health.multiplier));
+                    int kills = Health.savedAs != null ? SavedCharacterRules.KillsWorth(Health.savedAs.behaviour) : 1;
+                    Rewards.PayKill(Health, kills * CreatureKinds.KillExperience(level, file != null ? file.level : level,
+                                                                                 Health.multiplier));
                 }
             });
 

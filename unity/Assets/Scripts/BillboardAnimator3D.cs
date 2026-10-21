@@ -63,6 +63,9 @@ public class BillboardAnimator3D : MonoBehaviour
     Sprite[] idleClip, walkClip;
     Sprite[] playing;
     Vector2 facing = Vector2.down;
+    // The way it last went on the ground (x, z); until it has gone anywhere, it faces the camera.
+    Vector2 groundHeading;
+    bool headingKnown;
     float timer; int frame;
     Vector3 baseScale;
 
@@ -151,6 +154,8 @@ public class BillboardAnimator3D : MonoBehaviour
     Sprite[] attackPoses;
     Sprite deadPose, castPose, releasePose, instantReleasePose;
     Sprite posing;
+    // Whether the picture held is a swing's, which follows the camera like the walk; a release does not turn.
+    bool posingAttack;
     float poseUntil;
     bool holdingCast;
     float castEndedAt = -1f;
@@ -159,6 +164,7 @@ public class BillboardAnimator3D : MonoBehaviour
     {
         attackPoses = null;
         deadPose = castPose = releasePose = instantReleasePose = posing = null;
+        posingAttack = false;
         holdingCast = false;
         if (sheet == null || cell <= 0 || idleStrip.sheet != null) return;
         var attack = SpriteSheetCache.FootRow(sheet, cell, AttackRow, DrawnPivot);
@@ -183,6 +189,7 @@ public class BillboardAnimator3D : MonoBehaviour
             return;
         }
         posing = attackPoses[DirectionColumn(facing)];
+        posingAttack = true;
         poseUntil = Time.time + AttackPoseSeconds;   // server-math: how long a picture stays on screen, not a game number
     }
 
@@ -202,6 +209,7 @@ public class BillboardAnimator3D : MonoBehaviour
         holdingCast = false;
         castEndedAt = -1f;
         posing = afterCast ? releasePose : instantReleasePose;
+        posingAttack = false;
         poseUntil = Time.time + ReleasePoseSeconds;   // server-math: how long a picture stays on screen, not a game number
     }
 
@@ -211,6 +219,7 @@ public class BillboardAnimator3D : MonoBehaviour
         if (deadPose == null) return;
         if (sr == null) sr = GetComponent<SpriteRenderer>();
         posing = null;
+        posingAttack = false;
         holdingCast = false;
         sr.sprite = deadPose;
     }
@@ -290,7 +299,14 @@ public class BillboardAnimator3D : MonoBehaviour
     {
         bool moving = travelIsTold ? toldMoving : agent != null && agent.Moving;
         if (moving)
-            facing = travelIsTold ? Facing3D.FromWorldDir(new Vector3(toldHeading.x, 0f, toldHeading.y)) : agent.Facing;
+        {
+            groundHeading = travelIsTold ? toldHeading : agent.Heading;
+            headingKnown = true;
+        }
+        // THE SIDE SHOWN IS ASKED OF THE CAMERA EVERY FRAME, from the way it last went on the ground — so turning the
+        // camera turns a creature standing still or swinging too, not only one that is walking.
+        if (headingKnown) facing = Facing3D.FromWorldDir(new Vector3(groundHeading.x, 0f, groundHeading.y));
+        if (posingAttack && posing != null) posing = attackPoses[DirectionColumn(facing)];
 
         // A POSE OVERRIDES THE WALK: the casting picture for as long as the wind-up lasts, a swing or a release for a
         // moment. Only a character's sheet has any.

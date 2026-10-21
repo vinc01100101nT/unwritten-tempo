@@ -103,7 +103,7 @@ public static class Rewards
                 }));
             // On a server the character being paid is not the one on that player's screen, so their machine has to
             // be told or the kill quietly earns them nothing. Does nothing anywhere else.
-            GameNetwork.TellOwnerTheyEarned(character, paid, 0, levelsGained, ringLevelsGained);
+            GameNetwork.TellOwnerTheyEarned(character, paid, levelsGained, ringLevelsGained);
         }
         // Their combo, what this kill paid and their per-hour rates, to their own screen — every kill, paid or not.
         GameNetwork.TellOwnerTheirKillCombo(character, victim, true, paid, comboPaid - eventPaid, 0, 0);

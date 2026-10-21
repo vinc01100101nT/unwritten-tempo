@@ -50,9 +50,22 @@ public class GameNetwork : NetworkManager
     /// before bringing a map up: signing in is no longer enough to be somewhere.</summary>
     public static event Action OnJoinedWorld;
 
-    /// <summary>Raised when the wire is gone for good — every retry spent. Nobody may be in the world after this,
-    /// so <see cref="GameRoot"/> tears it down and puts the sign-in screen back.</summary>
-    public static event Action OnLostWorld;
+    /// <summary>Raised when the wire is gone for good — every retry spent, a refusal, or this character signed in
+    /// on another device. Nobody may be in the world after this, so <see cref="GameRoot"/> tears it down and puts the
+    /// sign-in screen back, showing the reason it carries — the whole of it, in words a player can act on.</summary>
+    public static event Action<string> OnLostWorld;
+
+    /// <summary>What a player is told when every attempt to reach or stay in the world has failed.</summary>
+    const string CouldNotReachWorld = "Could not reach the game world after 3 tries. The game server may be down or "
+                                      + "restarting — try again in a moment.";
+
+    /// <summary>What a player is told when their character was signed in on another device.</summary>
+    const string SignedInElsewhereText = "Your character was signed in on another device, so this one was disconnected.";
+
+    // SET BY THE SERVER'S WORD that this character was signed in on another device, just before it hangs up. The
+    // hang-up that follows is then the end, with this as its reason: no retry, which would only take the character
+    // back from the other device.
+    string kickedBecause;
 
     // How hard we try before giving up on a world. Small enough that nobody is left staring at a veil, long enough
     // to ride out the brief drop that a wireless connection produces several times an hour.
@@ -343,7 +356,8 @@ public class GameNetwork : NetworkManager
                            + ". Set CHAR_SERVER_URL in settings.env at the top of the project (the editor reads it "
                            + "there, and tools/build-game.sh writes it into every build), or in the terminal you "
                            + "start from. See docs/2-systems/networking/starting-the-network.md.");
-            OnLostWorld?.Invoke();
+            OnLostWorld?.Invoke("This copy of the game does not know where the character server is (CHAR_SERVER_URL "
+                                + "is not set), so it cannot enter the world.");
             return;
         }
 
@@ -354,7 +368,8 @@ public class GameNetwork : NetworkManager
             if (!ok)
             {
                 GameLog.Error(LogCat.Client, "the character server would not let us in — " + error + " " + body);
-                OnLostWorld?.Invoke();
+                OnLostWorld?.Invoke(string.IsNullOrEmpty(error) ? "The character server would not let you into the world."
+                                                                : char.ToUpperInvariant(error[0]) + error.Substring(1));
                 return;
             }
 
@@ -362,7 +377,7 @@ public class GameNetwork : NetworkManager
             if (where == null || string.IsNullOrEmpty(where.ticket))
             {
                 GameLog.Error(LogCat.Client, "the character server let us in but said nowhere to go: " + body);
-                OnLostWorld?.Invoke();
+                OnLostWorld?.Invoke("The character server let you in but did not say which world to join.");
                 return;
             }
 
@@ -641,10 +656,6 @@ public class GameNetwork : NetworkManager
     public struct XpEarned : NetworkMessage
     {
         public int amount;
-
-        /// <summary>Experience for the RING alone, whether or not it is worn — only a GM's <c>/ringxp</c> sends it.
-        /// A kill's experience reaches the ring through <see cref="amount"/>, by the ring's own rule.</summary>
-        public int ringOnlyAmount;
 
         // THE FINISHED ANSWER, as the server's copy of the character now stands. The owner's machine copies these
         // onto the screen; it used to run the level-up loop itself from the two amounts above, which is the
@@ -1018,6 +1029,7 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<ChatHeard>(OnChatHeard);
         NetworkClient.RegisterHandler<PmHeard>(OnPmHeard);
         NetworkClient.RegisterHandler<SystemNotice>(OnSystemNotice);
+        NetworkClient.RegisterHandler<SignedInElsewhere>(OnSignedInElsewhere);
         NetworkClient.RegisterHandler<CastWindupStarted>(OnCastWindupStarted);
         NetworkClient.RegisterHandler<CastWindupEnded>(OnCastWindupEnded);
         NetworkClient.RegisterHandler<FlightLeg>(OnFlightLeg);
@@ -1255,6 +1267,9 @@ public class GameNetwork : NetworkManager
             return;
         }
 
+        // TOLD WHY, while the write is in the air, which is long enough for the message to go out before the hang-up.
+        TellSignedInElsewhere(holding, shell);
+
         // NOTHING MORE FROM THEM. Said before the write, so what is written is the last thing they actually did
         // rather than something accepted while the write was in the air.
         shell.MarkLeaving();
@@ -1304,11 +1319,13 @@ public class GameNetwork : NetworkManager
         // the one the other process is already holding, and it stops anything else this connection sends being
         // acted on in the moment it has left.
         var going = found.identity != null ? found.identity.GetComponent<NetPlayer>() : null;
+        bool told = TellSignedInElsewhere(found, going);
         going?.MarkLeaving();
 
         GameLog.Info(LogCat.Server, "dropping the connection already playing that character — somebody has just "
                          + "been announced with it, so this one is the older of the two.");
-        found.Disconnect();
+        if (told && spawned != null) spawned.StartCoroutine(HangUpShortly(found));
+        else found.Disconnect();
         return true;
     }
 
@@ -1514,16 +1531,25 @@ public class GameNetwork : NetworkManager
     /// character (<see cref="Character.AddXP(int, out int)"/>), with the level counts that call returned. Silent
     /// off a server, and silent for a character that is not somebody's. The sheet those numbers produce (max
     /// HP among them) follows on the very next beat through the same door a GM's change uses.</summary>
-    public static void TellOwnerTheyEarned(Character who, int xp, int ringOnlyXp, int levelsGained, int ringLevelsGained)
+    public static void TellOwnerTheyEarned(Character who, int xp, int levelsGained, int ringLevelsGained)
     {
-        if (!NetworkServer.active || who == null || (xp <= 0 && ringOnlyXp <= 0)) return;
+        if (xp <= 0) return;
+        TellOwnerTheirProgress(who, xp, levelsGained, ringLevelsGained);
+    }
+
+    /// <summary>SERVER ONLY: tell <paramref name="who"/>'s own machine their level, experience, ring and points as they
+    /// stand now, with nothing earned — after a GM dialled a level straight in (<c>/ringlvl</c>), up or down.</summary>
+    public static void TellOwnerTheirProgress(Character who) => TellOwnerTheirProgress(who, 0, 0, 0);
+
+    static void TellOwnerTheirProgress(Character who, int xp, int levelsGained, int ringLevelsGained)
+    {
+        if (!NetworkServer.active || who == null) return;
 
         var identity = IdentityOfFighter(who);
         if (identity == null || identity.connectionToClient == null) return;
         identity.connectionToClient.Send(new XpEarned
         {
             amount = Mathf.Max(0, xp),
-            ringOnlyAmount = Mathf.Max(0, ringOnlyXp),
             level = who.Level,
             xp = who.XP,
             lifetimeXp = who.LifetimeXp,
@@ -1916,7 +1942,7 @@ public class GameNetwork : NetworkManager
         var victim = VictimBehind(identity) as ICombatUnit;
         if (victim == null || victim.IsDead) return;
         var attacker = ShellFor(conn);
-        var swinger = attacker != null && !attacker.Leaving ? attacker.ServerCombatUnit : null;
+        var swinger = attacker != null && !attacker.Leaving && !attacker.AwayOnTeleport ? attacker.ServerCombatUnit : null;
         if (swinger == null || swinger.IsDead || victim.Map != swinger.Map) return;
         if (!Sides.Hostile(swinger, victim)) return;
         var fighter = swinger as Character;
@@ -2026,6 +2052,7 @@ public class GameNetwork : NetworkManager
 
         var attacker = ShellFor(conn);
         // Same refusal as FighterFor makes: somebody on their way out of this world does not act in it.
+        if (attacker != null && attacker.AwayOnTeleport) return;   // away on a teleport: nothing of theirs runs
         var swinger = attacker != null && !attacker.Leaving ? attacker.ServerCombatUnit : null;
         if (swinger == null)
         {
@@ -2280,6 +2307,8 @@ public class GameNetwork : NetworkManager
 
         var caster = FighterFor(conn) as Character;
         if (caster == null) { WarnNoFighter(conn.connectionId); return false; }
+        var castShell = ShellFor(conn);
+        if (castShell != null && castShell.AwayOnTeleport) { WhyCastRefused(msg.skillId, "they are away on a teleport"); return false; }
         // A WEAPON SKILL NEEDS THE WEAPON IN HAND — the same rule a swing obeys, the same answer: take it out.
         var drawHost = caster.StatusHost;
         if (def.weaponType != WeaponType.None && drawHost != null && !drawHost.Draw.IsDrawn)
@@ -2657,7 +2686,8 @@ public class GameNetwork : NetworkManager
             at = DrawnBodyOf(other);
 
         VfxCue.PlayFromServer(msg.cue, on, at, msg.auraKey, msg.onNetId);
-        CueWords.Show(msg.cue, on, identity.TryGetComponent<NetMob>(out _));
+        // No word over a person away on a teleport, exactly as no effect is drawn on them.
+        if (!TeleportLook.Covers(on)) CueWords.Show(msg.cue, on, identity.TryGetComponent<NetMob>(out _));
     }
 
     static void OnCueStopped(CueStopped msg) => VfxCue.StopFromServer(msg.onNetId, msg.auraKey);
@@ -3164,6 +3194,36 @@ public class GameNetwork : NetworkManager
 
     static void OnSystemNotice(SystemNotice msg) => ChatController.GameSaid(msg.text);
 
+    /// <summary>The server is about to hang up on this machine because its character was signed in on another
+    /// device.</summary>
+    public struct SignedInElsewhere : NetworkMessage { }
+
+    static void OnSignedInElsewhere(SignedInElsewhere _)
+    {
+        if (spawned != null) spawned.kickedBecause = SignedInElsewhereText;
+    }
+
+    /// <summary>SERVER ONLY: tell the machine on <paramref name="conn"/> that its character was signed in on another
+    /// device — unless it is <see cref="NetPlayer.Leaving"/> already, which is a player walking through a door, whose
+    /// own hang-up is a move and not a loss. Asked BEFORE the shell is marked leaving. True when they were told, so
+    /// the caller gives the message time to reach them before hanging up.</summary>
+    static bool TellSignedInElsewhere(NetworkConnectionToClient conn, NetPlayer shell)
+    {
+        if (conn == null || shell == null || shell.Leaving) return false;
+        conn.Send(new SignedInElsewhere());
+        return true;
+    }
+
+    // A message waits to be sent with the rest of the frame's, and hanging up first throws it away; this long is
+    // several frames, which a player waiting to be dropped never notices.
+    const float SecondsToSayBeforeHangingUp = 0.25f;
+
+    static System.Collections.IEnumerator HangUpShortly(NetworkConnectionToClient conn)
+    {
+        yield return new WaitForSecondsRealtime(SecondsToSayBeforeHangingUp);
+        if (conn != null && NetworkServer.connections.ContainsKey(conn.connectionId)) conn.Disconnect();
+    }
+
     /// <summary>Server-only: one finished line in the chat of every player on this map server. ONLY PEOPLE ALREADY IN —
     /// a connection still at the door has no body yet, and is told what is running when it is let in.</summary>
     public static void TellEveryoneOnThisServer(string line)
@@ -3564,7 +3624,18 @@ public class GameNetwork : NetworkManager
         // Mirror reports a REFUSED first attempt and a DROPPED live connection through this same door, which is
         // exactly right for us: "we are not in a world" is one condition however we arrived at it, and it gets one
         // answer — try again, then give up.
-        if (GameServer.IsServer || goneForGood) return;
+        if (GameServer.IsServer) return;
+        if (kickedBecause != null)
+        {
+            string why = kickedBecause;
+            kickedBecause = null;
+            goneForGood = true;
+            if (pendingRetry != null) { StopCoroutine(pendingRetry); pendingRetry = null; }
+            ReconnectNotice.Hide();
+            OnLostWorld?.Invoke(why);
+            return;
+        }
+        if (goneForGood) return;
 
         // WE HUNG UP ON PURPOSE. Nothing was lost, so nothing is counted, no notice goes on screen, and above all
         // no retry is scheduled — the dial to the other world is already on its way from the line that set this.
@@ -3582,7 +3653,7 @@ public class GameNetwork : NetworkManager
         goneForGood = true;
         ReconnectNotice.Hide();
         GameLog.Warn(LogCat.Client, "gave up after " + JoinAttempts + " attempts — leaving the world");
-        OnLostWorld?.Invoke();
+        OnLostWorld?.Invoke(CouldNotReachWorld);
     }
 
     /// <summary>THE PLAYER IS CLOSING THE GAME, and that is the third and last way a world is left on purpose.

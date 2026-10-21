@@ -111,7 +111,7 @@ public class CharacterSelectScreen : MonoBehaviour
         AccountClient.ListCharacters((list, error) =>
         {
             if (this == null) return;
-            if (list == null) { Say(error ?? "Could not read your characters."); return; }
+            if (list == null) { Say(""); ErrorPopup.Show(error ?? "Could not read your characters."); return; }
 
             characters.Clear();
             characters.AddRange(list);
@@ -215,7 +215,7 @@ public class CharacterSelectScreen : MonoBehaviour
         AccountClient.DeleteCharacter(info.id, (ok, error) =>
         {
             if (this == null) return;
-            if (!ok) { Say(error ?? "Could not delete that character."); return; }
+            if (!ok) { Say(""); ErrorPopup.Show(error ?? "Could not delete that character."); return; }
             Refresh();
         });
     }
@@ -304,7 +304,7 @@ public class CharacterSelectScreen : MonoBehaviour
         AccountClient.ListModels((list, error) =>
         {
             if (this == null || choiceLabel == null) return;
-            if (list == null || list.Length == 0) { Say(error ?? "Could not read the list of bodies."); return; }
+            if (list == null || list.Length == 0) { Say(""); ErrorPopup.Show(error ?? "Could not read the list of bodies."); return; }
             models = list;
             modelIndex = 0;
             ShowModel();
@@ -559,7 +559,7 @@ public class CharacterSelectScreen : MonoBehaviour
         if (nameField == null || models == null || models.Length == 0) return;
 
         string name = nameField.text.Trim();
-        if (name.Length < 3) { Say("A name needs at least 3 characters."); return; }
+        if (name.Length < 3) { ErrorPopup.Show("A name needs at least 3 characters."); return; }
 
         CaptureDye(out var dyeSources, out var dyeTargets);
         // Always an explicit hair: the one on show, even when nobody pressed the hair buttons.
@@ -570,7 +570,7 @@ public class CharacterSelectScreen : MonoBehaviour
                                       hexagon.Spread, (info, error) =>
         {
             if (this == null) return;
-            if (info == null) { Say(error ?? "Could not create that character."); return; }
+            if (info == null) { Say(""); ErrorPopup.Show(error ?? "Could not create that character."); return; }
             CloseCreate();
             Refresh();
         });

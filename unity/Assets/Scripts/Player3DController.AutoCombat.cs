@@ -56,6 +56,7 @@ public partial class Player3DController
     {
         if (controller == null || !controller.enabled || !gameObject.activeInHierarchy) return "the character controller is switched off";
         if (Character.Instance != null && Character.Instance.IsDead) return "dead";
+        if (TeleportLook.OwnWaitingToAppear) return "away on a teleport";
         if (status != null && status.CannotAct) return "stunned or frozen";
         if (status != null && status.ActionLocked)
             return "held still by a skill for " + status.SkillRootSecondsLeft.ToString("0.0") + "s more";

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.autumn-stalk-seed
   displayName: Autumn Stalk Seed
-  icon: {fileID: 21300000, guid: d2c01fffcffd1c04b9860ecc2ab7be7a, type: 3}
+  icon: {fileID: 21300000, guid: ca4043df3eaf5c148b2df6b0b11dc8ef, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

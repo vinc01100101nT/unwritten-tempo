@@ -145,9 +145,7 @@ public class DropAmountPrompt
         field.textComponent = text;
         field.lineType = TMP_InputField.LineType.SingleLine;
         field.contentType = TMP_InputField.ContentType.IntegerNumber;
-        field.customCaretColor = true;
         UiKit.StyleTyping(field);
-        field.onSubmit.AddListener(_ => Confirm());
     }
 
     void BuildButtons(Transform parent)

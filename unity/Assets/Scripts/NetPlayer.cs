@@ -183,6 +183,15 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     [SyncVar] MoveSaid netMove;
     readonly WatchedMove watchedMove = new WatchedMove();
 
+    // AWAY ON A TELEPORT. The server sets it the moment a teleport starts (a wing, a door); this person's machine clears
+    // it when its screen has faded back in. Every watching machine hides this person's body while it is true, and the
+    // teleport effect starts where they stand each time it changes (TeleportLook). It starts out true, because a
+    // person arriving in a world — signing in, or a door to a map another server holds — is not shown until their
+    // machine says so.
+    [SyncVar] bool netAway = true;
+    // Whether the last appearance started the teleport effect: false for a person who arrived by anything else.
+    [SyncVar] bool netAppearedWithEffect;
+
     /// <summary>THE BODY THIS MACHINE DRAWS FOR THIS PERSON — the watched copy built for somebody else, and your own
     /// real avatar for yourself, because your own machine keeps no copy of you. Null before either exists.
     ///
@@ -368,6 +377,17 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// of the copy that is now live.</summary>
     public void MarkLeaving() => Leaving = true;
 
+    /// <summary>SERVER ONLY: a GM's <c>/tp</c> — their machine walks through a door to <paramref name="map"/> exactly as a
+    /// portal does (<see cref="Portal3D.WalkThrough"/>), and the door below lets a GM through any door.</summary>
+    public void WalkThroughDoorOnOwnersMachine(string map, string spawnId)
+    {
+        if (isServer && connectionToClient != null) TargetWalkThroughDoor(connectionToClient, map, spawnId ?? "");
+    }
+
+    [TargetRpc]
+    void TargetWalkThroughDoor(NetworkConnectionToClient target, string map, string spawnId)
+        => Portal3D.WalkThrough(map, spawnId);
+
     /// <summary>A door. The player's own machine no longer travels by itself, because the map it is walking into
     /// may be held by a different process — and only the server can find out which, or refuse.
     ///
@@ -403,7 +423,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             TargetMoveFailed(connectionToClient, "Switch auto-combat off to use a door.");
             return;
         }
-        MoveToMap(map, spawnId);
+        MoveToMap(map, spawnId, teleport: true);
     }
 
     /// <summary>Server-only: take this person to <paramref name="map"/>. The one way anybody changes map — a door
@@ -414,13 +434,18 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// same form a save's position is — instead of at an arrival point; a save point has no doorway to name.</para>
     ///
     /// <para><paramref name="onFailure"/> is told when the move does not happen — refused at once, the save before it
-    /// failed, or the map would not take them — so whoever paid for the trip can be paid back.</para></summary>
-    public void MoveToMap(string map, string spawnId, bool toSpot = false, Vector3 spot = default, Action onFailure = null)
+    /// failed, or the map would not take them — so whoever paid for the trip can be paid back.</para>
+    ///
+    /// <para><paramref name="teleport"/> (a door, a Butterfly Wing): it looks like a teleport on every screen
+    /// (<see cref="TeleportLook"/>).</para></summary>
+    public void MoveToMap(string map, string spawnId, bool toSpot = false, Vector3 spot = default, Action onFailure = null,
+                          bool teleport = false)
     {
         if (!isServer || Leaving || string.IsNullOrWhiteSpace(map)) { onFailure?.Invoke(); return; }
 
         // EVERY TRIP ENDS AUTO-COMBAT — a wing home, a Keeper's teleport, a GM's /tp: the hunt was set up where they were.
         StopAutoCombat("Auto-combat stopped — you travelled.");
+        if (teleport) BeginAway();
 
         // ALREADY HERE: nothing crosses the wire and nothing is written down. This is most doors, and it stays
         // exactly as instant as it has always been.
@@ -441,13 +466,13 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
                 GameLog.Warn(LogCat.Server, playerName + " was sent into '" + map + "' with no arrival point the server "
                              + "can name — their next position is taken as read");
             }
-            TargetTravelHere(connectionToClient, map, spawnId, toSpot, spot);
+            TargetTravelHere(connectionToClient, map, spawnId, toSpot, spot, teleport);
             return;
         }
 
         MarkLeaving();
         MapHosting.Want(map);
-        TargetMoveStage(connectionToClient, LoadingScreen.Stage.Asked);
+        TargetMoveStage(connectionToClient, LoadingScreen.Stage.Asked, teleport);
 
         // WRITTEN DOWN, AND THE WRITE CONFIRMED, BEFORE ANYBODY ELSE IS TOLD ABOUT THEM. The process they are
         // going to is handed the stored character, so a move that started before the write landed would hand
@@ -532,7 +557,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
     void AskTheCharacterServerToMoveMe(string map, string spawnId, bool toSpot, Vector3 spot, Action onFailure)
     {
-        TargetMoveStage(connectionToClient, LoadingScreen.Stage.Saved);
+        TargetMoveStage(connectionToClient, LoadingScreen.Stage.Saved, false);
 
         var body = JsonUtility.ToJson(new MoveAsk { map = map, accountId = ServerAccountId ?? "", isGm = ServerIsGm });
         ServerHttp.Send("POST", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId + "/move",
@@ -559,18 +584,21 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     }
 
     [TargetRpc]
-    void TargetTravelHere(NetworkConnectionToClient target, string map, string spawnId, bool toSpot, Vector3 spot)
+    void TargetTravelHere(NetworkConnectionToClient target, string map, string spawnId, bool toSpot, Vector3 spot,
+                          bool teleport)
     {
         if (toSpot) SceneTravel.ArriveAtSpot(map, spot);
-        SceneTravel.ArriveLocally(map, toSpot ? null : spawnId);
+        SceneTravel.ArriveLocally(map, toSpot ? null : spawnId, teleport);
     }
 
-    // The loading screen goes up at Asked — the server started this move, whether or not anybody pressed for it.
+    // The loading screen goes up at Asked — the server started this move, whether or not anybody pressed for it. A
+    // teleport's fades in over the player vanishing (TeleportLook).
     [TargetRpc]
-    void TargetMoveStage(NetworkConnectionToClient target, LoadingScreen.Stage stage)
+    void TargetMoveStage(NetworkConnectionToClient target, LoadingScreen.Stage stage, bool teleport)
     {
-        if (stage == LoadingScreen.Stage.Asked) LoadingScreen.Show();
-        else LoadingScreen.Reached(stage);
+        if (stage != LoadingScreen.Stage.Asked) LoadingScreen.Reached(stage);
+        else if (teleport) TeleportLook.CoverWithCurtain();
+        else LoadingScreen.Show();
     }
 
     /// <summary>SERVER ONLY: a move this person's machine asked for will not happen — the loading screen it raised on
@@ -583,15 +611,17 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     [TargetRpc]
     void TargetMoveTo(NetworkConnectionToClient target, string host, int port, string ticket, string map, string spawnId,
                       bool toSpot, Vector3 spot)
-        => GameNetwork.MoveToAnotherServer(host, port, ticket, map, spawnId, toSpot, spot);
+        // Hung up only once the screen is black, when a teleport is fading it: the world they leave goes dark the moment
+        // the line drops, and that must never be what the player sees instead of the fade.
+        => ScreenFade.AtBlack(() => GameNetwork.MoveToAnotherServer(host, port, ticket, map, spawnId, toSpot, spot));
 
     /// <summary>SERVER ONLY: take this person to their save point — or, when they have never set one, to
     /// <see cref="SavePoint.DefaultMap"/>'s default arrival point. <paramref name="onFailure"/> is told when the trip
     /// does not happen (see <see cref="MoveToMap"/>).</summary>
-    public void SendToSavePoint(Action onFailure = null)
+    public void SendToSavePoint(Action onFailure = null, bool teleport = false)
     {
         SavePointTrip(ServerCharacter, out var map, out var spawnId, out bool toSpot, out var spot);
-        MoveToMap(map, spawnId, toSpot, spot, onFailure);
+        MoveToMap(map, spawnId, toSpot, spot, onFailure, teleport);
     }
 
     /// <summary>Where <paramref name="c"/>'s save point puts them: a spot in a map, or an arrival point. A save point set
@@ -743,6 +773,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             SendOwedBag();
             if (savePointTripOwed) TakeOwedTrip();
             if (arrivalExpected) StandThemWhereSentIfLate();
+            if (netAway && Time.time >= awayEndsAt) EndAway(true);
             if (questsPushOwed) { questsPushOwed = false; SendQuests(true); }
         }
 
@@ -781,7 +812,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             TakeTheServersWord();
             // THE SMOKE AT THE LEVEL CAP, on the avatar this machine really draws for its own person.
             var mine = PersistentPlayer3D.Instance;
-            levelAura.Show(netLevel, mine != null ? mine.transform : null);
+            levelAura.Show(netLevel, mine != null && !TeleportLook.OwnWaitingToAppear ? mine.transform : null);
             return;
         }
         if (isClient) FollowTheServer();
@@ -1385,6 +1416,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // enough: a long dash sent four more, each refused, and the fourth dragged the dasher back to where they began.
         orderedMoveSpeed = WeaponDrawMath.OrderedMoveSpeed(runSpeed, motion.kind == Motion.Kind.Glide ? motion.speed : 0f);
         lookSentToOwner = motion.look;
+        // A WING'S TRIP IS A TELEPORT: every watching screen starts the effect and hides them from now.
+        if (motion.fadeThroughBlack) BeginAway();
         TargetMove(owner, motion);
     }
 
@@ -1417,7 +1450,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     static void TeleportThroughBlack(Vector3 dest, RelocationLook look)
     {
         string map = MapManager.CurrentMap;
-        ScreenFade.Through(() =>
+        TeleportLook.CoverWithFade(() =>
         {
             var me = Character.Instance;
             // Left the map while the screen went dark: that landing spot belongs to a map no longer here.
@@ -3680,6 +3713,46 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToStore(int index, string itemId, string copyId, bool all) => CmdKeeperStore(index, itemId, copyId ?? "", all);
     public void AskToTake(string itemId, string copyId, bool all) => CmdKeeperTake(itemId, copyId ?? "", all);
 
+    // ---- away on a teleport ----------------------------------------------------------------------------------
+
+    // The longest a person stays hidden from everybody once they stand where they were sent. Far beyond any real fade
+    // (1 second, ScreenFade.FadeSeconds), and here only so a machine that never says it showed them cannot stay unseen.
+    const float LongestAwayAfterArrival = 5f;
+    float awayEndsAt = float.PositiveInfinity;
+
+    /// <summary>SERVER ONLY: a teleport starts for this person now — every watching screen starts the effect and hides them.</summary>
+    void BeginAway()
+    {
+        netAway = true;
+        awayEndsAt = float.PositiveInfinity;
+    }
+
+    // SERVER: they are shown again, with or without the effect.
+    void EndAway(bool withEffect)
+    {
+        awayEndsAt = float.PositiveInfinity;
+        if (!netAway) return;
+        netAppearedWithEffect = withEffect;
+        netAway = false;
+    }
+
+    /// <summary>SERVER: true while this person is away on a teleport — no swing, cast or item of theirs is run.</summary>
+    public bool AwayOnTeleport => netAway;
+
+    /// <summary>THIS PERSON'S MACHINE: they are on screen again — <paramref name="withEffect"/> when they appeared the
+    /// teleport's way. A picture only: it decides nothing, so it is taken as said.</summary>
+    public void SayShown(bool withEffect)
+    {
+        if (isOwned) CmdShown(withEffect);
+    }
+
+    [Command]
+    void CmdShown(bool withEffect)
+    {
+        if (Leaving) return;
+        EndAway(withEffect);
+    }
+
     // ---- a Butterfly Wing's trip home ------------------------------------------------------------------------
     // OWED, NOT TAKEN AT ONCE: the wing is spent after its skill fires, and a trip to a map another server holds saves
     // the character the moment it starts — taken inside the skill, that save would still carry the wing.
@@ -3711,7 +3784,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         }
         GameLog.Info(LogCat.Server, playerName + " is going back to their save point"
                      + (paid != null ? " (" + paid.id + ")" : ""));
-        SendToSavePoint(() => { if (this != null) GiveBackWhatPaidForTrip(paid, "The wing could not carry you just now."); });
+        SendToSavePoint(() => { if (this != null) GiveBackWhatPaidForTrip(paid, "The wing could not carry you just now."); },
+                        teleport: true);
     }
 
     // The item a trip was paid with goes back into the bag it came out of — the same thing, not a new arrival — and the
@@ -4130,6 +4204,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         netPosition = p;
         netYaw = yaw;
         netSpeed = acceptedGroundSpeed;
+        // STANDING WHERE THEY WERE SENT, still away: their machine has at most this long left to say it showed them.
+        if (netAway && float.IsPositiveInfinity(awayEndsAt)) awayEndsAt = Time.time + LongestAwayAfterArrival;
         // A PICTURE, KEPT SANE RATHER THAN TRUSTED. It moves nothing the server decides — it lifts a model — so the
         // only thing worth guarding is that a broken or lying machine cannot leave somebody hanging in the sky.
         netAboveGround = Mathf.Clamp(aboveGround, 0f, HighestAnybodyGets);
@@ -4418,6 +4494,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         if (body == null) { EnsureBody(); return; }
 
+        ShowWhetherAway();
+
         // Glide rather than snap. Updates arrive ten times a second; moving straight to each one would read as a
         // stutter, so the body walks toward the latest known position instead. The SHARED way a watched body does
         // that — the identical one a watched creature uses, so the two can never drift into gliding differently.
@@ -4426,7 +4504,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         WatchedBody.Follow(body.transform, MapManager.InWorld(netPosition, mapName), facing, watchedMove);
 
         // THE SMOKE AT THE LEVEL CAP, from the level the server sent — the same one every kind of unit wears.
-        levelAura.Show(netLevel, body.transform);
+        levelAura.Show(netLevel, awayShown ? null : body.transform);
 
         // WHAT THIS PERSON IS DOING, handed over rather than worked out from where their body has been placed.
         // Without it their character walked in a fixed standing pose whenever the glide flickered, and never swung
@@ -4503,6 +4581,29 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <summary>The standing pose this person is holding — guarding, casting, sitting — put on their watched body through
     /// the one held-pose door every drawn body shares (<see cref="Agent3DVisual.TellHeld"/>), the same one a creature's
     /// casting pose goes through.</summary>
+    // THE BODY THE AWAY STATE WAS LAST PUT ON, and what it was. A body built while its person is away is hidden with no
+    // effect; a change seen on the same body starts the teleport effect where they stand (TeleportLook).
+    Transform awayShownOn;
+    bool awayShown;
+
+    void ShowWhetherAway()
+    {
+        var t = body.transform;
+        if (t != awayShownOn)
+        {
+            awayShownOn = t;
+            awayShown = netAway;
+            if (netAway) TeleportLook.Hide(t);
+            return;
+        }
+        if (netAway == awayShown) return;
+        awayShown = netAway;
+        if (netAway) { TeleportLook.Vanish(t); return; }
+        // Stood where the server has them first, so the effect starts where they are and not partway along the glide.
+        t.position = MapManager.InWorld(netPosition, mapName);
+        TeleportLook.Appear(t, netAppearedWithEffect);
+    }
+
     void ShowTheirHeldStance()
     {
         if (bodyVisual != null) bodyVisual.TellHeld(netHasHeld, netHeld, netHeldWindow);
@@ -4554,6 +4655,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         levelAura.Stop();
         // …and a move being drawn on the body, with any see-through fade that move put on it.
         watchedMove.Stop();
+        // …and its place among the hidden bodies, if it was away.
+        if (body != null) TeleportLook.Show(body.transform);
+        awayShownOn = null;
         // STRUCK FROM THE REGISTRY BEFORE THE BODY GOES, or a cursor scan would walk a destroyed one.
         if (bodyHealth != null) WatchedBodies.Remove(bodyHealth);
         if (body != null) byBody.Remove(body);
@@ -4802,6 +4906,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         base.OnStartLocalPlayer();
         Mine = this;
         GameNetwork.ConfirmedInTheWorld();
+        // Shown to everybody now — or, mid-teleport, once this screen has faded back in.
+        TeleportLook.JoinedWorld();
         ShowMyEmblemOnStart();
         // AND THIS WORLD KNOWS NOTHING ABOUT WHAT THIS BODY IS DOING. Poses are reported only when they CHANGE, and
         // a world we have only just arrived in starts out believing this body is doing nothing — so whatever it is

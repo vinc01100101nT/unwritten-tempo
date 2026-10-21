@@ -118,6 +118,7 @@ public class HotbarPanel : MonoBehaviour
     {
         var me = Character.Instance;
         if (s == null || me == null) return;
+        if (TeleportLook.OwnWaitingToAppear) return;   // away on a teleport: no skill, item or gear swap
         switch (s.kind)
         {
             case Kind.Skill:

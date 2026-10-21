@@ -86,23 +86,24 @@ public static class SavedCharacterRules
         return (int)(parts / 10000) + (roll0To9999 < parts % 10000 ? 1 : 0);
     }
 
-    /// <summary>The kind whose find a rebel from a creature of <paramref name="kind"/> gives up: one kind up.</summary>
-    public static CreatureKind LootKindOfRebel(CreatureKind kind) =>
-        kind == CreatureKind.Normal ? CreatureKind.Elite : CreatureKind.Shadow;
+    /// <summary>How many kills of its creature beating a rebel pays: its experience and every drop roll, that many
+    /// times over at the creature's own multiplier, so no higher tier opens (decided 2026-10-21).</summary>
+    public const int RebelKills = 3;
 
-    /// <summary>The multiplier a rebel's Temper Dust, Quench Oil, Inks and Salts drop at — one kind up, as its find is:
-    /// a normal's rebel at ×30, an elite's at ×90, and never below the creature's own <paramref name="multiplier"/>.
-    /// Its own material keeps the creature's own multiplier.</summary>
-    public static float LootMultiplierOfRebel(CreatureKind kind, float multiplier)
+    /// <summary>How many kills of its creature the death of a character of <paramref name="behaviour"/> pays. Only a
+    /// rebel's death pays at all; the others are paid in other ways or not at all.</summary>
+    public static int KillsWorth(SavedBehaviour behaviour) => behaviour == SavedBehaviour.Rebel ? RebelKills : 1;
+
+    /// <summary>How many times its creature's multiplier an ally fights at (decided 2026-10-20).</summary>
+    public const float AllyStrength = 2f;
+
+    /// <summary>The multiplier a character of <paramref name="behaviour"/> fights at, from its creature's
+    /// <paramref name="multiplier"/>: an ally at <see cref="AllyStrength"/> times it, every other its creature's own.</summary>
+    public static float FightingMultiplier(SavedBehaviour behaviour, float multiplier)
     {
-        float lifted = kind == CreatureKind.Normal ? RebelLootFromNormal : RebelLootFromElite;
         float own = CreaturePay.Clamp(multiplier);
-        return own > lifted ? own : lifted;
+        return behaviour == SavedBehaviour.Ally ? own * AllyStrength : own;
     }
-
-    /// <summary>What a rebel's materials drop at, from a normal creature and from an elite: one kind up (decided
-    /// 2026-10-20 with the multiplier).</summary>
-    public const float RebelLootFromNormal = 30f, RebelLootFromElite = 90f;
 
     /// <summary>The side a character of <paramref name="behaviour"/> stands on while it is here.</summary>
     public static Side SideOf(SavedBehaviour behaviour) =>

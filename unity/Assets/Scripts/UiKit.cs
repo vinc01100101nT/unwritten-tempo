@@ -374,8 +374,33 @@ public static class UiKit
     public static void StyleTyping(TMP_InputField field)
     {
         if (field == null) return;
+        field.customCaretColor = true;
         field.caretColor = Accent.Value;
-        field.selectionColor = Hover.Value;
+        field.caretWidth = 2;
+        field.caretBlinkRate = 0.85f;
+        var picked = Accent.Value;
+        picked.a = 0.4f;
+        field.selectionColor = picked;
+        // THE MARKER IS PUT UNDER THE TEXT'S PARENT, FIRST, so with the text sitting straight on the box it went
+        // beneath the box's own filled body ("Well") and was never seen (measured: caret at child 0, Well at 1). The
+        // text and its hint are given an area of their own, filling the box exactly so nothing moves, and the marker
+        // is made inside that, above the body.
+        var text = field.textComponent;
+        if (text != null && text.transform.parent == field.transform)
+        {
+            var area = (RectTransform)new GameObject("TextArea", typeof(RectTransform), typeof(RectMask2D)).transform;
+            area.SetParent(field.transform, false);
+            Fill(area, Vector2.zero, Vector2.zero);
+            text.rectTransform.SetParent(area, false);
+            if (field.placeholder != null && field.placeholder.transform.parent == field.transform)
+                field.placeholder.rectTransform.SetParent(area, false);
+            field.textViewport = area;
+        }
+        // THE BLINKING MARKER AND THE HIGHLIGHT ARE BUILT WHEN THE BOX SWITCHES ON, and only if it already knows its
+        // text. A box added in code switches on the instant it is added, before its text is handed to it, so it never
+        // got either — every box in the game typed with no marker and no highlight. Switched off and on again here,
+        // after its text is set, it builds them.
+        if (field.textComponent != null && field.isActiveAndEnabled) { field.enabled = false; field.enabled = true; }
     }
 
     /// <summary>Paint <paramref name="g"/> with a colour that is not a theme row (a picture's tint, a meaning colour);
@@ -715,10 +740,13 @@ public static class UiKit
 
     /// <summary>Make a <see cref="Btn"/> the affirming one: filled with the accent colour, its word white and bold —
     /// the chosen tab's look — so it is told from Cancel at a glance. Its fill is what the button tints, so switched off
-    /// it dims, and pressed it darkens, like any other.</summary>
-    public static void MarkPrimary(Button button)
+    /// it dims, and pressed it darkens, like any other.
+    /// <para><paramref name="enterPresses"/> false only for a button repeated down a list (Play on every quest), which
+    /// Enter must not guess between; every window's single yes takes the keyboard when it opens (EnterKey).</para></summary>
+    public static void MarkPrimary(Button button, bool enterPresses = true)
     {
         if (button == null) return;
+        if (enterPresses) EnterKey.Mark(button);
         var edge = button.GetComponent<Image>();
         if (edge != null) Paint(edge, Accent);
         var fill = button.transform.Find("Fill");

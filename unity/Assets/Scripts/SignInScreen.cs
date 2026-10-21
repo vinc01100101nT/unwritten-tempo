@@ -44,16 +44,13 @@ public class SignInScreen : MonoBehaviour
         go.AddComponent<SignInScreen>();
     }
 
-    /// <summary>Put the screen up carrying a line explaining why the player is looking at it. Used when a world
+    /// <summary>Put the screen up with the error popup explaining why the player is looking at it. Used when a world
     /// was lost rather than left: arriving back at sign-in with no explanation reads as a crash.</summary>
     public static void OpenSaying(string message)
     {
         Open();
-        var screen = Object.FindAnyObjectByType<SignInScreen>();
-        if (screen != null) screen.pendingMessage = message;
+        ErrorPopup.Show(message);
     }
-
-    string pendingMessage;
 
     // The panel's vertical rhythm, named once so a row can be inserted without re-typing every offset below it.
     const float RowGap = 56f;      // one labelled field to the next
@@ -106,26 +103,15 @@ public class SignInScreen : MonoBehaviour
 
         accountField.ActivateInputField();
 
-        // Set before this screen's parts existed (the world was lost while it was being built), so it is said now.
-        if (!string.IsNullOrEmpty(pendingMessage)) { Say(pendingMessage); pendingMessage = null; }
     }
 
-    void Update()
+    // ENTER moves down the form and then submits, which is what hands on a keyboard expect: with the account line in
+    // hand and no password yet, it goes to the password line. A click lands with neither line in hand, so it submits.
+    void OnEnter()
     {
-        // Enter moves down the form and then submits, which is what hands on a keyboard expect.
-        if (!Input.GetKeyDown(GameKeys.Chat) && !Input.GetKeyDown(GameKeys.ChatAlt)) return;
-
-        // ...unless a BUTTON holds the keyboard, which Tab now makes possible: pressing it belongs to the button,
-        // and answering here as well would run the button AND a sign-in off one press.
-        var events = EventSystem.current;
-        var focused = events != null ? events.currentSelectedGameObject : null;
-        if (focused != null && focused.GetComponent<Button>() != null) return;
-
-        if (accountField.isFocused && passwordField.text.Length == 0) passwordField.ActivateInputField();
-        else OnEnter();
+        if (accountField.isFocused && passwordField.text.Length == 0) { passwordField.ActivateInputField(); return; }
+        Submit(signUpFirst: false);
     }
-
-    void OnEnter() => Submit(signUpFirst: false);
     void OnCreate() => Submit(signUpFirst: true);
 
     void Submit(bool signUpFirst)
@@ -133,8 +119,8 @@ public class SignInScreen : MonoBehaviour
         string email = accountField.text.Trim();
         string password = passwordField.text;
 
-        if (email.Length == 0 || password.Length == 0) { Say("Fill in both lines."); return; }
-        if (signUpFirst && password.Length < 8) { Say("A new password needs at least 8 characters."); return; }
+        if (email.Length == 0 || password.Length == 0) { ErrorPopup.Show("Fill in both lines."); return; }
+        if (signUpFirst && password.Length < 8) { ErrorPopup.Show("A new password needs at least 8 characters."); return; }
 
         Busy(true);
         if (!signUpFirst) { SignIn(email, password); return; }
@@ -144,7 +130,7 @@ public class SignInScreen : MonoBehaviour
         AccountClient.Register(email, password, (ok, error) =>
         {
             if (this == null) return;
-            if (!ok) { Busy(false); Say(error ?? "Could not create that account."); return; }
+            if (!ok) { Busy(false); ErrorPopup.Show(error ?? "Could not create that account."); return; }
             SignIn(email, password);
         });
     }
@@ -176,7 +162,7 @@ public class SignInScreen : MonoBehaviour
     {
         AccountClient.SignIn(email, password, (ok, error) =>
         {
-            if (!ok) { if (this != null) { Busy(false); Say(error ?? "Could not sign in."); } return; }
+            if (!ok) { if (this != null) { Busy(false); ErrorPopup.Show(error ?? "Could not sign in."); } return; }
 
             // BELT AND BRACES, DELIBERATELY. Normally this screen is already gone by now, because setting the
             // session raises the event above and that happens first. But relying on that order would make a
@@ -194,7 +180,7 @@ public class SignInScreen : MonoBehaviour
     {
         if (enterButton != null) enterButton.interactable = !busy;
         if (createButton != null) createButton.interactable = !busy;
-        if (busy) Say("…");
+        Say(busy ? "…" : "");
     }
 }
 
@@ -349,6 +335,7 @@ public static class FrontScreen
         field.textComponent = text;
         field.lineType = TMP_InputField.LineType.SingleLine;
         if (secret) field.contentType = TMP_InputField.ContentType.Password;
+        UiKit.StyleTyping(field);
         return field;
     }
 }

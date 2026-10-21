@@ -198,4 +198,10 @@ public class CharacterSpec : ScriptableObject
     public SfxSet footstepSfx;
     [Tooltip("Played instead of the normal step when walking through a puddle.")]
     public SfxSet waterFootstepSfx;
+
+    // ---- teleport ------------------------------------------------------------------------------------------------------
+
+    [Header("Teleport (a wing, a door, arriving in the world)")]
+    [Tooltip("Played where the person stands each time the teleport effect starts — as they vanish and as they appear.")]
+    public SfxSet teleportSfx;
 }

@@ -272,6 +272,15 @@ public partial class Player3DController : MonoBehaviour
         // activeInHierarchy guards the SetActive(false) case (scene swap), which doesn't clear .enabled.
         if (controller == null || !controller.enabled || !controller.gameObject.activeInHierarchy) return;
 
+        // AWAY ON A TELEPORT (TeleportLook): nothing the player presses reaches the character — no step, no jump, no
+        // swing, no hunt — until they appear. Gravity only; the orders they had are left as they were, so a hunt a
+        // Fly Wing carried on resumes from where they land.
+        if (TeleportLook.OwnWaitingToAppear)
+        {
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+            return;
+        }
+
         // Clear the free-fall pose each frame; only the normal-movement path (ApplyGravityAndMove) re-asserts
         // it, so locked/dash/jump states below can't leave a stale in-air pose showing.
         falling = false;

@@ -92,7 +92,6 @@ public sealed class ColourPicker
         p.hexField.textComponent = text;
         p.hexField.lineType = TMP_InputField.LineType.SingleLine;
         p.hexField.characterLimit = 7;
-        p.hexField.customCaretColor = true;
         UiKit.StyleTyping(p.hexField);
         p.hexField.onValueChanged.AddListener(p.OnHexTyped);
 

@@ -83,6 +83,11 @@ public static class QuestMath
     public static int BuyBill(int price, int count, int bought, int free)
         => price * System.Math.Max(0, count - bought - free);
 
+    /// <summary>How many a Buy step needs bought in all: what it asks for, or — on a tutorial's first run — every one it
+    /// gives free, the <paramref name="bought"/> so far plus the <paramref name="freeLeft"/> still waiting, when that is more.</summary>
+    public static int BuyNeed(int count, int bought, int freeLeft)
+        => System.Math.Max(count, bought + System.Math.Max(0, freeLeft));
+
     /// <summary>Add a Buy step's <see cref="BuyBill"/> to a tutorial's running gold bill.</summary>
     public static void AddBought(int price, int count, int bought, int free, ref int gold)
         => gold += BuyBill(price, count, bought, free);

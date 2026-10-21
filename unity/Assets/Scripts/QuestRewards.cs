@@ -23,7 +23,7 @@ public static class QuestRewards
             if (r.experience > 0)
             {
                 int levels = c.AddXP(r.experience, out int ringLevels);
-                GameNetwork.TellOwnerTheyEarned(c, r.experience, 0, levels, ringLevels);
+                GameNetwork.TellOwnerTheyEarned(c, r.experience, levels, ringLevels);
                 Part(said, ref first, r.experience + " experience");
             }
             if (r.gold > 0)

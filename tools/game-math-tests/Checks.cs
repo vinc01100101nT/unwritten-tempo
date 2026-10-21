@@ -1493,9 +1493,6 @@ static class Checks
         That(CreatureKinds.KillExperience(60, 50, 3f) == 3 * at60, F,
              "levels a creature grew in the fight are not multiplied with the rest");
         That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, 3f) == 600, F, "a rescue from a x3 creature does not pay 3 times");
-        That(SavedCharacterRules.LootMultiplierOfRebel(CreatureKind.Normal, 1f) == 30f && SavedCharacterRules.LootMultiplierOfRebel(CreatureKind.Elite, 30f) == 90f
-             && SavedCharacterRules.LootMultiplierOfRebel(CreatureKind.Normal, 50f) == 50f, F,
-             "a rebel's materials should drop one kind up — x30 from a normal, x90 from an elite — never below its own");
     }
 
     // The total health of a x1 creature of the reference build at its level's +0 metal armour — what the health curve
@@ -1592,8 +1589,11 @@ static class Checks
             That(SavedCharacterRules.RescueKills(tier) + 2 * SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, tier)
                  == 10 * (tier == GoldTier.Ordinary ? 1 : tier == GoldTier.Helpless ? 2 : 3), F,
                  "a " + tier + " rescue is no longer worth 10, 20 or 30 kills in all");
-        That(SavedCharacterRules.LootKindOfRebel(CreatureKind.Normal) == CreatureKind.Elite, F, "a rebel from a normal drops as an elite");
-        That(SavedCharacterRules.LootKindOfRebel(CreatureKind.Elite) == CreatureKind.Shadow, F, "a rebel from an elite drops as a shadow");
+        That(SavedCharacterRules.FightingMultiplier(SavedBehaviour.Ally, 1f) == 2f && SavedCharacterRules.FightingMultiplier(SavedBehaviour.Ally, 5f) == 10f
+             && SavedCharacterRules.FightingMultiplier(SavedBehaviour.Rebel, 5f) == 5f && SavedCharacterRules.FightingMultiplier(SavedBehaviour.NeverFights, 3f) == 3f, F,
+             "an ally should fight at twice its creature's multiplier, every other character at its creature's own");
+        That(SavedCharacterRules.KillsWorth(SavedBehaviour.Rebel) == 3 && SavedCharacterRules.KillsWorth(SavedBehaviour.Ally) == 1
+             && SavedCharacterRules.KillsWorth(SavedBehaviour.NeverFights) == 1, F, "a rebel's death should pay 3 kills of its creature");
         That(!SavedCharacterRules.CanTurnBack(CreatureKind.Shadow), F, "a shadow never turns back");
         That(SavedCharacterRules.StaySeconds(SavedBehaviour.NeverFights) == 30f && SavedCharacterRules.StaySeconds(SavedBehaviour.Ally) == 30f
              && SavedCharacterRules.StaySeconds(SavedBehaviour.Rebel) == 30f, F, "every saved character stays 30s");
@@ -1639,6 +1639,9 @@ static class Checks
              "from 7 of 76 health, 30-health potions take 2 to reach 80%; none when already there or when they heal nothing");
         That(QuestMath.BuyBill(80, 3, 1, 1) == 80 && QuestMath.BuyBill(80, 1, 0, 2) == 0, QuestF,
              "buying 3 at 80 with 1 bought and 1 free costs 80; more free than asked costs nothing");
+        That(QuestMath.BuyNeed(1, 0, 3) == 3 && QuestMath.BuyNeed(1, 2, 1) == 3 && QuestMath.BuyNeed(1, 3, 0) == 3
+             && QuestMath.BuyNeed(2, 0, 0) == 2, QuestF,
+             "a step asking for 1 with 3 free needs all 3 bought; with nothing free it needs what it asks for");
         That(QuestMath.HealOfOneUse(new List<float> { 30f }) == 30 && QuestMath.HealOfOneUse(new List<float> { 12.5f, 12.5f, 0.5f }) == 26
              && QuestMath.HealOfOneUse(new List<float>()) == 0, QuestF, "one use heals the sum of its heals, rounded half up");
         int c2 = 0, g2 = 0;

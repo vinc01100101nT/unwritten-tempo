@@ -9,7 +9,8 @@ using UnityEditor;
 /// <item>gear: what a brand-new piece is worth (<see cref="CraftingMath.NewPieceWorth"/>) — the same rule every copy's
 /// own worth follows, so a piece is worth the same to a tooltip, a sale and a purchase;</item>
 /// <item>a creature's own material: the tier its creature's kind and grade give, and the value that pays what its
-/// creature's level, tier, grade and folds say (<see cref="CreatureMaterials.Derive"/>).</item>
+/// creature's level, tier, grade and folds say (<see cref="CreatureMaterials.Derive"/>) — and its icon, the box drawn
+/// in its tier's colour (<see cref="BoxIconPath"/>), so no material's box is ever picked by hand.</item>
 /// </list>
 ///
 /// <para>It runs by itself whenever an item or a creature file is SAVED — the user's own save is the action that
@@ -21,6 +22,8 @@ public class DerivedItemValues : AssetModificationProcessor
 {
     const string ItemsFolder = "/Resources/Items/";
     const string MonstersFolder = "/Resources/Monsters/";
+    // tools/check-creature-materials.py reads this line.
+    const string BoxIconPath = "Assets/1_Authored/Art/Icons/Items/Box {0}.png";
 
     static bool syncing;
 
@@ -72,6 +75,7 @@ public class DerivedItemValues : AssetModificationProcessor
             if (d == null || d.material == null || d.material.materialKind != MaterialKind.Creature) continue;
             if (!CreatureMaterials.Derive(d, out int step, out int value)) continue;
             n += Set(d.material, step, value, write, said, changedPaths);
+            n += SetIcon(d.material, BoxIcon(CreatureMaterials.TierOfStep(step)), write, said, changedPaths);
         }
 
         var dust = MaterialCatalog.TemperDust;
@@ -82,6 +86,36 @@ public class DerivedItemValues : AssetModificationProcessor
             if (it != null && it.slot != EquipSlotType.None)
                 n += Set(it, it.materialStep, newPiece, write, said, changedPaths);
         return n;
+    }
+
+    static readonly UnityEngine.Sprite[] boxIcons = new UnityEngine.Sprite[(int)Rarity.Legendary + 1];
+
+    static UnityEngine.Sprite BoxIcon(Rarity tier)
+    {
+        int t = (int)tier;
+        if (boxIcons[t] == null)
+            boxIcons[t] = AssetDatabase.LoadAssetAtPath<UnityEngine.Sprite>(string.Format(BoxIconPath, tier));
+        return boxIcons[t];
+    }
+
+    static int SetIcon(Item it, UnityEngine.Sprite box, bool write, StringBuilder said, List<string> changedPaths)
+    {
+        if (box == null)
+        {
+            said?.Append(it.displayName).Append(": no box icon found for its tier\n");
+            return 0;
+        }
+        if (it.icon == box) return 0;
+        said?.Append(it.displayName).Append(": icon ").Append(it.icon != null ? it.icon.name : "none").Append(" -> ")
+             .Append(box.name).Append('\n');
+        if (write)
+        {
+            it.icon = box;
+            // editor-write-ok: runs only inside the user's own save of an item or creature file, or a Sync(true) they ran.
+            EditorUtility.SetDirty(it);
+            changedPaths?.Add(AssetDatabase.GetAssetPath(it));
+        }
+        return 1;
     }
 
     static int Set(Item it, int step, int value, bool write, StringBuilder said, List<string> changedPaths)

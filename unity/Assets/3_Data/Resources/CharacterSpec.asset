@@ -77,3 +77,8 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 82c88d938401e744fbc4999a27530817, type: 3}
     volume: 0.55
     pitch: {x: 0.95, y: 1.05}
+  teleportSfx:
+    clips:
+    - {fileID: 8300000, guid: fc6b940c23f63824e94105755bd43afe, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}

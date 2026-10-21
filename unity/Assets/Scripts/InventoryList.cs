@@ -96,7 +96,6 @@ public class InventoryList : IItemBoxOwner
         search.textComponent = text;
         search.placeholder = placeholder;
         search.lineType = TMP_InputField.LineType.SingleLine;
-        search.customCaretColor = true;
         UiKit.StyleTyping(search);
         search.onValueChanged.AddListener(s =>
         {

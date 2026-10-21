@@ -21,6 +21,7 @@ public static class ItemUse
     {
         if (item == null || !item.IsUsable) return false;
         if (Character.Instance == null || Character.Instance.IsDead) return false;
+        if (!GameServer.IsServer && TeleportLook.OwnWaitingToAppear) return false;   // away on a teleport
 
         var runner = PlayerSkills.ById(item.useSkillId) as SkillRunner;
         if (runner == null || runner.def == null)

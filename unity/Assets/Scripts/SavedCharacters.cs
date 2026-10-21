@@ -98,6 +98,9 @@ public static class SavedCharacters
         health.BecomeSaved(c.who, SavedCharacterRules.SideOf(behaviour), behaviour == SavedBehaviour.Ally ? c.saver : null);
         Wear(go, c.who, health.kind);
 
+        // Set from its creature every time, never multiplied in place: a banked body still carries its last life's.
+        health.multiplier = SavedCharacterRules.FightingMultiplier(behaviour, c.def.multiplier);
+
         var block = go.GetComponent<UnitStatBlock>();   // perf-ok: once, at the moment a creature turns back
         if (block != null && c.hasInputs) block.SetSpawnInputs(c.inputs);
 

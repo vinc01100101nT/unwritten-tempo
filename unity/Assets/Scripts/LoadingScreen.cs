@@ -109,6 +109,20 @@ public static class LoadingScreen
     /// <see cref="FadeInSeconds"/>; anything else takes the curtain away at once.</summary>
     public static void Hide()
     {
+        // A TELEPORT'S CURTAIN STANDS ON BLACK (TeleportLook.CoverWithCurtain): it goes at once and the black fades
+        // away, the same fade a wing's trip ends with. Also when the curtain never got up — the answer came back
+        // before the screen was black — so the black waiting to raise it is called off.
+        if (TeleportLook.OwnWaitingToAppear)
+        {
+            if (root != null && root.gameObject.activeSelf)
+            {
+                fading = false;
+                ticker.enabled = false;
+                root.gameObject.SetActive(false);
+            }
+            ScreenFade.FromBlack();
+            return;
+        }
         if (root == null || !root.gameObject.activeSelf) return;
         bool landedElsewhere = !fading && !string.IsNullOrEmpty(MapManager.CurrentMap)
                                && MapManager.CurrentMap != shownInMap;

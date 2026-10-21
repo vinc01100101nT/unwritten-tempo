@@ -306,7 +306,7 @@ public sealed class QuestLog
                 {
                     // Counted only while this step is the current one (see CountKill, CountBought), so a step reached
                     // later starts at 0.
-                    met = i == def.IndexOf(r.stepId) && r.progress >= o.count;
+                    met = i == def.IndexOf(r.stepId) && r.progress >= StepNeed(r, o);
                 }
                 else if (o.kind == QuestObjectiveKind.Health)
                 {
@@ -381,8 +381,11 @@ public sealed class QuestLog
             int i = def != null ? def.IndexOf(r.stepId) : -1;
             if (i < 0) continue;
             var o = def.steps[i].objective;
-            if (o.kind != QuestObjectiveKind.Buy || o.itemId != itemId || r.progress >= o.count) continue;
-            r.progress = Mathf.Min(o.count, r.progress + count);
+            if (o.kind != QuestObjectiveKind.Buy || o.itemId != itemId) continue;
+            // The free ones in this purchase are already taken off what is left, so they are added back as bought.
+            int need = QuestMath.BuyNeed(o.count, r.progress + count, FreeBuysLeft(r, o.itemId));
+            if (r.progress >= need) continue;
+            r.progress = Mathf.Min(need, r.progress + count);
             Touch(r);
             counted = true;
         }
@@ -675,9 +678,9 @@ public sealed class QuestLog
             var w = new QuestOpenWire { questId = r.questId, stepId = r.stepId, tracked = r.tracked };
             int i = def.IndexOf(r.stepId);
             if (i >= 0) w.hasPath = HasPlace(def.steps[i].objective, map);
-            if (i >= 0 && def.steps[i].objective.kind == QuestObjectiveKind.Kill)
+            if (i >= 0 && (def.steps[i].objective.kind == QuestObjectiveKind.Kill || def.steps[i].objective.kind == QuestObjectiveKind.Buy))
             {
-                w.need = def.steps[i].objective.count;
+                w.need = StepNeed(r, def.steps[i].objective);
                 w.have = Mathf.Min(w.need, r.progress);
             }
             else if (i >= 0 && def.steps[i].objective.kind == QuestObjectiveKind.FoldedTo)
@@ -976,6 +979,11 @@ public sealed class QuestLog
     // ---- what a first run gives free --------------------------------------------------------------------------------
     // Free only while the record is on its FIRST run (never a replay) and the piece is still owed — a step ahead still
     // needs it — so nothing free is ever left lying about to be spent on something the tutorial no longer asks for.
+
+    // A counted step's target: a Kill's count; a Buy's count, or every one a first run gives free when that is more —
+    // so a tutorial that hands over three potions is not done after the first.
+    static int StepNeed(Record r, QuestDef.Objective o)
+        => o.kind == QuestObjectiveKind.Buy ? QuestMath.BuyNeed(o.count, r.progress, FreeBuysLeft(r, o.itemId)) : o.count;
 
     static int FreeBuysLeft(Record r, string itemId)
     {

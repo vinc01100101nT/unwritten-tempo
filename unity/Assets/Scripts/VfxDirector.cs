@@ -259,6 +259,10 @@ public class VfxSequenceRunner : MonoBehaviour
         // it is rolled from the cast's shared stream for exactly the reason a carrier's scatter is.
         Vector3 point = anchorPoint + st.offset + jitter;
         float scale = st.scale * (ctx.scaleMult <= 0f ? 1f : ctx.scaleMult);
+        // ON A PERSON AWAY ON A TELEPORT nothing is drawn or heard (TeleportLook.Covers) — the step still keeps its
+        // beats, so what it decides lands on time. A lasting aura is still started: it hides itself until they appear.
+        bool covered = TeleportLook.Covers(ctx.follow);
+        bool draws = Draws && !covered;
 
         Emit(st.emitEventOnStart, point, false);
 
@@ -269,7 +273,7 @@ public class VfxSequenceRunner : MonoBehaviour
                 // Looping PlayAt: keep the particle loop on and live for the skill's Stay Duration; otherwise a
                 // one-shot that plays once for its natural length. The window end (natural or Stay) drives End ticks.
                 float stayP = Stay(st);
-                if (Draws)
+                if (draws)
                 {
                     if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
                     var hP = Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
@@ -299,7 +303,7 @@ public class VfxSequenceRunner : MonoBehaviour
                     bool loop = st.looping || ctx.persistent;
                     float stayA = Stay(st);
                     float lifeA = (st.looping && !ctx.persistent) ? stayA : 0f;   // 0 → authored (persistent = until Stop)
-                    if (Draws)
+                    if (Draws && (ctx.persistent || !covered))
                     {
                         if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
                         var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA,
@@ -367,7 +371,7 @@ public class VfxSequenceRunner : MonoBehaviour
                             if (travel != null) travel.Stop();
                             if (gen == g) { Emit(tag, landing, true, rearmChained: true); OnCarrierArrive(idx, landing, mover); }
                         });
-                    if (Draws) travel = DrawFlight(st, mover, from, land, scale);
+                    if (draws) travel = DrawFlight(st, mover, from, land, scale);
                     // Carrier tick placement: Start = one tick at launch; Interval = every tickInterval along the
                     // flight (tracks the live mover, capped by carrierMaxLife, closed on arrival); End = one tick on
                     // arrival. Each copy answers for itself — its own launch, its own path, its own landing.
@@ -385,12 +389,12 @@ public class VfxSequenceRunner : MonoBehaviour
             }
 
             case VfxStepKind.Shake:
-                if (Draws) CameraFollow3D.ShakeMain(st.shakeStrength, st.shakeDuration);
+                if (draws) CameraFollow3D.ShakeMain(st.shakeStrength, st.shakeDuration);
                 ScheduleEnd(i, Time.time + st.shakeDuration);
                 break;
 
             case VfxStepKind.Sound:
-                if (Draws && st.sound != null && !st.sound.Empty)
+                if (draws && st.sound != null && !st.sound.Empty)
                     Sfx.PlayAt(st.sound, point, st.soundFadeIn, st.soundFadeOut, st.soundDuration);
                 ScheduleEnd(i, Time.time);   // one-shot cue: end ≈ start
                 break;

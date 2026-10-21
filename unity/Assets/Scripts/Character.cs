@@ -1142,6 +1142,7 @@ public class Character : MonoBehaviour, ICombatUnit
     public void SetLevel(int newLevel)
     {
         // A GM's dial ignores the cap (decided 2026-09-30): only EARNING stops at 99.
+        int oldLevel = level;
         level = Mathf.Max(1, newLevel);
         // Dialing a level in hands out no experience, so the lifetime figure would still read as whatever was
         // actually earned — 0 on a character levelled straight to 80, which reads as broken on a board that
@@ -1149,6 +1150,10 @@ public class Character : MonoBehaviour, ICombatUnit
         // dialed-DOWN level cannot erase experience somebody really gathered.
         // server-math: only a GM's /lvl dials a level, and GM commands run on the server
         LifetimeXp = System.Math.Max(LifetimeXp, UnitStatMath.XpEarnedByLevel(level) + (long)XP);
+        // LOWERED, the build is taken back whole: every stat to 1 and the points this level has earned to spend
+        // again, so the pool always follows the level instead of a high level's build sitting on a low one.
+        // server-math: only a GM's /lvl dials a level, and GM commands run on the server
+        if (level < oldLevel) for (int i = 0; i < primary.Length; i++) primary[i] = 1;
         ReconcilePointsToLevel();
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
@@ -2023,9 +2028,6 @@ public class Character : MonoBehaviour, ICombatUnit
         OnLeveledUp?.Invoke(reached);  // drives the level-up toast
     }
 
-    /// <summary>Dev/testing: feed the ring XP directly (the <c>/ringxp</c> command), so the ring track can be
-    /// exercised without grinding. Returns ring levels gained.</summary>
-    public int AddRingXP(int amount) => Ring.AddXP(amount);
 
     // ---- What this character is carrying --------------------------------------------------------------
     //

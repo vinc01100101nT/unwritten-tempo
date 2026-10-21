@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-scaly-shed-skin
   displayName: Blighted Scaly Shed Skin
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

@@ -192,6 +192,9 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     /// creature's direction already rides on <see cref="netYaw"/>. Left alone while it stands, so it keeps facing the
     /// way it last walked.</summary>
     [SyncVar] Vector2 netHeading = Vector2.down;
+    // PROBE — temporary (see the facing probe in the push). Delete with it.
+    Vector3 probeLast;
+    bool probeHasLast;
 
     // ---- what this creature is DOING ---------------------------------------------------------------------
     // The action beat: which action, the moment it began on the clock both machines share, and how long it runs.
@@ -377,6 +380,22 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // cadence for a slowed creature, neither of which a plain walking/not-walking flag could say.
         netSpeed = serverAgent != null && serverAgent.Moving ? serverAgent.moveSpeed : 0f;
         if (!isShadow && netSpeed > 0f) netHeading = serverAgent.Heading;
+        // PROBE — temporary, for the 'walks toward you showing its back' bug: say whenever the way this creature is
+        // told to face points away from the way it actually went since the last push. Delete once that bug is fixed.
+        if (!isShadow)
+        {
+            Vector3 probeNow = ServerMob.transform.position;
+            if (probeHasLast)
+            {
+                var went = new Vector2(probeNow.x - probeLast.x, probeNow.z - probeLast.z);
+                if (went.sqrMagnitude > 0.04f && Vector2.Dot(went.normalized, netHeading.normalized) < 0f)
+                    GameLog.Warn(LogCat.Server, string.Concat("[facing-probe] ", mapName, " ", SpawnIds.Label(serverHealth),
+                        " went ", went.ToString("F2"), " but faces ", netHeading.ToString("F2"), ", walking now: ",
+                        (netSpeed > 0f).ToString()));
+            }
+            probeLast = probeNow;
+            probeHasLast = true;
+        }
 
         // WHAT IT WEARS, re-sent only when the worn set has changed — a new life's fresh gear, above all.
         if (serverGear != null && serverGear.Version != wornVersionSent) PublishWorn();

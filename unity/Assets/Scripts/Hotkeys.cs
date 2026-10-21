@@ -105,6 +105,18 @@ public static class Hotkeys
         return Input.GetKey(key);
     }
 
+    /// <summary>Enter (either one) pressed this frame. Not typing-guarded: Enter in a box is how a form is sent.
+    /// Read by <see cref="EnterKey"/>, the one place Enter presses a window's button.</summary>
+    public static bool EnterDown()
+    {
+        if (NoKeyboard) return false;
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) return true;
+#endif
+        return Input.GetKeyDown(GameKeys.Chat) || Input.GetKeyDown(GameKeys.ChatAlt);
+    }
+
     /// <summary>Escape pressed this frame. Deliberately NOT typing-guarded: cancel/close-window must
     /// still work while a text box is focused (e.g. Esc closes the chat). The one shared front door for
     /// every panel's close-on-Escape, so the "Esc works while typing" rule can't fork per panel.</summary>

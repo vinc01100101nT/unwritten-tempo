@@ -28,7 +28,7 @@ MonoBehaviour:
   levelNeeded: 0
   steps:
   - id: buy-potion
-    text: Buy a Minor Healing Potion from a Tool Dealer.
+    text: Buy every free Minor Healing Potion from a Tool Dealer.
     objective:
       kind: 6
       townspersonId: 
@@ -43,10 +43,10 @@ MonoBehaviour:
       text: This red bar is your health, and it is low. The blue bar under it is your
         mana. Follow the arrows to a Tool Dealer, who sells healing potions.
     - spot: 10
-      text: Buy a Minor Healing Potion here. Double-click its row to put it in your
+      text: Buy the free Minor Healing Potions here. Double-click its row to put them in your
         cart.
     - spot: 11
-      text: One is enough. Press Confirm.
+      text: Type the number shown as free on the potion's row. You need all of them to get back to 80%. Press Confirm.
     - spot: 12
       text: Press Confirm to buy what is in your cart.
   - id: drink-potions
