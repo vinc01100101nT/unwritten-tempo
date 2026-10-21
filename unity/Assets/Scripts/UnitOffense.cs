@@ -50,6 +50,15 @@ public static class UnitOffense
         return mult == 1f ? amount : Mathf.RoundToInt(amount * mult);
     }
 
+    /// <summary>What a BASIC ATTACK spends on top of <see cref="SpendCharges"/>: one basic-attack boost charge, hit or
+    /// miss. Called only from <see cref="BasicSwing"/>, so a skill's own strike can never cash one.</summary>
+    public static int SpendBasicAttackCharges(UnitStates states, int amount)
+    {
+        if (states == null) return amount;
+        float mult = states.SpendBasicAttackBoost();
+        return mult == 1f ? amount : Mathf.RoundToInt(amount * mult);
+    }
+
     /// <summary>Seconds from one swing to the next, given a base cadence and the unit's attack-speed multiplier
     /// (&gt;1 = faster). Shared so the player and a mob speed up by the exact same rule.
     ///

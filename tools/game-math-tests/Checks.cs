@@ -223,7 +223,10 @@ static class Checks
         That(Math.Abs(UnitStatMath.SwingIntervalFromAspd(0f) - 4f) < 0.0001f, StatMath, "ASPD 0 should swing every 4 s");
         That(Math.Abs(UnitOffense.AttackInterval(0.8f, 0f) - 4f) < 0.0001f, StatMath, "a unit slowed to nothing must still swing every 4 s");
         // Movement-speed effects stop at 250%; life steal at 25% of a blow; reflect at 50%.
-        That(UnitStatMath.MoveMult(5f) == 2.5f && UnitStatMath.MoveMult(-3f) == 0f, StatMath, "movement speed left [0, 250%]");
+        That(UnitStatMath.MoveMult(5f) == 2.5f && UnitStatMath.MoveMult(-3f) == 0.3f, StatMath, "movement speed kept inside [30%, 250%]");
+        That(UnitStatMath.CreatureTravelSpeed(3f, 0f, UnitStatMath.MoveMult(-3f)) == 0f
+             && UnitStatMath.CreatureTravelSpeed(3f, 0f, UnitStatMath.MoveMult(1f)) == 0f, StatMath,
+             "a creature whose own speed is 0 must never move, whatever slows or speed-ups it carries");
         That(UnitStatMath.LifeStealFraction(0.9f) == 0.25f && UnitStatMath.ReflectFraction(0.9f) == 0.5f, StatMath,
              "life steal should stop at 25% and reflect at 50%");
         // The multiplier: health times it, attack the cube root, never below x1.
@@ -272,6 +275,20 @@ static class Checks
         That(Math.Abs(StrikeMath.Growth(0f, 0, 0.05f, 20f) - 1f) < 0.001f, StrikeF, "0.05 per metre at 20 metres should add 1");
         That(Math.Abs(StrikeMath.Growth(0.1f, 10, 0.05f, 20f) - 2f) < 0.001f, StrikeF, "the two growths should add together");
         That(StrikeMath.Growth(0.1f, -5, 0.05f, -3f) == 0f, StrikeF, "a negative amount given up or distance should add nothing");
+        // A lobbed arrow (Rainbow, 2026-10-21): real throw physics on level ground.
+        That(Math.Abs(Ballistics.FlightSeconds(11f, 45f, 9.81f) - 1.4976f) < 0.001f, StrikeF, "an 11 m lob at 45 degrees should fly about 1.5 s");
+        That(Ballistics.FlightSeconds(4f, 45f, 9.81f) < Ballistics.FlightSeconds(11f, 45f, 9.81f), StrikeF, "a shorter lob should land sooner");
+        That(Math.Abs(Ballistics.ApexHeight(11f, 45f) - 2.75f) < 0.001f, StrikeF, "an 11 m lob at 45 degrees should peak 2.75 m up");
+        That(Ballistics.PointAt(UnityEngine.Vector3.zero, new UnityEngine.Vector3(10f, 0f, 0f), 2f, 1f) == new UnityEngine.Vector3(10f, 0f, 0f), StrikeF, "a lob should end exactly on its landing");
+        That(Math.Abs(Ballistics.PointAt(UnityEngine.Vector3.zero, new UnityEngine.Vector3(10f, 0f, 0f), 2f, 0.5f).y - 2f) < 0.001f, StrikeF, "a lob should peak half way");
+        // Accuracy above 100 (Thunderhead, decided 2026-10-21): counted 0..100, never negative.
+        That(StrikeMath.AccuracyOverPoints(160) == 60, StrikeF, "160 raw hit points should count 60 over");
+        That(StrikeMath.AccuracyOverPoints(90) == 0, StrikeF, "a hit chance under 100 should count nothing");
+        That(StrikeMath.AccuracyOverPoints(400) == 100, StrikeF, "the accuracy overflow should stop at 100 points");
+        // Speed bonus while moving (Sunbreak): percent points of bonus, 0 standing still or slowed.
+        That(Math.Abs(StrikeMath.SpeedBonusPoints(1.45f, true) - 45f) < 0.01f, StrikeF, "a x1.45 pace on the move should count 45");
+        That(StrikeMath.SpeedBonusPoints(1.45f, false) == 0f, StrikeF, "standing still should count nothing");
+        That(StrikeMath.SpeedBonusPoints(0.7f, true) == 0f, StrikeF, "a slowed caster should count nothing, not a penalty");
         // The sniper (decided 2026-10-06): its ordinary attack is a magic shot that grows 2% a metre, and it is the only
         // weapon whose magic can crit.
         That(Math.Abs(StrikeMath.SniperShotGrowth(0f) - 1f) < 0.001f, StrikeF, "a point-blank sniper shot should be x1");

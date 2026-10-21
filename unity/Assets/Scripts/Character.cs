@@ -805,6 +805,19 @@ public class Character : MonoBehaviour, ICombatUnit
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
     public int Hit  => Told ? toldCurrent.hit : UnitStatMath.Hit(Inputs, equipBonuses, Lift(StatId.Accuracy, SubStat.Accuracy));
     public int Flee => Told ? toldCurrent.flee : UnitStatMath.Flee(Inputs, equipBonuses, Lift(StatId.Evasion, SubStat.Evasion));
+
+    /// <summary>SERVER: walking right now, by this person's own recent position reports (their shell knows). False on
+    /// a player's machine, which decides nothing with it.</summary>
+    public bool IsMoving
+    {
+        get
+        {
+            if (!GameServer.IsServer) return false;
+            var shell = GameNetwork.ShellOfFighter(this);
+            // perf-ok: asked once per strike that grows with speed, never per frame
+            return shell != null && shell.ServerIsMoving;
+        }
+    }
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
     public float AttackSpeedMult => Told ? toldCurrent.aspdMult : UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, RingAndMastery(StatId.AttackSpeed), AspdBuffMult);
@@ -1001,7 +1014,8 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Our crit chance against a defender with <paramref name="targetLuk"/> LUK — base
     /// <see cref="CritChance01"/> minus the crit shield, clamped to [0, 0.95].</summary>
-    float EffectiveCritChance(int targetLuk) => UnitStatMath.EffectiveCritChance(CritChance01, targetLuk);
+    float EffectiveCritChance(int targetLuk) =>
+        UnitStatMath.EffectiveCritChance(CritChance01 + SkillEffectApplier.StrikeCritBonus, targetLuk);
 
     /// <summary>Try to spend <paramref name="amount"/> mana; returns false (and spends nothing)
     /// if there isn't enough. Used by the caster before firing a spell.</summary>
@@ -1222,6 +1236,10 @@ public class Character : MonoBehaviour, ICombatUnit
     /// hits SILENTLY (no "Dodge" spam). Folded into the one <see cref="DodgedByInvuln"/> choke so both the
     /// physical and magic damage paths honor it. Runtime-only.</summary>
     public bool Invincible { get; set; }
+
+    /// <summary>SERVER, GM testing only (/nocooldown): every skill this character casts is ready again at once, the
+    /// shared ultimate cooldown included. Not saved — a sign-in starts with cooldowns on.</summary>
+    public bool NoCooldowns { get; set; }
 
     static readonly Color DodgeColor = new Color(0.55f, 0.9f, 1f);
     // The soaked-by-barrier number (Shield skill) — a pale cyan so an absorbed hit reads distinct from HP loss.
@@ -1599,6 +1617,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (missed)
         {
             OnEvaded?.Invoke();
+            PassiveEvents.Dodged(this, attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Missed);
         }
 

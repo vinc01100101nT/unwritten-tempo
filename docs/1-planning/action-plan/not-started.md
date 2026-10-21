@@ -79,8 +79,6 @@ It opens once `MT-14`, `MT-15` and `MT-17` are done; the shadows (`MT-18`) are n
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
 
-- [ ] `MT-34` **`[A]` Author the bow's skills.** — **5–8 days** — see [Weapon Roster — 14 Identities](../../2-systems/active-skill-system-v3/weapon-roster-12-identities.md)
-
 - [ ] `MT-35` **`[E]` Make cards something you earn** — decided 2026-09-26: every card is a "vs something" card (a size, a kind or an element; race and biome left out); a weapon rolls 3 to 4 sockets and an armour piece 0 to 1 when forged; a card is permanent once socketed. — **5–7 days** — see [Roadmap to Launch](../roadmap-to-launch.md)
 
   - [ ] `ST-35-A` **`[D]` First decide:** the card roster, and which creature drops each card. — see [Roadmap to Launch](../roadmap-to-launch.md)

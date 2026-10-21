@@ -133,6 +133,7 @@ public static class SkillTooltip
             case SkillTrigger.OnDamageReceived:    return "When you take damage";
             case SkillTrigger.OnWeaponDrawn:       return "When you draw your weapon";
             case SkillTrigger.OnHealDealt:         return "When you heal someone";
+            case SkillTrigger.OnDodge:             return "When you dodge an attack";
             default:                               return "Passive";
         }
     }
@@ -284,6 +285,7 @@ public static class SkillTooltip
             case SkillEffectKind.SubStatBuff:          return SubStatName(e.subStat) + " buff";
             case SkillEffectKind.SubStatDebuff:        return SubStatName(e.subStat) + " debuff";
             case SkillEffectKind.BoostOutgoingDamage:  return "damage bonus";
+            case SkillEffectKind.BoostBasicAttackDamage: return "basic attack damage bonus";
             case SkillEffectKind.ReduceOutgoingDamage: return "damage cut";
             case SkillEffectKind.AddStacks:
             {
@@ -348,6 +350,12 @@ public static class SkillTooltip
                     s += ", +" + Hl(e.damageMultPerPointGivenUp.value.ToString("0.###") + "×") + " per point of MP or HP given up";
                 if (e.damageMultPerMetre.value > 0f)
                     s += ", +" + Hl(e.damageMultPerMetre.value.ToString("0.###") + "×") + " per metre to the target";
+                if (e.damageMultPerAccuracyOver.value > 0f)
+                    s += ", +" + Hl(e.damageMultPerAccuracyOver.value.ToString("0.###") + "×") + " per point of hit chance above 100% (up to " + StrikeMath.MaxAccuracyOverPoints + ")";
+                if (e.critChanceBonus.value > 0f)
+                    s += ", +" + Pct(e.critChanceBonus.value) + " crit chance";
+                if (e.damageMultPerSpeedBonus.value > 0f)
+                    s += ", +" + Hl(e.damageMultPerSpeedBonus.value.ToString("0.###") + "×") + " per 1% movement speed bonus while moving";
                 return s;
             }
             case SkillEffectKind.Status:
@@ -400,6 +408,28 @@ public static class SkillTooltip
                 return charges > 1
                     ? "Your next " + Hl(charges.ToString()) + " attacks deal " + amount + window
                     : "Your next attack deals " + amount + window;
+            }
+            case SkillEffectKind.BoostBasicAttackDamage:
+            {
+                int charges = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
+                string window = " within " + Hl(e.seconds.value.ToString("0.#") + "s");
+                string amount = "+" + Pct(e.magnitude.value * LiveMult(e)) + " damage";
+                return charges > 1
+                    ? "Your next " + Hl(charges.ToString()) + " basic attacks deal " + amount + window
+                    : "Your next basic attack deals " + amount + window;
+            }
+            case SkillEffectKind.SureHit:
+            {
+                int charges = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
+                string window = " within " + Hl(e.seconds.value.ToString("0.#") + "s");
+                return charges > 1
+                    ? "Your next " + Hl(charges.ToString()) + " basic attacks can't miss" + window
+                    : "Your next basic attack can't miss" + window;
+            }
+            case SkillEffectKind.ResetCooldown:
+            {
+                var of = SkillCatalog.Get(e.modifierSkillId);
+                return (of != null ? Hl(of.displayName) : "A skill") + " is ready again at once";
             }
             case SkillEffectKind.ElementConverter:
             {
@@ -607,6 +637,7 @@ public static class SkillTooltip
             case SkillEffectKind.SubStatDebuff:
                 return SubStats.IsPercent(e.subStat) ? FinePct(v) : v.ToString("0.##");
             case SkillEffectKind.BoostOutgoingDamage:
+            case SkillEffectKind.BoostBasicAttackDamage:
             case SkillEffectKind.ReduceOutgoingDamage:
                 return FinePct(v);
             default:

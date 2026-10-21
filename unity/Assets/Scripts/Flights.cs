@@ -38,6 +38,8 @@ public static class Flights
         Streak = 1,
         /// <summary>An Effect Library effect, named by the leg.</summary>
         Effect = 2,
+        /// <summary>A real arrow model pointing along its flight — what a bow shoots (<see cref="Arrow.Model"/>).</summary>
+        ArrowModel = 3,
     }
 
     /// <summary>A WATCHING MACHINE: what to draw flying for a leg, from what was thrown. A skill's bounce draws its
@@ -52,6 +54,7 @@ public static class Flights
             var b = def != null && binding < def.bindings.Count ? def.bindings[binding] : null;
             if (b != null && !string.IsNullOrEmpty(b.bounceEffectId)) { effectId = b.bounceEffectId; return Look.Effect; }
         }
+        if (thrown == WeaponType.Bow) return Look.ArrowModel;
         return WeaponTypes.ThrowsItself(thrown) ? Look.HeldWeapon : Look.Streak;
     }
 

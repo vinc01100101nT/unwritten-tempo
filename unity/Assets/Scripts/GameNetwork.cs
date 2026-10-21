@@ -623,6 +623,20 @@ public class GameNetwork : NetworkManager
         public TrueDamageCause tickCause;
     }
 
+    /// <summary>EVERY BLOW ONE SKILL TICK LANDED, in one message (<see cref="BlowBatch"/>). Each hit is exactly the
+    /// message it would have travelled as on its own, plus WHEN to draw it (in pieces of the multi-hit cascade, 0 =
+    /// now) and what the combat log writes for it (−1 = nothing: a later piece of a blow already written). The
+    /// watching machine draws them as told and adds nothing up.</summary>
+    public struct HitBatch : NetworkMessage
+    {
+        public HitResult[] mobHits;
+        public byte[] mobDelays;
+        public int[] mobLog;
+        public PlayerHitResult[] playerHits;
+        public byte[] playerDelays;
+        public int[] playerLog;
+    }
+
     /// <summary>What the server HEALED a unit for, so the green digits appear over it. Health is the server's, and so is
     /// every gain — a potion, a heal skill, regeneration, lifesteal — so this is the only road the digits have to a
     /// screen. A person's gains are told to that person alone, the audience they have always had; a creature's reach
@@ -1009,6 +1023,7 @@ public class GameNetwork : NetworkManager
         base.OnStartClient();
         NetworkClient.RegisterHandler<HitResult>(OnHitResult);
         NetworkClient.RegisterHandler<PlayerHitResult>(OnPlayerHitResult);
+        NetworkClient.RegisterHandler<HitBatch>(OnHitBatch);
         NetworkClient.RegisterHandler<HPAddedShown>(OnHPAddedShown);
         NetworkClient.RegisterHandler<CooldownStarted>(OnCooldownStarted);
         NetworkClient.RegisterHandler<CastAnswered>(OnCastAnswered);
@@ -1070,7 +1085,30 @@ public class GameNetwork : NetworkManager
 
     // A blow on a PERSON, arriving on every machine that can see them. Each one shows it in the way it honestly
     // can — see NetPlayer.ShowBlow.
-    static void OnPlayerHitResult(PlayerHitResult msg)
+    static void OnPlayerHitResult(PlayerHitResult msg) => DrawPlayerHit(msg, msg.amount);
+
+    // A skill tick's blows, all at once: each drawn now or held for its place in the cascade.
+    static void OnHitBatch(HitBatch msg)
+    {
+        if (msg.mobHits != null)
+            for (int i = 0; i < msg.mobHits.Length; i++)
+            {
+                int delay = msg.mobDelays != null && i < msg.mobDelays.Length ? msg.mobDelays[i] : 0;
+                int log = msg.mobLog != null && i < msg.mobLog.Length ? msg.mobLog[i] : msg.mobHits[i].number;
+                if (delay <= 0) DrawMobHit(msg.mobHits[i], log); else BlowBatch.QueueMob(msg.mobHits[i], delay, log);
+            }
+        if (msg.playerHits != null)
+            for (int i = 0; i < msg.playerHits.Length; i++)
+            {
+                int delay = msg.playerDelays != null && i < msg.playerDelays.Length ? msg.playerDelays[i] : 0;
+                int log = msg.playerLog != null && i < msg.playerLog.Length ? msg.playerLog[i] : msg.playerHits[i].amount;
+                if (delay <= 0) DrawPlayerHit(msg.playerHits[i], log); else BlowBatch.QueuePlayer(msg.playerHits[i], delay, log);
+            }
+    }
+
+    /// <summary>Draw one blow on a person exactly as the server sent it. <paramref name="logNumber"/> is what the combat
+    /// log writes for it, or −1 for a piece of a blow the log already wrote.</summary>
+    public static void DrawPlayerHit(PlayerHitResult msg, int logNumber)
     {
         if (!NetworkClient.spawned.TryGetValue(msg.victimNetId, out var identity) || identity == null) return;
         var shell = identity.GetComponent<NetPlayer>();
@@ -1082,9 +1120,10 @@ public class GameNetwork : NetworkManager
             var striker = NetMob.ShellForNetId(msg.attackerNetId);
             if (striker != null) striker.TradedABlowWithMe();
             // AND THE COMBAT LOG'S LINE for it, the server's own numbers stored as they are.
-            ChatController.CombatTaken(striker != null ? striker.ShownName : null, msg.amount, msg.missed, msg.dodged,
-                                       msg.isCrit, msg.tick ? msg.tickCause : TrueDamageCause.None,
-                                       msg.mitigated.parried, msg.mitigated.blocked);
+            if (logNumber >= 0)
+                ChatController.CombatTaken(striker != null ? striker.ShownName : null, logNumber, msg.missed, msg.dodged,
+                                           msg.isCrit, msg.tick ? msg.tickCause : TrueDamageCause.None,
+                                           msg.mitigated.parried, msg.mitigated.blocked);
         }
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
@@ -1413,6 +1452,37 @@ public class GameNetwork : NetworkManager
         if (identity == null) return;
         uint striker = SharedNameOfStriker(info.attacker);
 
+        // A MULTI-HIT STRIKE IS SHOWN AS ITS HITS: one blow, cut into equal pieces here, each with its own place in
+        // the cascade and its own rising total — every number final before it leaves.
+        int pieces = BlowBatch.Open && BlowBatch.Split > 1 && !tick && !info.missed && dealt > 0 ? BlowBatch.Split : 1;
+        if (BlowBatch.Open)
+        {
+            var mitigatedOnce = victim.TakeMitigation();
+            bool dodgedOnce = dealt <= 0 && CombatAuthority.WhyNoDamage == NoDamageReason.Dodged;
+            for (int k = 0; k < pieces; k++)
+            {
+                int piece = BlowBatch.Piece(dealt, pieces, k);
+                BlowBatch.AddPlayer(identity, new PlayerHitResult
+                {
+                    victimNetId = identity.netId,
+                    amount = piece,
+                    element = info.element,
+                    isMagic = info.isMagic,
+                    isCrit = info.isCrit,
+                    missed = info.missed,
+                    attackerHit = info.attackerHit,
+                    mitigated = k == 0 ? mitigatedOnce : default,
+                    tick = tick,
+                    tickCause = tickCause,
+                    attackerNetId = striker,
+                    total = SkillEffectApplier.StrikeShowsTotal && !tick && !info.missed && piece > 0
+                        ? StrikeTotals.Add(identity.netId, striker, piece) : 0,
+                    dodged = dodgedOnce,
+                }, k, k == 0 ? dealt : -1);
+            }
+            return;
+        }
+
         NetworkServer.SendToReadyObservers(identity, new PlayerHitResult
         {
             victimNetId = identity.netId,
@@ -1505,6 +1575,32 @@ public class GameNetwork : NetworkManager
 
         var attackerIdentity = IdentityOfFighter(attacker as Character);
         uint striker = attackerIdentity != null ? attackerIdentity.netId : 0u;
+
+        // A MULTI-HIT STRIKE IS SHOWN AS ITS HITS — see the person's twin above.
+        if (BlowBatch.Open)
+        {
+            bool runs = blow.cause == TrueDamageCause.None && !blow.missed && blow.number > 0;
+            int pieces = runs && BlowBatch.Split > 1 ? BlowBatch.Split : 1;
+            for (int k = 0; k < pieces; k++)
+            {
+                int piece = BlowBatch.Piece(blow.number, pieces, k);
+                BlowBatch.AddMob(shell.netIdentity, new HitResult
+                {
+                    targetNetId = shell.netId,
+                    attackerNetId = striker,
+                    number = piece,
+                    elementModifier = blow.elementModifier,
+                    crit = blow.crit,
+                    magic = blow.magic,
+                    missed = blow.missed,
+                    flash = blow.flash,
+                    tickCause = blow.cause,
+                    total = SkillEffectApplier.StrikeShowsTotal && runs && piece > 0
+                        ? StrikeTotals.Add(shell.netId, striker, piece) : 0,
+                }, k, k == 0 ? blow.number : -1);
+            }
+            return;
+        }
 
         NetworkServer.SendToReadyObservers(shell.netIdentity, new HitResult
         {
@@ -1773,7 +1869,11 @@ public class GameNetwork : NetworkManager
     public static int HitResultsHeard;
     public static int HitResultsWithNoVictim;
 
-    static void OnHitResult(HitResult msg)
+    static void OnHitResult(HitResult msg) => DrawMobHit(msg, msg.number);
+
+    /// <summary>Draw one blow on a creature exactly as the server sent it. <paramref name="logNumber"/> is what the
+    /// combat log writes for it, or −1 for a piece of a blow the log already wrote.</summary>
+    public static void DrawMobHit(HitResult msg, int logNumber)
     {
         HitResultsHeard++;
         if (!NetworkClient.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
@@ -1783,7 +1883,7 @@ public class GameNetwork : NetworkManager
         // A CREATURE THIS MACHINE'S PLAYER JUST HIT — a miss does not count — is drawn through scenery for a while.
         if (mine && !msg.missed) shell.TradedABlowWithMe();
         // AND THE COMBAT LOG'S LINE for it — the server's own numbers, stored as they are.
-        if (mine) ChatController.CombatDealt(shell.ShownName, msg.number, msg.missed, msg.crit, msg.tickCause);
+        if (mine && logNumber >= 0) ChatController.CombatDealt(shell.ShownName, logNumber, msg.missed, msg.crit, msg.tickCause);
         var victim = (shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>()) as Health;
         if (victim == null) { HitResultsWithNoVictim++; return; }
 
@@ -2015,6 +2115,8 @@ public class GameNetwork : NetworkManager
     public override void Update()
     {
         base.Update();
+        // The pieces of a multi-hit cascade, drawn as their turns come — a player's machine only.
+        if (NetworkClient.active) BlowBatch.TickPlayback();
         if (!NetworkServer.active) return;
         // Everything in the air — arrows, thrown blades, bouncing skills — on the same server frame.
         Flights.Tick();
@@ -2795,8 +2897,10 @@ public class GameNetwork : NetworkManager
     // the real one and its shell is the parent that carries the identity.
     static uint IdentityOfServerSide(Transform aimed)
     {
-        if (aimed == null) return 0u;
-        var identity = aimed.GetComponentInParent<NetworkIdentity>();
+        // A CREATURE IS NAMED BY ITS SHELL — the one object every machine shares. The server's own creature carries no
+        // identity of its own, so asking it alone named nobody, and every screen played the skill's target effects on
+        // the caster instead.
+        var identity = SharedIdentityOnServer(aimed);
         return identity != null ? identity.netId : 0u;
     }
 
@@ -2811,8 +2915,7 @@ public class GameNetwork : NetworkManager
         {
             // A PERSON is aimed at on the body this machine draws for them — their own avatar for yourself, the copy
             // for anybody else — never at their shell. Only a creature's skill ever aims at a person.
-            var targetShell = at.GetComponent<NetPlayer>();
-            var drawn = targetShell != null ? targetShell.DrawnBody : null;
+            var drawn = DrawnBodyOf(at);
             aimed = drawn != null ? drawn : at.transform;
         }
 

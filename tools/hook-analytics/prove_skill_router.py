@@ -22,14 +22,25 @@ MUST_FIRE = {
         "make the character hold the new staff prefab",
         "can you do the 3d weapon model mapping to the hands yourself?",
     ],
+    "compose-skill": [
+        "make the sword skill cost less mana",
+        "let's start brainstorming more skills now, let's start with the bow",
+        "put numbers on the bow skills, the damage and cd",
+        "for all the bow skills without a release animation, give them a bow attack",
+        "change the passive so it triggers on dodge",
+        "rename downpour skill to jet stream",
+        "the ultimate needs a vfx",
+    ],
 }
-MUST_STAY_QUIET = [
-    "make the sword skill cost less mana",
-    "the axe does too much damage",
-    "what does the bow's attack range do?",
-    "import the new ground textures",
-    "the player model's hair is the wrong colour",
-]
+# Each message must reach NONE of the routes named beside it.
+MUST_STAY_QUIET = {
+    "the axe does too much damage": ["import-weapon-models", "compose-skill"],
+    "what does the bow's attack range do?": ["import-weapon-models", "compose-skill"],
+    "import the new ground textures": ["import-weapon-models", "compose-skill"],
+    "the player model's hair is the wrong colour": ["import-weapon-models", "compose-skill"],
+    "make the sword skill cost less mana": ["import-weapon-models"],
+    "is the cloudburst yellow total right?": ["compose-skill"],
+}
 
 
 def main():
@@ -38,10 +49,10 @@ def main():
         for m in messages:
             if skill not in [r["skill"] for r in skill_router.routes_for(m)]:
                 bad.append("did NOT route to %s: %r" % (skill, m))
-    for m in MUST_STAY_QUIET:
-        hits = skill_router.routes_for(m)
+    for m, never in MUST_STAY_QUIET.items():
+        hits = [r["skill"] for r in skill_router.routes_for(m) if r["skill"] in never]
         if hits:
-            bad.append("routed %r to %s" % (m, ", ".join(r["skill"] for r in hits)))
+            bad.append("routed %r to %s" % (m, ", ".join(hits)))
     for line in bad:
         print("FAIL " + line)
     total = sum(len(v) for v in MUST_FIRE.values()) + len(MUST_STAY_QUIET)

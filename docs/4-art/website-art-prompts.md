@@ -169,8 +169,34 @@ takes a second picture.
 | Wand | Seraphine, Before the Dawn | Morning Mist | mist | Holy |
 | Scythe | Morwen, the Last Bloom | Black Lily | lily | Undead |
 
-**Writing a new weapon's icon sheet:** copy the Sword sheet below, swap the "look" sentence for that Kashira's theme
-and a background in the weapon's colour, and write each icon as what the skill does, drawn out of that theme.
+### The icon sheet standard — every weapon's prompt has exactly this shape
+
+So every weapon's set looks like the same game, an icon prompt is three paragraphs and only the parts in brackets
+change. Everything else is copied word for word.
+
+```text
+Fantasy game skill icon sheet, hand-painted in the style of the attached reference, like early-2000s Korean fantasy online game skill icons: ink outlines, cel shading, soft painted colour, one bold emblem per icon, readable as a thumbnail. Original designs only. No text, no numbers, no people, no hands, no faces.
+
+Wide image: 24 equal square cells in 6 columns and 4 rows, thin off-white #f7f8fa gaps. Each icon: rounded square, thin dark ink border, [BACKGROUND] background, light from top left. Every icon is made of [THEME MATERIALS], plus [THE WEAPON] where a weapon is needed.
+
+Row 1, left to right: 1 [ICON]; 2 [ICON]; … 6 [ICON].
+Row 2: 7 … 12.
+Row 3: 13 … 18.
+Row 4: 19 … 24 (unused cells: "N and M empty off-white cells").
+```
+
+- **[BACKGROUND]** — one colour for the whole set: the weapon's colour in the game, said in words ("deep crimson").
+- **[THEME MATERIALS]** — the Kashira's theme from the table above, as the things the icons are painted with ("pink
+  blossom petals and swirling pale wind").
+- **[THE WEAPON]** — the weapon, slim and silver, only where an icon needs it ("a slim silver sword").
+- **Each [ICON]** — what the skill DOES, drawn out of the theme materials, in about 8 to 15 words: one picture, one
+  action, nothing that needs a person, a hand or a face. A buff is drawn as the theme glowing or wrapping something,
+  a debuff as the theme pressing down or covering something, a strike as the weapon or its shot plus the theme.
+- **Cells follow the order of the skill list written above the prompt**, so the cut pieces are named in that order.
+  A companion skill that shares its parent's icon gets no cell.
+- **Count the characters** before handing it over: under 2,000.
+
+Attach the usual style reference and use the usual settings (16:9, Small 1376 × 768, High, 1 image).
 
 ### Sword — Veyra, Blossom Wind (22 skills, one picture)
 
@@ -188,6 +214,25 @@ Row 1, left to right: 1 petal whirlwind spinning around a blade; 2 five glowing 
 Row 2: 7 a bare blossom branch beside a chipped falling blade; 8 a blossom blooming again from a fallen petal; 9 a blade riding three wind ribbons; 10 petals frozen in still air around an upright sword; 11 a leafless branch against a cracked red sky, one petal left; 12 two blossom branches crossed in an X, bound by wind.
 Row 3: 13 a sword thrust inside a spear-shaped gust; 14 a breeze spiralling upward, petals growing as they rise; 15 a slash scattering petals in all directions, wind broken in shards; 16 a petal tornado cut by two crossing slashes; 17 clouds parting, a golden beam down a sword edge; 18 a sword in slanting rain and sharp wind, petals torn.
 Row 4: 19 a bending reed, a sword flicking a blow aside in a white spark; 20 wind blowing petals back against a small glowing green leaf; 21 a gust circling back, five slash marks returning to the centre; 22 a sword planted in earth, glowing roots spreading below; 23 and 24 empty off-white cells.
+```
+
+### Bow — Celestia, Passing Cloud (22 skills, one picture)
+
+The bow has no weapon colour in the game yet, so its set sits on deep sky blue, the colour of the Wandering Sky. The
+22 skills in grid order: Clear Sky, Cloud Cover, Cloudburst, Jet Stream, Fair Weather, Gathering Clouds / Gust Front,
+Hailstone, High Cirrus, Low Cloud, Nimbus, Overcast / Petrichor, Rain Shadow, Rainbow, Scattered Rain, Slipstream,
+Sun Shower / Sunbreak, Thunderhead, Updraft, Wandering Sky. Wandering Sky's counter-arrow shares Wandering Sky's
+icon. The last two cells stay empty.
+
+```text
+Fantasy game skill icon sheet, hand-painted in the style of the attached reference, like early-2000s Korean fantasy online game skill icons: ink outlines, cel shading, soft painted colour, one bold emblem per icon, readable as a thumbnail. Original designs only. No text, no numbers, no people, no hands, no faces.
+
+Wide image: 24 equal square cells in 6 columns and 4 rows, thin off-white #f7f8fa gaps. Each icon: rounded square, thin dark ink border, deep sky-blue background, light from top left. Every icon is made of soft white and grey clouds and drifting pale wind, plus a slim silver bow or arrows where a weapon is needed.
+
+Row 1, left to right: 1 a clear blue gap in the clouds, an arrow line through it; 2 a small cloud wrapped around a blurred bow, arrows passing by; 3 a dark storm cloud pouring arrows down like rain; 4 one arrow on a narrow bright jet of wind through three cloud wisps, sideways; 5 sun breaking through clouds above an upward wind swirl, a sparkle; 6 small clouds stacking above a bow.
+Row 2: 7 a curling gust racing forward with speed streaks; 8 one heavy ice-white hailstone arrowhead on a drawn bow, white impact flash; 9 thin high clouds streaking fast, arrow trails; 10 a heavy low cloud pressing down on a trail of footprints; 11 a glowing cloud ring like a halo; 12 a grey overcast sky covering a dim eye.
+Row 3: 13 rain on dark earth, a green sprout, soft mist rising; 14 an arrow striking out of a cloud's shadow; 15 an arrow arcing high along a rainbow, landing in a splash; 16 one arrow splitting into three falling raindrop arrows; 17 an arrow riding a smooth wind stream past a missed blow; 18 rain and sunlight together, five quick arrows in a row.
+Row 4: 19 a sunbeam shooting through a moving cloud like an arrow; 20 a towering thundercloud around one lightning-charged arrow; 21 a wind spiral lifting upward with a cloud puff and a feather; 22 a lone white cloud drifting free, arrows missing around it; 23 and 24 empty off-white cells.
 ```
 
 ---

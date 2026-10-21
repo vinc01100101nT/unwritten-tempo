@@ -130,6 +130,8 @@ Every task carries:
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
 
+- [ON-GOING] `MT-34` **`[A]` Author the bow's skills.** — **5–8 days** — see [Weapon Roster — 14 Identities](../../2-systems/active-skill-system-v3/weapon-roster-12-identities.md)
+
 - [ON-GOING] `MT-46` **`[E]` Let the World Creator put cliffs on a map.** — **built** — see [World Creator — Spec](../../3-world/world-creator-spec.md)
   *Done when:* a field set to "Cliffs: on" in the World Creator comes out of Build World with cliffs, and one set to off comes out without.
 

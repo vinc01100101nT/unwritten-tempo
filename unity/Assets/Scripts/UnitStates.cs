@@ -79,6 +79,11 @@ public enum StateId
     // Plain charges: stacks = CHARGES and nothing else — no stat moves while they are held. Filed under the skill that
     // gave them; a trigger gate naming that skill and this pile spends them.
     Charges,
+    // The outgoing boost's sibling that ONLY basic attacks spend (SkillEffectKind.BoostBasicAttackDamage). Its own
+    // pile, so a skill strike can never cash a charge meant for your next shots. stacks = CHARGES, each its own bonus.
+    BasicAttackBoost,
+    // stacks = CHARGES: the holder's next basic attack skips its accuracy roll (SkillEffectKind.SureHit).
+    SureHit,
 }
 
 /// <summary>
@@ -554,6 +559,23 @@ public class UnitStates : MonoBehaviour
         Apply(StateId.OutgoingDamageBoost, seconds, bonus);
     }
 
+    /// <summary>Hold basic-attack boost charges for <paramref name="seconds"/> — each multiplies ONE basic attack this
+    /// unit makes by 1 + <paramref name="bonus"/>, spent by it; skill strikes never touch them. HOW MANY comes from
+    /// stacks-per-apply.</summary>
+    public void BeginBasicAttackBoost(float seconds, float bonus)
+    {
+        if (seconds <= 0f || bonus <= 0f) return;
+        Apply(StateId.BasicAttackBoost, seconds, bonus);
+    }
+
+    /// <summary>Hold sure-hit charges for <paramref name="seconds"/> — each lets ONE basic attack skip its accuracy
+    /// roll. HOW MANY comes from stacks-per-apply.</summary>
+    public void BeginSureHit(float seconds)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.SureHit, seconds);
+    }
+
     /// <summary>Hold outgoing-damage-penalty charges for <paramref name="seconds"/> — each multiplies ONE attack this
     /// unit sends by 1 − <paramref name="cut"/> and is spent by it. The mirror of <see cref="BeginOutgoingBoost"/>
     /// down to the knob it reads: HOW MANY comes from the apply context's stacks-per-apply.</summary>
@@ -966,6 +988,28 @@ public class UnitStates : MonoBehaviour
         return mult;
     }
 
+    /// <summary>Spend ONE basic-attack boost charge and report what it is worth as a multiplier — 1 when none is held.
+    /// Asked only by a basic attack (<see cref="BasicSwing"/>), hit or miss, read off the charge being spent.</summary>
+    public float SpendBasicAttackBoost()
+    {
+        EnsureFresh();
+        var s = Find(StateId.BasicAttackBoost);
+        if (s == null || s.stacks.Count == 0) return 1f;
+        float mult = 1f + s.stacks[0].magnitude;
+        Consume(StateId.BasicAttackBoost, 1);
+        return mult;
+    }
+
+    /// <summary>Spend ONE sure-hit charge, if any is held — true means this basic attack cannot miss.</summary>
+    public bool SpendSureHit()
+    {
+        EnsureFresh();
+        var s = Find(StateId.SureHit);
+        if (s == null || s.stacks.Count == 0) return false;
+        Consume(StateId.SureHit, 1);
+        return true;
+    }
+
     /// <summary>Spend ONE outgoing-damage-penalty charge and return what it leaves the attack worth (1 = none held).
     /// Floored at 0 so a 100%-cut charge means "this attack does nothing", never healing the target.
     ///
@@ -999,6 +1043,32 @@ public class UnitStates : MonoBehaviour
         if (!any) return;
         Recompute();
         OnChanged?.Invoke();
+    }
+
+    // Does any pile here end the moment a hit costs this unit health? Worked out in Recompute, so the per-hit check is
+    // one bool for every unit that holds none.
+    bool anyEndsOnHit;
+
+    static bool EndsOnHit(State s)
+    {
+        if (s == null || string.IsNullOrEmpty(s.sourceSkillId)) return false;
+        var def = SkillCatalog.Get(s.sourceSkillId);
+        return def != null && def.statesEndWhenHit;
+    }
+
+    /// <summary>A hit just cost this unit health: every pile granted by a skill whose states end when hit
+    /// (<see cref="SkillDef.statesEndWhenHit"/>) ends now — all of that skill's piles together.</summary>
+    public void EndPilesThatEndOnHit()
+    {
+        if (!anyEndsOnHit) return;
+        for (int guard = 0; guard < 16; guard++)
+        {
+            string source = null;
+            for (int i = 0; i < active.Count; i++)
+                if (EndsOnHit(active[i])) { source = active[i].sourceSkillId; break; }
+            if (source == null) return;
+            RemoveFrom(source);
+        }
     }
 
     /// <summary>Remove a state now (e.g. Cleanse, or a consumed mark). No-op if absent.</summary>
@@ -1296,11 +1366,13 @@ public class UnitStates : MonoBehaviour
         // would make each buff's value depend on which others happen to be up, and make order matter.
         shieldPool = 0; parryCharges = 0;
         cannotAct = false; silenced = false; taunted = false;
+        anyEndsOnHit = false;
         nextExpiry = float.MaxValue;
         System.Array.Clear(subStatBonus, 0, subStatBonus.Length);
 
         for (int i = 0; i < active.Count; i++)
         {
+            if (!anyEndsOnHit && EndsOnHit(active[i])) anyEndsOnHit = true;
             var s = active[i];
             // Earliest STACK expiry drives EnsureFresh — a pile must wake up when its FIRST stack lapses, not its last.
             for (int k = 0; k < s.stacks.Count; k++)

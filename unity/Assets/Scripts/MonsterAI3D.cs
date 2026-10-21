@@ -154,7 +154,8 @@ public class MonsterAI3D : MonoBehaviour
     /// victim's LUK shield.</summary>
     public bool RollBasicCrit(ICombatUnit victim) => RollCrit(victim != null ? victim.CritShieldLuk : 0);
 
-    bool RollCrit(int targetLuk) => CombatRng.Chance(UnitStatMath.EffectiveCritChance(critChance, targetLuk));
+    bool RollCrit(int targetLuk) =>
+        CombatRng.Chance(UnitStatMath.EffectiveCritChance(critChance + SkillEffectApplier.StrikeCritBonus, targetLuk));
 
     /// <summary>One skill strike's base damage from OUR numbers — the mob's half of the rule the player's roll follows:
     /// magic attack with its INT-steadied spread for a magic strike (never a crit), otherwise our physical attack,
@@ -942,7 +943,31 @@ public class MonsterAI3D : MonoBehaviour
         // …and so does the log being off, so switching it on writes the wait that is already under way.
         lastNoneReadyReasons = !logging || pick != null ? int.MinValue : reasons;
 
-        return pick != null && pick.CastFromRequest(player, player.position, out _);
+        return pick != null && pick.CastFromRequest(player, AimFor(pick.def), out _);
+    }
+
+    // The largest around-the-caster splash this skill has, or 0 when it has none.
+    static float AroundCasterRadius(SkillDef def)
+    {
+        float r = 0f;
+        if (def.bindings == null) return r;
+        for (int i = 0; i < def.bindings.Count; i++)
+        {
+            var b = def.bindings[i];
+            if (b != null && b.targetMode == TargetMode.Ground && b.groundDelivery == GroundDelivery.AroundCaster && b.radius > r)
+                r = b.radius;
+        }
+        return r;
+    }
+
+    // WHERE a creature aims a skill. Every skill aims at the prey, except a dash that strikes nobody: that one is for
+    // getting away, so it aims its full reach straight away from the prey.
+    Vector3 AimFor(SkillDef def)
+    {
+        if (!def.IsGetawayDash) return player.position;
+        Vector3 away = transform.position - player.position; away.y = 0f;
+        if (away.sqrMagnitude < 0.0001f) away = -transform.forward;
+        return transform.position + away.normalized * Mathf.Max(0.5f, def.castRange);
     }
 
     // What this creature has summoned, looked up once. A creature that does not summon never has one, and says so.
@@ -977,6 +1002,9 @@ public class MonsterAI3D : MonoBehaviour
     // with no authored range; otherwise the flat distance to the prey must be inside its cast range.
     bool Reaches(SkillDef def)
     {
+        // A splash around the caster lands on nothing unless the prey stands inside it.
+        float around = AroundCasterRadius(def);
+        if (around > 0f) return PlanarSqr(transform.position, player.position) <= around * around;
         if (!def.NeedsUnitPick && !def.NeedsAimPoint) return true;
         if (def.castRange <= 0f) return true;
         return PlanarSqr(transform.position, player.position) <= def.castRange * def.castRange;

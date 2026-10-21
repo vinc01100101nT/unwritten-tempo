@@ -188,7 +188,9 @@ public static class PassiveEvents
                     SpawnIds.MapOf(actor), " ", SpawnIds.Label(actor), " fired ", def.id, " on ", trigger.ToString(), how));
             }
 
-            r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
+            // Its own cast: nothing of a strike that happens to be landing right now carries into it.
+            using (new SkillEffectApplier.StrikeIsolation(true))
+                r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
         }
     }
 
@@ -227,9 +229,20 @@ public static class PassiveEvents
     /// <para>Nothing is raised for a hit that cost no health: a miss, a parry, a full barrier soak and a braced hit
     /// all reach the door with zero, and each of those is a different moment, or none. Damage over time does not come
     /// through here on either side.</para></summary>
+    /// <summary>THE MOMENT AN ATTACK MISSED <paramref name="victim"/> — <see cref="SkillTrigger.OnDodge"/>. Called by
+    /// BOTH damage doors on an accuracy miss, so a person and a creature dodge by the same rule.</summary>
+    public static void Dodged(ICombatUnit victim, ICombatUnit attacker)
+    {
+        if (victim == null) return;
+        var from = !PlayerUnits.Gone(attacker) ? attacker.Body : null;
+        Fire(victim, SkillTrigger.OnDodge, null, from);
+    }
+
     public static void HitLanded(ICombatUnit victim, int hpBefore, ICombatUnit attacker)
     {
         if (victim == null) return;
+        // A WINDOW THAT LASTS ONLY WHILE UNTOUCHED ends first, so nothing answering this hit still sees it.
+        if (!victim.IsWatchedCopy) victim.States?.EndPilesThatEndOnHit();
         var from = !PlayerUnits.Gone(attacker) ? attacker.Body : null;
         Fire(victim, SkillTrigger.OnDamageReceived, null, from);
 

@@ -17,6 +17,22 @@ public static class StrikeMath
     /// blank, +2% a metre.</summary>
     public static float SniperShotGrowth(float metres) => 1f + SniperGrowthPerMetre * Mathf.Max(0f, metres);
 
+    /// <summary>The most points of hit chance above 100 that a strike's accuracy growth counts (decided 2026-10-21):
+    /// 100, so the growth has a ceiling like every other power source.</summary>
+    public const int MaxAccuracyOverPoints = 100;
+
+    /// <summary>How many points of hit chance above 100 an attacker has against a defender — the accuracy an ordinary
+    /// attack would WASTE, because a hit chance is held at 100%. <paramref name="rawHitPoints"/> is the unclamped
+    /// HitBase + HIT − FLEE (<see cref="Combat.RawHitPoints"/>). Counted at most <see cref="MaxAccuracyOverPoints"/>.</summary>
+    public static int AccuracyOverPoints(int rawHitPoints) =>
+        Mathf.Clamp(rawHitPoints - 100, 0, MaxAccuracyOverPoints);
+
+    /// <summary>How many points of movement-speed bonus a caster has right now, as a percent (a ×1.45 pace = 45) — 0
+    /// when standing still, so a growth on it only pays while moving. Never negative: a slowed caster gets nothing,
+    /// not a penalty. It stops by itself at the speed cap (<see cref="UnitStatMath.MaxMoveMult"/>).</summary>
+    public static float SpeedBonusPoints(float moveMult, bool moving) =>
+        moving ? Mathf.Max(0f, moveMult - 1f) * 100f : 0f;
+
     /// <summary>The straight-line distance between two units' positions, in metres.</summary>
     public static float Metres(Vector3 from, Vector3 to) => Vector3.Distance(from, to);
 }

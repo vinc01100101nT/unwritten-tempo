@@ -602,6 +602,9 @@ def main():
                     for e in b.get("effects") or []:
                         if str(e.get("modifierSkillId", "")).strip() == parent_id:
                             return True
+                # A run whose extra beats are paid by the parent's pile spends that pile.
+                if str(skill.get("repeatBonusSkillId", "")).strip() == parent_id:
+                    return True
                 # A moment the parent is the source of: a skill that answers a parry needs a skill that parries.
                 parent = (by_id.get(parent_id) or [None])[0]
                 trig = {v: k for k, v in triggers.items()}

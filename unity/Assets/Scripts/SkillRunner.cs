@@ -64,6 +64,22 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         nextUse = Time.time + left;
     }
 
+    /// <summary>A skill's effect made this skill ready again (<see cref="SkillEffectKind.ResetCooldown"/>) — server
+    /// only. The cooldown ends now, and the owner is told it ended now, so their bar shows it ready. The shared ultimate
+    /// cooldown is left running.</summary>
+    public void ResetCooldown()
+    {
+        if (!GameServer.IsServer || def == null) return;
+        if (Time.time >= nextUse) return;
+        ForgetCooldown();
+        GameNetwork.TellOwnerCooldownStarted(Caster, def.id, WorldClock.UtcNow);
+    }
+
+    // The animation this skill's release plays: its authored cue, or the caster's own basic attack with the weapon in
+    // hand when the skill says its shots are basic attacks.
+    StanceId ReleaseStance => def.releaseIsWeaponAttack && !CasterGone
+        ? WeaponStances.AttackFor(Caster.HeldWeapon) : def.releaseStance;
+
     /// <summary>Make this skill ready now, as if it had never been cast — a creature starting a new life.</summary>
     public void ForgetCooldown()
     {
@@ -463,7 +479,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         // Turn the caster to face where it aimed — for every skill regardless of scope (ground/target/aoe).
         // A self-cast aims at the caster's own feet, so FaceWorldPoint no-ops (planar dir ~0): no exception needed.
-        if (body != null) body.FaceWorldPoint(lastCtx.target);
+        if (body != null)
+        {
+            body.FaceWorldPoint(lastCtx.target);
+            // A skill aimed at a unit keeps the body facing it for the skill's own length — its wind-up, then one
+            // swing's beat for the release (the release animation's window) — then walking turns it again.
+            if (lastCtx.targetUnit != null)
+                body.FocusOn(lastCtx.targetUnit, def.castTime + (CasterGone ? 0f : Caster.SwingTime));
+        }
 
         if (def.castTime > 0f && isActiveAndEnabled)
             castRoutine = StartCoroutine(CastWindup());
@@ -556,8 +579,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // Play the composed VFX once, then (if the def asks for a shower) replay the WHOLE cycle repeatCount times,
     // repeatInterval apart, at the SAME cast-time context — carrierScatter spreads the individual falls. Repetition
     // of the whole effect is owned HERE (gameplay), not the Vfx Composer (which stays WYSIWYG: one cycle = one fall).
+    // The total this cast's strikes add up into — a new one every cast, so its yellow number starts from zero.
+    int castTotalId;
+
     void PlayCycles()
     {
+        castTotalId = StrikeTotals.NewTotal();
         // THE RELEASE: the skill is actually going off, so this is where its mana is taken. Only a press ever
         // left a cost here, so a run started by one of the skill's own moments still fires free.
         if (pendingMana > 0 && !CasterGone)
@@ -606,7 +633,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // creature time a skill by one rule. Attack speed shortens it (and the root with it); movement speed,
             // slows, shoes and which gear the legs are in have no say, because the clip is FIT to the window rather
             // than paced by the walking gait it used to follow (which once held a caster still for two minutes).
-            releaseDur = StanceController.Player.PlayActionFor(def.releaseStance, Caster.SwingTime, 1f, fitToWindow: true);
+            releaseDur = StanceController.Player.PlayActionFor(ReleaseStance, Caster.SwingTime, 1f, fitToWindow: true);
             // RO-style aftercast: fully root the caster for the (attack-speed-scaled) release animation's length.
             // Stacks on top of the skill's own cooldown; a skill with no release stance roots for nothing.
             var aftercast = Status;
@@ -615,7 +642,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // A CREATURE'S RELEASE: the same stance, told to every screen watching it. Its beat is its swing — the length
         // every action a creature takes is sized to — because the machine deciding it has no animation to measure.
         if (def.hasReleaseStance && !Mine && !Watching && !CasterGone)
-            GameNetwork.AnnounceActionOnCaster(Caster, def.releaseStance, Caster.SwingTime);
+            GameNetwork.AnnounceActionOnCaster(Caster, ReleaseStance, Caster.SwingTime);
 
         // A projectile aims a DIRECTION, not a landing spot: the shot flies a FIXED travel distance (the reused
         // castRange = "travel range"), NOT to the cursor. Project the aim onto that range so the Carrier flies the
@@ -629,7 +656,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
         // A charge-driven run has no fixed length — it goes until the pile is empty — so the count is only consulted
         // for the plain fixed-repeat case.
-        int extra = def.repeatCostsCharge ? int.MaxValue : Mathf.Max(0, def.repeatCount - 1);
+        int extra = def.repeatCostsCharge || def.repeatWhilePileHeld ? int.MaxValue : Mathf.Max(0, def.repeatCount - 1);
         if (extra > 0 && isActiveAndEnabled)
         {
             HoldForBeat(BeatInterval());   // the opening beat; every later one re-takes the hold inside the loop
@@ -647,7 +674,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (Watching) return;
         ctx.seed = CombatRng.NewSeed();
-        GameNetwork.AnnounceCastPlayed(Caster, def, ctx.targetUnit, ctx.effectPoint, ctx.seed);
+        // A PROJECTILE IS SHOWN FLYING ITS FULL RANGE: the server measures its hits along the projected path, so every
+        // screen is told that same far end, never the spot that was clicked.
+        // …and a skill aimed at a unit with no spot of its own is shown at that unit, so a screen that cannot find the
+        // unit still draws the effect where it landed, never on the caster.
+        Vector3 shown = def.IsProjectileAim || (ctx.targetUnit != null && !def.NeedsAimPoint) ? ctx.target : ctx.effectPoint;
+        GameNetwork.AnnounceCastPlayed(Caster, def, ctx.targetUnit, shown, ctx.seed);
         VfxDirector.Play(def.vfx, ctx, onTick);
     }
 
@@ -714,6 +746,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     System.Collections.IEnumerator PlayExtraCycles(int extra, VfxContext ctx)
     {
+        float runStart = Time.time;
         for (int i = 0; i < extra; i++)
         {
             float interval = BeatInterval();
@@ -722,8 +755,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             for (float t = 0f; t < interval; t += Time.deltaTime) yield return null;
             // Only a run that STEERS or PAYS needs a live caster to read; a plain fixed repeat (a meteor shower) keeps
             // its old behaviour of finishing on its own, so nothing existing changes.
-            if ((def.repeatReaim || def.repeatCostsCharge)
+            if ((def.repeatReaim || def.repeatCostsCharge || def.repeatWhilePileHeld)
                 && (CasterGone || Caster.IsDead)) break;
+            // A RUN THAT LASTS WHILE ITS PILE IS HELD ends the moment that pile is gone, or at its ceiling, whichever
+            // comes first — so lengthening the pile lengthens the run, but never past the authored maximum.
+            if (def.repeatWhilePileHeld && !RunPileStillHeld(runStart)) break;
 
             // RE-AIM walks the run from one target to the next: the search is centred on the CURRENT target, so each
             // hop's range is measured from where the last one landed, never from the caster or the original aim.
@@ -753,12 +789,24 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // controller on the machine BY NAME — so a repeating skill run for somebody else, on a machine that also
             // has a player standing on it, played its animation on the wrong body.
             if (def.hasReleaseStance && def.releaseStanceReplayPerRepeat && Mine && StanceController.Player != null)
-                StanceController.Player.PlayActionFor(def.releaseStance, interval, 1f, fitToWindow: true);
+                StanceController.Player.PlayActionFor(ReleaseStance, interval, 1f, fitToWindow: true);
             else if (def.hasReleaseStance && def.releaseStanceReplayPerRepeat && !Mine && !CasterGone)
-                GameNetwork.AnnounceActionOnCaster(Caster, def.releaseStance, interval);
+                GameNetwork.AnnounceActionOnCaster(Caster, ReleaseStance, interval);
 
             PlaySequence(ref ctx);
             HoldForBeat(interval);   // hold through THIS beat; the next one re-takes it, and the last one just lapses
+        }
+        // THE EXTRA BEATS a pile pays for, read ONCE now and spent whole: stacks gained during them add none, so a run
+        // that refills its own payer (a volley landing basic attacks that feed it) still ends.
+        int bonus = SpendBonusBeats();
+        for (int k = 0; k < bonus; k++)
+        {
+            float interval = def.repeatBonusInterval;
+            ctx.isRepeat = true;
+            for (float t = 0f; t < interval; t += Time.deltaTime) yield return null;
+            if (CasterGone || Caster.IsDead) break;
+            PlaySequence(ref ctx);
+            HoldForBeat(interval);
         }
         // However the run stopped — last charge spent, nothing left in reach, caster down — it is over here, so the
         // piles it set up are over too.
@@ -771,9 +819,26 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// <see cref="WithoutStateGrants"/>: the same stacking grants that the opening play alone hands out are the ones
     /// that end with it. A plain fixed repeat is untouched — its length is authored, not bought, so its states keep
     /// their own clocks.</summary>
+    // Is the pile this run lasts for still held, and the run still under its ceiling?
+    bool RunPileStillHeld(float runStart)
+    {
+        if (def.repeatMaxSeconds > 0f && Time.time - runStart >= def.repeatMaxSeconds) return false;
+        var states = CasterStates;
+        return def.repeatPileStateIdSet && states != null && states.StacksFrom(def.id, def.repeatPileStateId) > 0;
+    }
+
+    // How many extra beats the named pile pays for — read once and spent whole. 0 on a machine that only watches,
+    // which plays nothing anyway.
+    int SpendBonusBeats()
+    {
+        if (Watching || CasterGone || string.IsNullOrEmpty(def.repeatBonusSkillId) || !def.repeatBonusStateIdSet) return 0;
+        var states = CasterStates;
+        return states != null ? states.ConsumeFrom(def.repeatBonusSkillId, def.repeatBonusStateId, 0, all: true) : 0;
+    }
+
     void EndRunPiles()
     {
-        if (!def.repeatCostsCharge || Watching) return;
+        if (!(def.repeatCostsCharge || def.repeatWhilePileHeld) || Watching) return;
         var states = CasterStates;
         if (states == null || def.bindings == null) return;
         for (int b = 0; b < def.bindings.Count; b++)
@@ -819,7 +884,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (Watching) return true;
 
         pendingMana = def.manaCost;
-        lastDuration = def.cooldown;
+        // A GM TESTING WITH COOLDOWNS OFF (/nocooldown): the skill is ready again the moment it is cast.
+        bool noCooldowns = Caster is Character gmTester && gmTester.NoCooldowns;
+        lastDuration = noCooldowns ? 0f : def.cooldown;
         // BOTH, TOGETHER. The moment is the one that survives being saved, slept or moved to another server;
         // the float beside it is the copy the per-frame gate and the hotbar ring read, because a date is too
         // expensive to ask for at that rate. They are set here and nowhere else apart from ResumeCooldown.
@@ -827,7 +894,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         nextUse = Time.time + lastDuration;
         GameNetwork.TellOwnerCooldownStarted(Caster, def.id, dueAtUtc);
         // AN ULTIMATE ALSO STARTS THE SHARED COOLDOWN: every ultimate this unit has waits on one moment from here.
-        if (def.IsUltimate && Caster.Skills != null)
+        if (def.IsUltimate && Caster.Skills != null && !noCooldowns)
             GameNetwork.TellOwnerCooldownStarted(Caster, SharedCooldown.UltimateKey, Caster.Skills.StartSharedUltimate());
         return true;
     }
@@ -862,6 +929,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // Map the consolidated per-tick targeting onto the shared burst params (scope/targets/radius). The applier
         // already routes each effect kind to the right sink per WHO is gathered, so nothing downstream changes.
         SkillScope scope; SkillTargets targets; float radius = b.radius;
+        Vector3 burstPoint = tick.point;
         switch (b.targetMode)
         {
             case TargetMode.Self:
@@ -870,6 +938,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 scope = SkillScope.Single; targets = b.affects; break;
             default: // Ground
                 scope = SkillScope.Area; targets = b.affects;
+                // AROUND THE CASTER: the splash is centred on where the caster stands NOW, whatever the tick's anchor.
+                if (b.groundDelivery == GroundDelivery.AroundCaster && !CasterGone && Caster.Body != null)
+                    burstPoint = Caster.Body.position;
                 // Point = the caster acts AT the aimed spot (Dash goes there; an accompanying Heal lands on the caster).
                 if (b.groundDelivery == GroundDelivery.Point) targets = SkillTargets.Player;
                 // Projectile = the flying VFX step (authored in the VFX composer) raises its SPREAD TICKS along its
@@ -885,12 +956,18 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (castGivenUp > 0) castVars = castVars.WithGivenUp(castGivenUp);
 
         var prevCause = PassiveEvents.Push(castChain, def.id);
+        // EVERY BLOW THIS TICK LANDS TRAVELS AS ONE MESSAGE (BlowBatch) — a rain over a pack, a strike's hits.
+        var batch = BlowBatch.Begin();
         try
         {
             // The cast hands DOWN what the pile measures and nothing more: which effects that pile pays, and how, is
             // authored per NUMBER, so cashing stacks composes with the damage effect
             // instead of being a second damage channel bolted onto the skill.
-            SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, effects,
+            // WHICH YELLOW TOTAL these strikes add into: the whole cast's (a new cast starts from zero), or this beat's
+            // alone when the skill totals per beat.
+            using var beatTotals = new StrikeTotals.BeatScope(!def.showRepeatsTotalDamage ? 0
+                : def.repeatTotalPerBeat ? StrikeTotals.NewTotal() : castTotalId);
+            SkillEffectApplier.ApplyBurst(burstPoint, radius, scope, targets, effects,
                                           // The aim rides the TICK, not a field on this runner: one cast can have
                                           // several plays in flight, and a re-aiming repeat would otherwise resolve a
                                           // still-running beat against whatever the newest beat picked.
@@ -915,7 +992,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                              def.id, def.Symbol, def.displayName, castEfficient);
             }
         }
-        finally { PassiveEvents.Pop(prevCause); }
+        finally { batch.Dispose(); PassiveEvents.Pop(prevCause); }
 
         // COMPUTE BEFORE CONSUME: the effects above read the LIVE store (Deathblow sees the whole Momentum pile while
         // rolling its damage); only now is the cost paid. Once per cast, not per tick.

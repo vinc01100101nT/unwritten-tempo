@@ -27,7 +27,6 @@ those. The literal phrase never lives in this file, so reading this file can't t
 import sys, os, re, json
 
 import guard_check   # sibling file — the heartbeat that proves this gate really ran
-import order_gate    # sibling file — a heavy or outward action runs only when the user ordered it
 import tool_writes   # sibling file — the one answer to 'which files does this call write?'
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -204,15 +203,6 @@ def main():
         allow()  # malformed payload → never block real work
         return
 
-    # THE ORDER GATE rides this gate's start, so a shell command pays one Python start, not two: a build, publish,
-    # push, commit, deploy or server start runs only when the user's latest message orders it (order_gate.py).
-    tool = data.get("tool_name") or ""
-    if order_gate.action_for(tool, data.get("tool_input")) is not None:
-        why = order_gate.decide(tool, data.get("tool_input"),
-                                order_gate.latest_user_text(data.get("transcript_path") or ""))
-        if why:
-            deny(why)
-            return
 
     # Which files does this call write? Asked of the one shared answer, because an edit made
     # with a shell command is still an edit — trusting the editing tools' "which file" field

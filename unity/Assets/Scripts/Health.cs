@@ -188,6 +188,9 @@ public class Health : MonoBehaviour, ICombatUnit
     /// <summary>Our dodge, rolled against an attacker's accuracy.</summary>
     public int Flee => flee;
 
+    /// <summary>SERVER: this creature's route is moving it right now.</summary>
+    public bool IsMoving => Agent != null && Agent.Moving;
+
     /// <summary>Our LUK, which lowers an attacker's crit chance against us.</summary>
     public int CritShieldLuk => luk + States.WornCritShieldLuk;
     public int PerfectDodgeLuk => luk;
@@ -575,6 +578,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (missed)
         {
             Show(ShownBlow.Miss(), attacker);
+            PassiveEvents.Dodged(this, attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Missed);
         }
         if (Blocked()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);

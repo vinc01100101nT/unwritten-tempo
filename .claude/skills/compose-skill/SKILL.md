@@ -67,16 +67,43 @@ tools/check-unity-code.sh                              # only if you touched C#
 - **Which side an effect lands on** — every side is legal, so nothing can flag the wrong one. That is the whole reason the audit above exists.
 - **Whether the numbers mean what you intended** — a 0.3 that should have been 3, a duration that should have been charges.
 - **Whether it plays well.** A clean run means Unity will load it, never that it is fun or balanced.
+- **When a passive really fires.** The moment is `trigger`, but the skill that must CAUSE it is `triggerSkillId` on
+  the same entry (Second Bloom: a kill — made by Thousand Petals). The generated table in `data/skills.md` prints only
+  the moment, so always read the asset's `triggers:` before saying when a passive fires.
 
 ## 5. Finish the job
 
 - **Read the asset back off disk** and confirm the values landed. Never report a value you only wrote.
-- **Update the weapon's roster doc** in the same change — those docs state which skills are composed, and a stale "designed, not composed" line is a lie the next reader will act on.
+- **Update the weapon's roster doc** once the work is final (the project rule: no doc edits while a change is still being built or tested) — those docs state which skills are composed, and a stale "designed, not composed" line is a lie the next reader will act on.
 - The player wiki (`wiki/content/*.json`) describes skills to players; update it when a skill becomes real.
-- Tell the user to click into Unity once so it imports new assets. Never force a recompile yourself.
+- The editor needs a refresh or recompile to load new assets and code. Trigger it yourself (the old ban was lifted
+  2026-08-26), but only when Play mode is stopped — read `editor_status` first.
 
 ## 6. Authoring in the editor
 
 The window is **Tools ▸ unwritten ▸ Composers ▸ Skill Composer**. Use it when the user is driving. When you are composing on their behalf, editing the `.asset` files directly is fine and faster — they are plain YAML — but then the verification pass in §4 is what stands in for the window's own guardrails.
 
 Related windows: **Tools ▸ unwritten ▸ Catalogs ▸ Skill Channels & Effects** (what every effect kind and channel means) and **Tools ▸ unwritten ▸ Composers ▸ Vfx Composer**.
+
+## 7. A skill's effects (VFX) — sized to this world
+
+Learned 2026-10-21 on the Bow, after effects five times too big filled the screen and target effects played on the
+caster.
+
+- **A person is `CharacterSpec.Active.bodyHeight` = 0.327 world units tall.** Library effects are authored at human
+  size, so a step scale of 1 is about five people tall. The game's own world-sized references: cast cue `aura.star`
+  0.226, heal cue `aura.buff` 0.212, sprint cue `smoke.dust-ground` 0.26, normal hit `hit.holy` 1 (its library scale
+  is already 0.21). Chest height is bodyHeight × 0.5; a bow's hand height about bodyHeight × 0.6.
+- **Look before you use one.** Render each effect next to a capsule of that height in a hidden preview scene
+  (`EditorSceneManager.NewPreviewScene`, a camera with `cam.scene` set, `ParticleSystem.Simulate`, `cam.Render`) and
+  look at the picture. Never open or change the user's scene for it. Measured: the `water.splash*` effects render
+  as nothing, and the smoke effects carry a stray blue mesh — avoid both.
+- **One sequence per skill** in `Resources/VfxSequences/`, its tick named to match the skill's binding `tickId`.
+- **A single-target shot is an arrow that arrives:** a Carrier step from the caster (`carrierFromCaster`, offset at
+  hand height) to the Target (offset at chest height), `carrierDrawsArrow` on, the tick on arrival (`tickWhen: End`),
+  and the hit effects on `emitEventOnEnd`. A lob adds `carrierArc` with a launch angle (25° stays inside the world's
+  scale).
+- **Self buffs** are an Attach step on the caster with the tick at its start; a splash around the caster uses the
+  binding's `AroundCaster` delivery and needs no aim.
+- **A release animation** for a skill whose shots are basic attacks: `hasReleaseStance` + `releaseIsWeaponAttack`
+  plays the held weapon's own attack. Never give one to a dash or to a passive — it roots the caster for one swing.

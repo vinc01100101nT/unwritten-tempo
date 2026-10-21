@@ -138,7 +138,8 @@ public class StatPanel : MonoBehaviour
             $"ASPD  {c.CurrentDerived.aspd} ({UnitStatMath.MaxAspd})   " +
             $"CAST ×{c.CastTimeMult:0.00}\n" +
             $"CRIT  {Mathf.RoundToInt(c.CritChance01 * 100)}% ×{c.CritMultiplier:0.0}\n" +
-            $"HIT   {c.Hit,-4}  FLEE {c.Flee}";
+            $"HIT   {c.Hit,-4}  FLEE {c.Flee}\n" +
+            $"MOVE  {c.DerivedWithStates.moveSpeed}% ({Mathf.RoundToInt(UnitStatMath.MinMoveMult * 100)}–{Mathf.RoundToInt(UnitStatMath.MaxMoveMult * 100)}%)";
     }
 
     RectTransform FindCharacterContent()

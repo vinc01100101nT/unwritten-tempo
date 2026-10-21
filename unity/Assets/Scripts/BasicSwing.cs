@@ -57,13 +57,16 @@ public static class BasicSwing
 
         bool crit = attacker.RollBasicCrit(victim);
         int hit = attacker.BasicHit;
-        bool missed = Combat.Missed(crit, hit, victim.Flee, victim.PerfectDodgeLuk, MonsterAI3D.AttackersOn(victim));
+        // A sure-hit charge is spent by this swing whether or not it would have missed, and skips the accuracy roll.
+        bool sure = attacker.States != null && attacker.States.SpendSureHit();
+        bool missed = !sure && Combat.Missed(crit, hit, victim.Flee, victim.PerfectDodgeLuk, MonsterAI3D.AttackersOn(victim));
         // A whiff rolls no damage at all — the miss rides along and the defender only shows it.
         int dmg = missed ? 0
                 : Mathf.Max(1, Mathf.RoundToInt(power.Resolve(vars, Mathf.Max(0f, outer),
                                                               attacker.RollBasicDamage(crit))));
         // One swing, one charge — spent on the whiff too, which is why this sits outside the miss branch.
         dmg = UnitOffense.SpendCharges(attacker.States, dmg);
+        dmg = UnitOffense.SpendBasicAttackCharges(attacker.States, dmg);
 
         // A swing (anything but a sniper's shot, which returned above) is PHYSICAL for every unit — player and creature
         // alike — so it always lands against armour.
@@ -94,6 +97,7 @@ public static class BasicSwing
         float growth = StrikeMath.SniperShotGrowth(metres);
         int dmg = Mathf.Max(1, Mathf.RoundToInt(power.Resolve(vars, Mathf.Max(0f, outer) * growth, roll)));
         dmg = UnitOffense.SpendCharges(attacker.States, dmg);
+        dmg = UnitOffense.SpendBasicAttackCharges(attacker.States, dmg);
 
         resolved = new DamageInfo(dmg, attacker.BasicElement, true, crit, overkill: overkill, attacker: attacker);
         int dealt = CombatAuthority.Apply(victim, resolved);

@@ -12,14 +12,14 @@
 
 - [Weapon affixes ≠ ring voices — never duplicate](../weapon-affix-vs-ring-voice-separation.md) — weapon=control/targeting/util (Slow live), ring=stat voices; library in V2 doc; don't put Execute/Repeat/Expand on a weapon.
 
-- [Multi-hit yellow total was never wired](../multihit-yellow-total-never-wired.md) — `MultiHitBurst` dead code; `hitCount>1` now cascades via `SkillEffectApplier.DispatchMobHits`.
+- [Multi-hit yellow total was never wired](../multihit-yellow-total-never-wired.md) — superseded: multi-hit is now worked out once (see combat-multihit-status).
 - [Cast reticle "persisted" on failed release](../cast-reticle-soft-fade-persists-on-fail.md) — GroundTargeter soft-fade masked on success; fix = `EffectHandle.Stop(true)` hard-clear.
 - [Single-target aim couldn't hit mobs in a crowd](../unittargeter-mob-shadowed-by-player.md) — UnitTargeter's own first-hit raycast let the player capsule shadow mobs behind it; fix = route mob pick through magnetised `MonsterUnderCursor`.
 
 - [Cast time (spell wind-up)](../cast-time-feature.md) — `SkillDef.castTime`→`SkillRunner.CastWindup`; `EndCast()` choke; 0=instant.
 - [Legacy skills retired → composed-only pool](../legacy-skills-retired-composed-pool.md) — hand `Player3D*` DELETED; pool=`SkillDef`s via `SkillCatalog`.
 - [Class system = kit + attack + affinity](../class-system-design.md) — kit identity NOT stat locks; doc q171yxv1de9zce12zhzrssr59188ws6t.
-- [RO-style multi-hit + status (stun)](../combat-multihit-status.md) — `MultiHitBurst.Run` + `MonsterAI3D.Stun`.
+- [Multi-hit computed once + HitBatch](../combat-multihit-status.md) — hitCount>1 = one roll per target shown as pieces (FlurryOnce/BlowBatch); every skill tick sends one HitBatch; MultiHitBurst deleted 2026-10-21.
 - [Multi-hit SFX cut off at death](../multihit-sfx-onhit-cue-gated.md) — audible per-hit sound is the `OnHitBySkill` VfxCue (was gated by `wasAlive`); fix = ungate in `TakeMagicDamageOverkill`. The VfxCue is the only combat-sound path.
 - [RO combat fundamentals](../ro-combat-fundamentals.md) — `Element.cs`, `StatusController.cs` (DoT+CC), the leech/reflect sub-stats.
 - [Trio-ring entries are "affixes" not "passives"](../affix-not-passive-terminology.md) — affix = % stat-modifier; passive = triggered.

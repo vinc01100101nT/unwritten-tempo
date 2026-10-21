@@ -43,6 +43,11 @@ public enum GroundDelivery
     /// Carrier step — is the single owner of "this tick is a projectile" (see <see cref="SkillDef.IsProjectileAim"/>
     /// for the cast-level aim it derives).</summary>
     Projectile,
+    /// <summary>Splash AROUND THE CASTER: hit every <see cref="SkillTickBinding.affects"/>-matching entity within
+    /// <see cref="SkillTickBinding.radius"/> of wherever the caster stands when the tick lands — read live, so a
+    /// repeating skill follows its caster as they move. Asks for no aim at all. Appended: the delivery is serialized by
+    /// int, so adding at the end is the only safe add.</summary>
+    AroundCaster,
 }
 
 /// <summary>PvP faction filter, used when <see cref="SkillTargets.Player"/> is an affected kind. Enemy-player tagging
@@ -322,6 +327,13 @@ public enum SkillTrigger
     /// <c>SkillEffectApplier</c> when a Heal effect of one of your SKILLS actually gave health back (a target already
     /// full fires nothing); what an item runs (a potion) never fires it. Entity = whoever was healed.</summary>
     OnHealDealt,
+
+    /// <summary>AN ATTACK AIMED AT YOU MISSED — your evasion beat its accuracy. Fired on the server by
+    /// <see cref="PassiveEvents.Dodged"/> from both damage doors, for people and creatures alike, only for an
+    /// accuracy miss: passing through a blow while a dash makes you untouchable is not a dodge. Only swings and shots
+    /// roll accuracy (a skill's strike always lands), so in practice this is a basic attack that missed you.
+    /// Entity = the attacker, so a counter can aim back.</summary>
+    OnDodge,
 }
 
 /// <summary>ONE way a skill can start — a moment, plus the state gate that moment must satisfy. A skill owns a LIST of
@@ -510,6 +522,16 @@ public class SkillDef : ScriptableObject
              "uses it: spends its stacks, adds to its pile, fires on its cast or on a moment it causes (Crossed " +
              "Branches needs Piercing Gust). Never because it pairs well. Empty = nothing comes first.")]
     public string needsSkillId = "";
+    [Tooltip("A COMPANION of another skill, by id: never bought on its own and never shown in the Skills window — it is " +
+             "learned, and at the same level, whenever that skill is. For a moment the parent's body cannot answer " +
+             "(Wandering Sky's counter-arrow fires on a dodge, a different body from the buff). Empty = an ordinary skill.")]
+    public string companionOf = "";
+
+    /// <summary>True for a skill that rides another one (<see cref="companionOf"/>) instead of being bought.</summary>
+    public bool IsCompanion => !string.IsNullOrEmpty(companionOf);
+    [Tooltip("ON = every pile this skill gives ends the moment a hit costs its holder health — a window that lasts " +
+             "only while you stay untouched (Wandering Sky). A miss, a parry or a fully-absorbed hit does not end it.")]
+    public bool statesEndWhenHit = false;
     [Tooltip("PUBLISHED = a new weapon may roll this as its trademark, and a creature may draw it as its extra " +
              "skill. Unpublished or not, it is learned with its weapon's mastery points.")]
     public bool published = false;
@@ -675,6 +697,9 @@ public class SkillDef : ScriptableObject
              "multi-hit flurry owns the total, so every repeat pops its own (a meteor shower shows one per meteor). " +
              "Purely what you SEE — it changes no damage, no timing and no state.")]
     public bool showRepeatsTotalDamage = false;
+    [Tooltip("With the total above ON: every beat starts its OWN yellow total, so each volley shows what that volley " +
+             "did to each mob and the next one starts again from zero. OFF = one total climbs across the whole run.")]
+    public bool repeatTotalPerBeat = false;
 
     [Tooltip("ON = each repeat RE-AIMS at a random living mob within the range below, measured from the CURRENT " +
              "target — so the cast walks from one target to the next. OFF = every repeat replays at the spot the " +
@@ -690,6 +715,24 @@ public class SkillDef : ScriptableObject
              "nothing left in reach, caster down). OFF = only the release animation's own aftercast roots the caster, " +
              "so it is free again between beats (a meteor shower rains while you keep fighting).")]
     public bool holdCasterForRun = false;
+    [Tooltip("ON = the repeats run for as long as a pile THIS skill granted to the caster is still held (named below) " +
+             "instead of a fixed count — so another skill lengthening that pile (Extend Duration) lengthens the run. " +
+             "Repeat count is then ignored.")]
+    public bool repeatWhilePileHeld = false;
+    [Tooltip("Which of this skill's own piles the run lasts for.")]
+    public StateId repeatPileStateId;
+    public bool repeatPileStateIdSet;
+    [Tooltip("The longest the run may last, in seconds from the cast, however long its pile is held — the ceiling on " +
+             "anything that lengthens it. 0 = no ceiling.")]
+    [Min(0f)] public float repeatMaxSeconds = 0f;
+    [Tooltip("When the run ends, read THIS skill's pile once, spend all of it, and play one extra beat per stack. " +
+             "Stacks gained during those extra beats add none, so the extra beats always end. Empty = none.")]
+    public string repeatBonusSkillId = "";
+    [Tooltip("Which pile of that skill pays for the extra beats.")]
+    public StateId repeatBonusStateId;
+    public bool repeatBonusStateIdSet;
+    [Tooltip("Seconds between the extra beats.")]
+    [Min(0.05f)] public float repeatBonusInterval = 0.2f;
 
     [Header("Skill type (release animation)")]
     [Tooltip("Play a skill-release stance when this skill FIRES (after any cast wind-up). false = no release pose.")]
@@ -701,6 +744,9 @@ public class SkillDef : ScriptableObject
              "repeat's interval — so a repeating skill shows one WHOLE animation per beat instead of one animation " +
              "stretched across the run. Off = it plays once, when the skill fires. Does nothing if the skill never repeats.")]
     public bool releaseStanceReplayPerRepeat = false;
+    [Tooltip("ON = the release animation is the caster's OWN basic attack with the weapon in hand (a bow's draw and " +
+             "loose), instead of a release cue — for a skill whose shots are basic attacks. Needs a release animation on.")]
+    public bool releaseIsWeaponAttack = false;
 
     [Header("Gameplay — one binding per tickId you want to matter")]
     public List<SkillTickBinding> bindings = new List<SkillTickBinding>();
@@ -806,7 +852,7 @@ public class SkillDef : ScriptableObject
             {
                 var b = bindings[i];
                 if (b == null) continue;
-                if (b.targetMode == TargetMode.Ground) return true;
+                if (b.targetMode == TargetMode.Ground && b.groundDelivery != GroundDelivery.AroundCaster) return true;
                 if (b.HasTargetPointEffects) return true;
                 if (b.HasCasterPointEffects && !picksUnit) return true;
             }
@@ -816,6 +862,30 @@ public class SkillDef : ScriptableObject
 
     /// <summary>The MOST DEMANDING single gesture of the sequence above — what a combo pre-resolves and what the
     /// tooltip calls "has a range". Derived from the two stages so it can never disagree with them.</summary>
+    /// <summary>A skill that moves its caster (a dash or a blink) and strikes nobody — a way to get somewhere, which a
+    /// creature uses to back away from its prey rather than to close on it.</summary>
+    public bool IsGetawayDash
+    {
+        get
+        {
+            if (bindings == null) return false;
+            bool dashes = false;
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                var fx = bindings[i]?.effects;
+                if (fx == null) continue;
+                for (int k = 0; k < fx.Count; k++)
+                {
+                    var e = fx[k];
+                    if (e == null) continue;
+                    if (e.kind == SkillEffectKind.Damage || e.kind == SkillEffectKind.Execute) return false;
+                    if (e.kind == SkillEffectKind.Dash || e.kind == SkillEffectKind.Teleport) dashes = true;
+                }
+            }
+            return dashes;
+        }
+    }
+
     public CastReticle Reticle =>
         NeedsUnitPick ? CastReticle.Unit : NeedsAimPoint ? CastReticle.Ground : CastReticle.Instant;
 

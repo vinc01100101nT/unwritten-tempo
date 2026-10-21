@@ -188,6 +188,15 @@ public class VfxStep
     public float carrierArriveRadius = 0.4f;
     [Tooltip("Safety cap: fly no longer than this before force-arriving.")]
     public float carrierMaxLife = 3f;
+    [Tooltip("ON = the carrier is THROWN in an arc instead of flying straight: it leaves at the launch angle below and " +
+             "falls onto its landing under real gravity, so its time in the air (and the tick on arrival) grows with the " +
+             "distance. Speed is then worked out from the throw, and the speed above is ignored.")]
+    public bool carrierArc;
+    [Tooltip("Arc only: the launch angle in degrees above level (45 = the classic lob).")]
+    public float carrierLaunchDegrees = 45f;
+    [Tooltip("Draw the carrier as an arrow streak pointing along its flight — the same streak every bow arrow is drawn " +
+             "with — in addition to any effect it carries.")]
+    public bool carrierDrawsArrow;
 
     [Header("Shake")]
     public float shakeStrength = 0.3f;

@@ -24000,6 +24000,783 @@
     ],
     "trademarks": [
         {
+            "name": "Clear Sky",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% accuracy buff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Cloud Cover",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% evasion buff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Cloudburst",
+            "weapon": "Bow",
+            "chance": "0.333%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Gathering Clouds",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% accuracy buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% accuracy buff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Gust Front",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% movement speed buff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Hailstone",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "High Cirrus",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% movement speed buff",
+                        "+5% attack speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% movement speed buff",
+                        "+7% attack speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% movement speed buff",
+                        "+10% attack speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% movement speed buff",
+                        "+12% attack speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% movement speed buff",
+                        "+15% attack speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% movement speed buff",
+                        "+18% attack speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% movement speed buff",
+                        "+20% attack speed buff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Jet Stream",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Low Cloud",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage",
+                        "+5% movement speed debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage",
+                        "+7% movement speed debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage",
+                        "+10% movement speed debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage",
+                        "+12% movement speed debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage",
+                        "+15% movement speed debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage",
+                        "+18% movement speed debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage",
+                        "+20% movement speed debuff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Nimbus",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% evasion buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% evasion buff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Overcast",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% accuracy debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% accuracy debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% accuracy debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% accuracy debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% accuracy debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% accuracy debuff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% accuracy debuff"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Rain Shadow",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% basic attack damage bonus"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% basic attack damage bonus"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% basic attack damage bonus"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% basic attack damage bonus"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% basic attack damage bonus"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% basic attack damage bonus"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% basic attack damage bonus"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Rainbow",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Scattered Rain",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Sun Shower",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Sunbreak",
+            "weapon": "Bow",
+            "chance": "6.6%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Thunderhead",
+            "weapon": "Bow",
+            "chance": "0.333%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% damage"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% damage"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Wandering Sky",
+            "weapon": "Bow",
+            "chance": "0.333%",
+            "byGrade": [
+                {
+                    "lines": [
+                        "+5% evasion buff",
+                        "+5% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+7% evasion buff",
+                        "+7% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+10% evasion buff",
+                        "+10% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+12% evasion buff",
+                        "+12% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+15% evasion buff",
+                        "+15% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+18% evasion buff",
+                        "+18% movement speed buff"
+                    ]
+                },
+                {
+                    "lines": [
+                        "+20% evasion buff",
+                        "+20% movement speed buff"
+                    ]
+                }
+            ]
+        },
+        {
             "name": "Bare Branch",
             "weapon": "Sword",
             "chance": "7.071%",

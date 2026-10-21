@@ -17,4 +17,18 @@ public static class Arrow
     public static readonly Color Tint = new Color(1f, 0.94f, 0.72f, 0.95f);
     public const float Width = 0.045f;
     public const float Length = 0.7f;
+
+    /// <summary>THE ARROW A BOW SHOOTS — a real model, lying along its own forward (+Z), tip first, sized to the
+    /// world's bodies. Every bow arrow in the air draws this one, its ordinary shots and its skills alike. Loaded once,
+    /// the first time a bow fires on this machine; null if the model is missing, and the line is drawn instead.</summary>
+    public static GameObject Model
+    {
+        get
+        {
+            if (!modelLooked) { modelLooked = true; model = Resources.Load<GameObject>("Projectiles/BowArrow"); }
+            return model;
+        }
+    }
+    static GameObject model;
+    static bool modelLooked;
 }

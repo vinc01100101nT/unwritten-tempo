@@ -822,6 +822,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     // as netSpeed the moment a report is believed.
     float acceptedGroundSpeed;
 
+    /// <summary>SERVER ONLY: is this person walking right now — a believed report showed them travelling, and it is
+    /// recent. A person who stops stops reporting, so silence for two report intervals means standing still (the same
+    /// rule <see cref="ForgetSpeedIfTheyStopped"/> uses).</summary>
+    public bool ServerIsMoving =>
+        acceptedGroundSpeed > 0.05f && lastAcceptedAt > 0f && Time.time - lastAcceptedAt <= ReportInterval * 2f;
+
     /// <summary>SERVER ONLY: a person who has stopped walking stops REPORTING — only a step or a turn is worth a
     /// packet — so the speed worked out from their last two positions would otherwise stand at whatever they were
     /// doing when they stopped, and their body would walk on the spot on every other screen forever.

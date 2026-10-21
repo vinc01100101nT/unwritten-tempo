@@ -372,7 +372,11 @@ public partial class Player3DController : MonoBehaviour
         if (status != null && status.MovementFlinched) move = Vector3.zero;
 
         bool moving = move.sqrMagnitude > 0.001f;
-        if (moving) facing.Toward(move);
+        // WHILE AN ATTACK IS UNDER WAY, THE TARGET WINS THE FACING: walking only moves the legs, so a shot or a skill
+        // released while backing off (S) still goes at the target. Every other facing writer (an opened window turning
+        // you to the camera, the step you took) is overruled for exactly as long as that attack lasts — no longer.
+        if (CombatFocusDirection(out var focusDir)) facing.Toward(focusDir);
+        else if (moving) facing.Toward(move);
         // The weapon key (X): out if away, away if out. Taking it out ends a sprint, which only peace allows.
         if (Hotkeys.Down(GameKeys.DrawToggle)) { if (WeaponDrawClient.Away) sprintToggled = false; WeaponDrawClient.Toggle(); }
         // Sprint gear (V toggle, stamina-gated) decided FIRST so it wins over Shift-walk; also drains/refills stamina.
@@ -995,6 +999,54 @@ public partial class Player3DController : MonoBehaviour
         if (attackTarget == null) return;
         Vector3 d = attackTarget.transform.position - transform.position; d.y = 0f;
         facing.Toward(d);   // facing derived camera-relative in Update
+        // Refreshed every frame the attack order stands in range; it lapses a moment after the order ends.
+        FocusOn(attackTarget.transform, OrderFocusSeconds);
+    }
+
+    // THE UNIT THIS BODY IS ATTACKING RIGHT NOW, held only for the length of that attack — a swing's beat, a skill's
+    // wind-up and release. Ends early when the unit dies, leaves, or drifts out of reach.
+    Transform combatFocus;
+    ICombatUnit combatFocusUnit;
+    float combatFocusUntil;
+    /// <summary>How long an attack order keeps the facing after it stops being refreshed — a moment, so walking away
+    /// turns the body at once.</summary>
+    const float OrderFocusSeconds = 0.2f;
+    /// <summary>Further than this and the fight is over, whatever the clock says (my pick, 2026-10-21).</summary>
+    const float CombatFocusMaxDistance = 20f;
+
+    /// <summary>This body is attacking <paramref name="unit"/> for the next <paramref name="seconds"/>: face it for
+    /// that long, whatever the legs do. Called by a swing and by a skill aimed at a unit; one place, so every way of
+    /// attacking keeps the same facing.</summary>
+    public void FocusOn(Transform unit, float seconds)
+    {
+        if (unit == null || unit == transform) return;
+        if (unit != combatFocus)
+        {
+            combatFocus = unit;
+            // once per new target, never per frame
+            combatFocusUnit = unit.GetComponentInParent<ICombatUnit>();
+            combatFocusUntil = 0f;
+        }
+        combatFocusUntil = Mathf.Max(combatFocusUntil, Time.time + Mathf.Max(0f, seconds));
+    }
+
+    bool CombatFocusDirection(out Vector3 dir)
+    {
+        dir = Vector3.zero;
+        if (combatFocus == null) return false;
+        if (Time.time > combatFocusUntil || !combatFocus.gameObject.activeInHierarchy
+            || (combatFocusUnit != null && combatFocusUnit.IsDead))
+        {
+            combatFocus = null; combatFocusUnit = null;
+            return false;
+        }
+        dir = combatFocus.position - transform.position; dir.y = 0f;
+        if (dir.sqrMagnitude > CombatFocusMaxDistance * CombatFocusMaxDistance)
+        {
+            combatFocus = null; combatFocusUnit = null;
+            return false;
+        }
+        return dir.sqrMagnitude > 1e-4f;
     }
 
     // Nearest living mob within radius (planar XZ). Scans the MonsterAI3D registry rather than a physics

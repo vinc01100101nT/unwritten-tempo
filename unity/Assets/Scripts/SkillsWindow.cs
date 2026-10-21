@@ -180,7 +180,7 @@ public class SkillsWindow : MonoBehaviour
         var skills = new List<SkillDef>();
         var all = SkillCatalog.All;
         for (int i = 0; i < all.Count; i++)
-            if (all[i] != null && all[i].weaponType == weapon) skills.Add(all[i]);
+            if (all[i] != null && all[i].weaponType == weapon && !all[i].IsCompanion) skills.Add(all[i]);
         int n = skills.Count;
         var opens = new int[n];
         var parent = new int[n];

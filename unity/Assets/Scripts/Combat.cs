@@ -41,6 +41,12 @@ public static class Combat
     public static bool Missed(bool crit, int attackerHit, int defenderFlee)
         => !crit && attackerHit >= 0 && !Lands(attackerHit, defenderFlee);
 
+    /// <summary>An ordinary attack's hit chance in points BEFORE it is held inside 5–100: HitBase + HIT − FLEE, with the
+    /// defender's FLEE cut for every creature past the second on it — the same FLEE <see cref="Missed(bool,int,int,int,int)"/>
+    /// rolls against. Above 100 is accuracy the roll can no longer use.</summary>
+    public static int RawHitPoints(int attackerHit, int defenderFlee, int attackersOnDefender)
+        => (int)(HitBase + (long)attackerHit - UnitStatMath.CrowdedFlee(defenderFlee, attackersOnDefender));
+
     /// <summary>The whole of an ordinary attack's whiff, Ragnarok's way: the defender's perfect dodge first (LUK × 0.1%,
     /// and it stops even a crit), then the HIT-vs-FLEE roll with the defender's FLEE cut for every creature past the
     /// second on it (<see cref="UnitStatMath.CrowdedFlee"/>).</summary>

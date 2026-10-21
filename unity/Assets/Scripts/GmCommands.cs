@@ -247,6 +247,9 @@ public static class GmCommands
         Register(new GmCommand("revive", "revive", "Stand back up from death at full HP/MP.", "revive", CmdRevive, false, true));
         Register(new GmCommand("save", "save", "Make where you stand your save point.", "save", CmdSave, false, true));
         Register(new GmCommand("invuln", "invuln", "Toggle invincibility (no damage taken).", "invuln", CmdInvuln, false, true, "nodmg"));
+        Register(new GmCommand("nocooldown", "nocooldown [on|off]", "Testing: switch your skill cooldowns off (every skill is ready " +
+            "again the moment you cast it, ultimates included) or back on. No argument flips it. Not saved.", "nocooldown",
+            CmdNoCooldown, false, true, "nocd"));
         Register(new GmCommand("model", "model [name]", "Wear a character model. No name lists the roster.", "model Viking_Male", CmdModel, false, true, "body"));
         Register(new GmCommand("clearemblem", "clearemblem", "Remove your cape emblem (an offensive upload: run it as that player).",
             "clearemblem", CmdClearEmblem, false, true));
@@ -457,6 +460,30 @@ public static class GmCommands
         GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(c.Ch), " ", SpawnIds.Label(c.Ch),
                                                   " invincibility ", c.Ch.Invincible ? "on" : "off"));
         c.Reply(c.Ch.Invincible ? "Invincibility ON." : "Invincibility OFF.");
+    }
+
+    static void CmdNoCooldown(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        string a = c.ArgCount > 0 ? c.Arg(0).ToLowerInvariant() : "";
+        bool on = a == "on" ? true : a == "off" ? false : !c.Ch.NoCooldowns;
+        c.Ch.NoCooldowns = on;
+        if (on)
+        {
+            // Everything already cooling down is ready now too, so the switch takes effect at once.
+            var runners = c.Ch.Skills != null ? c.Ch.Skills.Runners : null;
+            if (runners != null)
+                for (int i = 0; i < runners.Length; i++)
+                    if (runners[i] != null && runners[i]) runners[i].ResetCooldown();
+            if (c.Ch.Skills != null)
+            {
+                c.Ch.Skills.ForgetSharedUltimate();
+                GameNetwork.TellOwnerCooldownStarted(c.Ch, SharedCooldown.UltimateKey, WorldClock.UtcNow);
+            }
+        }
+        GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(c.Ch), " ", SpawnIds.Label(c.Ch),
+                                                  " cooldowns ", on ? "off" : "on"));
+        c.Reply(on ? "Cooldowns OFF — every skill is ready again the moment you cast it." : "Cooldowns ON.");
     }
 
     static void CmdGold(GmContext c)

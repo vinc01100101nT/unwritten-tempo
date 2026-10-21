@@ -38,4 +38,3 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 - 🗂 [HUD / UI](index/hud-ui.md) — build process, hotbar, progression windows, click-shield, dev-settings.
 - 🗂 [Performance](index/performance.md) — the hard constraint: pre-bake at author time, runtime hot-path patterns; canonical doc is `PERFORMANCE.md`.
 - 🗂 [Workflow / tooling / meta](index/workflow-meta.md) — Unity MCP bridge, chat/GM, Tempo docs/canvas gotchas, extractors, logs, persist protocol, dead-code scan, repo layout, writing voice.
-- [Absence hook: reply only the fix](absence-hook-reply-only-the-fix.md) — when the absence-claim stop hook fires, send just the corrected sentence, never the whole reply.

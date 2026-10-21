@@ -127,7 +127,8 @@ public class Projectile3D : MonoBehaviour
     /// <paramref name="arriveRadius"/>, or after <paramref name="maxLife"/> seconds) it fires <paramref name="onArrive"/>
     /// and removes itself. It draws nothing — a sequence's flight on the server, and the thing a watching screen hangs
     /// the flight's effect on. Same motion as every other projectile.</summary>
-    public static Transform Fly(Vector3 from, Vector3 to, float speed, float arriveRadius, float maxLife, System.Action onArrive)
+    public static Transform Fly(Vector3 from, Vector3 to, float speed, float arriveRadius, float maxLife, System.Action onArrive,
+                                bool drawArrow = false)
     {
         // NOT pooled, deliberately: this hands its live transform back to the caller, which keeps reading the position
         // each frame — recycling it underneath that caller would silently re-aim someone else's effect. It also has no
@@ -144,8 +145,48 @@ public class Projectile3D : MonoBehaviour
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
         p.onArrive = onArrive;
+        if (drawArrow) p.arrow = ArrowOn(go);
         return go.transform;   // the live mover — a Carrier with spread ticks reads its position each frame
     }
+
+    /// <summary>A bare mover THROWN in an arc (<see cref="Ballistics"/>): launched at <paramref name="launchDegrees"/>,
+    /// it falls onto <paramref name="to"/> under gravity, so the flight lasts as long as real throw physics says for that
+    /// distance, and <paramref name="onArrive"/> runs on the frame it lands. <paramref name="drawArrow"/> draws the
+    /// arrow streak along its flight. Same lifetime rules as <see cref="Fly"/>.</summary>
+    public static Transform FlyArc(Vector3 from, Vector3 to, float launchDegrees, bool drawArrow, System.Action onArrive)
+    {
+        var go = new GameObject("Projectile3D(Arc)") { hideFlags = HideFlags.DontSaveInEditor };
+        go.transform.position = from;
+        var p = go.AddComponent<Projectile3D>();
+        p.pooled = false;
+        p.target = null;
+        p.point = to;
+        Vector3 flat = to - from; flat.y = 0f;
+        float d = flat.magnitude;
+        p.arc = true;
+        p.arcFrom = from;
+        p.arcSeconds = Ballistics.FlightSeconds(d, launchDegrees, Ballistics.Gravity);
+        p.arcApex = Ballistics.ApexHeight(d, launchDegrees);
+        p.arcElapsed = 0f;
+        p.die = Time.time + p.arcSeconds + 1f;
+        p.onArrive = onArrive;
+        if (drawArrow) p.arrow = ArrowOn(go);
+        return go.transform;
+    }
+
+    // The arrow a bow skill's shot draws — the same model every bow arrow has (Arrow.Model), riding the mover and
+    // pointed along its flight each frame. Nothing is drawn if the model is missing.
+    static Transform ArrowOn(GameObject go)
+    {
+        var prefab = Arrow.Model;
+        if (prefab == null) return null;
+        var a = Instantiate(prefab, go.transform, false);
+        a.hideFlags = HideFlags.DontSaveInEditor;
+        return a.transform;
+    }
+
+    bool arc; Vector3 arcFrom; float arcSeconds, arcApex, arcElapsed;
+    Transform arrow;
 
     SpriteRenderer sr; Sprite[] frames; float fps, t;
     Transform target; Vector3 point; float speed, arriveRadius, die;
@@ -167,6 +208,22 @@ public class Projectile3D : MonoBehaviour
             sr.sprite = frames[(int)t % frames.Length];
         }
 
+        if (arc)
+        {
+            arcElapsed += Time.deltaTime;
+            float s = arcSeconds > 0f ? arcElapsed / arcSeconds : 1f;
+            Vector3 was = transform.position;
+            Vector3 now = Ballistics.PointAt(arcFrom, point, arcApex, s);
+            transform.position = now;
+            if (arrow != null)
+            {
+                Vector3 dir = now - was;
+                if (dir.sqrMagnitude > 1e-8f) transform.rotation = Quaternion.LookRotation(dir.normalized);
+            }
+            if (s >= 1f || Time.time >= die) Arrive();
+            return;
+        }
+
         // home onto mid-body (feet-pivoted)
         if (target != null) point = UnitAnchor.Center(target);
         Vector3 to = point - transform.position;
@@ -175,6 +232,7 @@ public class Projectile3D : MonoBehaviour
 
         if (d <= arriveRadius || d <= step || Time.time >= die) { Arrive(); return; }
         transform.position += to / d * step;
+        if (arrow != null) transform.rotation = Quaternion.LookRotation(to / d);
     }
 
     void Arrive()

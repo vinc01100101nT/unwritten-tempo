@@ -133,7 +133,13 @@ public sealed class MasteryProgress
 
     /// <summary>The level bought in <paramref name="skillId"/> — 0 when it is not learned.</summary>
     public int LevelOf(string skillId)
-        => !string.IsNullOrEmpty(skillId) && skillLevels.TryGetValue(skillId, out int l) ? l : 0;
+    {
+        if (string.IsNullOrEmpty(skillId)) return 0;
+        if (skillLevels.TryGetValue(skillId, out int l)) return l;
+        // A COMPANION is never bought: it is known, at the same level, whenever the skill it rides is.
+        var def = SkillCatalog.Get(skillId);
+        return def != null && def.IsCompanion && def.companionOf != skillId ? LevelOf(def.companionOf) : 0;
+    }
 
     /// <summary>True when this character has learned <paramref name="skillId"/> — at least one point is in it.</summary>
     public bool HasLearned(string skillId) => LevelOf(skillId) >= 1;
@@ -172,7 +178,7 @@ public sealed class MasteryProgress
         // THE SERVER SPENDS, never the machine whose world is elsewhere: it asks, and wears what comes back.
         if (GameNetwork.TheWorldIsElsewhere) return false;
         var def = SkillCatalog.Get(skillId);
-        if (def == null || def.weaponType == WeaponType.None || def.maxLevel <= 0)
+        if (def == null || def.weaponType == WeaponType.None || def.maxLevel <= 0 || def.IsCompanion)
         {
             why = "That skill cannot be learned.";
             return false;

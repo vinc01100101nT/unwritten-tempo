@@ -243,8 +243,30 @@ public enum SkillEffectKind
     /// They are filed under the skill that gave them, and any skill whose trigger gate names that skill and this pile
     /// spends them (Crossed Branches gives them; Piercing Gust's basic-attack trigger spends one per lunge).
     ///
-    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
     Charges,
+    /// <summary>The sibling of <see cref="BoostOutgoingDamage"/> that ONLY BASIC ATTACKS spend: one charge multiplies
+    /// one basic attack — an ordinary swing or shot, or a skill shot that resolves as one — by 1 +
+    /// <see cref="SkillEffect.magnitude"/>, hit or miss. A skill's own strike neither gains it nor spends it, so the
+    /// charges a passive hands out "for your next shots" can never be cashed by an ultimate.
+    ///
+    /// <para>Its own pile (<see cref="StateId.BasicAttackBoost"/>), never the any-strike one: one pile spent by two
+    /// rules would let whichever attack came first eat the other's charges. Charges come from stacks-per-apply.</para>
+    ///
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    BoostBasicAttackDamage,
+    /// <summary>CHARGES that make the holder's next basic attack unable to miss: the accuracy roll is skipped and the
+    /// swing lands. One charge per basic attack, spent by that attack whether or not it would have missed — the charge
+    /// paid for the attack, not for the rescue. Binary, so no magnitude; charges come from stacks-per-apply.
+    ///
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    SureHit,
+    /// <summary>A MODIFIER: the named skill (<see cref="SkillEffect.modifierSkillId"/>) of the unit it lands on is
+    /// ready again at once — its cooldown is cut to nothing, once, the moment this runs. It stores nothing and lasts
+    /// nothing. A skill the unit does not have is left alone. The shared ultimate cooldown is not touched.
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    ResetCooldown,
 }
 
 /// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
@@ -432,6 +454,17 @@ public class SkillEffect
              "moment the strike lands. 0.05 = +1 multiplier at 20 metres. 0 = distance changes nothing — which is every " +
              "strike authored before this existed.")]
     public ScaledNumber damageMultPerMetre = new ScaledNumber(0f);
+    [Tooltip("Added to the damage multiplier for every point of hit chance the caster has ABOVE 100 against the unit " +
+             "struck — accuracy an ordinary attack would waste. Counted at most 100 points. 0.075 = +7.5 multiplier at " +
+             "100 points over. 0 = accuracy changes nothing — which is every strike authored before this existed.")]
+    public ScaledNumber damageMultPerAccuracyOver = new ScaledNumber(0f);
+    [Tooltip("Added to the damage multiplier for every point (1%) of movement-speed bonus the caster has WHILE MOVING " +
+             "when the strike lands. Standing still, or slowed, adds nothing. 0.01 = +1.5 multiplier at +150% speed. " +
+             "0 = speed changes nothing — which is every strike authored before this existed.")]
+    public ScaledNumber damageMultPerSpeedBonus = new ScaledNumber(0f);
+    [Tooltip("Added to the caster's crit chance for THIS strike only (0.25 = +25%). A magic strike still cannot crit " +
+             "outside a sniper's hands. 0 = the caster's own crit chance — which is every strike authored before this existed.")]
+    public ScaledNumber critChanceBonus = new ScaledNumber(0f);
     [Tooltip("Attack element (RO property), checked against the target's armor element. On an Element Converter, " +
              "the element the converted slot takes.")]
     public Element element = Element.Neutral;
@@ -572,6 +605,8 @@ public class SkillEffect
             case SkillEffectKind.Parry:         id = StateId.Parry;         return true;
             case SkillEffectKind.Charges: id = StateId.Charges; return true;
             case SkillEffectKind.BoostOutgoingDamage: id = StateId.OutgoingDamageBoost; return true;
+            case SkillEffectKind.BoostBasicAttackDamage: id = StateId.BasicAttackBoost; return true;
+            case SkillEffectKind.SureHit: id = StateId.SureHit; return true;
             case SkillEffectKind.ReduceOutgoingDamage: id = StateId.OutgoingDamagePenalty; return true;
             case SkillEffectKind.ImmuneToDisables: id = StateId.DisableImmune; return true;
             // A taunt holds a real window on whoever it lands on (UnitStates.BeginTaunt) — the lock the skill door and
@@ -697,7 +732,11 @@ public class SkillEffect
     /// named by <see cref="modifierSkillId"/> + <see cref="modifierStateId"/>, never by the tick's aim, and the pile it
     /// edits sits on the caster — so these always land caster-side no matter what the tick catches.</summary>
     public static bool IsModifier(SkillEffectKind k) =>
-        k == SkillEffectKind.ExtendDuration || k == SkillEffectKind.AddStacks;
+        k == SkillEffectKind.ExtendDuration || k == SkillEffectKind.AddStacks || k == SkillEffectKind.ResetCooldown;
+
+    /// <summary>A modifier that names a SKILL and no pile — it acts on the skill itself (its cooldown), so
+    /// <see cref="modifierStateId"/> means nothing for it.</summary>
+    public static bool ModifierNeedsPile(SkillEffectKind k) => k != SkillEffectKind.ResetCooldown;
 
     /// <summary>An effect that must be told WHERE: it RELOCATES whoever it lands on, so the point is part of its
     /// meaning, not part of its targeting. This is the ONE thing that makes a cast ask for a ground point on top of
@@ -743,6 +782,7 @@ public static class EffectScaling
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff:
             case SkillEffectKind.BoostOutgoingDamage:
+            case SkillEffectKind.BoostBasicAttackDamage:
             case SkillEffectKind.ReduceOutgoingDamage:
             case SkillEffectKind.AddStacks:
             case SkillEffectKind.DrainMana:
@@ -783,6 +823,7 @@ public static class EffectScaling
             case SkillEffectKind.Shield:               return "BARRIER HP (sustain: HP/Def/MP)";
             case SkillEffectKind.Status:               return "DAMAGE / TICK";
             case SkillEffectKind.BoostOutgoingDamage:  return "DAMAGE BONUS";
+            case SkillEffectKind.BoostBasicAttackDamage: return "BASIC ATTACK DAMAGE BONUS";
             case SkillEffectKind.ReduceOutgoingDamage: return "DAMAGE CUT";
             case SkillEffectKind.AddStacks:            return "STACKS ADDED";
             case SkillEffectKind.DrainMana:            return "MP DRAINED";
@@ -836,6 +877,8 @@ public static class EffectScaling
             case SkillEffectKind.Charges:
             case SkillEffectKind.Brace:
             case SkillEffectKind.BoostOutgoingDamage:
+            case SkillEffectKind.BoostBasicAttackDamage:
+            case SkillEffectKind.SureHit:
             case SkillEffectKind.ReduceOutgoingDamage:
             case SkillEffectKind.ImmuneToDisables:
             case SkillEffectKind.Shield:

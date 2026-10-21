@@ -1,0 +1,255 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.bow.wandering_sky_counter
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  id: skill.bow.wandering_sky_counter
+  displayName: Wandering Sky
+  symbol: Ws
+  icon: {fileID: 21300000, guid: 67c82f38dbfa08c43baf06136fea623d, type: 3}
+  weaponType: 9
+  masteryLevel: 45
+  needsSkillId: 
+  companionOf: skill.bow.wandering_sky
+  statesEndWhenHit: 0
+  published: 0
+  maxLevel: 5
+  description: While Wandering Sky runs, every attack you dodge is answered with
+    an arrow for 150% Attack.
+  archetype: 0
+  family: 2
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
+  triggers:
+  - trigger: 12
+    triggerSkillId: 
+    requiresState: 1
+    requireSkillId: skill.bow.wandering_sky
+    requireStateId: 30
+    requireStateIdSet: 1
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+  manaCost: 0
+  cooldown: 0
+  castTime: 0
+  aim: 2
+  castRange: 0
+  tier: 0
+  castCircleId: 
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 11400000, guid: 95d06ff161b13bb438ebea25e4e88e31, type: 2}
+  repeatCount: 1
+  repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatTotalPerBeat: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
+  holdCasterForRun: 0
+  repeatWhilePileHeld: 0
+  repeatPileStateId: 0
+  repeatPileStateIdSet: 0
+  repeatMaxSeconds: 0
+  repeatBonusSkillId: 
+  repeatBonusStateId: 0
+  repeatBonusStateIdSet: 0
+  repeatBonusInterval: 0.2
+  hasReleaseStance: 0
+  releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
+  releaseIsWeaponAttack: 0
+  bindings:
+  - tickId: shot
+    targetMode: 1
+    groundDelivery: 1
+    affects: 3
+    playerFaction: 0
+    radius: 1.5
+    projectileCount: 1
+    projectileSpread: 0
+    stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
+    effects:
+    - kind: 0
+      useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 0
+      damageMult:
+        value: 1.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      element: 0
+      converts: 3
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
+      ailment: 2
+      seconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      magnitude:
+        value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      side: 1
+      subStat: 0
+      affinity:
+      - stat: 0
+        weight: 100
+      chanceAffinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+  shortLabel: Wanderin
+  keyLabel: 
+  slotOrder: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

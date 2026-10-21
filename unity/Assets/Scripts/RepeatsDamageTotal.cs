@@ -98,7 +98,24 @@ public class RepeatsDamageTotal : MonoBehaviour
 /// </summary>
 public static class StrikeTotals
 {
-    struct Run { public int total; public float lastHit; }
+    struct Run { public int total; public float lastHit; public int beat; }
+
+    // WHICH TOTAL the strikes landing right now belong to (0 = no say): a cast's whole run, or a single beat of it. A
+    // run struck under a different id than its last strike starts again from zero — so a new cast never carries the
+    // last cast's number on, and a skill that totals per beat shows each beat's alone.
+    static int currentBeat, beatCounter;
+
+    /// <summary>A fresh id for one total — handed out per cast (or per beat), never reused.</summary>
+    public static int NewTotal() => ++beatCounter == 0 ? ++beatCounter : beatCounter;
+
+    /// <summary>Every total struck until the scope closes belongs to <c>id</c> (0 = no say). Server only; nests by
+    /// putting the outer id back.</summary>
+    public readonly struct BeatScope : System.IDisposable
+    {
+        readonly int outer;
+        public BeatScope(int id) { outer = currentBeat; if (id != 0) currentBeat = id; }
+        public void Dispose() => currentBeat = outer;
+    }
 
     static readonly Dictionary<ulong, Run> open = new Dictionary<ulong, Run>(64);
     static readonly List<ulong> closing = new List<ulong>(16);
@@ -112,6 +129,8 @@ public static class StrikeTotals
         if (now >= nextSweep) Sweep(now);
         ulong key = ((ulong)struckNetId << 32) | strikerNetId;
         if (!open.TryGetValue(key, out var run) || now - run.lastHit >= RepeatsDamageTotal.IdleCloseSeconds) run.total = 0;
+        if (currentBeat != 0 && run.beat != currentBeat) run.total = 0;
+        run.beat = currentBeat;
         run.total += damage;
         run.lastHit = now;
         open[key] = run;

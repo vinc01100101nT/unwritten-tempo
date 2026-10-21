@@ -76,6 +76,10 @@ public static class UnitStatMath
     public const int MaxAspd = 190, MinAspd = 0;
     /// <summary>The most movement-speed effects can lift a unit's pace: 250%.</summary>
     public const float MaxMoveMult = 2.5f;
+    /// <summary>The slowest movement-speed effects can make a unit: 30%. Slows from different skills add up, and
+    /// without this floor a few at once would hold a unit still — a root nobody authored. Being stunned, frozen or
+    /// locked by a skill still stops a unit completely; that is a lock, not a speed.</summary>
+    public const float MinMoveMult = 0.3f;
     /// <summary>The most of a blow life steal can return, and the most of a blow reflect can send back.</summary>
     public const float MaxLifeSteal = 0.25f, MaxReflect = 0.5f;
     /// <summary>The range of a creature's own movement speed, in multiples of the shared pace: 0 never moves, 1 is the
@@ -583,8 +587,8 @@ public static class UnitStatMath
     /// <summary>Seconds between swings at <paramref name="aspd"/>: <c>(200 − ASPD) ÷ 50</c> — 0.2 s at 190, 4 s at 0.</summary>
     public static float SwingIntervalFromAspd(float aspd) => (200f - Mathf.Clamp(aspd, MinAspd, MaxAspd)) / 50f;
 
-    /// <summary>A movement-speed effect multiplier (1 + the live bonus), held inside [0, <see cref="MaxMoveMult"/>].</summary>
-    public static float MoveMult(float bonus) => Mathf.Clamp(1f + bonus, 0f, MaxMoveMult);
+    /// <summary>A movement-speed effect multiplier (1 + the live bonus), held inside [<see cref="MinMoveMult"/>, <see cref="MaxMoveMult"/>].</summary>
+    public static float MoveMult(float bonus) => Mathf.Clamp(1f + bonus, MinMoveMult, MaxMoveMult);
 
     public static float LifeStealFraction(float bonus) => Mathf.Clamp(bonus, 0f, MaxLifeSteal);
 

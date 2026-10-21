@@ -92,3 +92,31 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | Symbol | Skill | Tier | Cost | When | What it does |
 | --- | --- | --- | --- | --- | --- |
 | — | Meteor *(unpublished)* | active | MP **40**  CD **1.5s**  Cast **1.5s**  Range **13** | pressed | Deals **8×** magic damage, **3×** hits · Burn **3**/tick for **4s** · **25%** per hit: stun for **0.8s** · Deals **8×** magic damage |
+
+## Bow  —  *no colour chosen*
+
+| Symbol | Skill | Tier | Cost | When | What it does |
+| --- | --- | --- | --- | --- | --- |
+| `Cy` | Clear Sky | active | MP **12**  CD **12s**  Instant | pressed | +**30%** accuracy for **7s** |
+| `Cc` | Cloud Cover | passive | MP **0**  CD **0s**  Instant | After casting Updraft | +**7%** evasion for **4s** |
+| `Cl` | Cloudburst | **ULT** | MP **40**  CD **50s**  Instant | pressed | Gives **1** charge for **6s** · Deals **0.4×** physical damage |
+| `Fw` | Fair Weather | passive | MP **0**  CD **0s**  Instant | When your HP drops low | **Updraft** is ready again at once |
+| `Gc` | Gathering Clouds | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**1%** accuracy per stack for **6s** |
+| `Gf` | Gust Front | passive | MP **0**  CD **0s**  Instant | When you kill a mob | +**15%** movement speed for **3s** |
+| `Hs` | Hailstone | active | MP **16**  CD **8s**  Cast **1s**  Range **13** | pressed | Deals **2.2×** physical damage, +**25%** crit chance |
+| `Hc` | High Cirrus | active | MP **12**  CD **12s**  Instant | pressed | +**30%** movement speed for **7s** · +**20%** attack speed for **7s** |
+| `Js` | Jet Stream | active | MP **12**  CD **7s**  Instant  Range **12** | pressed | Deals **1.3×** physical damage |
+| `Lc` | Low Cloud | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Deals **1.2×** physical damage · −**25%** movement speed for **4s** |
+| `Nb` | Nimbus | passive | MP **0**  CD **0s**  Instant | When you take damage | +**4%** evasion for **3s** |
+| `Oc` | Overcast | active | MP **12**  CD **10s**  Instant  Range **11** | pressed | −**25%** accuracy for **5s** |
+| `Pt` | Petrichor | passive | MP **0**  CD **0s**  Instant | When you kill a mob | Extends **Cloudburst** by **1s** |
+| `Rs` | Rain Shadow | passive | MP **0**  CD **0s**  Instant | After casting Updraft | Your next **3** basic attacks deal +**40%** damage within **5s** |
+| `Ra` | Rainbow | active | MP **12**  CD **7s**  Instant  Range **11** | pressed | Deals **1.8×** physical damage |
+| `Sr` | Scattered Rain | active | MP **12**  CD **6s**  Instant  Range **11** | pressed | Deals **1×** physical damage |
+| `Sl` | Slipstream | passive | MP **0**  CD **0s**  Instant | When you dodge an attack | Your next basic attack can't miss within **4s** |
+| `Ss` | Sun Shower | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Deals **0.7×** physical damage |
+| `Sk` | Sunbreak | active | MP **12**  CD **6s**  Instant  Range **11** | pressed | Deals **1×** physical damage, +**0.01×** per 1% movement speed bonus while moving |
+| `Th` | Thunderhead | **ULT** | MP **40**  CD **50s**  Cast **1.5s**  Range **13** | pressed | Deals **5×** physical damage, +**0.075×** per point of hit chance above 100% (up to 100) |
+| `Ud` | Updraft | active | MP **8**  CD **5s**  Instant  Range **5** | pressed | Dashes to the target location |
+| `Ws` | Wandering Sky | **ULT** | MP **40**  CD **55s**  Instant | pressed | +**12%** evasion for **20s** · +**45%** movement speed for **20s** |
+| `Ws` | Wandering Sky *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **0** | When you dodge an attack | Deals **1.5×** physical damage |

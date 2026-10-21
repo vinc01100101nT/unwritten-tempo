@@ -28,10 +28,8 @@ using UnityEngine;
 /// </summary>
 public static class SkillEffectApplier
 {
-    // Seconds between the strikes of a multi-hit (hitCount > 1) flurry — the RO cascade timing.
-    const float MultiHitInterval = 0.2f;
-    // Reused snapshot of the mobs a burst reaches, so a multi-hit flurry can be handed to MultiHitBurst without a
-    // per-cast scan alloc. Cleared at the start of each ApplyBurst; MultiHitBurst copies it before the caller reuses it.
+    // Reused snapshot of the mobs a burst reaches, so a scan allocates nothing per cast. Cleared at the start of each
+    // ApplyBurst.
     static readonly List<MonsterAI3D> burstTargets = new List<MonsterAI3D>(32);
 
     /// <summary>Apply the binding's effects — CASTER effects to the caster, TARGET effects to whoever the tick reaches
@@ -48,6 +46,28 @@ public static class SkillEffectApplier
     // burst, set at its entry and restored in its finally, so a passive a hop sets off casts at full strength rather
     // than at the hop's share.
     static float hopScale = 1f;
+
+    // A MULTI-HIT STRIKE WORKED OUT ONCE: the one strike's finished number is multiplied by its hit count, then shown
+    // as that many pieces (BlowBatch.Split). Held for that one strike and restored, exactly like hopScale.
+    static float strikeScale = 1f;
+
+    /// <summary>Extra crit chance for the ONE strike being rolled right now (<see cref="SkillEffect.critChanceBonus"/>),
+    /// 0 otherwise. Read by every unit's crit roll, set and restored around the strike.</summary>
+    public static float StrikeCritBonus { get; private set; }
+
+    /// <summary>A PASSIVE FIRED IN THE MIDDLE OF A STRIKE (a kill, a hit landing) is its own cast: it must not inherit
+    /// the strike's hit-count scale, its crit bonus or its piece count. Held for the passive's run and put back after.</summary>
+    public readonly struct StrikeIsolation : System.IDisposable
+    {
+        readonly float scale, critBonus;
+        readonly int split;
+        public StrikeIsolation(bool _)
+        {
+            scale = strikeScale; critBonus = StrikeCritBonus; split = BlowBatch.Split;
+            strikeScale = 1f; StrikeCritBonus = 0f; BlowBatch.Split = 1;
+        }
+        public void Dispose() { strikeScale = scale; StrikeCritBonus = critBonus; BlowBatch.Split = split; }
+    }
 
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
@@ -659,6 +679,18 @@ public static class SkillEffectApplier
             case SkillEffectKind.Charges:
                 if (Fires(e, hit, caster, vars)) states.BeginCharges(seconds);   // charges ride the apply context
                 break;
+            case SkillEffectKind.BoostBasicAttackDamage:
+                // The any-strike boost's twin, read the same way — only who may spend a charge differs.
+                if (Fires(e, hit, caster, vars)) states.BeginBasicAttackBoost(seconds, OutputMagnitude(e, caster, vars));
+                break;
+            case SkillEffectKind.SureHit:
+                if (Fires(e, hit, caster, vars)) states.BeginSureHit(seconds);   // charges ride the apply context
+                break;
+            case SkillEffectKind.ResetCooldown:
+                // A modifier: once per landing, on the named skill of the unit it lands on, then it is over.
+                if (hit == 0 && GameServer.IsServer && !string.IsNullOrEmpty(e.modifierSkillId))
+                    unit.Skills?.RunnerById(e.modifierSkillId)?.ResetCooldown();
+                break;
             case SkillEffectKind.ImmuneToDisables:
                 // No magnitude: being stopped is binary. The whole knob is how long it lasts.
                 if (Fires(e, hit, caster, vars)) states.BeginDisableImmunity(seconds);
@@ -727,14 +759,21 @@ public static class SkillEffectApplier
             {
                 if (hit != 0) break;
                 var look = RelocationLook.Of(srcId, e, vars);
+                // A MOVE THAT STRIKES NOBODY LANDS WHERE IT WAS AIMED. Landing beside the nearest enemy at striking
+                // distance is for a gap-closer; a getaway dash snapped onto a creature standing near the clicked spot
+                // and flung its caster round to that creature's far side.
+                var relocSkill = SkillCatalog.Get(srcId);
+                bool exact = relocSkill != null && relocSkill.IsGetawayDash && aimUnit == null;
                 if (e.kind == SkillEffectKind.Teleport)
-                    unit.TeleportTo(RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)), look);   // instant blink
+                    unit.TeleportTo(exact ? relocatePoint
+                                          : RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)), look);   // instant blink
                 else
                 {
                     // Face what the hop is AIMED AT for the whole trip, not the direction it flies. A relocation lands
                     // BESIDE its target (a star corner), so facing the travel line leaves the caster swinging at empty
                     // air on arrival — and nothing turns it back afterwards. No aimed unit = face travel, as before.
-                    var dest = RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars));
+                    var dest = exact ? relocatePoint
+                                     : RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars));
                     float speedMult = e.dashSpeedMult.Resolve(vars);
                     float easeSeconds = Mathf.Max(0.05f, e.dashEaseSeconds.Resolve(vars));
                     float trip = unit.GlideTo(dest, speedMult, e.dashEaseIn, e.dashEaseOut, easeSeconds,
@@ -808,9 +847,8 @@ public static class SkillEffectApplier
         public void Dispose() => StrikeShowsTotal = outer;
     }
 
-    // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): hand the mob
-    // snapshot to MultiHitBurst so the strikes CASCADE over time and each mob shows ONE rising yellow combo total,
-    // exactly like RO — instead of N overlapping numbers dumped in a single frame.
+    // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): worked out ONCE
+    // per mob (FlurryOnce) and shown as its hits, cascading on the watching machine with ONE rising yellow total, like RO.
     static void DispatchMobHits(List<SkillEffect> effects, List<MonsterAI3D> mobs,
                                 ICombatUnit caster, Vector3 relocatePoint,
                                 string srcSymbol = null, string srcName = null, string srcId = null,
@@ -830,33 +868,46 @@ public static class SkillEffectApplier
             }
             return;
         }
-        // A flurry's later strikes land on LATER FRAMES, outside the caster's tick — so the causal chain must ride the
-        // callback, or a passive's cascade hits would arrive "unowned" and could re-fire the very passive that caused them.
-        ulong chain = PassiveEvents.CurrentChain;
-        var flurryVars = vars;   // the cast's readings ride the callback too — later strikes must cash the SAME snapshot
-        Vector3 flurryPoint = relocatePoint;   // and so does where this cast aimed — a later strike relocates to the same spot
-        // The cast's practice lift and a hop's share ride the callback too: both are held for the burst that set them
-        // and restored when it returns, so a later strike, landing on a later frame, would otherwise read whatever is
-        // set then — no lift at all, or another cast's.
-        float flurryHop = hopScale;
-        float flurryLift = masteryLift;
-        MultiHitBurst.Run(mobs, HitLoops(effects, caster, vars), MultiHitInterval,
-            (ai, hit) =>
-            {
-                // The CAUSE rides the callback whole — chain and skill both. A flurry's later strike can be the killing
-                // blow, and a kill that couldn't name the skill that landed it would be a kill by nobody.
-                var prev = PassiveEvents.Push(chain, srcId);
-                float prevHop = hopScale, prevLift = masteryLift;
-                hopScale = flurryHop;
-                masteryLift = flurryLift;
-                try { return ApplyHitToMob(effects, ai, hit, caster, flurryPoint, srcSymbol, srcName, srcId, flurryVars); }
-                finally { hopScale = prevHop; masteryLift = prevLift; PassiveEvents.Pop(prev); }
-            });
+        // A MULTI-HIT STRIKE IS WORKED OUT ONCE PER TARGET, Ragnarok's way: one roll, one blow through defence, shown
+        // as its hits (FlurryOnce). All of it in one message.
+        int loops = HitLoops(effects, caster, vars);
+        using (BlowBatch.Begin())
+            for (int i = 0; i < mobs.Count; i++)
+                if (mobs[i] != null && mobs[i].Health != null)
+                    FlurryOnce(effects, mobs[i].Health, loops, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
     }
 
-    // One beat of a multi-hit flurry on ONE mob: land every Damage effect (overkill-safe so the running total keeps
-    // climbing even past the kill, RO-style) and roll the binding's procs THIS hit. Returns the damage dealt so the
-    // yellow combo total can accumulate it.
+    /// <summary>A multi-hit strike on ONE unit, worked out once: every Damage effect lands ONE blow worth its hit count
+    /// (one roll, one pass through defence, a parry or a barrier), announced as that many equal pieces; then every other
+    /// effect gets its chance once per hit, as before. A unit already dead takes the numbers and nothing else.</summary>
+    static void FlurryOnce(List<SkillEffect> effects, ICombatUnit unit, int loops, ICombatUnit caster, Vector3 point,
+                           string srcSymbol, string srcName, string srcId, in StackVars vars)
+    {
+        bool deadBefore = unit.IsDead;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var e = effects[i];
+            if (e == null || e.kind != SkillEffectKind.Damage) continue;
+            int hits = EffectiveHits(e, caster, vars);
+            float prevScale = strikeScale;
+            int prevSplit = BlowBatch.Split;
+            strikeScale = hits;
+            BlowBatch.Split = hits;
+            try { LandStrike(e, unit, caster, vars, overkill: true); }
+            finally { strikeScale = prevScale; BlowBatch.Split = prevSplit; }
+        }
+        if (deadBefore) return;
+        for (int hit = 0; hit < loops; hit++)
+            for (int i = 0; i < effects.Count; i++)
+            {
+                var e = effects[i];
+                if (e == null || e.kind == SkillEffectKind.Damage || unit.IsDead) continue;
+                ApplyToTarget(e, unit, hit, caster, point, srcSymbol, srcName, srcId, vars);
+            }
+    }
+
+    // A single-hit strike on a mob that is already dead: the strike's numbers only (overkill-safe), every other effect
+    // skipped.
     static int ApplyHitToMob(List<SkillEffect> effects, MonsterAI3D ai, int hit,
                              ICombatUnit caster, Vector3 relocatePoint,
                              string srcSymbol = null, string srcName = null, string srcId = null,
@@ -866,7 +917,7 @@ public static class SkillEffectApplier
         return ApplyHitToUnit(effects, ai.Health, hit, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
     }
 
-    // One beat of a flurry on ONE unit, creature or person — the body both flurries share.
+    // One strike on ONE unit, creature or person, already dead: its numbers only (overkill-safe), every other effect skipped.
     static int ApplyHitToUnit(List<SkillEffect> effects, ICombatUnit h, int hit,
                               ICombatUnit caster, Vector3 relocatePoint,
                               string srcSymbol, string srcName, string srcId, StackVars vars)
@@ -987,21 +1038,11 @@ public static class SkillEffectApplier
             }
             return;
         }
-        ulong chain = PassiveEvents.CurrentChain;
-        var flurryVars = vars;
-        Vector3 flurryPoint = relocatePoint;
-        float flurryHop = hopScale;
-        float flurryLift = masteryLift;
-        MultiHitBurst.RunOnUnits(people, loops, MultiHitInterval,
-            (person, hit) =>
-            {
-                var prev = PassiveEvents.Push(chain, srcId);
-                float prevHop = hopScale, prevLift = masteryLift;
-                hopScale = flurryHop;
-                masteryLift = flurryLift;
-                try { return ApplyHitToUnit(effects, person, hit, caster, flurryPoint, srcSymbol, srcName, srcId, flurryVars); }
-                finally { hopScale = prevHop; masteryLift = prevLift; PassiveEvents.Pop(prev); }
-            });
+        // Worked out once per person, exactly as a creature's flurry is (FlurryOnce).
+        using (BlowBatch.Begin())
+            for (int i = 0; i < people.Count; i++)
+                if (people[i] != null)
+                    FlurryOnce(effects, people[i], loops, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
     }
 
     // ---- player as a TARGET (pass 2) ----------------------------------------
@@ -1044,6 +1085,17 @@ public static class SkillEffectApplier
     /// <param name="resolved">The blow exactly as it was applied, handed back whole.</param>
     public static int Strike(SkillEffect e, ICombatUnit unit, ICombatUnit caster,
                              in StackVars vars, bool overkill, out bool crit, out DamageInfo resolved)
+    {
+        crit = false;
+        resolved = default;
+        float prevCritBonus = StrikeCritBonus;
+        StrikeCritBonus = Mathf.Max(0f, e.critChanceBonus.Resolve(vars));
+        try { return StrikeBody(e, unit, caster, vars, overkill, out crit, out resolved); }
+        finally { StrikeCritBonus = prevCritBonus; }
+    }
+
+    static int StrikeBody(SkillEffect e, ICombatUnit unit, ICombatUnit caster,
+                          in StackVars vars, bool overkill, out bool crit, out DamageInfo resolved)
     {
         crit = false;
         resolved = default;
@@ -1131,6 +1183,13 @@ public static class SkillEffectApplier
         float metres = perMetre != 0f && caster != null && caster.Body != null && unit != null && unit.Body != null
             ? StrikeMath.Metres(caster.Body.position, unit.Body.position) : 0f;
         mult.value += StrikeMath.Growth(perPoint, vars.GivenUp, perMetre, metres);
+        float perAccuracy = e.damageMultPerAccuracyOver.Resolve(vars);
+        if (perAccuracy != 0f && caster != null && unit != null)
+            mult.value += perAccuracy * StrikeMath.AccuracyOverPoints(
+                Combat.RawHitPoints(caster.BasicHit, unit.Flee, MonsterAI3D.AttackersOn(unit)));
+        float perSpeed = e.damageMultPerSpeedBonus.Resolve(vars);
+        if (perSpeed != 0f && caster != null && caster.States != null)
+            mult.value += perSpeed * StrikeMath.SpeedBonusPoints(caster.States.MoveMult, caster.IsMoving);
         return mult;
     }
 
@@ -1272,7 +1331,7 @@ public static class SkillEffectApplier
     // this skill is worth. Added, never multiplied — so mastery is worth the same +30 POINTS to a new character as
     // to a maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at
     // a ring term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
-    static float OutputMult(SkillEffect e, ICombatUnit caster) => OutputScale(e, caster, masteryLift) * hopScale;
+    static float OutputMult(SkillEffect e, ICombatUnit caster) => OutputScale(e, caster, masteryLift) * hopScale * strikeScale;
 
     /// <summary>THE multiplier on an effect's main number: the ring's term where <see cref="EffectScaling"/> gives it
     /// a ring row, plus the practice lift where it says practice raises it — ADDED, never multiplied. Public so the

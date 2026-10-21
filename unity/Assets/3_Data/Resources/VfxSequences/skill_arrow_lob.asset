@@ -1,0 +1,186 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f3fba15f290da748ba5d1c7b1d25820, type: 3}
+  m_Name: skill_arrow_lob
+  m_EditorClassIdentifier: Assembly-CSharp::VfxSequence
+  steps:
+  - note: lobbed arrow
+    schedule: 0
+    delay: 0
+    startEvent: 
+    snapToEventPoint: 0
+    kind: 2
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: 
+    scale: 1
+    speed: 1
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 0.83396226, g: 0.50126487, b: 0.2438945, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    emitEventOnStart: 
+    emitEventOnEnd: landed
+    tickId: arrow_land
+    tickWhen: 1
+    tickInterval: 0.14
+    carrierFromCaster: 1
+    carrierFrom: {x: 0, y: 0.1962, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 4.6
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 4
+    carrierArc: 1
+    carrierLaunchDegrees: 25
+    carrierDrawsArrow: 1
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
+  - note: land_effect
+    schedule: 1
+    delay: 0
+    startEvent: landed
+    snapToEventPoint: 0
+    kind: 0
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: water.hit-01
+    scale: 0.26
+    speed: 0.97
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    tickId: 
+    tickWhen: 0
+    tickInterval: 0
+    carrierFromCaster: 0
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    carrierArc: 0
+    carrierLaunchDegrees: 45
+    carrierDrawsArrow: 0
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
+  - note: new
+    schedule: 0
+    delay: 0
+    startEvent: 
+    snapToEventPoint: 0
+    kind: 4
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: 
+    scale: 1
+    speed: 1
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    tickId: 
+    tickWhen: 0
+    tickInterval: 0
+    carrierFromCaster: 0
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    carrierArc: 0
+    carrierLaunchDegrees: 45
+    carrierDrawsArrow: 0
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips:
+      - {fileID: 8300000, guid: dba6ebda789fe0843a8cc99d28e914dc, type: 3}
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
+  - note: impact_sound
+    schedule: 1
+    delay: 0
+    startEvent: landed
+    snapToEventPoint: 0
+    kind: 4
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: 
+    scale: 1
+    speed: 1
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    tickId: 
+    tickWhen: 0
+    tickInterval: 0
+    carrierFromCaster: 0
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    carrierArc: 0
+    carrierLaunchDegrees: 45
+    carrierDrawsArrow: 0
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 12328cfc8d0174748a37295cbb690ee7, type: 3}
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
+  loopEnd: 0

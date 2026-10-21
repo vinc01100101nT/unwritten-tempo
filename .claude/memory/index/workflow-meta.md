@@ -69,3 +69,5 @@
 - [Filter red-team findings](../filter-red-team-findings.md) — drop obvious implementation steps, already-decided items and non-problems before relaying; only real design holes, as Problem → Root cause → Solution.
 - [No doc-keeper for sweeps](../no-doc-keeper-for-sweeps.md) — user killed it for token burn 2026-10-16; update docs inline by grep + slice edits.
 - [Recompile: check Play mode first, separately](recompile-gate-check-playmode-first.md) — never chain editor_status and recompile; recompile only after reading playMode stopped.
+- [List it = keep in chat](../list-it-means-keep-in-chat.md) — mid-brainstorm "list that for now" means a running list in my replies to batch later, never a backlog task or file.
+- [Fix the scope, never remove the feature](../fix-the-scope-never-remove-the-feature.md) — "it should only X" = keep the feature, narrow it to X; switching it off is not a fix (Cloudburst yellow total).

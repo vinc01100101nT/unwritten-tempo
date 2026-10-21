@@ -22,11 +22,24 @@ ROUTES = [
     {
         "skill": "import-weapon-models",
         "job": "a weapon's 3D model — importing a pack, adding one model, or replacing or re-fitting a single weapon",
+        "always": "the skill is used every time, a single weapon included",
         "all_of": [
             r"weapons?|swords?|greatswords?|longswords?|axes?|warhammers?|hammers?|maces?|daggers?|katars?|spears?"
             r"|staffs?|staves|wands?|scythes?|fists?|knuckles?|shurikens?|snipers?|firearms?|guns?|rifles?|bows?",
             r"models?|3d|mesh(es)?|prefabs?|fbx|glb|gltf|unitypackage|asset ?store|packs?|grips?|in (the |their |his |her )?hands?"
             r"|holds?|holding|held",
+        ],
+    },
+    {
+        # Ruled 2026-10-21: 23 Bow skills were authored without the skill-writing guide, because nothing put it in
+        # front of the session. Any skill work — designing, authoring, numbers, effects, triggers — loads it first.
+        "skill": "compose-skill",
+        "job": "a game SKILL — designing, authoring, renaming or re-pricing one, its numbers, triggers, effects or VFX",
+        "always": "the skill is used every time, a single skill or a single number included",
+        "all_of": [
+            r"skills?|passives?|ultimates?|ults?",
+            r"make|makes|create|author|authoring|compose|design|build|add|implement|numbers?|cooldowns?|mana|cost"
+            r"|damage|effects?|vfx|triggers?|rename|change|balance|brainstorm(ing|s)?|fix|tune|release animation",
         ],
     },
 ]
@@ -53,8 +66,8 @@ def main():
         print(json.dumps({"suppressOutput": True}))
         return 0
     lines = ["If this message asks for work on %s, invoke the `%s` skill with the Skill tool BEFORE doing any of "
-             "that work, and follow it. This is a standing rule set by the user: the skill is used every time, a "
-             "single weapon included. If the message is not about that, ignore this note." % (r["job"], r["skill"])
+             "that work, and follow it. This is a standing rule set by the user: %s. If the message is not about "
+             "that, ignore this note." % (r["job"], r["skill"], r["always"])
              for r in hits]
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
                                              "additionalContext": "\n".join(lines)}}))

@@ -127,6 +127,15 @@ public class FlightPicture : MonoBehaviour
             socket = hand;
             socket.HideForFlight();
         }
+        else if (look == Flights.Look.ArrowModel && Arrow.Model != null)
+        {
+            modelPrefab = Arrow.Model;
+            model = RentModel(modelPrefab);
+            model.transform.SetParent(transform, false);
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+            model.transform.localScale = Vector3.one;
+        }
         else if (look == Flights.Look.Effect && !string.IsNullOrEmpty(effectId))
             effect = Vfx.Attach(effectId, transform, Vector3.zero, 1f);
         else
@@ -161,7 +170,12 @@ public class FlightPicture : MonoBehaviour
         Vector3 travel = end - transform.position;
         transform.position = pos;
 
-        if (model != null) transform.Rotate(0f, SpinDegreesPerSecond * Time.deltaTime, 0f, Space.World);
+        if (look == Flights.Look.ArrowModel)
+        {
+            // An arrow points where it is going; it never spins like a thrown blade.
+            if (travel.sqrMagnitude > 1e-6f) transform.rotation = Quaternion.LookRotation(travel.normalized);
+        }
+        else if (model != null) transform.Rotate(0f, SpinDegreesPerSecond * Time.deltaTime, 0f, Space.World);
         if (look == Flights.Look.Streak)
         {
             Vector3 dir = travel.sqrMagnitude > 1e-6f ? travel.normalized : transform.forward;

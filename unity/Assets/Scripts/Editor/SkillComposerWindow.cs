@@ -621,6 +621,11 @@ public class SkillComposerWindow : EditorWindow
                 return "A HEAL YOU CAST RESTORED HEALTH — to anybody, yourself included. Aims at whoever was healed.\n\n" +
                        "Fires only when health was really given back: a heal on somebody already full fires nothing. " +
                        "Only a skill's heal fires it — a potion or anything else an item runs never does.";
+            case SkillTrigger.OnDodge:
+                return "AN ATTACK AIMED AT YOU MISSED — your evasion beat its accuracy. Aims at the attacker, so a " +
+                       "counter can strike back.\n\n" +
+                       "Only a real accuracy miss counts: passing through a blow during a dash is not a dodge. A skill's " +
+                       "strike always lands, so in practice this is a swing or a shot that missed you.";
             default:
                 return "";
         }
@@ -767,6 +772,13 @@ public class SkillComposerWindow : EditorWindow
         {
             EditorGUILayout.HelpBox("Pick the skill whose pile this edits — without it there is nothing to change.",
                                     MessageType.Warning);
+            return;
+        }
+        if (!SkillEffect.ModifierNeedsPile(ef.kind))
+        {
+            EditorGUILayout.HelpBox("That skill is ready again the moment this runs — its cooldown is cut to nothing, " +
+                "once. It stores nothing and lasts nothing, and the shared ultimate cooldown keeps running.",
+                MessageType.None);
             return;
         }
         if (!DrawPilePicker(ef.modifierSkillId, ref ef.modifierStateId, ref ef.modifierStateIdSet,
@@ -1083,13 +1095,39 @@ public class SkillComposerWindow : EditorWindow
                     EditorGUILayout.HelpBox("No trigger on this skill requires a state, so there are no charges to " +
                         "spend — the repeats would stop after the first beat.", MessageType.Warning);
             }
-            else
+            if (!sel.repeatCostsCharge)
+            {
+                sel.repeatWhilePileHeld = EditorGUILayout.Toggle(new GUIContent("repeat while its pile is held",
+                    "ON = the repeats run for as long as a pile THIS skill gave the caster is still held, instead of a " +
+                    "fixed count — so another skill lengthening that pile (Extend Duration) lengthens the run."),
+                    sel.repeatWhilePileHeld);
+                if (sel.repeatWhilePileHeld)
+                {
+                    DrawPilePicker(sel.id, ref sel.repeatPileStateId, ref sel.repeatPileStateIdSet,
+                                   "lasts for", "the run would stop after its first beat");
+                    sel.repeatMaxSeconds = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  longest run (s)",
+                        "The run never lasts longer than this from the cast, however long its pile is held — the " +
+                        "ceiling on anything that lengthens it. 0 = no ceiling."), sel.repeatMaxSeconds));
+                }
+            }
+            if (!sel.repeatCostsCharge && !sel.repeatWhilePileHeld)
                 sel.repeatCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("repeat count",
                     "Replay the WHOLE cycle N times per cast (e.g. 5 = a 5-meteor shower). Each cycle is an independent play " +
                     "at the same cast point; per-fall hits still come from the VFX's tick rule. 1 = play once."), sel.repeatCount));
 
-            if (sel.repeatCount > 1 || sel.repeatCostsCharge)   // only meaningful when the cycle actually repeats
+            if (sel.repeatCount > 1 || sel.repeatCostsCharge || sel.repeatWhilePileHeld)   // only meaningful when the cycle actually repeats
             {
+                sel.repeatBonusSkillId = DrawSkillPicker("extra beats paid by",
+                    "When the run ends, this skill's pile (picked below) is read ONCE and spent whole, and the run plays one " +
+                    "extra beat per stack. Stacks gained during those beats add none. None = no extra beats.",
+                    sel.repeatBonusSkillId, includePassives: true, allowSelf: true);
+                if (!string.IsNullOrEmpty(sel.repeatBonusSkillId))
+                {
+                    DrawPilePicker(sel.repeatBonusSkillId, ref sel.repeatBonusStateId, ref sel.repeatBonusStateIdSet,
+                                   "spends", "no extra beats are played");
+                    sel.repeatBonusInterval = Mathf.Max(0.05f, EditorGUILayout.FloatField(new GUIContent("  extra beat interval (s)",
+                        "Seconds between the extra beats."), sel.repeatBonusInterval));
+                }
                 sel.repeatScaleWithAttackSpeed = EditorGUILayout.Toggle(new GUIContent("scale with attack speed",
                     "ON = the beat follows the caster's SWING SPEED rather than a fixed number of seconds, so a faster " +
                     "caster beats faster. It takes precedence, so the interval below is hidden."),
@@ -1124,6 +1162,11 @@ public class SkillComposerWindow : EditorWindow
                     "second after the run last touched it — so a dance that hops away and comes back starts a fresh " +
                     "number. OFF = every repeat pops its own total (a meteor shower shows one per meteor). Purely what " +
                     "you SEE: no damage, timing or state changes either way."), sel.showRepeatsTotalDamage);
+                if (sel.showRepeatsTotalDamage)
+                    sel.repeatTotalPerBeat = EditorGUILayout.Toggle(new GUIContent("  one total per beat",
+                        "ON = every beat starts its own yellow total, so each volley shows what that volley did to each " +
+                        "mob and the next starts from zero. OFF = one total climbs across the whole run."),
+                        sel.repeatTotalPerBeat);
                 sel.holdCasterForRun = EditorGUILayout.Toggle(new GUIContent("holds the caster",
                     "ON = the caster is held for the WHOLE run — from the first beat until the last one ends it " +
                     "can't move, attack, start another skill or launch a combo. OFF = only the release animation's " +
@@ -1192,9 +1235,10 @@ public class SkillComposerWindow : EditorWindow
     {
         if (_skillTypeLabels != null) return _skillTypeLabels;
         var all = SkillReleaseStances.All;
-        _skillTypeLabels = new GUIContent[all.Length + 1];
+        _skillTypeLabels = new GUIContent[all.Length + 2];
         _skillTypeLabels[0] = new GUIContent("None (no release anim)");
         for (int i = 0; i < all.Length; i++) _skillTypeLabels[i + 1] = new GUIContent(SkillReleaseStances.Label(all[i]));
+        _skillTypeLabels[all.Length + 1] = new GUIContent("Weapon's own basic attack");
         return _skillTypeLabels;
     }
 
@@ -1241,7 +1285,8 @@ public class SkillComposerWindow : EditorWindow
         EditorGUILayout.LabelField("Skill Release Animation", EditorStyles.miniBoldLabel);
         var all = SkillReleaseStances.All;
         int cur = 0;   // None
-        if (sel.hasReleaseStance)
+        if (sel.hasReleaseStance && sel.releaseIsWeaponAttack) cur = all.Length + 1;
+        else if (sel.hasReleaseStance)
         {
             int i = System.Array.IndexOf(all, sel.releaseStance);
             cur = i >= 0 ? i + 1 : 0;
@@ -1249,8 +1294,9 @@ public class SkillComposerWindow : EditorWindow
         int next = EditorGUILayout.Popup(new GUIContent("release animation",
             "The animation the caster plays when this skill FIRES (after any cast wind-up). Bind each cue to a clip in " +
             "the Stance Composer."), cur, SkillTypeLabels());
-        if (next == 0) sel.hasReleaseStance = false;
-        else { sel.hasReleaseStance = true; sel.releaseStance = all[next - 1]; }
+        if (next == 0) { sel.hasReleaseStance = false; sel.releaseIsWeaponAttack = false; }
+        else if (next == all.Length + 1) { sel.hasReleaseStance = true; sel.releaseIsWeaponAttack = true; }
+        else { sel.hasReleaseStance = true; sel.releaseIsWeaponAttack = false; sel.releaseStance = all[next - 1]; }
 
         if (sel.hasReleaseStance)
         {
@@ -1359,6 +1405,9 @@ public class SkillComposerWindow : EditorWindow
                 switch (b.groundDelivery)
                 {
                     case GroundDelivery.Point: return "aim a spot — the caster acts there";
+                    case GroundDelivery.AroundCaster: return hasTargetFx
+                        ? "no aiming — hits " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units of wherever the caster stands"
+                        : "no aiming — nobody is hit (no target effects on this tick)";
                     case GroundDelivery.Projectile: return hasTargetFx
                         ? "aim a direction — a shot flies out, hitting " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units along its path"
                         : "aim a direction — a shot flies out, hitting nobody (no target effects on this tick)";
@@ -1451,8 +1500,8 @@ public class SkillComposerWindow : EditorWindow
         { SkillEffectKind.Teleport, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull,
           SkillEffectKind.ReturnToSavePoint, SkillEffectKind.TeleportToRandomSpot };
     static readonly SkillEffectKind[] BuffKinds =
-        { SkillEffectKind.SubStatBuff, SkillEffectKind.BoostOutgoingDamage,
-          SkillEffectKind.Parry, SkillEffectKind.Charges, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
+        { SkillEffectKind.SubStatBuff, SkillEffectKind.BoostOutgoingDamage, SkillEffectKind.BoostBasicAttackDamage,
+          SkillEffectKind.SureHit, SkillEffectKind.Parry, SkillEffectKind.Charges, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
           SkillEffectKind.Shield, SkillEffectKind.ElementConverter };
 
     // Modifiers: the effects whose target is a SKILL's pile rather than a body. Labelled as the whole sentence they
@@ -1466,12 +1515,12 @@ public class SkillComposerWindow : EditorWindow
     // decision, not a new entry in this array. Arming a promise for a later cast ("your NEXT skill …") is the same
     // violation wearing a trigger. Ask first: does this happen once, right now, and then it's done?
     static readonly SkillEffectKind[] ModifierKinds =
-        { SkillEffectKind.ExtendDuration, SkillEffectKind.AddStacks };
+        { SkillEffectKind.ExtendDuration, SkillEffectKind.AddStacks, SkillEffectKind.ResetCooldown };
     // The slash in "stacks∕charges" is U+2215, NOT the ASCII "/": a dropdown entry splits on "/" and builds a SUBMENU
     // out of it, so the plain sentence rendered as "add stacks ▸ charges to <skill>" — two menu levels out of one
     // phrase. The look-alike keeps the sentence exactly as it reads and is just a character to the menu.
     static readonly string[] ModifierLabels =
-        { "extend duration of <skill>", "add stacks∕charges to <skill>" };
+        { "extend duration of <skill>", "add stacks∕charges to <skill>", "reset cooldown of <skill>" };
 
     // A debuff entry is either its own kind (Vulnerability/Taunt/Knockback/Pull) or a Status ailment (the 8 ailments
     // all share kind = Status, differing only by Ailment) — so picking "Burn" sets kind=Status, ailment=Burn.
@@ -1840,6 +1889,18 @@ public class SkillComposerWindow : EditorWindow
                         "Added to the damage mult for every metre between the caster and the unit struck, measured when " +
                         "the strike lands. 0.05 = +1 multiplier at 20 metres. 0 = distance changes nothing.",
                         ref ef.damageMultPerMetre, ef.useStacks);
+                    NumberRow("crit chance bonus",
+                        "Added to the caster's crit chance for THIS strike only (0.25 = +25%). A magic strike still can't " +
+                        "crit outside a sniper's hands.", ref ef.critChanceBonus, ef.useStacks);
+                    NumberRow("damage mult per accuracy over 100",
+                        "Added to the damage mult for every point of hit chance the caster has ABOVE 100 against the " +
+                        "unit struck — accuracy an ordinary attack would waste. Counted at most " + StrikeMath.MaxAccuracyOverPoints +
+                        " points. 0 = accuracy changes nothing.",
+                        ref ef.damageMultPerAccuracyOver, ef.useStacks);
+                    NumberRow("damage mult per speed bonus",
+                        "Added to the damage mult for every 1% of movement-speed bonus the caster has WHILE MOVING when " +
+                        "the strike lands. Standing still or slowed adds nothing. 0.01 = +1.5 multiplier at +150% speed.",
+                        ref ef.damageMultPerSpeedBonus, ef.useStacks);
                     break;
                 case SkillEffectKind.DrainMana:
                     NumberRow("MP drained", "The most MP taken from the unit this lands on — never more than it holds. The caster gains exactly what was taken.", ref ef.amount, ef.useStacks, whole: true);
@@ -1900,6 +1961,19 @@ public class SkillComposerWindow : EditorWindow
                     EditorGUILayout.HelpBox("A second converter on the same slot REPLACES the first — it never stacks. " +
                         "A weapon converter and an armor converter run side by side. Skills keep their own element; " +
                         "only ordinary attacks take the weapon's.", MessageType.None);
+                    break;
+                case SkillEffectKind.BoostBasicAttackDamage:
+                    NumberRow("damage bonus (1 = +100%)", "The BONUS one charge adds to one basic attack: 1 = that attack hits for double. Applied BEFORE the target's armour.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("window (s)", "How long unspent charges stay held. They lapse when it ends.", ref ef.seconds, ef.useStacks);
+                    EditorGUILayout.HelpBox("ONE charge boosts ONE basic attack — an ordinary swing or shot, or a skill " +
+                        "shot that counts as a basic attack — and that attack spends it, hit or miss. A skill's own strike " +
+                        "never gains it and never spends it. Set how many charges below (charges per use).", MessageType.None);
+                    break;
+                case SkillEffectKind.SureHit:
+                    NumberRow("window (s)", "How long unspent charges stay held. They lapse when it ends.", ref ef.seconds, ef.useStacks);
+                    EditorGUILayout.HelpBox("ONE charge makes ONE basic attack skip its accuracy roll, so it cannot miss. " +
+                        "The next basic attack spends it whether or not it would have missed. Set how many charges below.",
+                        MessageType.None);
                     break;
                 case SkillEffectKind.Charges:
                     // No magnitude: a charge changes nothing on its own, it is only there to be spent. Charges come from
@@ -2162,6 +2236,10 @@ public class SkillComposerWindow : EditorWindow
                                                 return "Each charge makes ONE outgoing attack hit harder and is spent by it, hit or miss. Every kind of attack counts except damage-over-time ticks.";
             case SkillEffectKind.ElementConverter:
                                                 return "For a while, the holder's weapon strikes as an element, or their armor is hit as one (level 1). A new one on the same slot replaces the old.";
+            case SkillEffectKind.BoostBasicAttackDamage:
+                                                return "Each charge makes ONE basic attack hit harder and is spent by it, hit or miss. A skill's own strike never spends it.";
+            case SkillEffectKind.SureHit:       return "Each charge makes ONE basic attack unable to miss, and is spent by it.";
+            case SkillEffectKind.ResetCooldown: return "The named skill is ready again at once — its cooldown is cut to nothing, once.";
             case SkillEffectKind.Charges:
                                                 return "Gives charges for a while. They change no stat and do nothing on their own; another skill's trigger spends them by naming this skill and the Charges pile in its stack gate.";
             case SkillEffectKind.ImmuneToDisables:
@@ -2260,6 +2338,7 @@ public class SkillComposerWindow : EditorWindow
                                                             ? "× MATK" : "× ATK";
             case SkillEffectKind.Heal:                 return "HP RESTORED";
             case SkillEffectKind.BoostOutgoingDamage:  return "DAMAGE BONUS";
+            case SkillEffectKind.BoostBasicAttackDamage: return "BASIC ATTACK DAMAGE BONUS";
             case SkillEffectKind.ReduceOutgoingDamage: return "DAMAGE CUT";
             // Named for the STAT the author picked, so the row says what it moves rather than "bonus".
             case SkillEffectKind.SubStatBuff:

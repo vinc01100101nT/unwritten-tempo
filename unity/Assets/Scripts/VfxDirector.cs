@@ -365,12 +365,19 @@ public class VfxSequenceRunner : MonoBehaviour
                     // sequence play, and four of the five bolts would land in silence.
                     // The flight itself is a bare moving point on every machine, so it arrives on the same frame-steps
                     // everywhere; the effect riding it is a screen's alone, and comes off the moment it lands.
-                    mover = Projectile3D.Fly(from, land, st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
+                    mover = st.carrierArc
+                        ? Projectile3D.FlyArc(from, land, st.carrierLaunchDegrees, st.carrierDrawsArrow && draws,
                         () =>
                         {
                             if (travel != null) travel.Stop();
                             if (gen == g) { Emit(tag, landing, true, rearmChained: true); OnCarrierArrive(idx, landing, mover); }
-                        });
+                        })
+                        : Projectile3D.Fly(from, land, st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
+                        () =>
+                        {
+                            if (travel != null) travel.Stop();
+                            if (gen == g) { Emit(tag, landing, true, rearmChained: true); OnCarrierArrive(idx, landing, mover); }
+                        }, st.carrierDrawsArrow && draws);
                     if (draws) travel = DrawFlight(st, mover, from, land, scale);
                     // Carrier tick placement: Start = one tick at launch; Interval = every tickInterval along the
                     // flight (tracks the live mover, capped by carrierMaxLife, closed on arrival); End = one tick on

@@ -164,6 +164,10 @@ public interface ICombatUnit : IDamageable
     /// <summary>This unit's dodge, rolled against an attacker's <see cref="BasicHit"/>.</summary>
     int Flee { get; }
 
+    /// <summary>SERVER: is this unit travelling right now — a person whose recent position reports say they are
+    /// walking, a creature its route is moving. Read by strikes that pay off on the move.</summary>
+    bool IsMoving { get; }
+
     /// <summary>The LUK that lowers an attacker's crit chance when it swings at this unit — gear included.</summary>
     int CritShieldLuk { get; }
 
