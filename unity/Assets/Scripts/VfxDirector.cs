@@ -257,7 +257,9 @@ public class VfxSequenceRunner : MonoBehaviour
         Vector3 jitter = (st.scatter && (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach)) ? ScatterJitter() : Vector3.zero;
         // The jitter moves the step's TICK POINT as well as its picture (see the `point` below feeding ArmTicks), so
         // it is rolled from the cast's shared stream for exactly the reason a carrier's scatter is.
-        Vector3 point = anchorPoint + st.offset + jitter;
+        // "Face the aim" turns the offset with the effect, so +Z is in front of the caster toward the aimed spot.
+        Vector3 offset = (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach) ? AimFacing(st) * st.offset : st.offset;
+        Vector3 point = anchorPoint + offset + jitter;
         float scale = st.scale * (ctx.scaleMult <= 0f ? 1f : ctx.scaleMult);
         // ON A PERSON AWAY ON A TELEPORT nothing is drawn or heard (TeleportLook.Covers) — the step still keeps its
         // beats, so what it decides lands on time. A lasting aura is still started: it hides itself until they appear.
@@ -276,9 +278,10 @@ public class VfxSequenceRunner : MonoBehaviour
                 if (draws)
                 {
                     if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
-                    var hP = Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
+                    var hP = Vfx.PlayAt(st.effectId, point, AimFacing(st) * Quaternion.Euler(st.rotationEuler),
                                new Vfx.VfxParams { scale = scale, speed = st.speed, tint = st.tint, tailTrim = st.trimEnd,
                                                    clipStart = st.clipStart, loop = st.looping, lifetime = st.looping ? stayP : 0f });
+                    if (hP != null && st.leaveParticlesBehind) hP.LeaveParticlesBehind();
                     if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, hP);
                 }
                 // WHEN THIS BEAT LANDS is read off the effect TABLE, never off the instance we may or may not have
@@ -297,7 +300,7 @@ public class VfxSequenceRunner : MonoBehaviour
                     // HEIGHT ONLY. ctx.origin was taken when the play began and this step can fire frames later, so
                     // a dash has already carried the body away from it; keeping that sideways gap froze every trail
                     // parallel to the real path, up to a unit off (measured 2026-09-17, Blade Dance's first beats).
-                    Vector3 followOff = st.offset + jitter + new Vector3(0f, ctx.origin.y - ctx.follow.position.y, 0f);
+                    Vector3 followOff = offset + jitter + new Vector3(0f, ctx.origin.y - ctx.follow.position.y, 0f);
                     // Loops when the step asks (skill, capped by Stay Duration) OR the caller holds it (a status aura
                     // via VfxCue.Begin, which lives until Stop). A non-looping Attach plays its natural length once.
                     bool loop = st.looping || ctx.persistent;
@@ -306,8 +309,15 @@ public class VfxSequenceRunner : MonoBehaviour
                     if (Draws && (ctx.persistent || !covered))
                     {
                         if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
-                        var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA,
-                                           speed: st.speed <= 0f ? 1f : st.speed);   // 0 = unauthored / legacy step → normal rate
+                        // The step's own clip start and trim, exactly as a Play At honours them — an attached effect
+                        // that begins mid-animation (a tornado already formed) used to restart from frame 0 instead.
+                        var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: st.clipStart,
+                                           lifetime: lifeA, speed: st.speed <= 0f ? 1f : st.speed,   // 0 = unauthored / legacy step → normal rate
+                                           tailTrim: st.trimEnd);
+                        if (h != null && TurnsWithBody(st))
+                            h.TurnWithBody(st.offset, followOff - offset, Quaternion.Euler(st.rotationEuler));
+                        else if (h != null && st.faceAim) h.transform.rotation = AimFacing(st) * Quaternion.Euler(st.rotationEuler);
+                        if (h != null && st.leaveParticlesBehind) h.LeaveParticlesBehind();
                         if (h != null) attached.Add(new HeldEffect { handle = h, generation = h.Generation });
                         if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, h);
                     }
@@ -414,12 +424,22 @@ public class VfxSequenceRunner : MonoBehaviour
     static Vfx.EffectHandle DrawFlight(VfxStep st, Transform mover, Vector3 from, Vector3 land, float scale)
     {
         if (string.IsNullOrEmpty(st.effectId)) return null;
-        var travel = Vfx.Attach(st.effectId, mover, Vector3.zero, scale, tint: st.tint, clipStart: st.clipStart);
-        if (st.carrierFaceTravel && travel != null)
+        var travel = Vfx.Attach(st.effectId, mover, Vector3.zero, scale, tint: st.tint, clipStart: st.clipStart,
+                                speed: st.speed <= 0f ? 1f : st.speed);
+        if (travel == null) return null;
+        if (st.leaveParticlesBehind) travel.LeaveParticlesBehind();
+        Vector3 dir = land - from;
+        if (st.carrierFaceTravel)
         {
-            Vector3 dir = land - from;
             if (dir.sqrMagnitude > 1e-6f)
                 travel.transform.rotation = Quaternion.FromToRotation(Vector3.down, dir.normalized);
+        }
+        else if (st.carrierDrawsArrow)
+        {
+            // RIDING THE ARROW: the effect points where the arrow points, its forward along the flight, all the way down
+            // an arc too. The arrow turns itself only from its first frame of flight, so it is aimed here first.
+            if (dir.sqrMagnitude > 1e-6f) mover.rotation = Quaternion.LookRotation(dir.normalized);
+            travel.TurnWithFollow();
         }
         return travel;
     }
@@ -440,6 +460,27 @@ public class VfxSequenceRunner : MonoBehaviour
             if (window > EffectTiming.NeverEnds) return Time.time + window;
         }
         return Time.time + (st.looping ? fallbackStay : 0.5f);
+    }
+
+    // A "face the aim" step's facing: flat on the ground, forward from where the play began to where it was aimed (a
+    // dash's trail streaming behind the body). A play with no aim (a cue: aimed at its own feet) faces the way the
+    // body it rides is turned. No turn for a step without it, or with neither an aim nor a body.
+    Quaternion AimFacing(VfxStep st)
+    {
+        if (!st.faceAim) return Quaternion.identity;
+        Vector3 dir = ctx.target - ctx.origin;
+        dir.y = 0f;
+        if (dir.sqrMagnitude <= 1e-6f && ctx.follow != null) dir = Vfx.BodyForward(ctx.follow);
+        return dir.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(dir.normalized) : Quaternion.identity;
+    }
+
+    // A "face the aim" step with no aim, riding a body: it faces the way the body faces, for as long as it plays.
+    bool TurnsWithBody(VfxStep st)
+    {
+        if (!st.faceAim || ctx.follow == null) return false;
+        Vector3 dir = ctx.target - ctx.origin;
+        dir.y = 0f;
+        return dir.sqrMagnitude <= 1e-6f;
     }
 
     // A random per-axis nudge (magnitude up to 0.2 units) for a step's "scatter" option.

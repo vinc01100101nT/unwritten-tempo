@@ -135,6 +135,7 @@ public static class MobSpawner
             // disagree about what a hit on it does. The prefab's baked element is only the baker's copy of this.
             health.element = def.element;
             health.elementLevel = def.elementLevel;
+            health.elementCycleSeconds = def.elementCycleSeconds;
         }
         // ITS NAME, from its data. The plate otherwise falls back to the object's name, which Unity has just made
         // "<prefab>(Clone)" — and every readout that asks the plate for a name prints that suffix.

@@ -540,6 +540,32 @@ public class SkillDef : ScriptableObject
              "utility percentage or a charge count; 1 when nothing on the skill grows. 0 = never set, which the " +
              "skill-data check refuses on any skill that belongs to a weapon.")]
     [Min(0)] public int maxLevel = 0;
+    [Tooltip("ON = every character knows this skill at level 1 without spending a point; points raise it from there " +
+             "(the Staff's orbs and its Release). OFF = learned with the first point, like every other skill.")]
+    public bool freeFirstLevel = false;
+    [Tooltip("A Staff COMBINATION: the three orbs that cast it through Release, written as three letters from " +
+             "F (Fire), E (Earth), W (Wind) and A (Water), in any order — \"FFE\" is Meteor. Never learned with points; " +
+             "each part grows with its own orb's level. Empty = not a combination.")]
+    public string orbCombo = "";
+    [Tooltip("ON = this is the Staff's RELEASE: pressing it casts whichever combination the caster's three orbs make.")]
+    public bool isOrbRelease = false;
+    public bool IsOrbCombo => !string.IsNullOrEmpty(orbCombo);
+
+    /// <summary>True when one of this skill's effects makes the last Staff combination ready again (Weathering).</summary>
+    public bool ResetsLastCombination
+    {
+        get
+        {
+            for (int b = 0; bindings != null && b < bindings.Count; b++)
+            {
+                var effects = bindings[b] != null ? bindings[b].effects : null;
+                for (int k = 0; effects != null && k < effects.Count; k++)
+                    if (effects[k] != null && effects[k].kind == SkillEffectKind.ResetCooldown && effects[k].resetsLastCombination)
+                        return true;
+            }
+            return false;
+        }
+    }
 
     [Header("Codex (hover tooltip)")]
     [TextArea(2, 4)]
@@ -632,9 +658,19 @@ public class SkillDef : ScriptableObject
     [Header("Cost / cadence")]
     public int manaCost = 10;
     public float cooldown = 5f;
-    [Tooltip("Base cast wind-up in seconds BEFORE the skill fires (the cast bar fills over this). 0 = instant. " +
-             "The caster's DEX shortens it at runtime via Character.CastTimeMult (instacast at 150 DEX).")]
+    [Tooltip("VARIABLE cast time: wind-up seconds BEFORE the skill fires that the caster's DEX, the cast-speed ring and " +
+             "cast-speed buffs shorten (Character.CastTimeMult; instant at 150 DEX). 0 = none. The cast bar fills over " +
+             "this plus the fixed cast time.")]
     [Min(0f)] public float castTime = 0f;
+    [Tooltip("FIXED cast time: wind-up seconds added after the variable part that nothing shortens — not DEX, not the " +
+             "ring, not a buff. 0 = none.")]
+    [Min(0f)] public float fixedCastTime = 0f;
+    [Tooltip("Release early: while this skill winds up, a newly pressed movement key fires it at once, then it behaves " +
+             "exactly like a finished cast. Its damage scales with how much of the wind-up was filled: 0.30× let go at " +
+             "once, up to 1.50× at a full wind-up (StrikeMath.ReleaseScale). Needs a fixed cast time.")]
+    public bool releaseEarly = false;
+    /// <summary>True when the skill winds up at all before it fires — a variable part, a fixed part, or both.</summary>
+    public bool HasWindup => castTime > 0f || fixedCastTime > 0f;
     [Tooltip("How the skill picks where it lands.")]
     public SkillAim aim = SkillAim.Ground;
     [Tooltip("Ground/Target aim: max distance from the caster the impact point can be.")]
@@ -658,11 +694,34 @@ public class SkillDef : ScriptableObject
     /// Weapon Mastery. One rule for a player's passives and a creature's skills alike.</summary>
     public bool RidesWeaponMastery(WeaponType held) => weaponType != WeaponType.None && weaponType == held;
 
-    [Header("Cast circle (shown ONLY during the wind-up, needs castTime > 0)")]
-    [Tooltip("EffectLibrary id of the ground casting circle shown WHILE this skill winds up. Empty = no per-skill " +
-             "circle (the global OnCastStart cue plays instead). It's a wind-up visual, separate from the release " +
+    [Header("Cast circle (shown ONLY during the wind-up, needs a variable or fixed cast time)")]
+    [Tooltip("EffectLibrary id of the ground casting circle shown WHILE this skill winds up. Empty = automatic: a skill " +
+             "aimed at a point whose tick hits an area there gets the default circle, sized to that area; any other " +
+             "skill gets none. Set it only to use a different circle. It's a wind-up visual, separate from the release " +
              "vfx below. Author a LOOPING circle prefab; add packs via Art ▸ Rebuild Effect Library.")]
     public string castCircleId = "";
+
+    /// <summary>The circle every ground-aimed area skill shows while it winds up, unless it names another.</summary>
+    public const string DefaultCastCircle = "circle.magic";
+
+    /// <summary>THE circle this skill shows while it winds up — the one every reader asks, so no skill has to remember
+    /// to set one: its own <see cref="castCircleId"/>, or the default for a skill aimed at a point whose tick hits an
+    /// area there, or none. Sized by <see cref="LargestAreaRadius"/> wherever it is drawn.</summary>
+    public string CastCircle
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(castCircleId)) return castCircleId;
+            if (IsPassive || !NeedsAimPoint || IsProjectileAim || bindings == null) return "";
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                var b = bindings[i];
+                if (b != null && b.targetMode == TargetMode.Ground && b.groundDelivery == GroundDelivery.Aoe && b.radius > 0f)
+                    return DefaultCastCircle;
+            }
+            return "";
+        }
+    }
     [Tooltip("Tint for the casting circle (white = the prefab's own colours). Recolour per element without a new prefab.")]
     public Color castCircleTint = Color.white;
     [Header("Presentation (referenced, never copied)")]
@@ -682,6 +741,11 @@ public class SkillDef : ScriptableObject
              "beats faster. Overrides the repeat interval entirely. Read live each beat, so a speed buff landing " +
              "mid-run quickens the rest of it.")]
     public bool repeatScaleWithAttackSpeed = false;
+    [Tooltip("ON = the NUMBER of repeats grows with the caster's cast speed: the repeat count times (1 + their cast-speed " +
+             "bonus), never past the repeat ceiling below.")]
+    public bool repeatScaleWithCastSpeed = false;
+    [Tooltip("With repeats growing by cast speed: the most repeats one cast can ever run.")]
+    [Min(1)] public int repeatMaxCount = 1;
     [Tooltip("How many beats per swing when the beat follows swing speed. 1 = one beat per swing (your normal rhythm); " +
              "2 = twice as fast as you swing; 3 = three times. Whole numbers only — a beat is either on your rhythm " +
              "or a clean multiple of it.")]
@@ -883,6 +947,27 @@ public class SkillDef : ScriptableObject
                 }
             }
             return dashes;
+        }
+    }
+
+    /// <summary>True when pressing this moves the caster to the spot they aim at — a blink, a leap, a dash with no unit
+    /// picked. Such a cast is refused when nobody could stand there (<see cref="Pathfinder3D.CanLandAt"/>).</summary>
+    public bool MovesCasterToAimPoint
+    {
+        get
+        {
+            if (bindings == null || !NeedsAimPoint) return false;
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                var fx = bindings[i]?.effects;
+                for (int k = 0; fx != null && k < fx.Count; k++)
+                {
+                    var e = fx[k];
+                    if (e != null && (e.kind == SkillEffectKind.Teleport || e.kind == SkillEffectKind.Dash)
+                        && SkillEffect.LandsOnCaster(e)) return true;
+                }
+            }
+            return false;
         }
     }
 

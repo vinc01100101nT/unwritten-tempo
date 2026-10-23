@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Staff Skills Layout</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  :root {
+    --ground: #0D0E10;   /* the page backdrop, outside every window */
+    /* The tooltip's ULTIMATE tag: the game's pink (1, 0.549, 0.878) darkened by its own readable-on-panel rule. */
+    --ultimate: #A3598F;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); font-family: var(--font-ui);
+    display: flex; flex-direction: column; align-items: center; padding: 32px 16px 48px; gap: 28px;
+  }
+
+  /* ---- the window, as the game's window builder dresses it (same chrome as the sword mock) ---- */
+  .window {
+    width: 760px; max-width: 100%; height: 600px; background: var(--window-edge); border-radius: 5px; padding: 1px;
+    display: flex; flex-direction: column; user-select: none;
+  }
+  .body { flex: 1; background: var(--panel-fill); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+  .titlebar {
+    height: 24px; flex: none; display: flex; align-items: center; padding: 0 2px 0 10px;
+    background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+  }
+  .titlebar .title { flex: 1; font-size: 13px; font-weight: bold; color: var(--title-text); }
+  .barbtn {
+    width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
+    color: var(--title-text); font-size: 12px; font-weight: bold; display: grid; place-items: center;
+  }
+  .content { flex: 1; display: flex; flex-direction: column; padding: 8px; min-height: 0; gap: 8px; }
+
+  .topbar { height: 30px; flex: none; display: flex; align-items: center; gap: 10px; }
+  .btn {
+    background: var(--button-fill); border: 1px solid var(--button-edge); border-radius: 3px;
+    color: var(--button-text); font-family: var(--font-ui); font-size: 13px; font-weight: bold; cursor: pointer;
+  }
+  .btn:hover:not(:disabled) { background: var(--hover); }
+  .back { width: 70px; height: 30px; }
+  .heading { flex: 1; text-align: right; font-size: 15px; font-weight: bold; color: var(--title-text); white-space: nowrap; }
+  .points { font-size: 13px; font-weight: bold; color: var(--text-main); white-space: nowrap; }
+  .points b { color: var(--title-text); }
+
+  /* ---- the four orbs: where every point goes ---- */
+  .orbs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: none; }
+  .orb {
+    height: 40px; background: var(--panel-raise); border-radius: 3px; padding: 4px 6px;
+    display: grid; grid-template-columns: 32px 1fr 18px; column-gap: 8px; align-items: center;
+  }
+  .orb:hover { background: var(--hover); }
+  .orb img { width: 32px; height: 32px; border-radius: 3px; }
+  .orb .line { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; color: var(--text-main); }
+  .orb .line span:last-child { color: var(--text-dim); }
+  .orb .bar { height: 5px; margin-top: 4px; background: var(--rule); border-radius: 2px; position: relative; overflow: hidden; }
+  .orb .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+  .orb .mark { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--text-dim); }
+  .plus { width: 18px; height: 18px; padding: 0; font-size: 13px; line-height: 13px; }
+  .plus:disabled { color: var(--text-dim); cursor: default; }
+
+  /* ---- the combinations: rows = the pair, columns = the third orb ---- */
+  .grid {
+    flex: 1; min-height: 0; overflow: auto;
+    display: grid; grid-template-columns: 54px repeat(4, 1fr); grid-auto-rows: 52px; gap: 5px;
+  }
+  .head {
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+    font-size: 12px; font-weight: bold; color: var(--text-dim); white-space: nowrap;
+  }
+  .grid > .head.col { height: 22px; align-self: end; }
+  .grid > .corner { height: 22px; }
+  .head img { width: 18px; height: 18px; border-radius: 3px; }
+  .cell {
+    background: var(--panel-raise); border-radius: 3px; padding: 4px 6px;
+    display: grid; grid-template-columns: 32px 1fr; column-gap: 6px; align-items: center; cursor: default;
+  }
+  .cell:hover, .cell.shown { background: var(--hover); }
+  .cell > img { width: 32px; height: 32px; border-radius: 3px; }
+  .cell .nm { font-size: 12px; font-weight: bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell .dots { display: flex; gap: 2px; margin-top: 3px; }
+  .cell .dots img { width: 14px; height: 14px; border-radius: 2px; }
+  .cell.locked > img, .cell.locked .dots { opacity: 0.35; }
+  .cell.locked .nm { color: var(--text-dim); }
+  .cell .req { font-size: 10px; font-weight: bold; color: var(--text-dim); margin-top: 2px; white-space: nowrap; }
+  .split { grid-column: 1 / -1; height: 1px; background: var(--rule); align-self: center; }
+  .grid > .split { height: 1px; }
+
+  /* ---- the skill's hover card, as the game frames it ---- */
+  #card {
+    position: fixed; width: 288px; padding: 8px 10px; border: 1px solid var(--window-edge); border-radius: 5px;
+    background: var(--panel-fill); color: var(--text-main); font-size: 12px; line-height: 1.35;
+    pointer-events: none; z-index: 10; display: none;
+  }
+  #card .t { font-size: 14px; font-weight: bold; }
+  #card .ult { color: var(--ultimate); font-weight: bold; margin-left: 8px; }
+  #card .dots { display: flex; gap: 3px; margin: 4px 0 2px; }
+  #card .dots img { width: 16px; height: 16px; border-radius: 2px; }
+  #card .desc { margin-top: 2px; white-space: pre-line; }
+  #card .desc .first { font-style: italic; }
+  #card .sep { height: 1px; background: var(--rule); margin: 7px 0 5px; }
+  #card .grow { display: grid; grid-template-columns: 16px auto auto; column-gap: 6px; align-items: center; margin-top: 3px; }
+  #card .grow img { width: 16px; height: 16px; border-radius: 2px; }
+  #card .grow span:nth-of-type(1) { color: var(--text-dim); font-weight: bold; }
+  #card .grow .n { color: var(--accent); font-weight: bold; }
+  #card .grow .part { grid-column: 2 / span 2; }
+</style>
+</head>
+<body>
+
+<section class="window" data-mocks="Skills">
+  <div class="body">
+    <div class="titlebar"><span class="title">Skills</span><span class="barbtn">_</span><span class="barbtn">X</span></div>
+    <div class="content">
+      <div class="topbar">
+        <button class="btn back">Back</button>
+        <span class="points" id="points"></span>
+        <span class="heading">Staff Mastery 70</span>
+      </div>
+      <div class="orbs" id="orbs"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+</section>
+
+<div id="card" data-mocks="Skill Tooltip"></div>
+
+<script>
+const SKILLS = [{"id": "skill.staff.ashfall", "name": "Ashfall", "combo": "FFF", "desc": "The sky turns to ash.\nFour burning stones fall around the aimed spot, each for 260% Magic Attack, setting everything burning; a stone grows 15% for every second its target has already burned. Opens at Fire Orb level 20."}, {"id": "skill.staff.brushfire", "name": "Brushfire", "combo": "FFW", "desc": "Wind feeds the fire.\nThe aimed ground burns for 5s: every second, a 25% gust of hot wind and one more Burn stacks on everything standing in it (up to 5)."}, {"id": "skill.staff.deluge", "name": "Deluge", "combo": "AAF", "desc": "Water puts out the fire.\nA flood sweeps the aimed area for 140% Magic Attack. Every burn it puts out lands the damage it had left at once, ×1.5, in a 50% burst of steam; then it leaves 1 Chill."}, {"id": "skill.staff.dry_lightning", "name": "Dry Lightning", "combo": "WWE", "desc": "Lightning from a clear sky.\nA bolt hits one enemy for 200% Magic Attack with 1 Static; the ground it strikes sprays stone at everything beside it for 50%."}, {"id": "skill.staff.dust_devil", "name": "Dust Devil", "combo": "WWW", "desc": "The wind stands up and walks.\nA whirlwind follows you, striking everything near you 6 times for 90% Magic Attack and adding Static — more strikes the faster you cast, up to 12. Opens at Wind Orb level 20."}, {"id": "skill.staff.eruption", "name": "Eruption", "combo": "FEW", "desc": "The mountain wakes.\nFire bursts from the aimed ground for 200% Magic Attack, with 60% in falling stone, a burn and 1 Static from the ash cloud's lightning."}, {"id": "skill.staff.geyser", "name": "Geyser", "combo": "FEA", "desc": "Fire under stone boils the water.\nThe aimed ground erupts for 160% Magic Attack, then 50% in boiling water and 40% in heat, and leaves 1 Stone. No burn, no chill."}, {"id": "skill.staff.icicle", "name": "Icicle", "combo": "AAW", "desc": "Ice on the wind.\nA fast shard hits one enemy for 180% Magic Attack with 1 Chill and 1 Static."}, {"id": "skill.staff.landslide", "name": "Landslide", "combo": "EEE", "desc": "The mountain comes down.\nStone floods the aimed area for 600% Magic Attack and leaves 3 Stone on every enemy hit: each weakens one of its attacks by 25% (Stone stops at 5 and 30%). Opens at Earth Orb level 20."}, {"id": "skill.staff.meteor", "name": "Meteor", "combo": "FFE", "desc": "Fire melts the stone.\nA flaming stone lands on the aimed spot for 200% Magic Attack, +50% for every Stone it melts off the target, then sets it burning."}, {"id": "skill.staff.obsidian", "name": "Obsidian", "combo": "EEF", "desc": "Fire cools to stone.\nA lava stone hits one enemy for 240% Magic Attack, leaving 1 Stone and a burn."}, {"id": "skill.staff.orb_earth", "name": "Earth Orb", "combo": "", "desc": "Stone that fire left behind. Holds an Earth orb: defence while a Staff is in hand."}, {"id": "skill.staff.orb_fire", "name": "Fire Orb", "combo": "", "desc": "A spark of the turning world. Holds a Fire orb: magic attack while a Staff is in hand."}, {"id": "skill.staff.orb_water", "name": "Water Orb", "combo": "", "desc": "Water that wears the stone. Holds a Water orb: max MP while a Staff is in hand."}, {"id": "skill.staff.orb_wind", "name": "Wind Orb", "combo": "", "desc": "Air that lifts the sea. Holds a Wind orb: cast speed while a Staff is in hand."}, {"id": "skill.staff.permafrost", "name": "Permafrost", "combo": "AAE", "desc": "The ground freezes through.\nFor 5s the aimed ground adds 1 Chill and 1 Stone every second to each enemy on it. It deals no damage, so a freeze it makes holds."}, {"id": "skill.staff.release", "name": "Release", "combo": "", "desc": "The cycle turns.\nCasts the combination your three orbs make. Hold three orbs first."}, {"id": "skill.staff.rime", "name": "Rime", "combo": "EAW", "desc": "Frost on the stones.\nChills every enemy around you, and for 5s whoever hits you gets 1 Chill."}, {"id": "skill.staff.sandstorm", "name": "Sandstorm", "combo": "EEW", "desc": "Earth grounds the storm.\nSand buries the aimed area for 140% Magic Attack, +40% for every Static it grounds, a 50% gust after it, and 1 Stone on each enemy."}, {"id": "skill.staff.scald", "name": "Scald", "combo": "FFA", "desc": "Steam.\nA jet of scalding steam hits one enemy for 180% Magic Attack and sets it burning."}, {"id": "skill.staff.sirocco", "name": "Sirocco", "combo": "WWF", "desc": "A hot wind.\nStrikes one enemy for 120% Magic Attack with 1 Static and a burn, then carries its burn to every enemy within 2.5m — as strong as the original, never stronger."}, {"id": "skill.staff.stalactite", "name": "Stalactite", "combo": "EEA", "desc": "Stone that water made.\nA spike of stone and frost strikes one enemy for 200% and 40% Magic Attack, leaving 1 Stone and 1 Chill."}, {"id": "skill.staff.weathering", "name": "Weathering", "combo": "FAW", "desc": "Sun, rain and wind.\nFor 8s one enemy is hit as the element your last damaging skill beats, at its own element level — over any armour converter, which comes back when this ends."}, {"id": "skill.staff.whiteout", "name": "Whiteout", "combo": "AAA", "desc": "The world goes white.\nA blizzard beats on the aimed area 8 times for 80% Magic Attack each, growing with your max MP, and chills everything in it up to 2 Chill — slowed, never frozen. Opens at Water Orb level 20."}, {"id": "skill.staff.windshear", "name": "Windshear", "combo": "WWA", "desc": "Wind scatters the ice.\nBlades of wind cut the aimed area for 140% Magic Attack, +40% for every Chill they scatter — a frozen enemy shatters as 6 — then a 50% spray and 1 Static."}];
+// The new plan: what each combination does, and which orb grows which part.
+const PLAN = {
+  'skill.staff.ashfall':  { d: 'The sky turns to ash.\nBurning stones fall around the aimed spot in several strikes, each hitting harder for every Stone on its target. Leaves no mark. Opens at Fire Orb level 20.',
+                            g: [['F', 'the stones’ hits, and the bonus per Stone']] },
+  'skill.staff.landslide': { d: 'The mountain comes down.\nStone floods the aimed area, hitting harder for every Static on each enemy. Leaves no mark. Opens at Earth Orb level 20.',
+                            g: [['E', 'the hit, and the bonus per Static']] },
+  'skill.staff.dust_devil': { d: 'The wind stands up and walks.\nA whirlwind follows you, striking everything near you — more strikes the faster you cast. Each strike hits harder for every Chill on its target. Leaves no mark. Opens at Wind Orb level 20.',
+                            g: [['W', 'each strike, and the bonus per Chill']] },
+  'skill.staff.whiteout': { d: 'The world goes white.\nA blizzard beats on the aimed area, growing with your max MP and hitting harder for every Burn on each enemy. Leaves no mark. Opens at Water Orb level 20.',
+                            g: [['A', 'each beat, and the bonus per Burn']] },
+  'skill.staff.meteor':   { d: 'Fire melts the stone.\nA flaming stone lands on the aimed spot and melts the Stone on its target, for bonus damage per Stone.',
+                            g: [['F', 'the stone’s hit'], ['E', 'the bonus per Stone melted']] },
+  'skill.staff.sandstorm': { d: 'Earth grounds the storm.\nSand buries the aimed area and grounds the Static on each enemy, for bonus damage per Static.',
+                            g: [['E', 'the sand’s hit'], ['W', 'the bonus per Static grounded']] },
+  'skill.staff.windshear': { d: 'Wind scatters the ice.\nBlades of wind cut the aimed area and scatter the Chill on each enemy, for bonus damage per Chill. A frozen enemy shatters.',
+                            g: [['W', 'the blades’ hit'], ['A', 'the bonus per Chill scattered, and the shatter']] },
+  'skill.staff.deluge':   { d: 'Water puts out the fire.\nA flood sweeps the aimed area and puts out every burn. Each burn put out lands the damage it had left, at once.',
+                            g: [['A', 'the flood’s hit'], ['F', 'the payoff of each burn put out']] },
+  'skill.staff.brushfire': { d: 'Wind feeds the fire.\nThe aimed ground burns. Every second, a gust of hot wind hits everything standing in it and adds 1 Burn.',
+                            g: [['F', 'the burn’s damage per second'], ['W', 'the gust’s hit']] },
+  'skill.staff.sirocco':  { d: 'A hot wind.\nA hot wind blows over the aimed area: every second its heat hits everything in it and adds 2 Static.',
+                            g: [['W', 'how much its Static cuts attack speed'], ['F', 'the heat’s hit']] },
+  'skill.staff.permafrost': { d: 'The ground freezes through.\nThe aimed ground freezes: every enemy on it gains 1 Chill every second. It deals no damage while it lasts, so a freeze it makes holds. When it ends, the ground cracks and hits everything on it.',
+                            g: [['A', 'how much its Chill slows'], ['E', 'the crack’s hit']] },
+  'skill.staff.stalactite': { d: 'Stone that water made.\nThree drips fall on one enemy over 3 seconds. Each drip hits and adds 1 Stone.',
+                            g: [['E', 'how much its Stone weakens blows'], ['A', 'each drip’s hit']] },
+  'skill.staff.scald':    { d: 'Steam.\nPuts out the burns on every enemy around you. Each burn put out becomes a scalding hit, then 1 Chill.',
+                            g: [['F', 'the hit per burn put out'], ['A', 'how much the new Chill slows']] },
+  'skill.staff.dry_lightning': { d: 'Lightning from a clear sky.\nGrounds the Static on every enemy around you. Each Static discharges as a hit, then becomes 1 Stone.',
+                            g: [['W', 'the hit per Static grounded'], ['E', 'how much the new Stone weakens blows']] },
+  'skill.staff.obsidian': { d: 'Fire cools to stone.\nMelts the Stone on every enemy around you and pours it back as lava: a hit per Stone melted, then the lava cools to full Stone (5).',
+                            g: [['E', 'how much the Stone weakens blows'], ['F', 'the lava’s hit per Stone melted']] },
+  'skill.staff.icicle':   { d: 'Ice on the wind.\nA gust hits every enemy around you, then carries the Chill on each one to every enemy next to it.',
+                            g: [['A', 'how much the spread Chill slows'], ['W', 'the gust’s hit']] },
+  'skill.staff.eruption': { d: 'The mountain wakes.\nAn ash cloud over the aimed area makes every mark on the enemies in it last 3 seconds longer, and stronger.',
+                            g: [['F', 'how hard the lengthened burns tick'], ['E', 'how much the lengthened Stone weakens blows'], ['W', 'how much the lengthened Static cuts attack speed']] },
+  'skill.staff.geyser':   { d: 'Fire under stone boils the water.\nSteam bursts where you stand and throws you to the aimed spot. The burst hits every enemy you left behind.',
+                            g: [['F', 'the burst’s heat'], ['E', 'the burst’s stone'], ['A', 'the burst’s water']] },
+  'skill.staff.rime':     { n: 'Erosion',
+                            d: 'Water and wind wear the stone.\nWears down every enemy in the aimed area: a hit, a cut to their magic defence, and their MP drained into yours.',
+                            g: [['A', 'the MP drained'], ['W', 'the hit'], ['E', 'the cut to magic defence']] },
+  'skill.staff.weathering': { d: 'Sun, rain and wind.\nEnds the cooldown of the last combination you cast, ultimates included, and a burst of weather hits the aimed area.',
+                            g: [['F', 'the heat’s hit'], ['A', 'the rain’s hit'], ['W', 'the wind’s hit']] },
+};
+for (const s of SKILLS) { const p = PLAN[s.id]; if (p) { s.desc = p.d; s.grows = p.g; if (p.n) s.name = p.n; } }
+const LIFT = lv => Math.max(0, lv - 1) * 1.32;
+const ICON = id => `../unity/Assets/1_Authored/Art/Icons/Skills/${id}.png`;
+const ORB = { F: { name: 'Fire', id: 'skill.staff.orb_fire' }, E: { name: 'Earth', id: 'skill.staff.orb_earth' },
+              W: { name: 'Wind', id: 'skill.staff.orb_wind' }, A: { name: 'Water', id: 'skill.staff.orb_water' } };
+const ORDER = ['F', 'E', 'W', 'A'];
+const MAX = 35, ULT = 20;
+const level = { F: 22, E: 14, W: 6, A: 8 };
+let points = 50;
+
+const key = c => ORDER.map(o => [...c].filter(x => x === o).length).join('');
+const byKey = {};
+for (const s of SKILLS) if (s.combo) byKey[key(s.combo)] = s;
+const pick = c => byKey[key(c)];
+const dots = c => [...c].map(o => `<img src="${ICON(ORB[o].id)}" alt="">`).join('');
+const pure = c => c[0] === c[1] && c[1] === c[2];
+
+function drawOrbs() {
+  document.getElementById('points').innerHTML = `Mastery Points <b>${points}</b>`;
+  document.getElementById('orbs').innerHTML = ORDER.map(o => {
+    const s = SKILLS.find(x => x.id === ORB[o].id);
+    return `<div class="orb" data-skill="${s.id}">
+      <img src="${ICON(s.id)}" alt="">
+      <div><div class="line"><span>${s.name}</span><span>Lv ${level[o]} / ${MAX}</span></div>
+        <div class="bar"><div class="fill" style="width:${level[o] / MAX * 100}%"></div>
+          <div class="mark" style="left:${ULT / MAX * 100}%"></div></div></div>
+      <button class="btn plus" data-orb="${o}" ${points > 0 && level[o] < MAX ? '' : 'disabled'}>+</button>
+    </div>`;
+  }).join('');
+}
+
+function cell(c) {
+  const s = pick(c);
+  const locked = pure(c) && level[c[0]] < ULT;
+  return `<div class="cell${locked ? ' locked' : ''}" data-skill="${s.id}">
+    <img src="${ICON(s.id)}" alt="">
+    <div><div class="nm">${s.name}</div>
+      ${locked ? `<div class="req">${ORB[c[0]].name} Orb Lv ${ULT}</div>` : `<div class="dots">${dots(c)}</div>`}</div>
+  </div>`;
+}
+
+function drawGrid() {
+  // The wheel: Fire > Earth > Wind > Water > Fire.
+  const BEATS = { F: 'E', E: 'W', W: 'A', A: 'F' }, BEATEN_BY = { F: 'A', E: 'F', W: 'E', A: 'W' },
+        ALONGSIDE = { F: 'W', E: 'A', W: 'F', A: 'E' };
+  let h = `<div class="corner"></div>`;
+  for (const t of ['Ultimate', 'Offensive', 'Setter', 'Defensive']) h += `<div class="head col">${t}</div>`;
+  for (const r of ORDER) {
+    h += `<div class="head">2×<img src="${ICON(ORB[r].id)}" alt=""></div>`;
+    for (const c of [r, BEATS[r], ALONGSIDE[r], BEATEN_BY[r]]) h += cell(r + r + c);
+  }
+  h += `<div class="split"></div><div class="head">Utility</div>`;
+  for (const miss of ['A', 'W', 'E', 'F']) h += cell(ORDER.filter(o => o !== miss).join(''));
+  document.getElementById('grid').innerHTML = h;
+}
+
+const card = document.getElementById('card');
+function show(el) {
+  const s = SKILLS.find(x => x.id === el.dataset.skill);
+  document.querySelectorAll('.shown').forEach(e => e.classList.remove('shown'));
+  el.classList.add('shown');
+  const [first, ...rest] = s.desc.split('\n');
+  card.innerHTML = `<div class="t">${s.name}${s.combo && pure(s.combo) ? '<span class="ult">ULTIMATE</span>' : ''}</div>
+    ${s.combo ? `<div class="dots">${dots(s.combo)}</div>` : ''}
+    <div class="desc"><span class="first">${first}</span>${rest.length ? '\n' + rest.join('\n') : ''}</div>
+    ${s.grows ? `<div class="sep"></div>` + s.grows.map(([o, part]) =>
+      `<div class="grow"><img src="${ICON(ORB[o].id)}" alt=""><span>${ORB[o].name} Orb Lv ${level[o]}</span>` +
+      `<span class="n">+${LIFT(level[o]).toFixed(1)}%</span><span class="part">${part}</span></div>`).join('') : ''}`;
+  card.style.display = 'block';
+  const r = el.getBoundingClientRect();
+  card.style.left = Math.min(r.right + 8, innerWidth - 300) + 'px';
+  card.style.top = Math.max(8, r.top) + 'px';
+}
+
+function draw() { drawOrbs(); drawGrid(); }
+draw();
+document.addEventListener('mouseover', e => { const el = e.target.closest('[data-skill]'); if (el) show(el); });
+document.addEventListener('click', e => {
+  const b = e.target.closest('.plus'); if (!b || b.disabled) return;
+  level[b.dataset.orb]++; points--; draw();
+});
+show(document.querySelector('[data-skill="skill.staff.stalactite"]'));
+</script>
+</body>
+</html>

@@ -19,11 +19,6 @@ using UnityEngine;
 /// </summary>
 public static class FbxPropExtractor
 {
-    /// <summary>One-click: slice the Pxltgr Fantasy Assets pack straight into Assets/1_Authored/Prefabs/Props.</summary>
-    [MenuItem("Tools/unwritten/Props/Build Fantasy Assets (Pxltgr) → Props", priority = 502)]
-    static void ExtractFantasyAssets() =>
-        ExtractFbx("Assets/0_Raw/Pxltgr/fantasy-assets/source/Fantasy_Assets/Assets.fbx", "Assets/1_Authored/Prefabs/Props");
-
     /// <summary>Asset-agnostic: pick ANY single FBX that bundles many objects and split each top-level
     /// child into its own prefab under Assets/1_Authored/Prefabs/&lt;fbx name&gt;.</summary>
     [MenuItem("Tools/unwritten/Props/Split Multi-Object FBX…", priority = 503)]

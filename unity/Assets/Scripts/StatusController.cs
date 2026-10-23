@@ -36,7 +36,7 @@ public enum Ailment
 public class StatusController : MonoBehaviour
 {
     const int N = 8;                 // = number of Ailment values
-    const float DotInterval = 0.8f;  // seconds between damage-over-time ticks
+    public const float DotInterval = 0.8f;  // seconds between damage-over-time ticks
 
     float nextRegenTick, nextManaTick;   // each pool's own deadline on this unit
     float hpAccum, manaAccum;            // the sub-1-point remainder each carries between ticks
@@ -71,7 +71,6 @@ public class StatusController : MonoBehaviour
     readonly VfxCue.Aura[] aura = new VfxCue.Aura[N];
 
     Health health;          // mob: the thing DoTs damage
-    MonsterAI3D ai;          // mob: the brain we delegate Stun/Freeze/Slow to
     Player3DController player;// player: the mover — so the cast-start gate can see a mid-jump (no casting in the air)
     bool isPlayer;           // player: DoTs hit Character.Instance; flags read by the controller/spells
     float recoverUntil;      // aftercast root: fully action-locked until a skill's release animation finishes (folds into CannotAct)
@@ -100,7 +99,6 @@ public class StatusController : MonoBehaviour
     void Awake()
     {
         health = GetComponent<Health>();
-        ai     = GetComponent<MonsterAI3D>();
         player = GetComponent<Player3DController>();
         isPlayer = player != null;
         if (isPlayer) Player = this;
@@ -262,6 +260,14 @@ public class StatusController : MonoBehaviour
     /// <para>Damage-over-time never reaches here — it goes through the true-damage channel — so ticks neither stagger
     /// a unit nor build its footing. Nor does a hit a parry erased, a shield ate or a brace banked: those cost no HP,
     /// so the damage door reports 0 and this is never called.</para></summary>
+    /// <summary>A blow that cost this unit health shatters a freeze on it at once. Damage over time never calls this, so
+    /// a frozen unit stays frozen through its poison, bleed and burn ticks.</summary>
+    public void BreakFreeze()
+    {
+        // Every freeze on it: each skill that froze it holds its own entry.
+        while (states != null && states.Has(StateId.Freeze)) states.Remove(StateId.Freeze);
+    }
+
     public void TookHit(int dealt)
     {
         if (dealt <= 0) return;
@@ -337,6 +343,12 @@ public class StatusController : MonoBehaviour
         if (seconds <= 0f) return;
         var id = (StateId)(int)a;
         bool wasActive = states.Has(id);
+        // BURN AND CHILL NEVER SHARE A UNIT: the mark already there wins, and only the element that beats it (Water's
+        // cash-in) takes it off. A burn landing on a chilled unit is refused.
+        if (a == Ailment.Burn && states.ChillStacks > 0) return;
+        // A BURN ON A FROZEN UNIT never lands: it melts the ice instead, each attempt taking a fixed slice off the
+        // freeze — so burning ground, trying once a second, thaws it twice as fast.
+        if (a == Ailment.Burn && states.Has(StateId.Freeze)) { states.MeltFreeze(MarkMath.BurnMeltsFreezeSeconds); return; }
 
         if (IsDot(a))
         {
@@ -354,17 +366,8 @@ public class StatusController : MonoBehaviour
 
         // Control: every remaining ailment is BINARY — it either has you or it doesn't. The two that carried a number
         // (Slow's speed factor, Blind's accuracy loss) were sub-stat moves and are authored as sub-stat debuffs now.
+        // A creature's brain reads CannotAct from this same store, exactly as a person's controller does.
         states.Apply(id, seconds, 0f);
-
-        switch (a)
-        {
-            case Ailment.Stun:
-                if (ai != null) ai.Stun(seconds);                    // mob: reuse the freeze
-                break;
-            case Ailment.Freeze:
-                if (ai != null) ai.Stagger(seconds);                 // mob: freeze movement/attacks
-                break;
-        }
 
         // One-shot cue on a NEW control/debuff. DoTs return above with their aura instead.
         if (!wasActive && CcCue(a, out var cue)) VfxCue.Fire(cue, transform);

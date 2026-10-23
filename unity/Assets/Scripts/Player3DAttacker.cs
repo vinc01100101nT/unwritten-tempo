@@ -153,7 +153,8 @@ public class Player3DAttacker : MonoBehaviour
     // reach and once when it comes back — never per frame, because this is asked every frame while attacking.
     bool wasOutOfReach;
 
-    public void TryAttack(Health t)
+    /// <summary>True only on the frame a swing actually starts.</summary>
+    public bool TryAttack(Health t)
     {
         // OUT OF REACH IS A REASON, NOT A SILENCE. A sword with no authored reach makes every swing impossible
         // and said nothing about it, so two play-tests reported "attacks do not work" and one of them had both
@@ -169,9 +170,9 @@ public class Player3DAttacker : MonoBehaviour
                     : "target back in reach");
         }
 
-        if (Time.time < nextSwing || swing != null || !InRange(t)) return;
+        if (Time.time < nextSwing || swing != null || !InRange(t)) return false;
         // A swing needs the weapon in hand. The order that brought us here already asked for it; the swing waits.
-        if (Character.Instance != null && !WeaponDrawClient.Ready) { WeaponDrawClient.AskToDraw(); return; }
+        if (Character.Instance != null && !WeaponDrawClient.Ready) { WeaponDrawClient.AskToDraw(); return false; }
         attemptOpen = false;   // the announced attack is happening — this attempt is resolved
         // AttackSpeed shortens the gap between swings AND the motion itself (faster = higher mult),
         // so the visible swing keeps pace with the cadence instead of lagging at high ASPD.
@@ -192,6 +193,7 @@ public class Player3DAttacker : MonoBehaviour
         // OnAttack (attacker-side "Active Verb") is dormant — re-enable once we compose per-weapon swing vfx/sfx.
         // VfxCue.Fire(VfxCueId.OnAttack, transform);
         swing = StartCoroutine(SwingThenHit(t));
+        return true;
     }
 
     // The equipped weapon's set if it has clips, else the player default.

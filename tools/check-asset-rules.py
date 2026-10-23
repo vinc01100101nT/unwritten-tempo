@@ -60,6 +60,21 @@ def value(block, key):
 
 
 # ---- A1–A3  textures ------------------------------------------------------------------------------------------
+def png_fits_one_block(path):
+    """True when `path` is a PNG at most 4 pixels on each side — one block-compression block."""
+    if not path.lower().endswith(".png"):
+        return False
+    try:
+        with open(path, "rb") as fh:
+            head = fh.read(24)
+    except OSError:
+        return False
+    if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n":
+        return False
+    w, h = int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+    return 0 < w <= 4 and 0 < h <= 4
+
+
 def check_textures(repo, out):
     # Every texture the game can use: all of Assets except the untouched vendor packs in 0_Raw (never placed, never
     # shipped as they are) and Mirror's own bundled samples.
@@ -79,6 +94,9 @@ def check_textures(repo, out):
             # against, which block compression would shift off the colour the piece names.
             pixel_art = ("/Art/" in p and "/GroundTiles/" not in p) or "/2_Generated/Weapons/" in p                 or "/2_Generated/Characters/HeadPieces/" in p
             cursor = "/KenneyCursorPack/" in p
+            # A colour palette no bigger than one 4×4 compression block (a low-poly model's swatch) gains nothing from
+            # block compression, and compressing it blends its few exact colours together.
+            palette = png_fits_one_block(path[:-5])
             meta = read(path)
             if "TextureImporter:" not in meta:
                 continue
@@ -89,7 +107,7 @@ def check_textures(repo, out):
             if size and int(size) > MAX_TEXTURE_SIZE:
                 out("FAIL", p, "maxTextureSize %s is above %d — a 2.5D camera never shows a prop that large"
                     % (size, MAX_TEXTURE_SIZE))
-            if not pixel_art and not cursor and comp == "0":
+            if not pixel_art and not cursor and not palette and comp == "0":
                 out("FAIL", p, "textureCompression: 0 (None) — every authored texture that is not pixel art "
                     "ships compressed; this one costs four to eight times its compressed size")
             if readable == "1" and not cursor:

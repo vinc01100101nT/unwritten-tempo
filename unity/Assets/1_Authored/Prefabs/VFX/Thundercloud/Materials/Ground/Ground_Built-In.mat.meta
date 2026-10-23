@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e595c7de0f6f240dca4022c318298ce8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Materials/Ground/Ground_Built-In.mat
+  uploadId: 831922

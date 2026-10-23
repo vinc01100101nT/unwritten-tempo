@@ -415,8 +415,9 @@ public class StanceController : MonoBehaviour
         }
         if (best != null)
         {
+            bool fresh = currentResolved != best.id;
             driving = true; currentResolved = best.id;
-            ApplyStance(best, bestWindow);
+            ApplyStance(best, bestWindow, restart: fresh);
             return;
         }
 
@@ -436,12 +437,22 @@ public class StanceController : MonoBehaviour
     }
 
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
-    void ApplyStance(StanceBinding b, float window, bool release = false, bool forceFit = false, float seekTo = -1f)
+    void ApplyStance(StanceBinding b, float window, bool release = false, bool forceFit = false, float seekTo = -1f,
+                     bool restart = false)
     {
         pose.SetShownStance(b.id);
         // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
         // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
         if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, ResolveSpeedMult(b, window)); return; }
+        // A HELD POSE THAT STOPS PART-WAY: the clip reaches holdAt, then stays on that frame for as long as the stance
+        // is held — the same phase drive the jump's airborne freeze uses. Fit Window = the body glides into that frame
+        // across the whole window (a bow drawn over the cast); otherwise the clip plays up to it at its own speed.
+        if (b.holdAt > 0f)
+        {
+            float glide = b.speedSource == StanceSpeedSource.FitWindow && window > 0.01f ? window : 0f;
+            pose.PlayClipPhase(b.action, b.clip, b.holdAt, false, ResolveSpeedMult(b, window), restart, glide);
+            return;
+        }
 
         if (seekTo >= 0f) pose.PlayFrom(b.action, b.clip, seekTo);
         else pose.Play(b.action, b.clip);

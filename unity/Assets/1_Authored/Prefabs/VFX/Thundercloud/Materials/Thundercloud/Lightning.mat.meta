@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9fe55de2bec5442488a10ea95118fb6a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Materials/Thundercloud/Lightning.mat
+  uploadId: 831922

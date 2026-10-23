@@ -162,6 +162,9 @@ public class MonsterDef : ScriptableObject
     [Tooltip("How strongly its element resists and is weak, 1 to 4 (Ragnarok's element levels). Only the defending " +
              "side has a level — an attack never does. Level 3 and 4 heal from their own element.")]
     [Range(1, 4)] public int elementLevel = 1;
+    [Tooltip("Seconds between turns of its element around the cycle Fire, Earth, Wind, Water (each the element the one " +
+             "before it beats), starting from its own. 0 = it keeps its element. Kaelen's shadow turns.")]
+    [Min(0f)] public float elementCycleSeconds = 0f;
     [Tooltip("Ailment inflicted on the player when a hit lands. Chance 0 below = inflicts nothing (the type is ignored).")]
     public Ailment onHitAilment = Ailment.Poison;
     [Range(0f, 1f)] public float onHitAilmentChance = 0f;

@@ -19,14 +19,11 @@ using UnityEngine;
 /// </summary>
 public enum StanceId
 {
-    // --- Held stances (persistent baselines; pushed/popped; priority-resolved) ---
-    Combat,   // weapon-ready idle held while a target is engaged (Baked idle cadence)
-    Guard,    // defensive / blocking hold
-    Casting,  // channel pose held during a cast wind-up (FitWindow → fits the cast-bar length)
-    Sit,      // resting / seated
+    // 0–3 were Combat, Guard, Casting and Sit, held poses nothing ever started; removed 2026-10-23. Every stance
+    // below keeps its stored number, so Idle stays 4. The held poses left are the per-weapon cast poses (CastBow…).
 
     // --- Action stances (transient; the gameplay brain drives one at a time; beat held stances) ---
-    Idle,     // standing baseline when nothing else is active
+    Idle = 4, // standing baseline when nothing else is active
     Walk,     // slow locomotion (legs locked to the ground speed)
     Run,      // fast locomotion (legs locked to the ground speed)
     Attack,   // melee swing (FitWindow → fps fits the attack-speed-scaled swing)
@@ -76,6 +73,25 @@ public enum StanceId
     AttackKatar,
     AttackKnuckle,
     AttackWand,
+    // A weapon's own cast-time pose, held for the whole wind-up (WeaponStances.CastFor). The bow's is its attack clip
+    // stopped where the string is fully drawn (2026-10-23).
+    CastBow,
+    // Every other weapon's own cast-time pose, mapped like the attack variants (WeaponStances.CastFor). Each began as
+    // the Cast clip fitted to the cast bar, the one pose every weapon shared before.
+    CastBareHands,
+    CastSword,
+    CastOneHandSword,
+    CastAxe,
+    CastMace,
+    CastDagger,
+    CastKatar,
+    CastStaff,
+    CastWand,
+    CastScythe,
+    CastShuriken,
+    CastLance,
+    CastRifle,
+    CastKnuckle,
 }
 
 /// <summary>
@@ -107,7 +123,7 @@ public class StanceBinding
 {
     public StanceId id;
 
-    [Tooltip("Which CharacterAction this stance plays (e.g. Combat -> Idle, Attack -> Attack, Fall -> Jump). " +
+    [Tooltip("Which CharacterAction this stance plays (e.g. Attack -> Attack, Fall -> Jump)." +
              "If the sink has no clip for it, it falls back to Idle.")]
     public CharacterAction action = CharacterAction.Idle;
 
@@ -121,13 +137,13 @@ public class StanceBinding
 
     [Tooltip("Where the LIVE playback-speed multiplier is read from each frame. Baked = the action's authored fps; " +
              "FitWindow fits the clip to a runtime window (Attack = swing time, " +
-             "Roll = dash length, Casting = cast-bar length).")]
+             "Roll = dash length, a cast pose = cast-bar length).")]
     public StanceSpeedSource speedSource = StanceSpeedSource.Baked;
 
     [Tooltip("Hand-tuned constant multiplier on top of the live source (1 = just the source).")]
     public float speedMult = 1f;
 
-    [Tooltip("For HELD stances only: higher wins when several are active at once (e.g. Casting > Combat). Action " +
+    [Tooltip("For HELD stances only: higher wins when several are active at once. Action" +
              "stances are driven one at a time, so their priority is unused.")]
     public int priority;
 
@@ -139,6 +155,11 @@ public class StanceBinding
              "on this frame for the whole airborne time (however long the fall lasts); on landing it resumes here→end " +
              "as the landing tail (player rooted for that tail). The Fall stance (ledge walk-off) reuses THIS value.")]
     public float airborneFreeze = 1.5f;
+
+    [Tooltip("HELD stances: seconds into the clip where it stops and holds on that frame for as long as the stance is " +
+             "held (the bow's cast: drawn and waiting). The clip plays up to here at its own speed, never stretched " +
+             "to the cast time. 0 = the clip plays normally.")]
+    public float holdAt = 0f;
 
     [Tooltip("ROLL only: the clip FRAME from which the player is ROOTED (no move) until the clip ends — the roll's " +
              "recovery. Runtime turns this into a normalized point (frame ÷ the clip's own frame count) so it survives " +
@@ -194,10 +215,12 @@ public static class StanceDefaults
         var b = new StanceBinding { id = id, action = CharacterAction.Idle, speedMult = 1f };
         switch (id)
         {
-            case StanceId.Combat:  b.action = CharacterAction.Idle;   b.speedSource = StanceSpeedSource.Baked; b.priority = 10; break;
-            case StanceId.Guard:   b.action = CharacterAction.Idle;   b.priority = 20; break;
-            case StanceId.Casting: b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.FitWindow;  b.priority = 30; break;
-            case StanceId.Sit:     b.action = CharacterAction.Sit;    b.priority = 5;  break;
+            case StanceId.CastBareHands: case StanceId.CastSword: case StanceId.CastOneHandSword: case StanceId.CastAxe:
+            case StanceId.CastMace:      case StanceId.CastDagger: case StanceId.CastKatar: case StanceId.CastStaff:
+            case StanceId.CastWand:      case StanceId.CastScythe: case StanceId.CastShuriken: case StanceId.CastLance:
+            case StanceId.CastRifle:     case StanceId.CastKnuckle:
+                b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.FitWindow;  b.priority = 30; break;
+            case StanceId.CastBow: b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.Baked;      b.priority = 30; break;
             case StanceId.Idle:    b.action = CharacterAction.Idle;   b.speedMult = 0.75f; break;
             case StanceId.Walk:    b.action = CharacterAction.Walk;   break;   // walk cycles take the legs' pace; speedSource is never read
             case StanceId.Run:     b.action = CharacterAction.Run;    break;

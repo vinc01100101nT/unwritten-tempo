@@ -41,11 +41,20 @@ public static class SkillEffectApplier
     // burst — the same reason PassiveEvents holds its cause this way.
     static float masteryLift;
 
+    // THE STAFF'S ORB LIFTS for the burst applying, one per orb element (index = OrbElement): a combination's part grows
+    // with its own orb's level, so a Fire part reads the Fire orb's lift. Resolved once per burst like the lift above.
+    static readonly float[] orbLift = new float[5];
+
     // What one hop of a bouncing chain is worth, as a share of its first hit (FlightMath.HopScale) — 1 for every burst
     // that is not a hop. Held the same way and for the same reason as the practice lift above: one value for a whole
     // burst, set at its entry and restored in its finally, so a passive a hop sets off casts at full strength rather
     // than at the hop's share.
     static float hopScale = 1f;
+
+    // How much of a release-early skill's wind-up was filled (StrikeMath.ReleaseScale) — 1 for every other burst. DAMAGE
+    // ONLY: a heal, a buff or a stack riding the same cast is untouched. Held per burst and restored exactly like
+    // hopScale, and cleared for a passive fired inside a strike (StrikeIsolation).
+    static float releaseScale = 1f;
 
     // A MULTI-HIT STRIKE WORKED OUT ONCE: the one strike's finished number is multiplied by its hit count, then shown
     // as that many pieces (BlowBatch.Split). Held for that one strike and restored, exactly like hopScale.
@@ -59,21 +68,22 @@ public static class SkillEffectApplier
     /// the strike's hit-count scale, its crit bonus or its piece count. Held for the passive's run and put back after.</summary>
     public readonly struct StrikeIsolation : System.IDisposable
     {
-        readonly float scale, critBonus;
+        readonly float scale, critBonus, release;
         readonly int split;
         public StrikeIsolation(bool _)
         {
-            scale = strikeScale; critBonus = StrikeCritBonus; split = BlowBatch.Split;
-            strikeScale = 1f; StrikeCritBonus = 0f; BlowBatch.Split = 1;
+            scale = strikeScale; critBonus = StrikeCritBonus; split = BlowBatch.Split; release = releaseScale;
+            strikeScale = 1f; StrikeCritBonus = 0f; BlowBatch.Split = 1; releaseScale = 1f;
         }
-        public void Dispose() { strikeScale = scale; StrikeCritBonus = critBonus; BlowBatch.Split = split; }
+        public void Dispose() { strikeScale = scale; StrikeCritBonus = critBonus; BlowBatch.Split = split; releaseScale = release; }
     }
 
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   string srcSymbol = null, string srcName = null, string srcId = null,
                                   Vector3? aimPoint = null, ICombatUnit caster = null, StackVars vars = default,
-                                  bool efficient = false, bool casterPass = true, float hop = 1f)
+                                  bool efficient = false, bool casterPass = true, float hop = 1f,
+                                  float release = 1f)
     {
         if (effects == null || effects.Count == 0) return;
 
@@ -87,14 +97,25 @@ public static class SkillEffectApplier
         // on paying for the outer cast's remaining hits. An EFFICIENT cast adds its bonus on top (SkillEfficiency).
         float prevLift = masteryLift;
         float prevHop = hopScale;
+        float prevRelease = releaseScale;
+        float prevF = orbLift[1], prevE = orbLift[2], prevW = orbLift[3], prevA = orbLift[4];
         masteryLift = SkillEfficiency.OutputLift(ch.SkillOutputLift(srcId), efficient);
+        var srcDef = SkillCatalog.Get(srcId);
+        if (srcDef != null && srcDef.IsOrbCombo)
+            for (int o = 1; o <= 4; o++)
+                orbLift[o] = SkillEfficiency.OutputLift(ch.SkillOutputLift(OrbMath.SkillIdOf((OrbElement)o)), efficient);
         hopScale = Mathf.Max(0f, hop);
+        releaseScale = Mathf.Max(0f, release);
         try
         {
             ApplyBurstTargets(point, radius, scope, targets, effects, singleTarget,
                               srcSymbol, srcName, srcId, aimPoint, ch, vars, casterPass, efficient);
         }
-        finally { masteryLift = prevLift; hopScale = prevHop; }
+        finally
+        {
+            masteryLift = prevLift; hopScale = prevHop; releaseScale = prevRelease;
+            orbLift[1] = prevF; orbLift[2] = prevE; orbLift[3] = prevW; orbLift[4] = prevA;
+        }
     }
 
     // The body of a burst, split out ONLY so the lift above is restored on every exit — this method has several.
@@ -128,7 +149,8 @@ public static class SkillEffectApplier
         // A DASH STRIKES WHERE IT LANDS: when the caster pass sent the caster gliding, the strike waits for the trip
         // and lands on arrival (DashLandings), never as the dash leaves.
         if (dashSeconds > 0f && DashLandings.Hold(dashSeconds, dashGiveUp, dashDest, point, radius, scope, targets, effects,
-                                                  singleTarget, srcSymbol, srcName, srcId, aimPoint, ch, vars, efficient))
+                                                  singleTarget, srcSymbol, srcName, srcId, aimPoint, ch, vars, efficient,
+                                                  releaseScale))
             return;
 
         // SINGLE scope: ignore the radius, land straight on the cast's designated unit. Falls back to Area if unset.
@@ -177,6 +199,126 @@ public static class SkillEffectApplier
             // somewhere the caster isn't standing. Caster effects already ran in pass 1 and are not repeated here.
             if (ch != null && !ch.IsDead)
                 ApplyEffectsToPlayer(effects, relocatePoint, srcSymbol, srcName, srcId, ch, vars);
+        }
+    }
+
+    // ---- the Staff's helpers --------------------------------------------------------------------------------
+    /// <summary>The level <paramref name="unit"/> has in an orb — every character knows each at level 1.</summary>
+    public static int OrbLevel(ICombatUnit unit, OrbElement orb)
+    {
+        string id = OrbMath.SkillIdOf(orb);
+        if (unit is Character person) return person.Mastery.LevelOf(id);
+        if (unit is Health creature) return creature.Mastery.LevelOf(id);
+        return 1;
+    }
+
+    // Is any skill of this unit mid-run? An orb press waits for it to end.
+    static bool RunGoing(ICombatUnit unit)
+    {
+        var runners = unit != null && unit.Skills != null ? unit.Skills.Runners : null;
+        if (runners == null) return false;
+        for (int i = 0; i < runners.Length; i++)
+            if (runners[i] != null && runners[i].RunInProgress) return true;
+        return false;
+    }
+
+    static readonly List<ICombatUnit> copyPeople = new List<ICombatUnit>(8);
+    static readonly List<MonsterAI3D> copyCreatures = new List<MonsterAI3D>(16);
+
+    // A MARK CARRIED to the caster's enemies around the unit it lands on. A burn is copied at its own strength and time;
+    // Chill raises each neighbour to the unit's own count at this effect's strength (Hoarfrost). A copy reads the
+    // ORIGINAL, so it can never grow past it.
+    static void CopyMark(SkillEffect e, ICombatUnit from, ICombatUnit caster, in StackVars vars)
+    {
+        var fromStates = from.States;
+        if (fromStates == null || from.Body == null) return;
+        float perTick = 0f, left = 0f, slow = 0f, seconds = 0f;
+        int chill = 0;
+        if (e.markKind == MarkKind.Burn)
+        {
+            var burn = fromStates.Get(StateId.Burn);
+            if (burn == null) return;
+            perTick = burn.magnitude; left = burn.Remaining;
+            if (perTick <= 0f || left <= 0f) return;
+        }
+        else if (e.markKind == MarkKind.Chill)
+        {
+            chill = fromStates.ChillStacks;
+            if (chill <= 0) return;
+            slow = OutputMagnitude(e, caster, vars);
+            seconds = ScaledSeconds(e, caster, vars);
+        }
+        else return;
+        float r = Mathf.Max(0.1f, e.copyRadius.Resolve(vars));
+        GatherOpponents(from.Body.position, r * r, caster, copyPeople, copyCreatures);
+        for (int i = 0; i < copyCreatures.Count; i++)
+        {
+            var h = copyCreatures[i] != null ? copyCreatures[i].Health : null;
+            if (h != null && !ReferenceEquals(h, from)) CopyOnto(h, e.markKind, perTick, left, chill, slow, seconds, caster);
+        }
+        for (int i = 0; i < copyPeople.Count; i++)
+        {
+            var p = copyPeople[i];
+            if (p != null && !ReferenceEquals(p, from)) CopyOnto(p, e.markKind, perTick, left, chill, slow, seconds, caster);
+        }
+    }
+
+    static void CopyOnto(ICombatUnit to, MarkKind mark, float perTick, float left, int chill, float slow, float seconds,
+                         ICombatUnit caster)
+    {
+        if (to.IsDead || to.Body == null) return;
+        if (mark == MarkKind.Burn) { Status.Apply(to.Body.gameObject, Ailment.Burn, left, perTick, caster); return; }
+        var states = to.States;
+        if (states == null) return;
+        int add = MarkMath.CopyAdds(states.ChillStacks, chill);
+        if (add > 0 && states.AddChill(add, seconds, 0, slow))
+            Status.Apply(to.Body.gameObject, Ailment.Freeze, MarkMath.FreezeSeconds, 0f, caster);
+    }
+
+    // ---- "only if marked": the marks each unit carried when the tick reached it ----
+    // Read once per unit, before any effect of the tick ran, so a mark that tick cashes still counts for the effects
+    // after it (Scald puts out the burns, then chills exactly the units that were burning).
+    static ICombatUnit gateUnit;
+    static readonly int[] gateMarks = new int[5];
+
+    static void ReadGateMarks(ICombatUnit unit)
+    {
+        gateUnit = unit;
+        var states = unit != null ? unit.States : null;
+        for (int m = 0; m < gateMarks.Length; m++)
+            gateMarks[m] = states != null ? states.MarkCount((MarkKind)m) : 0;
+    }
+
+    // Only a tick with a gated effect pays for the read; every other tick on every other unit skips it.
+    static void ReadGateMarksIfAsked(List<SkillEffect> effects, ICombatUnit unit)
+    {
+        gateUnit = null;
+        for (int i = 0; i < effects.Count; i++)
+            if (effects[i] != null && effects[i].onlyIfMarked != MarkKind.None) { ReadGateMarks(unit); return; }
+    }
+
+    static int GateCount(ICombatUnit unit, MarkKind mark)
+    {
+        if (ReferenceEquals(unit, gateUnit)) return gateMarks[(int)mark];
+        return unit != null && unit.States != null ? unit.States.MarkCount(mark) : 0;
+    }
+
+    // How many stacks this apply grants on THIS unit: one per mark it carried, when the effect asks for that.
+    static int StacksOn(SkillEffect e, ICombatUnit unit, ICombatUnit caster, in StackVars vars) =>
+        e.stackPerMark && e.onlyIfMarked != MarkKind.None ? Mathf.Max(1, GateCount(unit, e.onlyIfMarked))
+                                                           : ResolveStacks(e, caster, vars);
+
+    // Weathering: the last Staff combination this unit cast is ready again — an ultimate's shared wait with it.
+    static void ResetLastCombination(ICombatUnit unit)
+    {
+        var skills = unit != null ? unit.Skills : null;
+        if (skills == null || string.IsNullOrEmpty(skills.LastCombinationId)) return;
+        skills.RunnerById(skills.LastCombinationId)?.ResetCooldown();
+        var def = SkillCatalog.Get(skills.LastCombinationId);
+        if (def != null && def.IsUltimate && skills.SharedUltimateRemaining > 0f)
+        {
+            skills.ForgetSharedUltimate();
+            GameNetwork.TellOwnerCooldownStarted(unit, SharedCooldown.UltimateKey, WorldClock.UtcNow);
         }
     }
 
@@ -465,7 +607,7 @@ public static class SkillEffectApplier
     }
 
     // How wide a body a random landing spot must fit: the one routing width people walk by.
-    static float TripRadius => CharacterSpec.Active != null ? CharacterSpec.Active.routingRadius : 0.35f;
+    public static float TripRadius => CharacterSpec.Active != null ? CharacterSpec.Active.routingRadius : 0.35f;
 
     // Back to where this unit returns to: a person to their save point — OWED to their shell's next frame, because an
     // item that ran this is spent after it fires, and a trip to another server saves them the moment it starts — a
@@ -572,6 +714,7 @@ public static class SkillEffectApplier
         if (e == null || unit == null) return;
         var states = unit.States;
         if (states == null) return;
+        if (e.onlyIfMarked != MarkKind.None && GateCount(unit, e.onlyIfMarked) <= 0) return;
         // The unit's BODY in the scene. Null only in the window before the player's avatar has spawned — the effects
         // that need a body (ailments, cleanse, relocation) sit on it, so they simply don't land yet.
         var body = unit.Body;
@@ -589,7 +732,7 @@ public static class SkillEffectApplier
         // hand, and clamping an earned count to it would silently delete the charges a fast caster just paid for.
         if (tagDisplay) states.SetApplyContext(srcSymbol, srcName,
                                                unit is Character ? SkillTooltip.DescribeEffect(e) : null,
-                                               e.stacking, ResolveStacks(e, caster, vars),
+                                               e.stacking, StacksOn(e, unit, caster, vars),
                                                e.stacksFromAttackSpeed ? 0 : Mathf.Max(1, e.stackLimit.ResolveInt(vars)), srcId);
         switch (e.kind)
         {
@@ -688,8 +831,11 @@ public static class SkillEffectApplier
                 break;
             case SkillEffectKind.ResetCooldown:
                 // A modifier: once per landing, on the named skill of the unit it lands on, then it is over.
-                if (hit == 0 && GameServer.IsServer && !string.IsNullOrEmpty(e.modifierSkillId))
-                    unit.Skills?.RunnerById(e.modifierSkillId)?.ResetCooldown();
+                if (hit == 0 && GameServer.IsServer)
+                {
+                    if (e.resetsLastCombination) ResetLastCombination(unit);
+                    else if (!string.IsNullOrEmpty(e.modifierSkillId)) unit.Skills?.RunnerById(e.modifierSkillId)?.ResetCooldown();
+                }
                 break;
             case SkillEffectKind.ImmuneToDisables:
                 // No magnitude: being stopped is binary. The whole knob is how long it lasts.
@@ -736,6 +882,37 @@ public static class SkillEffectApplier
                     else GameLog.Warn(LogCat.Server, SpawnIds.Label(unit) + " found nowhere to land on a random spot of '"
                                       + SpawnIds.MapOf(unit) + "'");
                 }
+                break;
+            // ---- the Staff -----------------------------------------------------------------------------------------
+            case SkillEffectKind.AddOrb:
+                // An orb press while one of the caster's own runs is still going is refused, so the stats a run was
+                // released with are the stats it ends with.
+                if (hit == 0 && GameServer.IsServer && e.orb != OrbElement.None && !RunGoing(unit))
+                {
+                    var orbSkill = SkillCatalog.Get(OrbMath.SkillIdOf(e.orb));
+                    // The orb's stat is its main number, raised like any other by its own level and its trademark.
+                    states.AddOrb(e.orb, Mathf.Max(0f, OutputMagnitude(e, caster, vars)),
+                                  orbSkill != null ? orbSkill.Symbol : "", orbSkill != null ? orbSkill.displayName : "");
+                }
+                break;
+            case SkillEffectKind.Chill:
+                if (GameServer.IsServer && Fires(e, hit, caster, vars)
+                    && states.AddChill(StacksOn(e, unit, caster, vars), seconds, e.stackLimit.ResolveInt(vars),
+                                       OutputMagnitude(e, caster, vars))
+                    && body != null)
+                    Status.Apply(body.gameObject, Ailment.Freeze, MarkMath.FreezeSeconds, 0f, caster);
+                break;
+            case SkillEffectKind.Static:
+                if (GameServer.IsServer && Fires(e, hit, caster, vars))
+                    states.AddStatic(StacksOn(e, unit, caster, vars), seconds, OutputMagnitude(e, caster, vars));
+                break;
+            case SkillEffectKind.CopyMark:
+                if (hit == 0 && GameServer.IsServer) CopyMark(e, unit, caster, vars);
+                break;
+            // Lengthens by the effect's own seconds as authored — a level never grows a time, only how much stronger.
+            case SkillEffectKind.ExtendMarks:
+                if (hit == 0 && GameServer.IsServer)
+                    states.ExtendMark(e.markKind, e.seconds.Resolve(vars), OutputMagnitude(e, caster, vars));
                 break;
             case SkillEffectKind.Knockback:
                 // Shove AWAY from the caster (magnitude = speed).
@@ -923,6 +1100,7 @@ public static class SkillEffectApplier
                               string srcSymbol, string srcName, string srcId, StackVars vars)
     {
         int dealt = 0;
+        if (hit == 0) ReadGateMarksIfAsked(effects, h);
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
@@ -977,6 +1155,7 @@ public static class SkillEffectApplier
                                    string srcSymbol, string srcName, string srcId, StackVars vars)
     {
         int loops = HitLoops(effects, caster, vars);
+        ReadGateMarksIfAsked(effects, h);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
                 ApplyToTarget(effects[i], h, n, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
@@ -1006,7 +1185,7 @@ public static class SkillEffectApplier
         if (unit.MaxHP <= 0 || power <= 0f) return;
         float missing = 1f - Mathf.Clamp01((float)unit.CurrentHP / unit.MaxHP);
         if (missing <= 0f) return;
-        int roll = RollPower(e, vars, OutputMult(e, caster),
+        int roll = RollPower(e, vars, OutputMult(e, caster) * releaseScale,
                              out bool crit, caster, unit);
         int bonus = Mathf.RoundToInt(roll * power * missing);
         if (bonus <= 0) return;
@@ -1077,8 +1256,41 @@ public static class SkillEffectApplier
 
         // Whether this strike draws a rising total is the authored skill's answer, held while it lands so the creature
         // can carry it when it announces the blow (Health.Show). A blow on a person is announced at the damage door.
-        using (new StrikeTotalScope(ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId), e, caster, vars)))
-            return Strike(e, unit, caster, vars, overkill, out _, out _);
+        int dealt = 0;
+        // A STRIKE THAT IS ONLY A PAYOFF, with nothing to pay out (no mark, no base), lands no blow at all — a "1" for
+        // nothing would read as a hit. Its cash-in still runs below: a burn is put out whatever the strike was worth.
+        if (!PaysNothing(e, caster, unit, vars))
+            using (new StrikeTotalScope(ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId), e, caster, vars)))
+                dealt = Strike(e, unit, caster, vars, overkill, out _, out _);
+        if (e.cashMark != MarkKind.None) CashIn(e, unit, caster, vars);
+        return dealt;
+    }
+
+    static bool PaysNothing(SkillEffect e, ICombatUnit caster, ICombatUnit unit, in StackVars vars) =>
+        e.cashMark != MarkKind.None && !e.damageMult.useStacks && StrikeMult(e, caster, unit, vars).value <= 0f;
+
+    // THE MARK GOES, once the strike that read it has landed. Burn is put out with the damage it had left landing at once.
+    static void CashIn(SkillEffect e, ICombatUnit unit, ICombatUnit caster, in StackVars vars)
+    {
+        var marks = unit != null ? unit.States : null;
+        if (marks == null || e.keepsMark) return;
+        switch (e.cashMark)
+        {
+            case MarkKind.Burn:
+            {
+                var burn = marks.Get(StateId.Burn);
+                if (burn == null) break;
+                int left = MarkMath.BurnLeft(burn.magnitude, burn.Remaining, StatusController.DotInterval);
+                // The payoff is this effect's output, so it grows with its orb like any other part.
+                int payoff = Mathf.RoundToInt(left * Mathf.Max(0f, e.burnPayoff.Resolve(vars)) * OutputMult(e, caster));
+                marks.RemoveAll(StateId.Burn);
+                if (payoff > 0 && !unit.IsDead) CombatAuthority.ApplyTrue(unit, payoff, TrueDamageCause.Extinguished, caster);
+                break;
+            }
+            case MarkKind.Chill:  marks.RemoveAll(StateId.Chill); break;
+            case MarkKind.Static: marks.RemoveAll(StateId.Static); break;
+            case MarkKind.Stone:  marks.RemoveStone(); break;
+        }
     }
 
     /// <summary>Roll and land ONE authored strike — on the server, the only machine that lands one.</summary>
@@ -1089,7 +1301,8 @@ public static class SkillEffectApplier
         crit = false;
         resolved = default;
         float prevCritBonus = StrikeCritBonus;
-        StrikeCritBonus = Mathf.Max(0f, e.critChanceBonus.Resolve(vars));
+        StrikeCritBonus = StrikeMath.CritBonus(e.critChanceBonus.Resolve(vars), e.critChanceBonusVsSlowed.Resolve(vars),
+                                               unit != null && unit.States != null ? unit.States.MoveMult : 1f);
         try { return StrikeBody(e, unit, caster, vars, overkill, out crit, out resolved); }
         finally { StrikeCritBonus = prevCritBonus; }
     }
@@ -1101,7 +1314,7 @@ public static class SkillEffectApplier
         resolved = default;
         // Ring investment and the combo ramp are both OUTER multipliers of the finished number, so they travel together
         // as one scale — the pile's contribution answers to them exactly as the caster's own damage does.
-        float outer = OutputMult(e, caster);
+        float outer = OutputMult(e, caster) * releaseScale;
 
         // A FLURRY BEAT ON A TARGET THAT IS ALREADY DEAD is presentation only: the number it would have been and the hit
         // cue — no charge spent, no swing announced, no passive fed. Decided here, the one place every strike is rolled,
@@ -1190,6 +1403,18 @@ public static class SkillEffectApplier
         float perSpeed = e.damageMultPerSpeedBonus.Resolve(vars);
         if (perSpeed != 0f && caster != null && caster.States != null)
             mult.value += perSpeed * StrikeMath.SpeedBonusPoints(caster.States.MoveMult, caster.IsMoving);
+        // THE STAFF'S CASH-INS read the mark BEFORE the strike lands; it is removed after (CashIn).
+        var marks = unit != null ? unit.States : null;
+        float perMark = e.damageMultPerMark.Resolve(vars);
+        if (perMark != 0f && marks != null) mult.value += perMark * marks.MarkCount(e.cashMark);
+        float perBurnSecond = e.damageMultPerBurnSecond.Resolve(vars);
+        if (perBurnSecond != 0f && marks != null)
+        {
+            var burn = marks.Get(StateId.Burn);
+            if (burn != null) mult.value += MarkMath.BurnAgeGrowth(perBurnSecond, Time.time - burn.startTime);
+        }
+        float perMana = e.damageMultPerMaxMana.Resolve(vars);
+        if (perMana != 0f && caster != null) mult.value += MarkMath.MaxManaGrowth(perMana, caster.MaxMP);
         return mult;
     }
 
@@ -1331,7 +1556,9 @@ public static class SkillEffectApplier
     // this skill is worth. Added, never multiplied — so mastery is worth the same +30 POINTS to a new character as
     // to a maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at
     // a ring term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
-    static float OutputMult(SkillEffect e, ICombatUnit caster) => OutputScale(e, caster, masteryLift) * hopScale * strikeScale;
+    static float OutputMult(SkillEffect e, ICombatUnit caster) =>
+        OutputScale(e, caster, e.orb != OrbElement.None && e.kind != SkillEffectKind.AddOrb ? orbLift[(int)e.orb] : masteryLift)
+        * hopScale * strikeScale;
 
     /// <summary>THE multiplier on an effect's main number: the ring's term where <see cref="EffectScaling"/> gives it
     /// a ring row, plus the practice lift where it says practice raises it — ADDED, never multiplied. Public so the

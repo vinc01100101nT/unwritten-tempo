@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e75df4b0d012b45899f9461a4e5ab07d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Materials/Thundercloud/DistortedCloud.mat
+  uploadId: 831922

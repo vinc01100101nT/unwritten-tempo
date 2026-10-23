@@ -96,7 +96,11 @@ public class TrainingDummy : MonoBehaviour
         if (timer >= regenInterval)
         {
             timer = 0f;
-            health.Revive();   // resets Current to maxHealth
+            // A REFILL, NOT A NEW LIFE: reviving clears every timed status, which wiped a freeze, a burn or a Stone
+            // off the dummy every 5 seconds — the very things it is there to measure. Only a dummy a GM command
+            // actually killed is brought back to life.
+            if (health.IsDead) health.Revive();
+            else health.RefillToMax();
         }
     }
 }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: skill_bow_clear_sky
   m_EditorClassIdentifier: Assembly-CSharp::VfxSequence
   steps:
-  - note: spark.sparks-flashing-white
+  - note: 
     schedule: 0
     delay: 0
     startEvent: 

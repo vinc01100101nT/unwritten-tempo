@@ -1038,7 +1038,7 @@ public static class RecipeGenerator
     }
 
     // Leaf/plant material? Matched by name (the Pxltgr pack names them oak_leaves, Birch_leaves, Tree_leaves1,
-    // Plant, … while trunks are *_bark) — the same convention PxltgrMaterialFixer keys its alpha-clip off.
+    // Plant, … while trunks are *_bark).
     static readonly string[] FoliageMatKeywords = { "leaf", "leaves", "plant", "foliage", "needle", "fern", "bush" };
     static bool IsFoliageMat(Material m)
     {

@@ -135,9 +135,12 @@ public sealed class MasteryProgress
     public int LevelOf(string skillId)
     {
         if (string.IsNullOrEmpty(skillId)) return 0;
-        if (skillLevels.TryGetValue(skillId, out int l)) return l;
-        // A COMPANION is never bought: it is known, at the same level, whenever the skill it rides is.
         var def = SkillCatalog.Get(skillId);
+        // A FREE FIRST LEVEL (the Staff's orbs and Release) is known by everyone; points bought sit on top of it.
+        int free = def != null && def.freeFirstLevel ? 1 : 0;
+        if (skillLevels.TryGetValue(skillId, out int l)) return l + free;
+        if (free > 0) return free;
+        // A COMPANION is never bought: it is known, at the same level, whenever the skill it rides is.
         return def != null && def.IsCompanion && def.companionOf != skillId ? LevelOf(def.companionOf) : 0;
     }
 
@@ -208,7 +211,8 @@ public sealed class MasteryProgress
             return false;
         }
 
-        skillLevels[def.id] = level + 1;
+        // What is STORED is the points bought; a free first level is never stored, so it is never refunded or counted.
+        skillLevels[def.id] = level + 1 - (def.freeFirstLevel ? 1 : 0);
         LevelsVersion++;
         OnChanged?.Invoke();
         return true;
@@ -278,6 +282,9 @@ public sealed class MasteryProgress
     // works them out (SkillLevelNumbers) and this machine only keeps and draws them.
     readonly Dictionary<string, SkillLevelView> sentViews = new Dictionary<string, SkillLevelView>(32);
 
+    // The orb lifts a combination's hover numbers are worked out with — reused, one per orb element.
+    readonly float[] comboOrbLifts = new float[5];
+
     /// <summary>SERVER: for every skill that belongs to a weapon, its raised numbers at the level bought and at the
     /// next level, as <paramref name="owner"/> would land them — finished values for the hover card, flattened with a
     /// count per skill. Every level bought counts, whatever is in hand; a skill of the weapon in hand also carries
@@ -297,8 +304,19 @@ public sealed class MasteryProgress
             int boughtNext = Mathf.Min(bought + 1, def.maxLevel);
             float trademark = inHand && owner != null ? owner.TrademarkLift(def.id) : 0f;
             int before = viewNow.Count;
-            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(bought) + trademark, viewNow);
-            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(boughtNext) + trademark, viewNext);
+            float[] orbs = null;
+            if (def.IsOrbCombo)
+            {
+                orbs = comboOrbLifts;
+                for (int o = 1; o <= 4; o++)
+                {
+                    string orbId = OrbMath.SkillIdOf((OrbElement)o);
+                    orbs[o] = MasteryMath.LevelLift(SkillCatalog.Get(orbId), LevelOf(orbId))
+                            + (inHand && owner != null ? owner.TrademarkLift(orbId) : 0f);
+                }
+            }
+            SkillLevelNumbers.Collect(def, owner, MasteryMath.LevelLift(def, bought) + trademark, viewNow, orbs);
+            SkillLevelNumbers.Collect(def, owner, MasteryMath.LevelLift(def, boughtNext) + trademark, viewNext, orbs);
             viewIds.Add(def.id);
             viewCounts.Add(viewNow.Count - before);
         }

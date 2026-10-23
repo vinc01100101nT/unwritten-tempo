@@ -607,6 +607,11 @@ public static class UnitStatMath
     public static float CastTimeMult(in UnitStatInputs u, float ringPct, float buffMult) =>
         Mathf.Clamp01(1f - u.dex / (float)InstantCastDex) / Mathf.Max(0.01f, (1f + ringPct) * buffMult);
 
+    /// <summary>How long a skill winds up, in seconds: its variable cast time shortened by <paramref name="castTimeMult"/>
+    /// (DEX, the cast-speed ring, buffs — <see cref="CastTimeMult"/>), plus its fixed cast time, which nothing shortens.</summary>
+    public static float CastWindupSeconds(float castTime, float castTimeMult, float fixedCastTime) =>
+        Mathf.Max(0f, castTime) * Mathf.Max(0f, castTimeMult) + Mathf.Max(0f, fixedCastTime);
+
     // ---- damage spread ------------------------------------------------------------------------------------------
     /// <summary>The fraction of MAX a hit can drop to, raised toward 1 by the stabilising stat (DEX physical / INT magic).</summary>
     public static float MinFraction(int stabilisingStat) =>

@@ -100,8 +100,8 @@ public class StanceComposerWindow : EditorWindow
         return clipResolver(clip) as AnimationClip;
     }
 
-    // Ensure one binding row per enum id (add missing with a sensible default; the enum is append-only so we never
-    // remove). Existing rows are left untouched — the asset is the single owner of a stance once authored.
+    // Ensure one binding row per enum id (add missing with a sensible default; a removed stance keeps its number
+    // unused, so no other row moves). Existing rows are left untouched — the asset is the single owner once authored.
     void Reconcile()
     {
         foreach (StanceId id in Enum.GetValues(typeof(StanceId)))
@@ -121,7 +121,7 @@ public class StanceComposerWindow : EditorWindow
         if (lib == null) { if (GUILayout.Button("Create Stance Library")) LoadOrCreate(); return; }
 
         EditorGUILayout.HelpBox(
-            "Every character pose is a stance. HELD stances (Combat/Guard/Casting/Sit) are pushed/popped on a " +
+            "Every character pose is a stance. HELD stances (the cast poses by weapon) are pushed/popped on a " +
             "StanceController and the highest priority wins. ACTION stances (locomotion + one-shots) are driven one " +
             "at a time by the gameplay brain and beat held stances.\n\n" +
             "Clip (3D) = the animation a live-3D character plays for this stance — the SINGLE owner of that choice " +
@@ -150,8 +150,12 @@ public class StanceComposerWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
 
-        Section("Held stances (pushed/popped; priority-resolved)");
-        Row(StanceId.Combat); Row(StanceId.Guard); Row(StanceId.Casting); Row(StanceId.Sit);
+        Section("Cast poses by weapon (held through a skill's cast time; picked by the skill's weapon)");
+        Row(StanceId.CastBareHands); Row(StanceId.CastSword); Row(StanceId.CastDagger); Row(StanceId.CastStaff);
+        Row(StanceId.CastLance); Row(StanceId.CastRifle); Row(StanceId.CastBow);
+        Row(StanceId.CastScythe); Row(StanceId.CastShuriken);
+        Row(StanceId.CastOneHandSword); Row(StanceId.CastAxe); Row(StanceId.CastMace);
+        Row(StanceId.CastKatar); Row(StanceId.CastKnuckle); Row(StanceId.CastWand);
 
         Section("Locomotion (driven by the player brain)");
         Row(StanceId.Idle); Row(StanceId.Walk); Row(StanceId.Run); Row(StanceId.Sprint);
@@ -238,6 +242,10 @@ public class StanceComposerWindow : EditorWindow
             if (id == StanceId.Jump) JumpTimingButton(b);
             else if (id == StanceId.Roll) RollRootButton(b);
             else if (walkCycle) StepFramesButton(b);
+            // A held pose that stops part-way (the bow's cast): where in the clip it stops, in seconds.
+            else if (WeaponStances.IsCast(id))
+                b.holdAt = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("", "Seconds into the clip where it " +
+                    "stops and holds for the whole cast. 0 = plays normally."), b.holdAt, GUILayout.Width(94)));
             else GUILayout.Space(94);
             // A walk cycle's legs are locked to the ground, so no speed source applies to it; a blank keeps columns aligned.
             if (walkCycle) GUILayout.Space(110);
@@ -254,7 +262,7 @@ public class StanceComposerWindow : EditorWindow
                 var d = StanceDefaults.For(id);
                 b.action = d.action; b.speedSource = d.speedSource; b.speedMult = d.speedMult;
                 b.priority = d.priority; b.crouchEnd = d.crouchEnd; b.airborneFreeze = d.airborneFreeze;
-                b.rootFromFrame = d.rootFromFrame; b.clip = d.clip;
+                b.rootFromFrame = d.rootFromFrame; b.clip = d.clip; b.holdAt = d.holdAt;
                 b.footPlants = new List<FootPlant>();
                 if (walkCycle) MeasureSteps(b);
                 GUI.changed = true;

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ef6d792bac08842598d133d9a1c7db0c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Settings/HDRP_Volume_Settings.asset
+  uploadId: 831922

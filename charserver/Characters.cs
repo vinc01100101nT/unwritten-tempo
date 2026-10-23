@@ -240,7 +240,10 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         // that write, BEFORE the row below is read. Read first and whoever is arriving picks up the last ordinary
         // save, up to fifteen seconds old, and everything the machine being taken over did since is lost. This is
         // the same order a door already uses: write, wait, then hand over.
-        await maps.LetGoOfEverywhereAsync(characterId.ToString(), http.RequestAborted);
+        // EXCEPT THE PLAYER'S OWN GAME: a read under the very sign-in that is in the world right now is that game
+        // reading its own character — letting go there threw the player out of the world they had just entered.
+        if (!maps.IsPlayedBySession(characterId.ToString(), auth.SessionIdFrom(http.Request.Headers.Authorization)))
+            await maps.LetGoOfEverywhereAsync(characterId.ToString(), http.RequestAborted);
 
         await using var cmd = new NpgsqlCommand(
             @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm
@@ -430,7 +433,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         // starting map of the process they go to, which is what that process brings up for them.
         bool taken = await maps.AnnounceAsync(to, ticket, name, map ?? to.StartingMap ?? "", sent,
                                               CharacterRows.ForAnnouncement(ownRows), quests.RootElement, isGm, handover,
-                                              signingIn: true, http.RequestAborted);
+                                              signingIn: true, http.RequestAborted, sessionId: carrying);
         if (!taken)
             return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
 

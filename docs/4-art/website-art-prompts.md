@@ -147,8 +147,9 @@ one feature.
 
 Every skill's icon is a painted emblem. **A weapon's whole skill set is made in ONE picture** — a grid of 6 columns
 and 4 rows (24 cells) on one 1376 × 768 image — and cut apart afterwards, because only six pictures are made a day.
-Each icon comes out about 180 pixels square, well above the 48-pixel hotbar slot. A weapon with more than 24 skills
-takes a second picture.
+Each icon comes out about 180 pixels square, well above the 48-pixel hotbar slot. A weapon with more than 24 icons
+still gets ONE picture: the grid widens to 7 columns and 4 rows (28 cells, still about 190 pixels each), and the
+prompt says so. Never split a set into a second picture for a few extra icons.
 
 **Every icon in a weapon's set is built from its Kashira's theme** (the lore's own table):
 

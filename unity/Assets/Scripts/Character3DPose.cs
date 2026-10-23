@@ -322,19 +322,45 @@ public class Character3DPose : MonoBehaviour, IStancePose
     // takeoff crouch and landing tail play at that speed, while the airborne HOLD stays a hard 0 regardless. The
     // freeze POINT (freezeN) is a normalized clip fraction, so it's unaffected by mult. No allocation — struct state
     // info + cached clip length. Falls back to a plain hold if the clip has no dedicated one-shot state.
-    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f)
+    // The animator's speed while gliding into a held frame (see PlayClipPhase): slow enough that the clip itself
+    // stays on that frame for the whole glide, not zero, because a stopped animator would stop the blend too.
+    const float BlendCrawl = 1e-4f;
+    bool phaseBlending;
+
+    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f,
+                              bool restart = false, float blendSeconds = 0f)
     {
         if (string.IsNullOrEmpty(clip) || !stateHash.TryGetValue(clip, out int h)) { Play(src, clip); return; }
 
         float len = clipLen.TryGetValue(clip, out float l) && l > 0.01f ? l : 1f;
         float freezeN = Mathf.Clamp01(freezeSeconds / len);
 
-        // First frame in this state: CrossFade in at the start, playing forward.
-        if (currentState != h)
+        // First frame in this state: CrossFade in at the start, playing forward. A held pose that has just begun
+        // (restart) re-enters even when the body is already in this clip — a bow cast right after a bow shot must start
+        // from the draw, not hold wherever the shot had reached.
+        if (currentState != h || restart)
         {
-            anim.CrossFadeInFixedTime(h, crossFade, 0);
             currentState = h;
+            if (blendSeconds > 0f)
+            {
+                // GLIDE INTO THE FREEZE FRAME over blendSeconds of real time: start the clip already on that frame
+                // and run the animator at a crawl, with the blend sized so the crawl takes exactly that long. The
+                // clip barely moves meanwhile, so what shows is the body easing from its pose into the held one.
+                phaseBlending = true;
+                anim.CrossFadeInFixedTime(h, blendSeconds * BlendCrawl, 0, freezeSeconds);
+                anim.speed = BlendCrawl;
+                return;
+            }
+            phaseBlending = false;
+            anim.CrossFadeInFixedTime(h, crossFade, 0);
             anim.speed = mult;
+            return;
+        }
+        if (phaseBlending)
+        {
+            if (anim.IsInTransition(0)) { anim.speed = BlendCrawl; return; }
+            phaseBlending = false;
+            anim.speed = 0f;
             return;
         }
 
@@ -429,11 +455,16 @@ public class Character3DPose : MonoBehaviour, IStancePose
     }
 
     /// <summary>World-space facing/aim (XZ) — the model yaws toward it. Called by the 3D visual brain.</summary>
-    public void SetFacing(Vector3 worldDir)
+    public void SetFacing(Vector3 worldDir, bool snap = false)
     {
         worldDir.y = 0f;
-        if (worldDir.sqrMagnitude > 1e-6f) facing = worldDir;
+        if (worldDir.sqrMagnitude <= 1e-6f) return;
+        facing = worldDir;
+        if (snap) snapFacing = true;
     }
+
+    // Set the frame an attack starts; the next turn lands at once and the flag clears.
+    bool snapFacing;
 
     void GoTo(int hash)
     {
@@ -465,7 +496,8 @@ public class Character3DPose : MonoBehaviour, IStancePose
         if (facing.sqrMagnitude > 1e-4f)
         {
             Quaternion look = Quaternion.LookRotation(facing);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, look, turnSpeed * Time.deltaTime);
+            transform.rotation = snapFacing ? look : Quaternion.RotateTowards(transform.rotation, look, turnSpeed * Time.deltaTime);
         }
+        snapFacing = false;
     }
 }

@@ -86,13 +86,14 @@ public static class Flights
         public ulong chain;
         public string skillId, symbol, skillName;
         public bool efficient;
+        public float release = 1f;
 
         public readonly List<ICombatUnit> hit = new List<ICombatUnit>(FlightMath.MaxJumps + 1);
 
         public void Clear()
         {
             thrower = null; target = null; effects = null; map = null; binding = -1;
-            skillId = null; symbol = null; skillName = null; hit.Clear(); returning = false;
+            skillId = null; symbol = null; skillName = null; hit.Clear(); returning = false; release = 1f;
         }
     }
 
@@ -140,7 +141,8 @@ public static class Flights
     /// effects, measured with the cast's snapshot (<paramref name="vars"/>); the cast's own side never runs again.</summary>
     public static void StartSkillBounce(ICombatUnit caster, ICombatUnit firstVictim, SkillTickBinding binding,
                                         List<SkillEffect> effects, StackVars vars, ulong chain,
-                                        string skillId, string symbol, string skillName, bool efficient)
+                                        string skillId, string symbol, string skillName, bool efficient,
+                                        float release = 1f)
     {
         if (!GameServer.IsServer || binding == null || binding.bounceJumps <= 0) return;
         if (PlayerUnits.Gone(caster) || caster.IsDead || PlayerUnits.Gone(firstVictim) || firstVictim.Body == null) return;
@@ -169,6 +171,7 @@ public static class Flights
         f.chain = chain;
         f.skillId = skillId; f.symbol = symbol; f.skillName = skillName;
         f.efficient = efficient;
+        f.release = release;
         f.hit.Add(firstVictim);
         f.lastPoint = UnitAnchor.Center(firstVictim.Body);
         live.Add(f);
@@ -306,7 +309,7 @@ public static class Flights
             SkillEffectApplier.ApplyBurst(victim.Body.position, 0f, SkillScope.Single, SkillTargets.Mobs, f.effects,
                                           victim.Body, f.symbol, f.skillName, f.skillId,
                                           caster: f.thrower, vars: f.vars, efficient: f.efficient,
-                                          casterPass: false, hop: scale);
+                                          casterPass: false, hop: scale, release: f.release);
         }
         finally { PassiveEvents.Pop(prev); }
     }

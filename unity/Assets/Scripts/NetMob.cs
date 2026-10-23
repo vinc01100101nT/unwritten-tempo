@@ -579,7 +579,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
             viewBillboard.TellTravel(netSpeed > 0f, netHeading);
             // A FLAT CHARACTER'S POSES, from the same beats a live-3D body plays: its casting picture while a wind-up is
             // held, and its attack picture for a swing — each swing once, and only while it is fresh.
-            viewBillboard.HoldCast(netHasHeld && netHeld == StanceId.Casting);
+            viewBillboard.HoldCast(netHasHeld && WeaponStances.IsCast(netHeld));
             if (netActionAt > 0d && netActionAt != poseShownAt)
             {
                 poseShownAt = netActionAt;
@@ -874,7 +874,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // A wind-up's bar and ring are hung on this body, which is about to be banked for another creature — and so is
         // any pose it was told to hold.
         StopCastWindup();
-        if (viewVisual != null) viewVisual.TellHeld(false, StanceId.Casting, 0f);
+        if (viewVisual != null) viewVisual.TellHeld(false, default, 0f);
         // EVERY LASTING CUE RIDING THIS BODY COMES OFF FIRST. A glow is held by the name the server gave it, not by
         // the body it is attached to, and this body is about to be banked for the next creature to use — so a
         // poisoned creature you walked away from would hand its glow to whatever came back in its place.

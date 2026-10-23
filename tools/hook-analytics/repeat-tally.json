@@ -1,16 +1,10 @@
 {
-  "bff6691d-46a5-4cd8-9a3c-b326485dbd62": {
+  "5cc9b2be-10bd-4918-b97c-9619869af77c": {
     "counts": {
-      "build-game.sh server": 1
-    }
-  },
-  "c0a7c5af-02aa-408c-ae5b-9a5bdc4ecd4d": {
-    "counts": {
-      "build-game.sh server": 3,
-      "npm run migrate": 1
+      "editor_play": 4
     },
     "told": [
-      "build-game.sh server"
+      "editor_play"
     ]
   },
   "c660f476-5d5f-4023-aebc-9ab9e054d5f4": {
@@ -28,6 +22,11 @@
       "check-perf-hotpaths.py 2>&1",
       "check-unity-code.sh 2>&1"
     ]
+  },
+  "d5b8e1af-af9f-407a-9ae7-16fa6cd5a006": {
+    "counts": {
+      "build-game.sh server": 1
+    }
   },
   "d620a2f5-7cd2-4f15-840c-2dfff515140a": {
     "counts": {

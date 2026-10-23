@@ -38,6 +38,8 @@ MonoBehaviour:
   manaCost: 5
   cooldown: 0.7
   castTime: 0
+  fixedCastTime: 0
+  releaseEarly: 0
   aim: 1
   castRange: 11
   tier: 0

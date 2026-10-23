@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 3d1e59ad689b04808913ae54444e52a8
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 60072b568d64c40a485e0fc55012dc9f, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Shaders/CloudTextureMovement.shadersubgraph
+  uploadId: 831922

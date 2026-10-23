@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1d04b1323bad14d499b61587e662bddb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Animation/ThundercloudStart.anim
+  uploadId: 831922

@@ -64,6 +64,8 @@ public sealed class UnitPlate
     TextMeshProUGUI nameLabel;
     TextMeshProUGUI descriptionLabel;
     bool hasDescription;
+    // How far down the name row starts: below the buffs and debuffs, when there are any.
+    float nameY;
     // A quest mark over the name — "!" or "?" (see QuestMarks) — or nothing.
     TextMeshProUGUI markLabel;
     string shownMark = "";
@@ -85,7 +87,7 @@ public sealed class UnitPlate
 
     // The buffs and debuffs row. The store is listened to only while it is handed in; tiles are pooled and redrawn
     // when the store changes or the soonest one shown runs out — never per frame.
-    sealed class StateTile { public Image back, icon; public TextMeshProUGUI letters; }
+    sealed class StateTile { public Image back, icon; public TextMeshProUGUI letters, count; public int shownCount = -1; }
     RectTransform stateRow;
     readonly System.Collections.Generic.List<StateTile> stateTiles = new System.Collections.Generic.List<StateTile>(4);
     UnitStates stateStore;
@@ -294,7 +296,12 @@ public sealed class UnitPlate
             letters.fontSizeMin = 3f;
             letters.fontSizeMax = 6f;
             StretchFull(letters.rectTransform);
-            stateTiles.Add(new StateTile { back = back, icon = icon, letters = letters });
+            // The stack count in the tile's lower-right corner, blank at one stack — the buff tray's own rule.
+            var count = NewText("Count", back.rectTransform, 5);
+            count.alignment = TextAlignmentOptions.BottomRight;
+            count.color = BuffBarPanel.StackColor;
+            StretchFull(count.rectTransform);
+            stateTiles.Add(new StateTile { back = back, icon = icon, letters = letters, count = count });
         }
         return stateTiles[i];
     }
@@ -309,6 +316,12 @@ public sealed class UnitPlate
         t.letters.gameObject.SetActive(!pictured);
         if (pictured) { t.icon.sprite = sprite; t.icon.color = StateFace.Tint(s); }
         else { t.letters.text = StateFace.Letters(s); t.letters.color = StateFace.Tint(s); }
+        int n = s.StackCount;
+        if (n != t.shownCount)
+        {
+            t.count.text = n >= 0 && n < BuffBarPanel.StackLabels.Length ? BuffBarPanel.StackLabels[n] : "";
+            t.shownCount = n;
+        }
     }
 
     int StatesPerRow => Mathf.Max(1, Mathf.FloorToInt((barW + StateGap) / (StateSize + StateGap)));
@@ -413,31 +426,32 @@ public sealed class UnitPlate
         if (root == null) return;
 
         bool mana = hasBars && hasMana;
-        float top = hasDescription ? NameH + DescriptionH : NameH;
 
-        // The buffs and debuffs sit between the name and the health bar.
+        // The buffs and debuffs sit on top, above the name, so the name stays right over the bars it names.
+        nameY = 0f;
         int stateRows = stateCount == 0 ? 0 : (stateCount + StatesPerRow - 1) / StatesPerRow;
         if (stateRow.gameObject.activeSelf != stateRows > 0) stateRow.gameObject.SetActive(stateRows > 0);
         if (stateRows > 0)
         {
             float rowsH = stateRows * StateSize + (stateRows - 1) * StateGap;   // server-math: screen pixels, not a game number
-            Place(stateRow, new Vector2(0f, -(top + RowGap)), new Vector2(barW, rowsH));
-            top += RowGap + rowsH;
+            Place(stateRow, Vector2.zero, new Vector2(barW, rowsH));
+            nameY = rowsH + RowGap;
             PlaceStateTiles();
         }
+        float top = nameY + (hasDescription ? NameH + DescriptionH : NameH);
 
         // The plate is only as tall as what it is showing.
         float h = top + (hasBars ? RowGap + HpBarH : 0f) + (mana ? RowGap + MpBarH : 0f);   // server-math: the plate's height in screen pixels, not a game number
         root.sizeDelta = new Vector2(barW, h);
 
-        Place(nameLabel.rectTransform, new Vector2(0f, 0f), new Vector2(Mathf.Max(barW, 40f), NameH));
+        Place(nameLabel.rectTransform, new Vector2(0f, -nameY), new Vector2(Mathf.Max(barW, 40f), NameH));
         nameLabel.fontSize = Mathf.Max(7f, Mathf.Min(11f, barW * 0.28f));
 
         if (descriptionLabel.gameObject.activeSelf != hasDescription) descriptionLabel.gameObject.SetActive(hasDescription);
         if (hasDescription)
         {
             // Wider than the bars: a caption is a few words, and a narrow body should not squeeze it.
-            Place(descriptionLabel.rectTransform, new Vector2(0f, -NameH), new Vector2(Mathf.Max(barW, 160f), DescriptionH));
+            Place(descriptionLabel.rectTransform, new Vector2(0f, -(nameY + NameH)), new Vector2(Mathf.Max(barW, 160f), DescriptionH));
             descriptionLabel.fontSize = Mathf.Max(6f, nameLabel.fontSize * DescriptionScale);
         }
 
@@ -466,13 +480,13 @@ public sealed class UnitPlate
         float extra = elementShown ? ElementGap + ElementSize : 0f;
         float face = portraitShown ? NameH + ElementGap : 0f;
         float left = -(face + nameW + extra) * 0.5f;
-        if (portraitShown) portrait.rectTransform.anchoredPosition = new Vector2(left + NameH * 0.5f, 0f);
+        if (portraitShown) portrait.rectTransform.anchoredPosition = new Vector2(left + NameH * 0.5f, -nameY);
         left += face;
         var nrt = nameLabel.rectTransform;
-        nrt.anchoredPosition = new Vector2(left + nameW * 0.5f, 0f);
+        nrt.anchoredPosition = new Vector2(left + nameW * 0.5f, -nameY);
         if (elementShown)
             elementTile.rectTransform.anchoredPosition =
-                new Vector2(left + nameW + ElementGap + ElementSize * 0.5f, -(NameH - ElementSize) * 0.5f);
+                new Vector2(left + nameW + ElementGap + ElementSize * 0.5f, -nameY - (NameH - ElementSize) * 0.5f);
     }
 
     // ---- small builders ------------------------------------------------------------------------------------

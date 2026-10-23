@@ -37,11 +37,23 @@ public static class Vfx
     {
         ParticleSystem[] systems;
         AudioSource[] audioSources;
+        // An effect's own lights (the shared light effect is nothing else): their authored colour, reach and brightness,
+        // the baselines each play starts from — tint recolours them, scale stretches their reach, a soft stop dims them.
+        Light[] lights;
+        Color[] baseLightColor;
+        float[] baseLightRange, baseLightIntensity;
+        float fadeFrom, fadeSeconds;
         float[] baseSpeed;                       // authored simulationSpeed per system — the reset baseline
         ParticleSystem.MinMaxGradient[] baseColor; // authored startColor per system — the tint baseline
         bool[] isRoot;                           // system has no ParticleSystem ancestor in this instance → drives children
         bool[] baseLoop;                         // authored loop flag per system — restored for attached auras, forced off for one-shots
-        EntityId poolKey;
+        ParticleSystemSimulationSpace[] baseSpace;
+        // authored simulation space per system — restored every play, overridden by LeaveParticlesBehind
+        internal EntityId poolKey;
+#if UNITY_EDITOR
+        internal bool staleInEditor;
+        // Its prefab was saved while it was out playing: destroyed on return, never reused (editor Play mode only).
+#endif
         // What this effect's own particles say about its length — the same three numbers the effect table carries
         // for a machine that never builds one of these (see EffectTiming).
         EffectTiming.Measured measured;
@@ -51,6 +63,18 @@ public static class Vfx
         float returnAt;        // Time.time to auto-return at; 0 = never (attached loop, until Stop)
         bool stopping;         // in the fade-out tail after Stop() → next returnAt hits Return, not another Stop
         Transform follow;      // tracked target for Attach (auras/shields); null for a fixed-point one-shot
+        bool turnsWithFollow;
+        // also copies the target's facing each frame — an effect riding a flying arrow (see TurnWithFollow)
+        bool turnsWithBody;
+        // faces the way the body it rides faces each frame, its offset turned with it (see TurnWithBody)
+        Player3DController bodyPlayer;
+        MonsterAI3D bodyCreature;
+        Vector3 bodyOffset;
+        Quaternion bodyRotation;
+        internal bool readsScreen;
+        // set once at birth from the effect table: this effect has a heat haze (see ScreenCopy)
+        bool holdsScreen;
+        // this play is holding the camera's screen copy, released exactly once when the instance switches off
         Vector3 offset;
         int generation;
 
@@ -58,6 +82,49 @@ public static class Vfx
         /// up pointing at an instance now showing somebody else's effect. Whoever keeps one keeps this number beside
         /// it, and stops it only while the two still agree.</summary>
         internal int Generation => generation;
+
+        /// <summary>From now until this play ends, the effect also takes its target's FACING every frame, not only its
+        /// position — so an effect riding a flying arrow points where the arrow points. Cleared when the next play
+        /// begins and when the instance goes back to the pool.</summary>
+        internal void TurnWithFollow()
+        {
+            turnsWithFollow = true;
+            if (follow != null) transform.rotation = follow.rotation;
+        }
+
+        /// <summary>For this play only, every particle stays where it was born, so an effect riding something that
+        /// moves leaves a trail. Called right after the play begins, before any particle exists; the next play
+        /// restores the effect's own setting.</summary>
+        internal void LeaveParticlesBehind()
+        {
+            for (int i = 0; i < systems.Length; i++)
+            {
+                var m = systems[i].main;
+                m.simulationSpace = ParticleSystemSimulationSpace.World;
+            }
+        }
+
+        /// <summary>From now until this play ends, the effect faces the way the body it rides faces, every frame, and
+        /// its <paramref name="turnedOffset"/> turns with it (+Z = in front). <paramref name="fixedOffset"/> is added
+        /// unturned (a height fix, a scatter nudge). Cleared like <see cref="TurnWithFollow"/>.</summary>
+        internal void TurnWithBody(Vector3 turnedOffset, Vector3 fixedOffset, Quaternion extraRotation)
+        {
+            if (follow == null) return;
+            turnsWithBody = true;
+            bodyPlayer = follow.GetComponent<Player3DController>();
+            bodyCreature = bodyPlayer == null ? follow.GetComponent<MonsterAI3D>() : null;
+            bodyOffset = turnedOffset;
+            offset = fixedOffset;
+            bodyRotation = extraRotation;
+            FollowBody();
+        }
+
+        void FollowBody()
+        {
+            Vector3 dir = BodyForward(follow, bodyPlayer, bodyCreature);
+            Quaternion face = dir.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(dir.normalized) : Quaternion.identity;
+            transform.SetPositionAndRotation(follow.position + offset + face * bodyOffset, face * bodyRotation);
+        }
 
 
         // Cache components + measure loop/duration + the authored speed/color baselines. Runs ONCE the first
@@ -69,6 +136,16 @@ public static class Vfx
             poolKey = key;
             systems = GetComponentsInChildren<ParticleSystem>(true);
             audioSources = GetComponentsInChildren<AudioSource>(true);
+            lights = GetComponentsInChildren<Light>(true);
+            baseLightColor = new Color[lights.Length];
+            baseLightRange = new float[lights.Length];
+            baseLightIntensity = new float[lights.Length];
+            for (int i = 0; i < lights.Length; i++)
+            {
+                baseLightColor[i] = lights[i].color;
+                baseLightRange[i] = lights[i].range;
+                baseLightIntensity[i] = lights[i].intensity;
+            }
             // The x-ray silhouette bits are RESERVED for the player. Vendor VFX prefabs ship with
             // renderingLayerMask "Everything" (all bits set), which spuriously matches the silhouette
             // feature's filter and paints the effect flat blue when it passes behind scenery. Strip those
@@ -81,11 +158,12 @@ public static class Vfx
             baseColor = new ParticleSystem.MinMaxGradient[systems.Length];
             isRoot = new bool[systems.Length];
             baseLoop = new bool[systems.Length];
+            baseSpace = new ParticleSystemSimulationSpace[systems.Length];
             // HOW LONG THIS PLAYS is no longer worked out here — it is one formula, shared with the author-time
             // baker that writes the same numbers into the effect table for a machine that never builds an instance
             // (see EffectTiming). Measured from the instance we are holding, so a machine with the real thing still
             // reads the real thing; the bake exists for the one that hasn't.
-            measured = EffectTiming.Of(systems);
+            measured = EffectTiming.Of(systems, lights.Length > 0);
             for (int i = 0; i < systems.Length; i++)
             {
                 var m = systems[i].main;
@@ -105,6 +183,7 @@ public static class Vfx
                 }
                 isRoot[i] = root;
                 baseLoop[i] = m.loop;
+                baseSpace[i] = m.simulationSpace;
             }
         }
 
@@ -119,11 +198,20 @@ public static class Vfx
             generation++;
             if (covered) Cover(false);
             follow = followTarget;
+            turnsWithFollow = false;
+            turnsWithBody = false;
+            bodyPlayer = null;
+            bodyCreature = null;
             offset = followOffset;
             stopping = false;
             transform.SetPositionAndRotation(pos, rot);
             transform.localScale = Vector3.one * Mathf.Max(0.001f, authoredScale * callerScale);
             gameObject.SetActive(true);
+            if (readsScreen && !holdsScreen)
+            {
+                ScreenCopy.Hold();
+                holdsScreen = true;
+            }
 
             bool tinted = tint != Color.white;
             float speed = Mathf.Max(0.01f, speedMult);
@@ -134,6 +222,7 @@ public static class Vfx
                 // A one-shot plays exactly ONE clip — no restart at the loop boundary (mirrors the Vfx Composer
                 // preview, which forces loop off for PlayAt). Attached auras keep their authored looping.
                 m.loop = oneShot ? false : baseLoop[i];
+                m.simulationSpace = baseSpace[i];
                 m.startColor = tinted ? Multiply(baseColor[i], tint) : baseColor[i];
                 systems[i].Clear(true);
                 systems[i].Play(true);
@@ -148,6 +237,16 @@ public static class Vfx
             if (audioSources != null)
                 for (int i = 0; i < audioSources.Length; i++)
                     if (audioSources[i].playOnAwake && audioSources[i].clip != null) audioSources[i].Play();
+
+            // A LIGHT TAKES THE PLAY'S TINT AS ITS COLOUR and its SCALE as its reach — a light's range does not follow
+            // its object's scale, so one shared light serves a tiny spark and a wide blast alike.
+            float lightScale = Mathf.Max(0.001f, authoredScale * callerScale);
+            for (int i = 0; i < lights.Length; i++)
+            {
+                lights[i].color = tinted ? new Color(tint.r, tint.g, tint.b, 1f) : baseLightColor[i];
+                lights[i].range = baseLightRange[i] * lightScale;
+                lights[i].intensity = baseLightIntensity[i];
+            }
 
             // WHEN THIS PLAY ENDS is one arithmetic, shared with whatever else has to know the moment without
             // holding an instance (see EffectTiming.PlayEndsInSeconds). A forced window wins; otherwise a one-shot
@@ -204,7 +303,18 @@ public static class Vfx
             // (cleared on Return once the tail is done). Nulling it here left the tail behind at the Stop position.
             stopping = true;
             returnAt = Time.time + measured.fadeSeconds;
+            fadeFrom = Time.time;
+            fadeSeconds = measured.fadeSeconds;
             // let live particles fade for one particle lifetime, then Return picks it up
+        }
+
+        // Every way out — back to the pool, a host torn down with its map, a quit — switches the instance off, so the
+        // screen copy is released on all of them.
+        void OnDisable()
+        {
+            if (!holdsScreen) return;
+            holdsScreen = false;
+            ScreenCopy.Release();
         }
 
         void LateUpdate()
@@ -212,11 +322,22 @@ public static class Vfx
             if (follow != null)
             {
                 if (follow.gameObject == null) { Stop(); return; }   // target destroyed → tear down
-                transform.position = follow.position + offset;
+                if (turnsWithBody) FollowBody();
+                else
+                {
+                    transform.position = follow.position + offset;
+                    if (turnsWithFollow) transform.rotation = follow.rotation;
+                }
                 // HIDDEN AND SILENT while the person it rides is away on a teleport — an aura, a regeneration glow,
                 // anything held on them — and back the frame they appear.
                 bool hide = TeleportLook.Covers(follow);
                 if (hide != covered) Cover(hide);
+            }
+            // A STOPPING LIGHT DIMS over the fade tail rather than cutting off. Only while one is fading.
+            if (stopping && lights.Length > 0 && fadeSeconds > 0f)
+            {
+                float left = 1f - Mathf.Clamp01((Time.time - fadeFrom) / fadeSeconds);
+                for (int i = 0; i < lights.Length; i++) lights[i].intensity = baseLightIntensity[i] * left;
             }
             if (returnAt <= 0f || Time.time < returnAt) return;
             // A one-shot with a looping sub-emitter: stop emitting + fade the tail, THEN return (avoids a hard
@@ -235,6 +356,9 @@ public static class Vfx
             if (audioSources != null)
                 for (int i = 0; i < audioSources.Length; i++)
                     if (audioSources[i] != null) audioSources[i].mute = on;
+            if (lights != null)
+                for (int i = 0; i < lights.Length; i++)
+                    if (lights[i] != null) lights[i].enabled = !on;
         }
 
         void Return()
@@ -242,8 +366,31 @@ public static class Vfx
             if (covered) Cover(false);
             gameObject.SetActive(false);
             follow = null;
+            turnsWithFollow = false;
+            turnsWithBody = false;
+            bodyPlayer = null;
+            bodyCreature = null;
+#if UNITY_EDITOR
+            if (staleInEditor) { Destroy(gameObject); return; }
+#endif
             GetPool(poolKey).Push(this);
         }
+    }
+
+    /// <summary>The way a body is turned, flat on the ground. Your own body's object never turns (measured
+    /// 2026-10-23: yaw 0 while the player faced 69°) — its brain's facing is the answer, and a creature's brain
+    /// mirrors it. Anything else (a watched person's body, turned to their heading) uses its own forward.</summary>
+    internal static Vector3 BodyForward(Transform unit) =>
+        BodyForward(unit, unit.GetComponent<Player3DController>(), unit.GetComponent<MonsterAI3D>());
+
+    static Vector3 BodyForward(Transform unit, Player3DController player, MonsterAI3D creature)
+    {
+        Vector3 f;
+        if (player != null) f = player.WorldFacing;
+        else if (creature != null && creature.WorldFacing.sqrMagnitude > 1e-4f) f = creature.WorldFacing;
+        else f = unit.forward;
+        f.y = 0f;
+        return f;
     }
 
     // ---- pool ---------------------------------------------------------------
@@ -272,8 +419,26 @@ public static class Vfx
         var h = go.GetComponent<EffectHandle>();
         if (h == null) h = go.AddComponent<EffectHandle>();
         h.Prepare(key);
+        h.readsScreen = def.measuredReadsScreen;
         return h;
     }
+
+#if UNITY_EDITOR
+    /// <summary>Editor Play mode only: an effect prefab was just saved, so every copy built from the old version is
+    /// thrown away — the idle ones now, the ones still playing when they finish — and the next use is built from the
+    /// saved prefab. Called by the editor's save watcher; nothing in a build can reach it.</summary>
+    public static void DropPoolInEditor(GameObject prefab)
+    {
+        if (!Application.isPlaying || host == null || prefab == null) return;
+        EntityId key = prefab.GetEntityId();
+        // Every effect played this session has a pile (Rent makes it), so no pile = never built = nothing old to drop.
+        if (!pools.TryGetValue(key, out var idle)) return;
+        while (idle.Count > 0) { var h = idle.Pop(); if (h != null) Object.Destroy(h.gameObject); }
+        pools.Remove(key);
+        foreach (var h in host.GetComponentsInChildren<EffectHandle>(false))
+            if (h.poolKey == key) h.staleInEditor = true;
+    }
+#endif
 
     static Stack<EffectHandle> GetPool(EntityId key)
     {
@@ -348,7 +513,7 @@ public static class Vfx
     /// seconds, applied separately.</remarks>
     public static EffectHandle Attach(string id, Transform target, Vector3 offset = default, float scaleMult = 1f,
                                       Color tint = default, bool oneShot = false, float clipStart = 0f, float lifetime = 0f,
-                                      float speed = 1f)
+                                      float speed = 1f, float tailTrim = 0f)
     {
         if (Blind) return null;
         var def = EffectCatalog.Get(id);
@@ -359,7 +524,7 @@ public static class Vfx
         // lifetime > 0 → a looping aura capped at that many seconds (a skill's Stay Duration); 0 → the authored
         // lifetime (which for a looping effect means "until Stop()", the persistent-aura path).
         float life = lifetime > 0f ? lifetime : def.lifetime;
-        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, speed, t, life, oneShot, target, total, 0f, clipStart);
+        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, speed, t, life, oneShot, target, total, tailTrim, clipStart);
         return h;
     }
 

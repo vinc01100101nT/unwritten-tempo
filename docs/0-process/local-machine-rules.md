@@ -114,9 +114,30 @@ There is one road to the running editor and it works. **Check it before leaning 
 state a live value, describe how something looks, run an author-time action, or take a second swing at a bug that
 survived one fix — that is the instruction. Measure, don't guess.
 
-**Three things stay the user's:** Play mode, their visual judgement, and their Scene view — never move its camera
-and never change which scene is open (added 2026-09-25 at the user's instruction; work on a scene without showing
-it). And the forced-recompile ban below.
+**Three things stay the user's:** STARTING Play mode, their visual judgement, and their Scene view — never move its
+camera and never change which scene is open (added 2026-09-25 at the user's instruction; work on a scene without
+showing it). And the forced-recompile ban below.
+
+**⛔ STOPPING PLAY MODE IS MINE — never be blocked by it (HARD RULE, added 2026-10-23 at the user's instruction:
+"you can always stop the playmode yourself so you are not blocked").** When work needs the editor out of Play mode —
+a recompile, an asset reload, a file change the editor must pick up — stop Play myself (`unity cmd editor_stop`, or
+the `editor_stop` tool), do the work, and say in the reply that I stopped it. Never end a reply with "stop Play and
+recompile" handed to the user, and never park a change unloaded because Play was on. Starting Play again stays theirs.
+
+**⛔ EVERY CHANGE ENDS WITH THE EDITOR RECOMPILED AND LOADED — the user only presses Play (HARD RULE, added
+2026-10-23 at the user's instruction: "always recompile the editor after your changes so all I have to do is press
+playmode").** The closing move of any reply that touched C#, an asset, a scene or a prefab: stop Play if it is on,
+`recompile`, wait for `completed`, reimport any asset I edited on disk, prove the change reached the build (search the
+assembly, per the console section below), read the console, THEN report. "Unity will pick it up when you recompile" is
+a failed reply.
+
+**⛔ A BEHAVIOUR FIX IS WATCHED IN PLAY MODE BEFORE IT IS REPORTED (HARD RULE, added 2026-10-23 at the user's
+instruction: "test it before reporting it is fixed, so you do not report a false fix").** A clean compile proves it
+builds, never that it works. For anything that only shows while the game runs, start Play myself, sign in with the test
+account (`AccountClient.SignIn("alpha@test.local", "testpass123", …)` then `AccountSession.PlayAs` its character
+"Alpha", made 2026-10-23 — the user's own account is not mine to use), drive the thing through the game's own
+functions, sample the live values, stop Play, then report what I watched. *(Scar: two reasoned fixes for the bow's
+cast draw were reported fixed and both failed; the third was watched — the draw glided across a 1 s cast — first.)*
 
 The connection details, the proven-vs-unproven list, how to run an editor action safely, and the offline compile
 checker are the **`unity-live-editor` skill**.
@@ -133,7 +154,7 @@ Never let one wear the other's words. Two players at once is beyond it — the e
 
 ## Working against the running editor (from the standing rules)
 
-- **Refreshing / recompiling Unity is ALLOWED** (the old blanket ban was lifted by the user on 2026-08-26). Trigger a refresh yourself when you need the editor to pick up new files or edits, instead of handing the user a click. **BUT NEVER WHILE THE USER IS PLAYING — read `editor_status` first, and if `playMode` is anything but `stopped`, do not recompile.** A recompile mid-play reloads every script's memory and ends the session as a wall of errors (2026-09-21: two scripts threw every frame and the user had to stop and restart Play to test the very fix I had just compiled). Two things still hold: **don't sit in a polling loop** on `recompile_status` / `get_console_logs` — fire it, wait, read once; and **to find out whether your C# COMPILES, still run `tools/check-unity-code.sh`** (next rule) rather than a refresh, because it is far faster and needs no editor.
+- **Refreshing / recompiling Unity is ALLOWED** (the old blanket ban was lifted by the user on 2026-08-26). Trigger a refresh yourself when you need the editor to pick up new files or edits, instead of handing the user a click. **BUT NEVER WHILE PLAY MODE IS RUNNING — read `editor_status` first, and if `playMode` is anything but `stopped`, STOP PLAY FIRST (the rule above: stopping is mine), then recompile.** A recompile mid-play reloads every script's memory and ends the session as a wall of errors (2026-09-21: two scripts threw every frame and the user had to stop and restart Play to test the very fix I had just compiled). Two things still hold: **don't sit in a polling loop** on `recompile_status` / `get_console_logs` — fire it, wait, read once; and **to find out whether your C# COMPILES, still run `tools/check-unity-code.sh`** (next rule) rather than a refresh, because it is far faster and needs no editor.
 
 **AND READ THE EDITOR'S CONSOLE BEFORE SAYING THE WORK IS DONE — every time, unprompted (HARD-PINNED, added 2026-08-29 at the user's instruction).** The offline checker and the console answer DIFFERENT questions, and a clean checker has never meant a clean console: the checker compiles the source it finds on disk, while the console is the only place that shows what the running editor actually did with it — an import failure, a serialization complaint, a null thrown by a tool, a package window falling over. So the closing move of any turn that touched C#, an asset, a scene or a prefab is: run the checker, then read the console, then report. **The user must never be the one to say "check the console".** Being asked is the failure this rule exists to remove.
 

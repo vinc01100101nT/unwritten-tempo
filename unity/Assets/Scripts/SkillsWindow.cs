@@ -107,7 +107,18 @@ public class SkillsWindow : MonoBehaviour
         rulerTrack = null;
         shownWeapon = weapon;
         if (weapon == WeaponType.None) BuildWeaponList();
+        else if (HasOrbCombos(weapon)) BuildOrbBoard(weapon);
         else BuildTimeline(weapon, keep);
+    }
+
+    // A weapon whose skills are orb combinations (the Staff) is laid out by its orbs, not on a mastery timeline: its
+    // combinations have no mastery level of their own, so a timeline would pile them all at its left edge.
+    static bool HasOrbCombos(WeaponType weapon)
+    {
+        var all = SkillCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+            if (all[i] != null && all[i].weaponType == weapon && all[i].IsOrbCombo) return true;
+        return false;
     }
 
     // Every weapon that has at least one skill in the game, in enum order.
@@ -152,29 +163,7 @@ public class SkillsWindow : MonoBehaviour
         int pointsLeft = mastery != null ? mastery.SentPointsLeft(weapon) : 0;
         int topMastery = CraftingMath.WeaponMasteryCap(CraftingMath.Best);
         Color weaponColor = WeaponColors.Load()?.Lookup(weapon) ?? SkillSymbol.NoWeapon;
-
-        // Top bar: back to the weapon list, the points left to spend, and the mastery the timeline is filled to.
-        var bar = NewRect("TopBar", content);
-        bar.anchorMin = new Vector2(0, 1); bar.anchorMax = new Vector2(1, 1); bar.pivot = new Vector2(0.5f, 1);
-        bar.sizeDelta = new Vector2(0, 30); bar.anchoredPosition = Vector2.zero;
-        var back = UiKit.Btn("Back", bar, () => { UISounds.PlayClick(); Show(WeaponType.None); });
-        var brt = (RectTransform)back.transform;
-        brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(0, 1); brt.pivot = new Vector2(0, 0.5f);
-        brt.sizeDelta = new Vector2(70, 0); brt.anchoredPosition = Vector2.zero;
-        var points = UiKit.Label("Points", bar, "Mastery Points <color=" + UiKit.Hex(UiKit.TitleText) + ">" + pointsLeft + "</color>",
-                                 13, FontStyle.Bold, TextAnchor.MiddleLeft);
-        points.richText = true; points.raycastTarget = false;
-        var prt = points.rectTransform;
-        prt.anchorMin = new Vector2(0, 0); prt.anchorMax = new Vector2(0, 1); prt.pivot = new Vector2(0, 0.5f);
-        prt.sizeDelta = new Vector2(220, 0); prt.anchoredPosition = new Vector2(82, 0);
-        // The experience toward the next level, exactly as the server sent it — this window only prints the numbers.
-        string heading = WeaponTypes.Label(weapon) + " Mastery " + level;
-        if (mastery != null && mastery.SentProgress(weapon, out double into, out double size, out bool capped))
-            heading += capped ? "  ·  capped by this weapon's grade"
-                              : "  ·  " + into.ToString("0.00") + " / " + size.ToString("0") + " exp";
-        var head = UiKit.Label("Mastery", bar, heading, 15, FontStyle.Bold, TextAnchor.MiddleRight);
-        UiKit.Fill(head.rectTransform, new Vector2(310, 0), Vector2.zero);
-        UiKit.Paint(head, UiKit.TitleText); head.raycastTarget = false;
+        TopBar(weapon, level, pointsLeft, mastery);
 
         // This weapon's skills, and the row each sits on.
         var skills = new List<SkillDef>();
@@ -270,19 +259,182 @@ public class SkillsWindow : MonoBehaviour
         rulerTrack.anchoredPosition = new Vector2(track.anchoredPosition.x, 0f);
     }
 
+    // Top bar: back to the weapon list, the points left to spend, and the weapon's mastery.
+    void TopBar(WeaponType weapon, int level, int pointsLeft, MasteryProgress mastery)
+    {
+        var bar = NewRect("TopBar", content);
+        bar.anchorMin = new Vector2(0, 1); bar.anchorMax = new Vector2(1, 1); bar.pivot = new Vector2(0.5f, 1);
+        bar.sizeDelta = new Vector2(0, 30); bar.anchoredPosition = Vector2.zero;
+        var back = UiKit.Btn("Back", bar, () => { UISounds.PlayClick(); Show(WeaponType.None); });
+        var brt = (RectTransform)back.transform;
+        brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(0, 1); brt.pivot = new Vector2(0, 0.5f);
+        brt.sizeDelta = new Vector2(70, 0); brt.anchoredPosition = Vector2.zero;
+        var points = UiKit.Label("Points", bar, "Mastery Points <color=" + UiKit.Hex(UiKit.TitleText) + ">" + pointsLeft + "</color>",
+                                 13, FontStyle.Bold, TextAnchor.MiddleLeft);
+        points.richText = true; points.raycastTarget = false;
+        var prt = points.rectTransform;
+        prt.anchorMin = new Vector2(0, 0); prt.anchorMax = new Vector2(0, 1); prt.pivot = new Vector2(0, 0.5f);
+        prt.sizeDelta = new Vector2(220, 0); prt.anchoredPosition = new Vector2(82, 0);
+        // The experience toward the next level, exactly as the server sent it — this window only prints the numbers.
+        string heading = WeaponTypes.Label(weapon) + " Mastery " + level;
+        if (mastery != null && mastery.SentProgress(weapon, out double into, out double size, out bool capped))
+            heading += capped ? "  ·  capped by this weapon's grade"
+                              : "  ·  " + into.ToString("0.00") + " / " + size.ToString("0") + " exp";
+        var head = UiKit.Label("Mastery", bar, heading, 15, FontStyle.Bold, TextAnchor.MiddleRight);
+        UiKit.Fill(head.rectTransform, new Vector2(310, 0), Vector2.zero);
+        UiKit.Paint(head, UiKit.TitleText); head.raycastTarget = false;
+    }
+
+    // ---- the orb board (the Staff) ----------------------------------------------------------------------
+    // Its orbs (and the Release) on one row — where every point goes — and under them every combination in a grid:
+    // one row per pair ("2× Fire"), one column per job the third orb gives it on the element wheel, and the three-element
+    // combinations as a Utility row.
+    const float OrbRowY = 38f, HeadY = 92f, GridY = 110f, RowStep = 48f, LabelW = 50f, Gap = 6f;
+    static readonly string[] JobTitles = { "Ultimate", "Offensive", "Setter", "Defensive" };
+
+    void BuildOrbBoard(WeaponType weapon)
+    {
+        var me = Character.Instance;
+        var mastery = me != null ? me.Mastery : null;
+        int level = mastery != null ? mastery.SentLevel(weapon) : 0;
+        int pointsLeft = mastery != null ? mastery.SentPointsLeft(weapon) : 0;
+        Color weaponColor = WeaponColors.Load()?.Lookup(weapon) ?? SkillSymbol.NoWeapon;
+        TopBar(weapon, level, pointsLeft, mastery);
+
+        var board = NewRect("OrbBoard", content);
+        UiKit.Fill(board, Vector2.zero, Vector2.zero);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        float width = content.rect.width > 0f ? content.rect.width : 744f;
+
+        // The skills that are not combinations — the orbs and the Release — on the top row.
+        var plain = new List<SkillDef>();
+        var combos = new Dictionary<int, SkillDef>();
+        var all = SkillCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var s = all[i];
+            if (s == null || s.weaponType != weapon || s.IsCompanion) continue;
+            if (s.IsOrbCombo) combos[OrbMath.KeyOf(s.orbCombo)] = s;
+            else plain.Add(s);
+        }
+        plain.Sort((a, b) => a.slotOrder != b.slotOrder ? a.slotOrder.CompareTo(b.slotOrder) : string.CompareOrdinal(a.id, b.id));
+        float plainW = plain.Count > 0 ? (width - Gap * (plain.Count - 1)) / plain.Count : width;
+        for (int i = 0; i < plain.Count; i++)
+            BuildNode(board, plain[i], i * (plainW + Gap), OrbRowY, Mathf.Max(1, plain[i].masteryLevel), null,
+                      weaponColor, level, pointsLeft, mastery, plainW);
+
+        float cellW = (width - LabelW - Gap * 4) / 4f;
+        for (int c = 0; c < JobTitles.Length; c++) GridLabel(board, JobTitles[c], CellX(c, cellW), HeadY, cellW, 16);
+
+        for (int r = 0; r < 4; r++)
+        {
+            var pair = (OrbElement)(r + 1);
+            float y = GridY + r * RowStep;
+            RowLabel(board, "2×", pair, y);
+            OrbElement[] thirds = { pair, Beats(pair), Alongside(pair), BeatenBy(pair) };
+            for (int c = 0; c < thirds.Length; c++)
+                if (combos.TryGetValue(KeyOf(pair, pair, thirds[c]), out var def))
+                    BuildNode(board, def, CellX(c, cellW), y, 1, null, weaponColor, level, pointsLeft, mastery, cellW);
+        }
+
+        float utilY = GridY + 4 * RowStep + 12f;
+        Box(board, "Split", LineBg, 0, utilY - 8f, width, 1);
+        GridLabel(board, "Utility", 0, utilY, LabelW, NodeH);
+        for (int c = 0; c < 4; c++)
+        {
+            var missing = (OrbElement)(4 - c);
+            OrbElement a = OrbElement.None, b = OrbElement.None, d = OrbElement.None;
+            for (int o = 1; o <= 4; o++)
+            {
+                var e = (OrbElement)o;
+                if (e == missing) continue;
+                if (a == OrbElement.None) a = e; else if (b == OrbElement.None) b = e; else d = e;
+            }
+            if (combos.TryGetValue(KeyOf(a, b, d), out var def))
+                BuildNode(board, def, CellX(c, cellW), utilY, 1, null, weaponColor, level, pointsLeft, mastery, cellW);
+        }
+    }
+
+    static float CellX(int column, float cellW) => LabelW + column * (cellW + Gap);
+
+    static int KeyOf(OrbElement a, OrbElement b, OrbElement c)
+    {
+        int f = 0, e = 0, w = 0, water = 0;
+        Count(a); Count(b); Count(c);
+        return OrbMath.Key(f, e, w, water);
+        void Count(OrbElement o)
+        {
+            if (o == OrbElement.Fire) f++; else if (o == OrbElement.Earth) e++;
+            else if (o == OrbElement.Wind) w++; else if (o == OrbElement.Water) water++;
+        }
+    }
+
+    // The element wheel, read through the one table that owns it (Fire beats Earth beats Wind beats Water beats Fire).
+    static OrbElement OrbOf(Element e)
+    {
+        for (int o = 1; o <= 4; o++) if (OrbMath.ElementOf((OrbElement)o) == e) return (OrbElement)o;
+        return OrbElement.None;
+    }
+    static OrbElement Beats(OrbElement o) => OrbOf(MarkMath.WeakTo(OrbMath.ElementOf(o)));
+    static OrbElement BeatenBy(OrbElement o)
+    {
+        for (int x = 1; x <= 4; x++) if (Beats((OrbElement)x) == o) return (OrbElement)x;
+        return OrbElement.None;
+    }
+    static OrbElement Alongside(OrbElement o)
+    {
+        for (int x = 1; x <= 4; x++)
+        {
+            var e = (OrbElement)x;
+            if (e != o && e != Beats(o) && e != BeatenBy(o)) return e;
+        }
+        return OrbElement.None;
+    }
+
+    static void GridLabel(RectTransform parent, string text, float x, float y, float w, float h)
+    {
+        var t = UiKit.Label("Label", parent, text, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
+        UiKit.Paint(t, LockedText); t.raycastTarget = false;
+        TopLeft(t.rectTransform, x, y, w, h);
+    }
+
+    static void RowLabel(RectTransform parent, string text, OrbElement orb, float y)
+    {
+        var t = UiKit.Label("Pair", parent, text, 12, FontStyle.Bold, TextAnchor.MiddleRight);
+        UiKit.Paint(t, LockedText); t.raycastTarget = false;
+        TopLeft(t.rectTransform, 0, y, 24, NodeH);
+        OrbDot(parent, orb, 27, y + (NodeH - 18f) * 0.5f, 18);
+    }
+
+    // One orb's own icon, small — how a combination shows the orbs it takes.
+    static void OrbDot(RectTransform parent, OrbElement orb, float x, float y, float size)
+    {
+        var holder = UiKit.Img("Orb", parent, new Color(0, 0, 0, 0));
+        holder.raycastTarget = false;
+        TopLeft(holder.rectTransform, x, y, size, size);
+        var sprite = SkillSymbol.IconFor(SkillCatalog.Get(OrbMath.SkillIdOf(orb)));
+        if (sprite == null) return;
+        var icon = ItemIcon.Make(holder.transform, 0f);
+        ItemIcon.Show(icon, sprite);
+        icon.raycastTarget = false;
+    }
+
     void BuildNode(RectTransform track, SkillDef def, float x, float y, int opensAt, SkillDef needs,
-                   Color weaponColor, int masteryLevel, int pointsLeft, MasteryProgress mastery)
+                   Color weaponColor, int masteryLevel, int pointsLeft, MasteryProgress mastery, float w = NodeW)
     {
         int bought = mastery != null ? mastery.LevelOf(def.id) : 0;
         int top = Mathf.Max(1, def.maxLevel);
-        bool learned = bought >= 1;
+        // A STAFF COMBINATION is shown, never learned: it reads "open" once its orbs allow it (an ultimate at orb 20),
+        // and its line names the orbs that make it instead of a level.
+        bool combo = def.IsOrbCombo;
+        bool learned = combo ? OrbCombos.Opened(Character.Instance, def) : bought >= 1;
         bool reached = masteryLevel >= opensAt;
         // Every part of this test compares numbers the server sent; the server asks it again before spending.
-        bool canRaise = mastery != null && reached && bought < top && pointsLeft > 0
+        bool canRaise = !combo && mastery != null && reached && bought < top && pointsLeft > 0
                         && (needs == null || mastery.HasLearned(needs.id));
 
         var node = UiKit.Round(UiKit.Img("Skill_" + def.id, track, NodeBg), 3);
-        TopLeft(node.rectTransform, x, y, NodeW, NodeH);
+        TopLeft(node.rectTransform, x, y, w, NodeH);
         node.raycastTarget = true;
         if (!reached) node.gameObject.AddComponent<CanvasGroup>().alpha = Unreached;
 
@@ -312,11 +464,21 @@ public class SkillsWindow : MonoBehaviour
         if (learned && def.tint != default) UiKit.PaintReadable(title, def.tint);
         else UiKit.Paint(title, learned ? UiKit.TextMain : LockedText);
         title.raycastTarget = false;
-        TopLeft(title.rectTransform, 4 + TileSize + 4, 3, NodeW - TileSize - 12, 24);
+        TopLeft(title.rectTransform, 4 + TileSize + 4, 3, w - TileSize - 12, 24);
 
-        var lvl = UiKit.Label("Level", node.transform, bought + "/" + top, 11, FontStyle.Bold, TextAnchor.MiddleRight);
-        UiKit.Paint(lvl, learned ? UiKit.TextMain : LockedText); lvl.raycastTarget = false;
-        TopLeft(lvl.rectTransform, 4, 27, NodeW - 8 - 19, 14);
+        // A combination shows the orbs it takes as their own icons; an ultimate not open yet says what opens it.
+        if (combo && learned)
+            for (int i = 0; i < def.orbCombo.Length; i++)
+                OrbDot((RectTransform)node.transform, OrbMath.FromLetter(def.orbCombo[i]), 4 + TileSize + 4 + i * 16, 27, 14);
+        else
+        {
+            string line = combo ? OrbMath.FromLetter(def.orbCombo[0]) + " Orb Lv " + OrbMath.UltimateOrbLevel : bought + "/" + top;
+            var lvl = UiKit.Label("Level", node.transform, line, 11, FontStyle.Bold,
+                                  combo ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight);
+            UiKit.Paint(lvl, learned ? UiKit.TextMain : LockedText); lvl.raycastTarget = false;
+            if (combo) TopLeft(lvl.rectTransform, 4 + TileSize + 4, 27, w - TileSize - 12, 14);
+            else TopLeft(lvl.rectTransform, 4, 27, w - 8 - 19, 14);
+        }
 
         string id = def.id;
         var plus = UiKit.Btn("+", node.transform, () =>
@@ -326,16 +488,17 @@ public class SkillsWindow : MonoBehaviour
             UISounds.PlayClick();
             net.AskToSpendSkillPoint(id);
         });
-        TopLeft((RectTransform)plus.transform, NodeW - 4 - 15, 27, 15, 15);
+        TopLeft((RectTransform)plus.transform, w - 4 - 15, 27, 15, 15);
         var plusText = plus.GetComponentInChildren<TextMeshProUGUI>();
         if (plusText != null) { plusText.fontSize = 12; plusText.fontStyle = FontStyles.Bold; if (!canRaise) UiKit.Paint(plusText, LockedText); }
         plus.interactable = canRaise;
+        if (combo) plus.gameObject.SetActive(false);
 
         SkillHoverCard.Attach(node.transform, def, beside: true);
 
         // A learned skill goes on the hotbar by dragging it there. A passive is never pressed, so it does not drag (the
         // server refuses one on the bar too); a skill not learned yet would be a slot the server refuses.
-        if (learned && !def.IsPassive)
+        if (learned && !def.IsPassive && !combo)
         {
             var drag = node.gameObject.AddComponent<SkillDragSource>();
             drag.skillId = def.id;

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e2aa156cbe2374768bb371edec42f46b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Animation/CloudAnimation.anim
+  uploadId: 831922

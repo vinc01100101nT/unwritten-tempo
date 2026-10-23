@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.staff.release
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  id: skill.staff.release
+  displayName: Release
+  symbol: Re
+  icon: {fileID: 21300000, guid: 98ed28cdc87442a4494d211bab627ed4, type: 3}
+  weaponType: 8
+  masteryLevel: 1
+  needsSkillId: 
+  companionOf: 
+  statesEndWhenHit: 0
+  published: 0
+  maxLevel: 1
+  freeFirstLevel: 1
+  orbCombo: 
+  isOrbRelease: 1
+  description: 'The cycle turns.
+
+    Casts the combination your three orbs make.
+    Hold three orbs first.'
+  archetype: 0
+  family: 1
+  shape: 3
+  complexity: 0
+  acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+  manaCost: 0
+  cooldown: 0
+  castTime: 0
+  fixedCastTime: 0
+  releaseEarly: 0
+  aim: 2
+  castRange: 0
+  tier: 0
+  castCircleId: 
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 11400000, guid: a0ff918d66591f240beb78d88fa36246, type: 2}
+  repeatCount: 1
+  repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatScaleWithCastSpeed: 0
+  repeatMaxCount: 1
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatTotalPerBeat: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
+  holdCasterForRun: 0
+  repeatWhilePileHeld: 0
+  repeatPileStateId: 0
+  repeatPileStateIdSet: 0
+  repeatMaxSeconds: 0
+  repeatBonusSkillId: 
+  repeatBonusStateId: 0
+  repeatBonusStateIdSet: 0
+  repeatBonusInterval: 0.2
+  hasReleaseStance: 0
+  releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
+  releaseIsWeaponAttack: 0
+  bindings: []
+  shortLabel: Skill
+  keyLabel: 
+  slotOrder: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

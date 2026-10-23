@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: de5fbf27b65c74698a2a7114c05e8539
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Animation/ThundercloudAnimator_Prewarm.controller
+  uploadId: 831922

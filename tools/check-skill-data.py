@@ -568,6 +568,19 @@ def main():
         if as_int(s.get("published")) == 1 and as_int(s.get("weaponType")) == weapons.get("None", 0):
             warn(s, "is published for loot but belongs to no weapon, so no weapon can ever roll it.")
 
+        # ---- the wind-up: a variable part, a fixed part, and release early (decided 2026-10-23) ----------
+        # Release early pays 0.30x to 1.50x by how much of the wind-up was filled, so it needs a wind-up nothing can
+        # remove: on a variable-only wind-up 150 DEX makes it instant and the 1.50x free. And it is pressed by a
+        # movement key during that wind-up, so a skill nobody presses can never use it. OnCast is trigger 0.
+        if as_float(s.get("fixedCastTime")) < 0 or as_float(s.get("castTime")) < 0:
+            problem(s, "has a negative cast time.")
+        if as_int(s.get("releaseEarly")) == 1:
+            if as_float(s.get("fixedCastTime")) <= 0:
+                problem(s, "can be released early but has no fixed cast time — at 150 DEX its wind-up is instant and "
+                           "the full 1.50x damage comes free.")
+            if not any(as_int(e.get("trigger")) == 0 for e in entries):
+                problem(s, "can be released early but is never pressed, so nothing can release it.")
+
         # ---- learning: how far it can be raised, and what it needs first ------------------------------
         # The skill-tree rules (decided 2026-10-03): a skill that belongs to a weapon is learned and raised with
         # mastery points up to its max level — 1 when nothing on it grows, so no point is ever spent on nothing —
@@ -582,7 +595,20 @@ def main():
                         return True
             return False
 
-        if as_int(s.get("weaponType")) != weapons.get("None", 0):
+        # THE STAFF'S ORBS: a combination is never learned (its max level must be 0, and its three letters must be
+        # F, E, W or A); an orb is the one skill allowed past 10 — it carries a whole pool's levels, up to 35.
+        combo = str(s.get("orbCombo", "") or "").strip()
+        is_orb = any(kind_name.get(as_int(e.get("kind")), "") == "AddOrb"
+                     for b in (s.get("bindings") or []) for e in (b.get("effects") or []))
+        if combo:
+            if len(combo) != 3 or any(ch not in "FEWA" for ch in combo.upper()):
+                problem(s, "is a Staff combination whose orbs '%s' are not three letters from F, E, W and A." % combo)
+            if as_int(s.get("maxLevel")) != 0:
+                problem(s, "is a Staff combination but has a max level — a combination is never learned with points; its max level must be 0.")
+        elif is_orb:
+            if as_int(s.get("maxLevel")) != 35:
+                problem(s, "is a Staff orb whose max level is not 35 — the orbs carry the whole pool's levels.")
+        elif as_int(s.get("weaponType")) != weapons.get("None", 0):
             top = as_int(s.get("maxLevel"))
             if top < 1:
                 problem(s, "belongs to a weapon but has no max level, so no mastery point can ever be spent on it.")

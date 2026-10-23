@@ -14,16 +14,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.staff.meteor
   displayName: Meteor
+  symbol: Me
+  icon: {fileID: 21300000, guid: 1d9027556a98a2645901e7029f192c0d, type: 3}
   weaponType: 8
   masteryLevel: 1
   needsSkillId: 
+  companionOf: 
+  statesEndWhenHit: 0
   published: 0
-  maxLevel: 10
-  description: 'The sky falls.
+  maxLevel: 0
+  freeFirstLevel: 0
+  orbCombo: FFE
+  isOrbRelease: 0
+  description: 'Fire melts the stone.
 
-    Calls down 8x Magic damage across 3 strikes,
-    then a second impact for 8x more. Sets the target burning for 3 a tick over 4s,
-    and each hit has a 25% chance to stun.'
+    A flaming stone lands on the aimed spot and melts the Stone on its target, for bonus damage per Stone.'
   archetype: 0
   family: 1
   shape: 1
@@ -39,55 +44,155 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-  manaCost: 40
-  cooldown: 1.5
-  castTime: 1.5
+  manaCost: 16
+  cooldown: 8
+  castTime: 1
+  fixedCastTime: 0
+  releaseEarly: 0
   aim: 2
-  castRange: 13
+  castRange: 11
   tier: 0
-  castCircleId: circle.magic
+  castCircleId: 
   castCircleTint: {r: 0.86415094, g: 0.29302153, b: 0.11576363, a: 1}
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
-  repeatCount: 5
-  repeatInterval: 0.5
+  repeatCount: 1
+  repeatInterval: 0
   repeatScaleWithAttackSpeed: 0
+  repeatScaleWithCastSpeed: 0
+  repeatMaxCount: 1
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
   showRepeatsTotalDamage: 0
+  repeatTotalPerBeat: 0
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
-  hasReleaseStance: 0
-  releaseStance: 16
+  repeatWhilePileHeld: 0
+  repeatPileStateId: 0
+  repeatPileStateIdSet: 0
+  repeatMaxSeconds: 0
+  repeatBonusSkillId: 
+  repeatBonusStateId: 0
+  repeatBonusStateIdSet: 0
+  repeatBonusInterval: 0.2
+  hasReleaseStance: 1
+  releaseStance: 14
   releaseStanceReplayPerRepeat: 0
+  releaseIsWeaponAttack: 0
   bindings:
   - tickId: meteor_ball
     targetMode: 2
     groundDelivery: 1
     affects: 2
     playerFaction: 0
-    radius: 4.75
+    radius: 1.6
     projectileCount: 1
     projectileSpread: 0
     stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
     effects:
     - kind: 0
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 8
+        value: 2
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 1
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
       element: 3
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0
@@ -176,7 +281,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       hitCount:
-        value: 3
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -191,299 +296,108 @@ MonoBehaviour:
       subStat: 0
       affinity:
       - stat: 1
-        weight: 70
-      - stat: 6
-        weight: 15
-      - stat: 3
-        weight: 15
+        weight: 100
       chanceAffinity: []
       durationAffinity: []
-      hitCountAffinity:
-      - stat: 1
-        weight: 100
-    - kind: 2
-      useStacks: 0
-      resolveAsBasicAttack: 0
-      damageType: 1
-      damageMult:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      element: 3
-      amount:
-        value: 10
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      ailment: 2
-      seconds:
-        value: 4
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      shoveSeconds:
-        value: 0.25
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      magnitude:
-        value: 3
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacking: 0
-      stackLimit:
-        value: 5
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacksPerApply:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacksFromAttackSpeed: 0
-      stackShare:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      dashSpeedMult:
-        value: 8
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      dashEaseIn: 0
-      dashEaseOut: 0
-      dashEaseSeconds:
-        value: 0.3
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      afterimageSeconds:
-        value: 0
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
-      casterOpacity:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      starCorners:
-        value: 5
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      modifierSkillId: 
-      modifierStateId: 0
-      modifierStateIdSet: 0
-      modifierSeconds:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      modifierStacks:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      hitCount:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      chance:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      side: 1
-      subStat: 0
-      affinity:
-      - stat: 1
-        weight: 100
-      chanceAffinity: []
-      durationAffinity:
-      - stat: 3
-        weight: 70
-      - stat: 1
-        weight: 30
       hitCountAffinity: []
-    - kind: 2
-      useStacks: 0
-      resolveAsBasicAttack: 0
-      damageType: 1
-      damageMult:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      element: 3
-      amount:
-        value: 10
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      ailment: 3
-      seconds:
-        value: 0.75
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      shoveSeconds:
-        value: 0.25
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      magnitude:
-        value: 0
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacking: 0
-      stackLimit:
-        value: 5
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacksPerApply:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacksFromAttackSpeed: 0
-      stackShare:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      dashSpeedMult:
-        value: 8
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      dashEaseIn: 0
-      dashEaseOut: 0
-      dashEaseSeconds:
-        value: 0.3
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      afterimageSeconds:
-        value: 0
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
-      casterOpacity:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      starCorners:
-        value: 5
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      modifierSkillId: 
-      modifierStateId: 0
-      modifierStateIdSet: 0
-      modifierSeconds:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      modifierStacks:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      hitCount:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      chance:
-        value: 0.25
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      side: 1
-      subStat: 0
-      affinity: []
-      chanceAffinity:
-      - stat: 5
-        weight: 100
-      durationAffinity:
-      - stat: 1
-        weight: 60
-      - stat: 3
-        weight: 40
-      hitCountAffinity: []
-  - tickId: fire_pillar
-    targetMode: 2
-    groundDelivery: 1
-    affects: 2
-    playerFaction: 0
-    radius: 1
-    projectileCount: 1
-    projectileSpread: 0
-    stayDuration: 1
-    effects:
     - kind: 0
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 8
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 2
+      cashMark: 4
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
       element: 3
+      converts: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
       ailment: 2
       seconds:
         value: 0
@@ -594,4 +508,4 @@ MonoBehaviour:
   shortLabel: Meteor
   keyLabel: 
   slotOrder: 20
-  tint: {r: 1, g: 0.55, b: 0.25, a: 1}
+  tint: {r: 1, g: 1, b: 1, a: 1}

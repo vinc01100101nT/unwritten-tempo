@@ -22,6 +22,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.crystals-crossfade-2
     prefab: {fileID: 584207449403360073, guid: b1ae5055f08b8284d9e996465d1d37e3, type: 3}
     scale: 1
@@ -31,6 +32,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.crystals-front-attack
     prefab: {fileID: 3156866507962234106, guid: 645ebd7cef59b7b40b27c29bf3e99cf2, type: 3}
     scale: 1
@@ -40,6 +42,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.ground-explosion
     prefab: {fileID: 4994997792314849709, guid: 3dd50886582244645be87adb42aa8528, type: 3}
     scale: 1
@@ -49,6 +52,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.laser
     prefab: {fileID: 7478731271839673279, guid: 4d3c8045dd8857a4b8d34c2361c61045, type: 3}
     scale: 1
@@ -58,6 +62,7 @@ MonoBehaviour:
     measuredPlaySeconds: 9.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.meteors
     prefab: {fileID: 7957833072274404953, guid: 3355f6bfa6db8b24281b827de929694c, type: 3}
     scale: 1
@@ -67,6 +72,7 @@ MonoBehaviour:
     measuredPlaySeconds: 9.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.plexus
     prefab: {fileID: 8974203713140315807, guid: 709b0bd6b0b625249a98409dd7a87343, type: 3}
     scale: 1
@@ -76,6 +82,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.85
     measuredFadeSeconds: 0.85
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.red-energy-explosion
     prefab: {fileID: 8378648546881499446, guid: 867c572a5be680d42a042d2349f10143, type: 3}
     scale: 1
@@ -85,6 +92,17 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.shockwave
+    prefab: {fileID: 9080140021571130472, guid: 82066d902ed0dd6488ddfd32eb994801, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.75
+    measuredFadeSeconds: 0.75
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.slash-blue
     prefab: {fileID: 7647375919561907788, guid: 035ce8c9cfc34104991ce416daf8aebe, type: 3}
     scale: 1
@@ -94,6 +112,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.slash-green
     prefab: {fileID: 8915312667134092580, guid: 8a43d9f68490c374a93a9e8085555c02, type: 3}
     scale: 1
@@ -103,6 +122,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.slash-orange
     prefab: {fileID: 689667626583958020, guid: 1336648bc1d8baf46a4515860950c9d4, type: 3}
     scale: 1
@@ -112,6 +132,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.smoke-explosion
     prefab: {fileID: 5034656251238326012, guid: 9de2fa19f0390d44491264d9cab8cec5, type: 3}
     scale: 1
@@ -121,6 +142,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aoe.snow
     prefab: {fileID: 161766660727748596, guid: 05ce920d629922a4eb4795ef7494ce5c, type: 3}
     scale: 1
@@ -130,6 +152,87 @@ MonoBehaviour:
     measuredPlaySeconds: 9.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.thundercloud-1
+    prefab: {fileID: 284847970742790660, guid: d19c960e2f0c14a7ca1ebd345700afdd, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0.65
+    measuredFadeSeconds: 0.6045455
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.thundercloud-1-lowpoly
+    prefab: {fileID: 5218222830688257537, guid: 80f27d4f960a5493cb5c5cf133f55f20, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0.65
+    measuredFadeSeconds: 0.6045455
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.thundercloud-2
+    prefab: {fileID: 3521288894642801586, guid: 72b63290055ae44a0bb97141a7bf06e6, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0.65
+    measuredFadeSeconds: 0.6045455
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.thundercloud-2-lowpoly
+    prefab: {fileID: 7402093843820901052, guid: 18c1c7ddce8c54fb8b70b10dd43980de, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0.65
+    measuredFadeSeconds: 0.6045455
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.thundercloud-prewarm
+    prefab: {fileID: 5219714312323764021, guid: 39550fce8b3fe41599e0ff713fa8a3fe, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0.65
+    measuredFadeSeconds: 0.6045455
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.water-dome-cyan
+    prefab: {fileID: 6330053056624616938, guid: 78ab352e15a114204bf5ec278a00b5d8, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.65
+    measuredFadeSeconds: 2.5500002
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.water-dome-deep
+    prefab: {fileID: 5283146771921619270, guid: d6841cb0dce8346ffafbc7915f5f2cfe, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.65
+    measuredFadeSeconds: 2.5500002
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aoe.water-dome-pale
+    prefab: {fileID: 2334455049011862081, guid: c1335396aea434a6ab7bf94c401421a0, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.65
+    measuredFadeSeconds: 2.5500002
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.buff
     prefab: {fileID: 7155335147208632822, guid: 97c43495f80a3244fad1301dfafbe252, type: 3}
     scale: 1
@@ -139,6 +242,27 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.buff-2
+    prefab: {fileID: 419411002348774512, guid: 247a3e752e93a864db063f5c85fd8391, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.75
+    measuredFadeSeconds: 1.75
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.burn
+    prefab: {fileID: 7455372202216957759, guid: 5357b7f40e1451744886942913efe75f, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.debuff
     prefab: {fileID: 6126188424833946103, guid: a58aa9a78f2b45b45bb0f3e2e1e3ad3c, type: 3}
     scale: 1
@@ -148,6 +272,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.healing
     prefab: {fileID: 9017484664307500583, guid: 1245b8d2997d5b34fb1637be70a7eb05, type: 3}
     scale: 1
@@ -157,6 +282,27 @@ MonoBehaviour:
     measuredPlaySeconds: 5.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.healing-2
+    prefab: {fileID: 5301128866119301075, guid: a813928736520ea41a0cca2f164e20b4, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 5.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.healing-soft
+    prefab: {fileID: 5169803093150543574, guid: c2891704bd6413946ab8af725fb72212, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.lightning
     prefab: {fileID: 7131401307255788800, guid: 4d9a3b35b3bc07649b697df7fb497b6d, type: 3}
     scale: 1
@@ -166,6 +312,17 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.lightning-2
+    prefab: {fileID: 1936488993998635378, guid: 88b14fae91f3b5345abdc3e7a5f29793, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.love
     prefab: {fileID: 5766691976136461342, guid: 43d1d06cf70fcb2488255051aaae40a5, type: 3}
     scale: 1
@@ -175,6 +332,17 @@ MonoBehaviour:
     measuredPlaySeconds: 5.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.plain
+    prefab: {fileID: 3081362037621676516, guid: 0e1cda1849280884a99fa85ea45ffbbc, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.9900002
+    measuredFadeSeconds: 1.99
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.plexus
     prefab: {fileID: 6063518424537689786, guid: bad5794a53f5c3645bb444b3a040ba01, type: 3}
     scale: 1
@@ -184,6 +352,27 @@ MonoBehaviour:
     measuredPlaySeconds: 5.85
     measuredFadeSeconds: 0.85
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.smell
+    prefab: {fileID: 1161150146248325794, guid: a765deefa9e0ede438985b1b88542cd2, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 4.78
+    measuredFadeSeconds: 3.7800002
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.smoke
+    prefab: {fileID: 6463736515401614795, guid: 778a281a2188fc24aab47c804de7dc83, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.2900002
+    measuredFadeSeconds: 2.2900002
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.smoke-01
     prefab: {fileID: 2787556212050310887, guid: f0690dca0889d454c9a3a1b1b9b7c9a9, type: 3}
     scale: 1
@@ -193,6 +382,7 @@ MonoBehaviour:
     measuredPlaySeconds: 9.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: aura.star
     prefab: {fileID: 7053385775836331393, guid: 354b6251e950209409c75ab984acf000, type: 3}
     scale: 1
@@ -202,6 +392,17 @@ MonoBehaviour:
     measuredPlaySeconds: 5.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: aura.stun
+    prefab: {fileID: 6097779538034126439, guid: b6d3e2e4b8df2964eb3dfce561902f3e, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 20.15
+    measuredFadeSeconds: 10.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.freeze
     prefab: {fileID: 4932088507883938021, guid: 0e5709a7ddb77924090c112cf73bb98a, type: 3}
     scale: 1
@@ -211,6 +412,7 @@ MonoBehaviour:
     measuredPlaySeconds: 8.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.healing
     prefab: {fileID: 7986504087968017091, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
     scale: 1
@@ -220,6 +422,7 @@ MonoBehaviour:
     measuredPlaySeconds: 8.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.icearrow01
     prefab: {fileID: 1902839626373450777, guid: 377bd8e4df08cc444b8742609e5ebd73, type: 3}
     scale: 1
@@ -229,6 +432,7 @@ MonoBehaviour:
     measuredPlaySeconds: 10.15
     measuredFadeSeconds: 5.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.icearrow02
     prefab: {fileID: 8883919025765829949, guid: 3a85ce5ea8efb714b81e4fb07c66a9b6, type: 3}
     scale: 1
@@ -238,6 +442,7 @@ MonoBehaviour:
     measuredPlaySeconds: 10.15
     measuredFadeSeconds: 5.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.icearrow03
     prefab: {fileID: 348291441642749557, guid: 72ed267a04bf396419f3230844bb29f1, type: 3}
     scale: 1
@@ -247,6 +452,7 @@ MonoBehaviour:
     measuredPlaySeconds: 10.15
     measuredFadeSeconds: 5.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.icearrow04
     prefab: {fileID: 7568505782868795063, guid: fc9179e31f338a34580c281aec328cc9, type: 3}
     scale: 1
@@ -256,6 +462,7 @@ MonoBehaviour:
     measuredPlaySeconds: 10.15
     measuredFadeSeconds: 5.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.magic
     prefab: {fileID: 3744133877081091469, guid: a2a060732547fe64581bb0cb3c2bdf1d, type: 3}
     scale: 1
@@ -265,6 +472,7 @@ MonoBehaviour:
     measuredPlaySeconds: 8.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: circle.magic-2
     prefab: {fileID: 3377181292992421420, guid: 48c5715f9603c3842a353516a8baefbb, type: 3}
     scale: 1
@@ -274,6 +482,7 @@ MonoBehaviour:
     measuredPlaySeconds: 8.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: env.crystal-effect-blue
     prefab: {fileID: 683182934616091483, guid: 491bd2f8e55e1db45a195465b18740bd, type: 3}
     scale: 1
@@ -283,6 +492,7 @@ MonoBehaviour:
     measuredPlaySeconds: 10.15
     measuredFadeSeconds: 6.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: env.crystal-effect-green
     prefab: {fileID: 3928998189374746443, guid: 00bba72dbda252a4eac12e218848cb44, type: 3}
     scale: 1
@@ -292,6 +502,7 @@ MonoBehaviour:
     measuredPlaySeconds: 10.15
     measuredFadeSeconds: 6.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: env.crystal-effect-red
     prefab: {fileID: 6414953239637031926, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
     scale: 1
@@ -301,6 +512,7 @@ MonoBehaviour:
     measuredPlaySeconds: 10.15
     measuredFadeSeconds: 6.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: env.teleport
     prefab: {fileID: 7761031033666763820, guid: 1eb833340b41fb444b576c4dced8d4dc, type: 3}
     scale: 1
@@ -310,6 +522,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.85
     measuredFadeSeconds: 0.85
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: fire.explosion
     prefab: {fileID: 1845955007268882, guid: 67a684e320da6e7439421a07e3fa265c, type: 3}
     scale: 1
@@ -319,6 +532,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.footprint
     prefab: {fileID: 389821699222927281, guid: c78e2f7eca004290b813614c90be0889, type: 3}
     scale: 1
@@ -328,6 +542,7 @@ MonoBehaviour:
     measuredPlaySeconds: 25.15
     measuredFadeSeconds: 20.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-0
     prefab: {fileID: 1692517446758730, guid: 08fd1b80cc24cc8439f45fda3c558255, type: 3}
     scale: 1
@@ -337,6 +552,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-1
     prefab: {fileID: 1537593200154216, guid: 25093a0593dc83043a7bc17ebba0e95d, type: 3}
     scale: 1
@@ -346,6 +562,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-2
     prefab: {fileID: 1900756431413560, guid: 529eb4216865eba419c1a4a68d0b0388, type: 3}
     scale: 1
@@ -355,6 +572,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-3
     prefab: {fileID: 1654736843778140, guid: 78e8b38d431ddef4fa2994a3f2d6e2ff, type: 3}
     scale: 1
@@ -364,6 +582,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-pro-blue
     prefab: {fileID: 1223526616464650, guid: c590b17884b119046bc6412066500b7d, type: 3}
     scale: 1
@@ -373,6 +592,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-pro-green
     prefab: {fileID: 1518366863219760, guid: 3d35e81bdc5955041be098ef22e82a3b, type: 3}
     scale: 1
@@ -382,6 +602,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-pro-orange
     prefab: {fileID: 1725317912486240, guid: e55149ba6f4d00741984987e258c3378, type: 3}
     scale: 1
@@ -391,6 +612,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-pro-red
     prefab: {fileID: 1975959190090480, guid: eca000ab44c908d4dab395f654753038, type: 3}
     scale: 1
@@ -400,6 +622,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.magic-pro-yellow
     prefab: {fileID: 1434627103891488, guid: 52d340ed9c2714c4f8aabf1f82df1b58, type: 3}
     scale: 1
@@ -409,6 +632,7 @@ MonoBehaviour:
     measuredPlaySeconds: 6.65
     measuredFadeSeconds: 1.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.rotatorps1
     prefab: {fileID: 1789005739015704, guid: 1381b64ff1936ac4e80c3a00687081f3, type: 3}
     scale: 1
@@ -418,6 +642,7 @@ MonoBehaviour:
     measuredPlaySeconds: 17.5
     measuredFadeSeconds: 6.5
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: fire.rotatorps2
     prefab: {fileID: 1032870836932200, guid: 26255240385821a4185c7163c7a7aec6, type: 3}
     scale: 1
@@ -427,6 +652,7 @@ MonoBehaviour:
     measuredPlaySeconds: 14.5
     measuredFadeSeconds: 6.5
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.electro
     prefab: {fileID: 2965222256817593503, guid: a164e676dbbd6e54587237e619372c98, type: 3}
     scale: 1
@@ -436,6 +662,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.65
     measuredFadeSeconds: 0.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.explosion
     prefab: {fileID: 358637981425055526, guid: 8eb503696b886e04faff8fc0f480d473, type: 3}
     scale: 1
@@ -445,6 +672,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.green
     prefab: {fileID: 6823302871133167919, guid: 3138a83bedbd6ad4481ba0b061da2eb6, type: 3}
     scale: 1
@@ -454,6 +682,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.holy
     prefab: {fileID: 2944396702758532163, guid: e190bf97c041e58448af6b043116cba0, type: 3}
     scale: 0.20971718
@@ -463,6 +692,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.love
     prefab: {fileID: 9070474633162843459, guid: 356cf4dca1465b54fabbb8cd9b1cd190, type: 3}
     scale: 1
@@ -472,6 +702,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.snow
     prefab: {fileID: 4924508274929071776, guid: 0edef91621bb6b34384ccc9dbb98729c, type: 3}
     scale: 1
@@ -481,6 +712,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.star
     prefab: {fileID: 4535006216103734310, guid: 98c4704d0fd7211449bcf5c451095a60, type: 3}
     scale: 1
@@ -490,6 +722,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: hit.stones
     prefab: {fileID: 1758473627833946668, guid: 9b21333b068a5084ba09535839bee3c8, type: 3}
     scale: 1
@@ -499,6 +732,17 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: light.point
+    prefab: {fileID: 8332000898390020697, guid: 48991f6374c874f4fafddbc6e6d5adf3, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0.15
+    measuredFadeSeconds: 0.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: loot.drop
     prefab: {fileID: 1943286446490004412, guid: 7371b69947157424b8634b526d5e6151, type: 3}
     scale: 0.1
@@ -508,6 +752,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: portal.blue
     prefab: {fileID: 5607819269926399345, guid: 45e0f06c750176947862c10346226439, type: 3}
     scale: 1
@@ -517,6 +762,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: portal.green
     prefab: {fileID: 3992058561654064293, guid: 13c990b8270c70b4c9f196019286028c, type: 3}
     scale: 1
@@ -526,15 +772,17 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: portal.purple
     prefab: {fileID: 5607819269926399345, guid: b422fc6c6a8205a4a99b07217a506942, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: portal.red
     prefab: {fileID: 4617036660772024948, guid: 52c7d057cba585641bb68312c10d7791, type: 3}
     scale: 1
@@ -544,6 +792,47 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: portal.warp-circle-green
+    prefab: {fileID: 5907591635835504494, guid: 0e319d3dd8480e246b682ce571703453, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 8.15
+    measuredFadeSeconds: 4.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: portal.warp-circle-purple
+    prefab: {fileID: 5870960597677518310, guid: 4cb80da8a4a9e624eb925268ffb25de0, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 8.15
+    measuredFadeSeconds: 4.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: portal.warp-circle-red
+    prefab: {fileID: 3788365095572516875, guid: 2c841f40c18af7c448a390c6985f47cb, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 8.15
+    measuredFadeSeconds: 4.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: portal.warp-circle-yellow
+    prefab: {fileID: 6724659633868777038, guid: 7da490870d3e58f40a1f909214ba3479, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 8.15
+    measuredFadeSeconds: 4.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: portal.yellow
     prefab: {fileID: 4752457369876416285, guid: 5ad33d58a66ab154a89c9e88255601e5, type: 3}
     scale: 1
@@ -553,6 +842,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: shield.magic-blue
     prefab: {fileID: 1289543790355709915, guid: b99922c2f59b1a542bdd06ae8bee47ae, type: 3}
     scale: 1
@@ -562,6 +852,7 @@ MonoBehaviour:
     measuredPlaySeconds: 8.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: shield.magic-pink
     prefab: {fileID: 6287953604210959080, guid: 5156d6689efbccb4991059f3a5755566, type: 3}
     scale: 1
@@ -571,6 +862,7 @@ MonoBehaviour:
     measuredPlaySeconds: 8.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: shield.magic-yellow
     prefab: {fileID: 6424583148328831481, guid: d2ffbc8b168cdf74a9dbb7c6c1cfdf2f, type: 3}
     scale: 1
@@ -580,6 +872,17 @@ MonoBehaviour:
     measuredPlaySeconds: 8.15
     measuredFadeSeconds: 4.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: slash
+    prefab: {fileID: 5545173171955001552, guid: 7ac879c2caac1ca41b6c438e77d8b25d, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 0
+    measuredReadsScreen: 1
   - id: slash.charge-blue
     prefab: {fileID: 3367314013316085171, guid: 8b20002c2b69a9d44ab5bae8e1d923cd, type: 3}
     scale: 1
@@ -589,6 +892,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.65
     measuredFadeSeconds: 0.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: slash.charge-purple
     prefab: {fileID: 2715471840370901047, guid: df9374346b76e444dbbb2b019de4da25, type: 3}
     scale: 1
@@ -598,6 +902,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.65
     measuredFadeSeconds: 0.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: slash.charge-red
     prefab: {fileID: 8145502431507700120, guid: 000832214335ffd4782827d2a4510f4a, type: 3}
     scale: 1
@@ -607,6 +912,17 @@ MonoBehaviour:
     measuredPlaySeconds: 2.65
     measuredFadeSeconds: 0.65
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: slash.earth
+    prefab: {fileID: 2060418090655630911, guid: 4fb7673fa1cb7e34ea16f350b1e1fba9, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 0
+    measuredReadsScreen: 1
   - id: slash.electro
     prefab: {fileID: 1171201465392465800, guid: 4aa9f30a28a77224ba84b2a2c334c71b, type: 3}
     scale: 1
@@ -616,6 +932,97 @@ MonoBehaviour:
     measuredPlaySeconds: 1.65
     measuredFadeSeconds: 0.65
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: slash.eletric
+    prefab: {fileID: 9177886612219991525, guid: f90fc7acf1ef2fa4c85896a9afc17028, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 0
+    measuredReadsScreen: 1
+  - id: slash.fire
+    prefab: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 0
+    measuredReadsScreen: 1
+  - id: slash.impact
+    prefab: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 1.65
+    measuredFadeSeconds: 0.65
+    measuredLoops: 0
+    measuredReadsScreen: 1
+  - id: slash.multiple-impact
+    prefab: {fileID: 2183146480622160771, guid: 131ad0e894ecda14eac32155d82d6c3d, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 1
+  - id: slash.multiple-slashes
+    prefab: {fileID: 1116249604692860204, guid: 8a02c4042c68dd244abad8cf394dab42, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.65
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 1
+  - id: slash.projectile-earth
+    prefab: {fileID: 4416080445347060711, guid: 0a6aa35eeb2241a43befc4ccae423907, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 1
+  - id: slash.projectile-eletric
+    prefab: {fileID: 3020920808754819069, guid: d860dbff6d19af4448c7d0e478fa5cef, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 1
+  - id: slash.projectile-fire
+    prefab: {fileID: 6882116249847192011, guid: c4b2ddd78a478394da66879a43e7af99, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 1
+  - id: slash.projectile-water
+    prefab: {fileID: 6111486948785554852, guid: f7967f33aeac15f48a3732e3fd3ac36c, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 3.15
+    measuredFadeSeconds: 2.15
+    measuredLoops: 1
+    measuredReadsScreen: 1
   - id: slash.snow
     prefab: {fileID: 2060900179291159282, guid: ca6705a3f9070d14d819d179493bcfa0, type: 3}
     scale: 1
@@ -625,6 +1032,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.65
     measuredFadeSeconds: 0.65
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: slash.stone
     prefab: {fileID: 3153472991145048103, guid: 3407e378c048bb5438424b28c7740b48, type: 3}
     scale: 1
@@ -634,6 +1042,27 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: slash.trails-earth
+    prefab: {fileID: 4416080445347060711, guid: e9318b13c3df1434cb3047b6d2dc3bfa, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: slash.water
+    prefab: {fileID: 856368647163548680, guid: 724d151229932ba47931fcc83c083470, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 0
+    measuredReadsScreen: 1
   - id: smoke.dust-ground
     prefab: {fileID: 8230022441722461589, guid: 41494896fc96c9748b81d3356632794e, type: 3}
     scale: 1
@@ -643,6 +1072,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.15
     measuredFadeSeconds: 2.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.dust-hemisphere-loop
     prefab: {fileID: 1541352577665823825, guid: 3535ca9d47f2b634e8d624b4b50de4b8, type: 3}
     scale: 1
@@ -652,6 +1082,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.dust-loop
     prefab: {fileID: 3789122199548263463, guid: 2d8c2dfad6d208641b2b0a3b26af5960, type: 3}
     scale: 1
@@ -661,6 +1092,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.15
     measuredFadeSeconds: 2.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.dust-puff
     prefab: {fileID: 5610010966355794069, guid: 803ecf87f61d9fb4f84ba6319ba95c9c, type: 3}
     scale: 1
@@ -670,6 +1102,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.ground
     prefab: {fileID: 2886950366143268859, guid: 253510ecf8d65454aa4d811cffb5a8f8, type: 3}
     scale: 1
@@ -679,6 +1112,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.15
     measuredFadeSeconds: 2.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.hemisphere-loop
     prefab: {fileID: 6112500879855133090, guid: 7cd1504d167e4724eb33f762e81ccb5a, type: 3}
     scale: 1
@@ -688,6 +1122,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.loop
     prefab: {fileID: 4318940320840401929, guid: 842eb98046e1ca348b3c0807fcfe362d, type: 3}
     scale: 1
@@ -697,6 +1132,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.15
     measuredFadeSeconds: 2.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.puff
     prefab: {fileID: 4809171458859421548, guid: 4e91ed1a8efe7044785b9bd97a47d87f, type: 3}
     scale: 1
@@ -706,6 +1142,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: smoke.vortex
     prefab: {fileID: 6526302276393259002, guid: f9d9793366789ae48a7e1b0692763acc, type: 3}
     scale: 1
@@ -715,6 +1152,17 @@ MonoBehaviour:
     measuredPlaySeconds: 6.15
     measuredFadeSeconds: 2.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: spark.electricity
+    prefab: {fileID: 7834434380170384362, guid: 68101499d07aced4aa0ded4acb624942, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 5.3
+    measuredFadeSeconds: 0.3
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-blue
     prefab: {fileID: 7045889733438899885, guid: 14078f8f7064d894fad9a68275c46f31, type: 3}
     scale: 1
@@ -724,6 +1172,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-explode-blue
     prefab: {fileID: 952961124639765284, guid: 1095a5c9f65bfbe4383f63d5d1886c65, type: 3}
     scale: 1
@@ -733,6 +1182,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-explode-green
     prefab: {fileID: 2300369305902588757, guid: 4e273c58acd2b614084a98035db3ba7c, type: 3}
     scale: 1
@@ -742,6 +1192,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-explode-pink
     prefab: {fileID: 4386588507499592971, guid: 48e196c36363e814bad43a44c92dc11b, type: 3}
     scale: 1
@@ -751,6 +1202,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-explode-red
     prefab: {fileID: 5435998012328932994, guid: d8703a33a4eb0b84a875202fde23e8f7, type: 3}
     scale: 1
@@ -760,6 +1212,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-explode-white
     prefab: {fileID: 8500920156052182585, guid: 830e92a3f95c4b04caf8edd648aed9bd, type: 3}
     scale: 1
@@ -769,6 +1222,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-explode-yellow
     prefab: {fileID: 496913248247719083, guid: c483142edbf33dc4d9014c13724a0175, type: 3}
     scale: 1
@@ -778,6 +1232,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-flashing-blue
     prefab: {fileID: 8822187405165230804, guid: fb66a85d95aa25e439cb3c7792564804, type: 3}
     scale: 1
@@ -787,6 +1242,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-flashing-green
     prefab: {fileID: 1758640513163058458, guid: 9b99dafe7fbb348489619e9393e4bcfa, type: 3}
     scale: 1
@@ -796,6 +1252,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-flashing-pink
     prefab: {fileID: 678138013338386963, guid: 658d046b38b9935498936eaed505d73f, type: 3}
     scale: 1
@@ -805,6 +1262,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-flashing-red
     prefab: {fileID: 3438277244574041817, guid: 6fec832863289f04a854167bc2650d9b, type: 3}
     scale: 1
@@ -814,6 +1272,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-flashing-white
     prefab: {fileID: 6007584933065334475, guid: 45c1a9f607b571349b0186f437fb0702, type: 3}
     scale: 1
@@ -823,6 +1282,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-flashing-yellow
     prefab: {fileID: 9193915884290050384, guid: 44a5acc7be8b9294ab3e52ef93fa09df, type: 3}
     scale: 1
@@ -832,6 +1292,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-green
     prefab: {fileID: 3632712385227303547, guid: 324fc9687c94a5f4585d7728801af43d, type: 3}
     scale: 1
@@ -841,6 +1302,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-pink
     prefab: {fileID: 919012162133337528, guid: e4a831baccba453479bb744202efc891, type: 3}
     scale: 1
@@ -850,6 +1312,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-red
     prefab: {fileID: 4718697377525663345, guid: 0d3a2dc2176fee345b9d92ac7a089808, type: 3}
     scale: 1
@@ -859,6 +1322,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-white
     prefab: {fileID: 8860363494751517875, guid: 010733280c7cd0b4294a9867b26a13f4, type: 3}
     scale: 1
@@ -868,6 +1332,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: spark.sparks-yellow
     prefab: {fileID: 2790453049482571525, guid: c4af6be39e87b634d9e26d8ce65b529b, type: 3}
     scale: 1
@@ -877,6 +1342,17 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+    measuredReadsScreen: 0
+  - id: water.ball-charge
+    prefab: {fileID: 6261345114989098648, guid: 535aa3efe0237714face39c08ddef813, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 4.15
+    measuredFadeSeconds: 1.75
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: water.ball-explosion
     prefab: {fileID: 6261345114989098648, guid: f66e2be959a7d4e4e8b050df54d1af73, type: 3}
     scale: 1
@@ -886,6 +1362,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.15
     measuredFadeSeconds: 1.75
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.beam
     prefab: {fileID: 5551718882146614446, guid: ca5678a67971360408484fc2051d9d2e, type: 3}
     scale: 1
@@ -895,6 +1372,7 @@ MonoBehaviour:
     measuredPlaySeconds: 5.65
     measuredFadeSeconds: 3.15
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.bubble-explosion
     prefab: {fileID: 5056385361940353899, guid: 5831d4dc964245b4d935906496064f8f, type: 3}
     scale: 1
@@ -904,6 +1382,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.65
     measuredFadeSeconds: 2.65
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.bubbles-burst
     prefab: {fileID: 3381772053132140057, guid: 673dd86dc0590e84a976de2f8dc35a63, type: 3}
     scale: 1
@@ -913,6 +1392,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.85
     measuredFadeSeconds: 0.85
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.bubbles-vertical-loop
     prefab: {fileID: 2485276936549234680, guid: a500764f1a0d3654db7718249e73c3d3, type: 3}
     scale: 1
@@ -922,6 +1402,7 @@ MonoBehaviour:
     measuredPlaySeconds: 3.3500001
     measuredFadeSeconds: 1.35
     measuredLoops: 1
+    measuredReadsScreen: 0
   - id: water.explosion
     prefab: {fileID: 8294947810415399850, guid: 7a16f43b4abbc0846a15aa17f7ba39bd, type: 3}
     scale: 1
@@ -931,6 +1412,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.85
     measuredFadeSeconds: 0.85
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.hit-01
     prefab: {fileID: 6042243990886550057, guid: af44cbf49172b8d42b452221c9638892, type: 3}
     scale: 1
@@ -940,6 +1422,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.65
     measuredFadeSeconds: 0.65
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.hit-02
     prefab: {fileID: 8866987181904549775, guid: 8c8d8385f96bd054a88a3df780d77bcc, type: 3}
     scale: 1
@@ -949,6 +1432,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.impact
     prefab: {fileID: 5911893088733641442, guid: f6573a110c1967643a98d0efdba24be8, type: 3}
     scale: 1
@@ -958,6 +1442,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.15
     measuredFadeSeconds: 1.35
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.splash
     prefab: {fileID: 811279206364260445, guid: 67368ac46d9b5f14bb1df8009e324d28, type: 3}
     scale: 1
@@ -967,6 +1452,7 @@ MonoBehaviour:
     measuredPlaySeconds: 1.25
     measuredFadeSeconds: 0.65
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.splash-a
     prefab: {fileID: 8585649807550039280, guid: 224c4574d4d272a4b92df19ede61b338, type: 3}
     scale: 1
@@ -976,6 +1462,7 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.splash-b
     prefab: {fileID: 3323387954473017891, guid: 0b912e9003fba894faa88cf964a6fb8a, type: 3}
     scale: 1
@@ -985,6 +1472,7 @@ MonoBehaviour:
     measuredPlaySeconds: 4.15
     measuredFadeSeconds: 1.15
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: water.splash-multiple
     prefab: {fileID: 2586947100091486788, guid: bf97aaa7a02fd834782d32dcc497cbef, type: 3}
     scale: 1
@@ -994,138 +1482,154 @@ MonoBehaviour:
     measuredPlaySeconds: 2.65
     measuredFadeSeconds: 1.15
     measuredLoops: 0
+    measuredReadsScreen: 0
   - id: weaponenchant.dark-lvl-1
     prefab: {fileID: 2720650084040897827, guid: 9c7c37d36aca431daabc30d11f4ed42c, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.dark-lvl-2
     prefab: {fileID: 6397433411572311964, guid: 5c04149ae6014f1caedaf6bae7ece9a8, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.dark-lvl-3
     prefab: {fileID: 6098213378169517917, guid: f8a00c4a94624705a9638ff76007731c, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.fire-lvl-1
     prefab: {fileID: 2415447811048438670, guid: afede32446094d73aaa2be720d83e8ff, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.fire-lvl-2
     prefab: {fileID: 7569748353520111345, guid: fbe29c6d0b6c43c0944613e98a02e8f8, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.fire-lvl-3
     prefab: {fileID: 1537971033341231097, guid: b4a04be0c7714e1eace7c9aceb0cb786, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.ice-lvl-1
     prefab: {fileID: 1693668491800532447, guid: 8b21457dfe5f4b77a58d1bfbf4cbc028, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.ice-lvl-2
     prefab: {fileID: 8662731430913487513, guid: f001d2be85f8450db4a602781645c973, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.ice-lvl-3
     prefab: {fileID: 7538291151217991452, guid: cd77dbaf5aac400eae44f94de833cb01, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.nature-lvl-1
     prefab: {fileID: 4915863843663251042, guid: f6382d77dd09452dbf3e4cc6b5f86aae, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.nature-lvl-2
     prefab: {fileID: 2055196806654080230, guid: 9000186b9b4b4eb2a88d23e6728fea82, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.nature-lvl-3
     prefab: {fileID: 7570097330636046783, guid: c4c3c8c21e334282a94e96eeaefa6ac3, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.water-lvl-1
     prefab: {fileID: 3155125002801167478, guid: 8b41e03e66694345aae58bf85e472df6, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.water-lvl-2
     prefab: {fileID: 138147253843667403, guid: 9b322f678c084b4089d82ae0e9312253, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0
   - id: weaponenchant.water-lvl-3
     prefab: {fileID: 6762456411764577992, guid: 4b0e191b229944e5802eecc3402d830d, type: 3}
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
-    measuredPlaySeconds: 0
-    measuredFadeSeconds: 0
-    measuredLoops: 0
+    measuredPlaySeconds: 10.15
+    measuredFadeSeconds: 5.15
+    measuredLoops: 1
+    measuredReadsScreen: 0

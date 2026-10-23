@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c35e9c951687a4a7fabc03986a5bdb01
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Materials/Ground/Ground_HDRP.mat
+  uploadId: 831922

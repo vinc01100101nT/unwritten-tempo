@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f3fba15f290da748ba5d1c7b1d25820, type: 3}
+  m_Name: skill_staff_orb_water
+  m_EditorClassIdentifier: Assembly-CSharp::VfxSequence
+  steps:
+  - note: 
+    schedule: 0
+    delay: 0
+    startEvent: 
+    snapToEventPoint: 0
+    kind: 0
+    anchor: 0
+    offset: {x: 0, y: 0.42, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: water.ball-explosion
+    scale: 0.25
+    speed: 1
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    tickId: orb
+    tickWhen: 0
+    tickInterval: 0.2
+    carrierFromCaster: 0
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    carrierArc: 0
+    carrierLaunchDegrees: 45
+    carrierDrawsArrow: 0
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
+  loopEnd: 0

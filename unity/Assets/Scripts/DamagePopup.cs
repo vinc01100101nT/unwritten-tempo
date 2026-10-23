@@ -28,7 +28,9 @@ public class DamagePopup : MonoBehaviour
 
     // Damage-number timing. Begin() resets to these every reuse so a SpawnBubble bark (which stretches
     // lifetime/riseSpeed) can't leak its long-lived, slow-rising timing into the next combat number.
-    const float DefaultLifetime = 0.7f, DefaultRise = 1.4f;
+    // A combat number RISES to a fixed height, HOLDS there so it can be read, then FADES in place.
+    const float RiseSeconds = 0.3f, RiseHeight = 0.6f, HoldSeconds = 0.5f, FadeSeconds = 0.4f;
+    const float DefaultLifetime = RiseSeconds + HoldSeconds + FadeSeconds, DefaultRise = RiseHeight / RiseSeconds;
     // A released multi-hit combo total lingers this long and fades IN PLACE (no rise) — see Release().
     const float HeldFadeSeconds = 2f;
 
@@ -39,7 +41,7 @@ public class DamagePopup : MonoBehaviour
     // (This is a plain world distance ON PURPOSE, unlike the anchor a number is spawned at — which must scale with the
     // body, and once didn't. What this clears is the CLIMB of the other numbers, and that climb is a world distance
     // too, so matching it is the only way to stay above them over a mob of any size.)
-    const float HeldLift = DefaultRise * DefaultLifetime;
+    const float HeldLift = RiseHeight;
 
     // How a pop decays: full size boost at the moment it fires, gone this many times faster than a second.
     const float PopDecay = 6f;
@@ -123,6 +125,7 @@ public class DamagePopup : MonoBehaviour
         popup.Begin(worldPos, label, color, 1f);
         popup.lifetime = Mathf.Max(0.1f, life);   // override AFTER Begin (which reset it to the default)
         popup.riseSpeed = rise;
+        popup.staged = false;                     // a bark keeps its own slow drift and long fade
     }
 
     /// <summary>As <see cref="SpawnText(Vector3,string,Color)"/> but at <paramref name="scaleMult"/>× size.</summary>
@@ -168,6 +171,7 @@ public class DamagePopup : MonoBehaviour
     {
         if (!held) return;
         held = false;
+        staged = false;               // a total fades where it stands, never rises
         age = 0f;                     // fresh fade starting now
         riseSpeed = 0f;               // hold position — fade in place, don't drift up
         lifetime = HeldFadeSeconds;   // linger ~2s before it's gone
@@ -231,6 +235,8 @@ public class DamagePopup : MonoBehaviour
     float age;
     float scaleMult = 1f;
     bool held;          // a live combo total: stays put + updatable until Release()
+    bool staged;        // a combat number: rise, hold, fade (RiseSeconds / HoldSeconds / FadeSeconds)
+    Vector3 basePos;    // where a staged number started, so its height is set rather than accumulated
     float holdAge;      // failsafe so a never-released held popup can't get stuck on screen
     float popAge;       // since the last POP — arriving, or a total taking another hit. Never reset by ending.
     const float MaxHold = 8f;
@@ -252,6 +258,8 @@ public class DamagePopup : MonoBehaviour
         // which is a world distance and so ignored unit size — it read as 3.7x body height over the smallest mob and
         // 1.1x over the largest. HEIGHT IS THE CALLER'S to choose, through UnitAnchor.Overhead (the single owner).
         transform.position = worldPos + new Vector3(Random.Range(-0.15f, 0.15f), 0f, 0f);
+        basePos = transform.position;
+        staged = true;
         transform.localScale = Vector3.one * (BaseScale * scaleMult);
         gameObject.SetActive(true);
     }
@@ -275,12 +283,19 @@ public class DamagePopup : MonoBehaviour
 
         age += Time.deltaTime;
         popAge += Time.deltaTime;
-        transform.position += Vector3.up * (riseSpeed * Time.deltaTime);
-
         var c = startColor;
-        // Fade out over its lifetime, SCALED by the colour's own alpha so a caller can pass a translucent
-        // colour (e.g. an element-resisted hit at 70% / an immune hit at 30%) and have that cap honoured.
-        c.a = startColor.a * Mathf.Clamp01(1f - age / lifetime);
+        // Faded SCALED by the colour's own alpha so a caller can pass a translucent colour (an element-resisted hit at
+        // 70%, an immune hit at 30%) and have that cap honoured.
+        if (staged)
+        {
+            transform.position = basePos + Vector3.up * StagedHeight(age);
+            c.a = startColor.a * StagedAlpha(age);
+        }
+        else
+        {
+            transform.position += Vector3.up * (riseSpeed * Time.deltaTime);
+            c.a = startColor.a * Mathf.Clamp01(1f - age / lifetime);
+        }
         text.color = c;
 
         // a quick "pop": briefly larger at spawn, then settle to the base size
@@ -288,6 +303,18 @@ public class DamagePopup : MonoBehaviour
 
         if (age >= lifetime) Recycle();
     }
+
+    /// <summary>How high a combat number has risen <paramref name="age"/> seconds in: easing out to
+    /// <see cref="RiseHeight"/> over <see cref="RiseSeconds"/>, then staying there.</summary>
+    public static float StagedHeight(float age)
+    {
+        float t = Mathf.Clamp01(age / RiseSeconds);
+        return RiseHeight * (1f - (1f - t) * (1f - t));
+    }
+
+    /// <summary>A combat number's opacity <paramref name="age"/> seconds in: full while it rises and holds, then fading
+    /// to nothing over <see cref="FadeSeconds"/>.</summary>
+    public static float StagedAlpha(float age) => Mathf.Clamp01(1f - (age - RiseSeconds - HoldSeconds) / FadeSeconds);
 
     /// <summary>The size boost from the most recent pop, decaying to nothing. ONE timer and ONE curve for both kinds of
     /// pop — a number arriving and a live total taking another hit — so they can only ever differ in strength, and a

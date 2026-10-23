@@ -45,6 +45,8 @@ MonoBehaviour:
   manaCost: 12
   cooldown: 8
   castTime: 0
+  fixedCastTime: 0
+  releaseEarly: 0
   aim: 2
   castRange: 11
   tier: 0
@@ -56,7 +58,7 @@ MonoBehaviour:
   repeatScaleWithAttackSpeed: 0
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
-  showRepeatsTotalDamage: 0
+  showRepeatsTotalDamage: 1
   repeatTotalPerBeat: 0
   repeatReaim: 0
   repeatReaimRange: 6

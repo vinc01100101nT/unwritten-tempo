@@ -55,6 +55,9 @@ public class UnitSkills
         return sharedUltimateDueAtUtc;
     }
 
+    /// <summary>SERVER: the last Staff combination this unit cast — the one Weathering makes ready again.</summary>
+    public string LastCombinationId { get; set; }
+
     /// <summary>Every ultimate ready now — a creature starting a new life, the same moment its own cooldowns are forgotten.</summary>
     public void ForgetSharedUltimate() => ResumeSharedUltimate(System.DateTime.MinValue);
 

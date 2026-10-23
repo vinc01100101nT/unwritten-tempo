@@ -84,6 +84,20 @@ public enum StateId
     BasicAttackBoost,
     // stacks = CHARGES: the holder's next basic attack skips its accuracy roll (SkillEffectKind.SureHit).
     SureHit,
+
+    // ---- The Staff's orbs and element marks (APPEND-ONLY) -----------------------------------------------------------
+    // One pile per orb element; each stack is one held orb, its intAmount its place in line, 1 = oldest (drops first).
+    OrbFire, OrbEarth, OrbWind, OrbWater,
+    // Water's mark: ONE shared count per unit whoever applied it (source ""), each stack slowing, a full pile freezing.
+    Chill,
+    // Wind's mark: each stack cuts attack speed a little.
+    Static,
+    // UNUSED since 2026-10-23 (the wait after a freeze was removed) — kept so every id after it keeps its number.
+    ChillGuard,
+    // Weathering: the element this unit is hit as, at its OWN level, over any armour converter. intAmount = the Element.
+    Weathered,
+    // Rime: whoever hits this unit while it runs gets a chill stack.
+    FrostAura,
 }
 
 /// <summary>
@@ -261,6 +275,13 @@ public class UnitStates : MonoBehaviour
         wornVersion = v;
         worn = wornGear.Bonuses;
         return true;
+    }
+
+    /// <summary>Is a Staff the weapon this unit holds? Held orbs give their stat only then.</summary>
+    bool StaffInHand()
+    {
+        if (!wornLooked && this != null) { wornGear = GetComponent<UnitEquipment>(); wornLooked = true; }   // perf-ok: once per store
+        return wornGear != null && wornGear.WeaponType == WeaponType.Staff;
     }
 
     /// <summary>Worn crit shield, as the LUK it is worth to the crit roll (Ironblood).</summary>
@@ -582,6 +603,15 @@ public class UnitStates : MonoBehaviour
     public void BeginOutgoingPenalty(float seconds, float cut)
     {
         if (seconds <= 0f || cut <= 0f) return;
+        // STONE — the Staff's weakening charges — has a ceiling on both halves: no charge cuts an attack by more than
+        // StoneCutCap, and one unit never holds more than MaxStone of them, summed over every Staff skill.
+        if (IsStaffSource(ctxSourceId))
+        {
+            cut = Mathf.Min(cut, MarkMath.StoneCutCap);
+            int room = MarkMath.MaxStone - StoneCharges;
+            if (room <= 0) return;
+            ctxStacksPerApply = Mathf.Min(ctxStacksPerApply, room);
+        }
         Apply(StateId.OutgoingDamagePenalty, seconds, cut);
     }
 
@@ -630,6 +660,22 @@ public class UnitStates : MonoBehaviour
     /// one runs, otherwise its own element at its own level. The ONE answer both kinds of unit read.</summary>
     public Element DefendingElementOr(Element natural, int naturalLevel, out int level)
     {
+        EnsureFresh();
+        // A MARK sits on top of everything: the unit is hit as the newest mark's element, at level 1, whatever its own
+        // element, cycle or converter — as a frozen target in Ragnarok becomes Water 1.
+        var marked = NewestMark();
+        if (marked != MarkKind.None)
+        {
+            level = Elements.ConverterLevel;
+            return MarkMath.ElementOf(marked);
+        }
+        // A creature's own element cycle keeps the unit's OWN level; a converter underneath it runs on.
+        var weathered = Find(StateId.Weathered, ElementCycleSource);
+        if (weathered != null && weathered.stacks.Count > 0)
+        {
+            level = naturalLevel;
+            return (Element)weathered.stacks[weathered.stacks.Count - 1].intAmount;
+        }
         if (TryConvertedElement(StateId.ArmorElement, out var converted))
         {
             level = Elements.ConverterLevel;
@@ -866,6 +912,9 @@ public class UnitStates : MonoBehaviour
             active.Add(s);
         }
 
+        // A MARK ARRIVING OR REFRESHING restarts its pile's clock: the newest mark decides what the unit is hit as
+        // (DefendingElementOr), and the start time is what crosses the wire to say which one that is.
+        if (MarkOf(s) != MarkKind.None) s.startTime = now;
         s.stacking = ctxStacking;   // decides how magnitude reads (absolute vs sum-of-deltas) — see Recompute's note
         var stack = new State.Stack { endTime = now + seconds, magnitude = magnitude, intAmount = intAmount };
         if (!ctxStacking)
@@ -1234,6 +1283,359 @@ public class UnitStates : MonoBehaviour
         OnChanged?.Invoke();
     }
 
+    // ---- the Staff: orbs and element marks ------------------------------------------------------------------------
+    // A held orb and a mark never time out on their own clock the way a buff does: an orb stays until it is replaced,
+    // so its stack ends this far ahead. A mark keeps its own seconds.
+    const float HeldForever = 1e7f;
+    static readonly int[] orbPlaceScratch = new int[OrbMath.Slots];
+
+    /// <summary>The live entry for <paramref name="id"/> granted by <paramref name="source"/>, made when missing —
+    /// for the piles below, which write their stacks themselves rather than through <see cref="Apply"/>.</summary>
+    State PileFor(StateId id, string source, string symbol, string name)
+    {
+        var s = Find(id, source);
+        if (s != null) return s;
+        s = pool.Count > 0 ? pool.Pop() : new State();
+        s.id = id; s.startTime = Time.time; s.nextTick = 0f;
+        s.sourceSkillId = source ?? "";
+        s.appliedBy = null;
+        s.stacks.Clear();
+        s.stacking = true;
+        s.symbol = symbol; s.name = name; s.description = null;
+        s.tint = Color.white;
+        active.Add(s);
+        return s;
+    }
+
+    void Changed(State s)
+    {
+        if (s != null)
+        {
+            if (s.stacks.Count == 0) { active.Remove(s); pool.Push(s); }
+            else s.Refold();
+        }
+        Recompute();
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>How many orbs of each element this unit holds.</summary>
+    public void OrbCounts(out int fire, out int earth, out int wind, out int water)
+    {
+        EnsureFresh();
+        fire = StacksOfPile(StateId.OrbFire); earth = StacksOfPile(StateId.OrbEarth);
+        wind = StacksOfPile(StateId.OrbWind); water = StacksOfPile(StateId.OrbWater);
+    }
+
+    int StacksOfPile(StateId id)
+    {
+        int n = 0;
+        for (int i = 0; i < active.Count; i++) if (active[i].id == id) n += active[i].stacks.Count;
+        return n;
+    }
+
+    /// <summary>SERVER: put one <paramref name="element"/> orb in this unit's slots, worth <paramref name="statFraction"/>
+    /// to its stat while a Staff is in hand; a full set drops its oldest orb first.</summary>
+    public void AddOrb(OrbElement element, float statFraction, string symbol, string name)
+    {
+        if (element == OrbElement.None) return;
+        EnsureFresh();
+        if (StacksOfPile(StateId.OrbFire) + StacksOfPile(StateId.OrbEarth) + StacksOfPile(StateId.OrbWind)
+            + StacksOfPile(StateId.OrbWater) >= OrbMath.Slots)
+            DropOldestOrb();
+        int held = RenumberOrbPlaces();
+        var s = PileFor(OrbMath.PileOf(element), "", symbol, name);
+        s.stacks.Add(new State.Stack { endTime = Time.time + HeldForever, magnitude = statFraction, intAmount = held + 1 });
+        Changed(s);
+    }
+
+    /// <summary>Rewrite each held orb's place in line as 1, 2, 3 — oldest first, keeping their order — and return how
+    /// many are held. A place never grows past <see cref="OrbMath.Slots"/>, so there is no counter to save or reset.</summary>
+    int RenumberOrbPlaces()
+    {
+        int n = 0;
+        for (int i = 0; i < active.Count; i++)
+        {
+            if (OrbMath.OrbOfPile(active[i].id) == OrbElement.None) continue;
+            var stacks = active[i].stacks;
+            for (int k = 0; k < stacks.Count && n < orbPlaceScratch.Length; k++)
+            {
+                int mine = stacks[k].intAmount, place = 1;
+                for (int j = 0; j < active.Count; j++)
+                {
+                    if (OrbMath.OrbOfPile(active[j].id) == OrbElement.None) continue;
+                    var other = active[j].stacks;
+                    for (int q = 0; q < other.Count; q++)
+                        if (other[q].intAmount < mine || (other[q].intAmount == mine && (j < i || (j == i && q < k)))) place++;
+                }
+                orbPlaceScratch[n++] = place;
+            }
+        }
+        int w = 0;
+        for (int i = 0; i < active.Count; i++)
+        {
+            if (OrbMath.OrbOfPile(active[i].id) == OrbElement.None) continue;
+            var stacks = active[i].stacks;
+            for (int k = 0; k < stacks.Count && w < n; k++)
+            {
+                var st = stacks[k];
+                st.intAmount = orbPlaceScratch[w++];
+                stacks[k] = st;
+            }
+            active[i].Refold();
+        }
+        return n;
+    }
+
+    void DropOldestOrb()
+    {
+        State oldestPile = null; int oldestIndex = -1, oldestSeq = int.MaxValue;
+        for (int i = 0; i < active.Count; i++)
+        {
+            var s = active[i];
+            if (OrbMath.OrbOfPile(s.id) == OrbElement.None) continue;
+            for (int k = 0; k < s.stacks.Count; k++)
+                if (s.stacks[k].intAmount < oldestSeq) { oldestSeq = s.stacks[k].intAmount; oldestPile = s; oldestIndex = k; }
+        }
+        if (oldestPile == null) return;
+        oldestPile.stacks.RemoveAt(oldestIndex);
+        LogStacksGone(oldestPile, 1, "replaced");
+        if (oldestPile.stacks.Count == 0) { active.Remove(oldestPile); pool.Push(oldestPile); }
+        else oldestPile.Refold();
+    }
+
+    /// <summary>The held orbs, oldest first, into <paramref name="into"/> (at least <see cref="OrbMath.Slots"/> long).
+    /// Returns how many. Reads the press order the server stamped on each orb.</summary>
+    public int OrbsInOrder(OrbElement[] into)
+    {
+        EnsureFresh();
+        int n = 0, lastSeq = int.MinValue;
+        for (int pick = 0; pick < OrbMath.Slots; pick++)
+        {
+            int bestSeq = int.MaxValue; var best = OrbElement.None;
+            for (int i = 0; i < active.Count; i++)
+            {
+                var orb = OrbMath.OrbOfPile(active[i].id);
+                if (orb == OrbElement.None) continue;
+                var stacks = active[i].stacks;
+                for (int k = 0; k < stacks.Count; k++)
+                    if (stacks[k].intAmount > lastSeq && stacks[k].intAmount < bestSeq) { bestSeq = stacks[k].intAmount; best = orb; }
+            }
+            if (best == OrbElement.None) break;
+            into[n++] = best; lastSeq = bestSeq;
+        }
+        return n;
+    }
+
+    /// <summary>Chill stacks held (0 when none).</summary>
+    public int ChillStacks { get { EnsureFresh(); return StacksOfPile(StateId.Chill); } }
+    /// <summary>Static stacks held (0 when none).</summary>
+    public int StaticStacks { get { EnsureFresh(); return StacksOfPile(StateId.Static); } }
+
+    /// <summary>SERVER: add <paramref name="stacks"/> Chill for <paramref name="seconds"/> to the one shared count,
+    /// never past <paramref name="skillCeiling"/> (0 = the full count). Refused on a burning unit (the mark already there
+    /// wins) and while it is frozen. Returns true when the count filled and the unit must freeze — the
+    /// count is emptied here; the caller freezes it.</summary>
+    public bool AddChill(int stacks, float seconds, int skillCeiling, float slowPerStack)
+    {
+        if (stacks <= 0 || seconds <= 0f) return false;
+        EnsureFresh();
+        if (Find(StateId.Burn) != null || Find(StateId.Freeze) != null) return false;
+        var s = PileFor(StateId.Chill, "", "Ch", "Chill");
+        s.startTime = Time.time;
+        int held = s.stacks.Count;
+        int after = MarkMath.ChillAfter(held, stacks, skillCeiling, out bool freezes);
+        float end = Time.time + seconds;
+        // Every stack shares the newest window: a refreshed chill is the whole count lasting longer, not one stack.
+        for (int k = 0; k < s.stacks.Count; k++) { var st = s.stacks[k]; st.endTime = end; s.stacks[k] = st; }
+        for (int k = held; k < after; k++) s.stacks.Add(new State.Stack { endTime = end, magnitude = Mathf.Max(0f, slowPerStack) });
+        if (freezes) s.stacks.Clear();
+        Changed(s);
+        return freezes;
+    }
+
+    /// <summary>SERVER: a burn tried to land on this frozen unit — every freeze on it ends
+    /// <paramref name="seconds"/> sooner. A freeze melted past now ends at once.</summary>
+    public void MeltFreeze(float seconds)
+    {
+        if (seconds <= 0f) return;
+        EnsureFresh();
+        bool any = false;
+        for (int i = 0; i < active.Count; i++)
+        {
+            var s = active[i];
+            if (s.id != StateId.Freeze) continue;
+            for (int k = 0; k < s.stacks.Count; k++)
+            {
+                var st = s.stacks[k];
+                st.endTime = MarkMath.Melted(st.endTime, seconds);
+                s.stacks[k] = st;
+            }
+            s.Refold();
+            any = true;
+        }
+        if (!any) return;
+        Recompute();
+        OnChanged?.Invoke();
+        EnsureFresh();   // a freeze melted to nothing ends now, not on the next read
+    }
+
+    /// <summary>SERVER: add <paramref name="stacks"/> Static for <paramref name="seconds"/>, never past the cap.</summary>
+    public void AddStatic(int stacks, float seconds, float cutPerStack)
+    {
+        if (stacks <= 0 || seconds <= 0f) return;
+        EnsureFresh();
+        var s = PileFor(StateId.Static, "", "St", "Static");
+        s.startTime = Time.time;
+        float end = Time.time + seconds;
+        for (int k = 0; k < s.stacks.Count; k++) { var st = s.stacks[k]; st.endTime = end; s.stacks[k] = st; }
+        int add = Mathf.Min(stacks, MarkMath.MaxStatic - s.stacks.Count);
+        for (int k = 0; k < add; k++) s.stacks.Add(new State.Stack { endTime = end, magnitude = Mathf.Max(0f, cutPerStack) });
+        Changed(s);
+    }
+
+    /// <summary>The mark a pile is, or None: Burn, Chill (a freeze too), Static, and Stone — the Staff's own weakening
+    /// charges only.</summary>
+    static MarkKind MarkOf(State s)
+    {
+        if (s == null) return MarkKind.None;
+        switch (s.id)
+        {
+            case StateId.Burn:   return MarkKind.Burn;
+            case StateId.Chill:
+            case StateId.Freeze: return MarkKind.Chill;
+            case StateId.Static: return MarkKind.Static;
+            case StateId.OutgoingDamagePenalty: return IsStaffSource(s.sourceSkillId) ? MarkKind.Stone : MarkKind.None;
+            default:             return MarkKind.None;
+        }
+    }
+
+    /// <summary>The mark on this unit that arrived or refreshed last, or None. Read from each pile's start time, which
+    /// crosses the wire, so every machine names the same one.</summary>
+    public MarkKind NewestMark()
+    {
+        EnsureFresh();
+        var best = MarkKind.None;
+        float at = float.NegativeInfinity;
+        for (int i = 0; i < active.Count; i++)
+        {
+            var s = active[i];
+            if (s.stacks.Count == 0) continue;
+            var mark = MarkOf(s);
+            if (mark != MarkKind.None && s.startTime > at) { at = s.startTime; best = mark; }
+        }
+        return best;
+    }
+
+    /// <summary>How many of <paramref name="mark"/> this unit holds, as a strike counts them: burn stacks, Chill (a
+    /// frozen unit counts as a full shatter), Static stacks, Stone charges.</summary>
+    public int MarkCount(MarkKind mark)
+    {
+        switch (mark)
+        {
+            case MarkKind.Burn:   { var b = Get(StateId.Burn); return b != null ? b.stacks.Count : 0; }
+            case MarkKind.Chill:  return MarkMath.ChillCount(ChillStacks, Has(StateId.Freeze));
+            case MarkKind.Static: return StaticStacks;
+            case MarkKind.Stone:  return StoneCharges;
+            default:              return 0;
+        }
+    }
+
+    /// <summary>SERVER: make every <paramref name="mark"/> on this unit last <paramref name="seconds"/> longer and each of
+    /// its stacks <paramref name="strengthen"/> stronger (0.2 = +20%), once. A freeze is never lengthened — its guard
+    /// was set when it began. Stone stays under its cut cap.</summary>
+    public void ExtendMark(MarkKind mark, float seconds, float strengthen)
+    {
+        if (mark == MarkKind.None || (seconds <= 0f && strengthen <= 0f)) return;
+        EnsureFresh();
+        float grow = 1f + Mathf.Max(0f, strengthen);
+        bool any = false;
+        for (int i = 0; i < active.Count; i++)
+        {
+            var s = active[i];
+            if (s.id == StateId.Freeze || MarkOf(s) != mark) continue;
+            for (int k = 0; k < s.stacks.Count; k++)
+            {
+                var st = s.stacks[k];
+                st.endTime += Mathf.Max(0f, seconds);
+                st.magnitude = MarkMath.Strengthened(mark, st.magnitude, grow);
+                s.stacks[k] = st;
+            }
+            s.Refold();
+            any = true;
+        }
+        if (any) { Recompute(); OnChanged?.Invoke(); }
+    }
+
+    /// <summary>True when <paramref name="sourceSkillId"/> is a Staff skill — whose weakening charges are Stone.</summary>
+    static bool IsStaffSource(string sourceSkillId)
+    {
+        var def = SkillCatalog.Get(sourceSkillId);
+        return def != null && def.weaponType == WeaponType.Staff;
+    }
+
+    /// <summary>Stone charges held — the weakening charges Staff skills put on this unit, and no one else's.</summary>
+    public int StoneCharges
+    {
+        get
+        {
+            EnsureFresh();
+            int n = 0;
+            for (int i = 0; i < active.Count; i++)
+                if (active[i].id == StateId.OutgoingDamagePenalty && IsStaffSource(active[i].sourceSkillId))
+                    n += active[i].stacks.Count;
+            return n;
+        }
+    }
+
+    /// <summary>SERVER: remove every Stone charge (the Staff's own weakening charges only). Returns how many went.</summary>
+    public int RemoveStone()
+    {
+        EnsureFresh();
+        int gone = 0;
+        for (int i = active.Count - 1; i >= 0; i--)
+        {
+            var s = active[i];
+            if (s.id != StateId.OutgoingDamagePenalty || !IsStaffSource(s.sourceSkillId)) continue;
+            gone += s.stacks.Count;
+            LogStacksGone(s, s.stacks.Count, "melted", wholePile: true);
+            active.RemoveAt(i); pool.Push(s);
+        }
+        if (gone > 0) { Recompute(); OnChanged?.Invoke(); }
+        return gone;
+    }
+
+    /// <summary>SERVER: remove a whole mark — every pile of <paramref name="id"/>, whoever granted it.</summary>
+    public int RemoveAll(StateId id)
+    {
+        EnsureFresh();
+        int gone = 0;
+        for (int i = active.Count - 1; i >= 0; i--)
+        {
+            var s = active[i];
+            if (s.id != id) continue;
+            gone += s.stacks.Count;
+            LogStacksGone(s, s.stacks.Count, "cashed", wholePile: true);
+            active.RemoveAt(i); pool.Push(s);
+        }
+        if (gone > 0) { Recompute(); OnChanged?.Invoke(); }
+        return gone;
+    }
+
+    /// <summary>The source a creature's own element cycle files its element under.</summary>
+    public const string ElementCycleSource = "@element-cycle";
+
+    /// <summary>SERVER: a creature whose element turns (Kaelen's shadow) is hit as <paramref name="element"/> for
+    /// <paramref name="seconds"/>, at its own level.</summary>
+    public void BeginCycledElement(Element element, float seconds)
+    {
+        if (seconds <= 0f) return;
+        EnsureFresh();
+        var s = PileFor(StateId.Weathered, ElementCycleSource, "El", "Turning element");
+        s.stacks.Clear();
+        s.stacks.Add(new State.Stack { endTime = Time.time + seconds, intAmount = (int)element });
+        Changed(s);
+    }
+
     // ---- the server's word, on a machine that only watches -------------------------------------------------------
 
     /// <summary>ONE state as it crosses the wire — what the owner's machine needs in order to SHOW a pile and to
@@ -1358,8 +1760,12 @@ public class UnitStates : MonoBehaviour
         OnChanged?.Invoke();
     }
 
+    /// <summary>Changes every time the set of states does — a reader can tell "nothing moved" with one compare.</summary>
+    public int ChangeCount { get; private set; }
+
     void Recompute()
     {
+        ChangeCount++;
         // Mult-style channels accumulate BONUSES (a ×1.3 pile contributes +0.30) and are converted back to a multiplier
         // once, at the end. Two +30% piles therefore read ×1.60, not ×1.69: every pile of a kind sits in the SAME
         // category, so a second one is worth the same as the first regardless of what's already running. Compounding
@@ -1369,6 +1775,7 @@ public class UnitStates : MonoBehaviour
         anyEndsOnHit = false;
         nextExpiry = float.MaxValue;
         System.Array.Clear(subStatBonus, 0, subStatBonus.Length);
+        float orbFire = 0f, orbEarth = 0f, orbWind = 0f, orbWater = 0f;
 
         for (int i = 0; i < active.Count; i++)
         {
@@ -1395,9 +1802,24 @@ public class UnitStates : MonoBehaviour
                 case StateId.Shield:          shieldPool += s.intAmount; break;
                 // Parry carries no per-stack value — the STACK COUNT *is* the charge count (one hit erased each).
                 case StateId.Parry:           parryCharges += s.StackCount; break;
+                // The Staff's marks: each stack carries its own cut (Chill on movement, Static on attack speed).
+                case StateId.Chill:           subStatBonus[(int)SubStat.MovementSpeed] -= s.magnitude; break;
+                case StateId.Static:          subStatBonus[(int)SubStat.AttackSpeed] -= s.magnitude; break;   // server-math: the same fold every sub-stat pile above takes; each stack's cut is the server's
+                case StateId.OrbFire:         orbFire += s.magnitude; break;
+                case StateId.OrbEarth:        orbEarth += s.magnitude; break;
+                case StateId.OrbWind:         orbWind += s.magnitude; break;
+                case StateId.OrbWater:        orbWater += s.magnitude; break;
                 // Poison/Bleed/Burn (DoT) + the HP-regen trickle tick in the (migrated) update loop; Taunt/Knockback/
                 // Pull drive MonsterAI3D directly — none contribute a cached scalar, they're timer + display entries.
             }
+        }
+        // HELD ORBS give their stat only while a Staff is in hand; with any other weapon they wait in their slots.
+        if (StaffInHand())
+        {
+            subStatBonus[(int)OrbMath.StatOf(OrbElement.Fire)]  += OrbMath.HeldStat(orbFire);
+            subStatBonus[(int)OrbMath.StatOf(OrbElement.Earth)] += OrbMath.HeldStat(orbEarth);
+            subStatBonus[(int)OrbMath.StatOf(OrbElement.Wind)]  += OrbMath.HeldStat(orbWind);
+            subStatBonus[(int)OrbMath.StatOf(OrbElement.Water)] += OrbMath.HeldStat(orbWater);
         }
         // WHAT THE UNIT WEARS joins the same table (ArmourWords.FoldIntoSubStats owns the units).
         ArmourWords.FoldIntoSubStats(worn, subStatBonus);

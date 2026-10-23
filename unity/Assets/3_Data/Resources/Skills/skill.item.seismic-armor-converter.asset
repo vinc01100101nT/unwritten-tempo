@@ -39,6 +39,8 @@ MonoBehaviour:
   manaCost: 0
   cooldown: 0
   castTime: 0
+  fixedCastTime: 0
+  releaseEarly: 0
   aim: 0
   castRange: 0
   tier: 0

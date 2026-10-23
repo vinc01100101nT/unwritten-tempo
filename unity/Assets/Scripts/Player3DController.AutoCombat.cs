@@ -276,8 +276,7 @@ public partial class Player3DController
         routing = false; path.Clear();
         if (attacker != null && attacker.EngagedWith(attackTarget))
         {
-            attacker.TryAttack(attackTarget);
-            FaceTarget();
+            if (attacker.TryAttack(attackTarget)) FaceTarget();
         }
         return Vector3.zero;
     }

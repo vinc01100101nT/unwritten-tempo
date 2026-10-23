@@ -18,7 +18,7 @@ public static class SkillLevelNumbers
     /// <summary>Append to <paramref name="into"/> one number per raised effect of <paramref name="def"/>, in the
     /// order its bindings and effects are authored, as <paramref name="caster"/> would land it with
     /// <paramref name="lift"/> (its skill level's and its weapon trademark's lift, added together as the fight adds them).</summary>
-    public static void Collect(SkillDef def, ICombatUnit caster, float lift, List<float> into)
+    public static void Collect(SkillDef def, ICombatUnit caster, float lift, List<float> into, float[] orbLifts = null)
     {
         if (def == null || def.bindings == null || into == null) return;
         for (int b = 0; b < def.bindings.Count; b++)
@@ -29,7 +29,12 @@ public static class SkillLevelNumbers
             {
                 var e = binding.effects[k];
                 if (MainNumber(e, out var number, out bool whole))
-                    into.Add(Scaled(number, whole, SkillEffectApplier.OutputScale(e, caster, lift)));
+                    into.Add(Scaled(number, whole, SkillEffectApplier.OutputScale(e, caster,
+                        // A Staff combination's part grows with its own orb, exactly as the fight lifts it.
+                        orbLifts != null && e.orb != OrbElement.None && e.kind != SkillEffectKind.AddOrb ? orbLifts[(int)e.orb] : lift)
+                        // A MULTI-HIT is one strike shown as its pieces, and the card shows the strike: the fight
+                        // multiplies the whole blow by its hit count (SkillEffectApplier.FlurryOnce), so the card does too.
+                        * (e.kind == SkillEffectKind.Damage ? SkillEffectApplier.EffectiveHits(e, caster) : 1)));
             }
         }
     }
@@ -44,11 +49,21 @@ public static class SkillLevelNumbers
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
+                // A part that is only a payoff (no base of its own) is raised through its payoff: the bonus per mark,
+                // or a burn's leftover damage.
+                if (e.cashMark != MarkKind.None && e.damageMult.value <= 0f)
+                {
+                    number = e.cashMark == MarkKind.Burn && e.damageMultPerMark.value <= 0f ? e.burnPayoff : e.damageMultPerMark;
+                    return true;
+                }
+                number = e.damageMult;
+                return true;
             case SkillEffectKind.Execute:
                 number = e.damageMult;
                 return true;
             case SkillEffectKind.Heal:
             case SkillEffectKind.Shield:
+            case SkillEffectKind.DrainMana:
                 number = e.amount;
                 whole = true;
                 return true;

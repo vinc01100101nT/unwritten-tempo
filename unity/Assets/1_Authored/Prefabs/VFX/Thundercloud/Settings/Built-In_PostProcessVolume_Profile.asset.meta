@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3bcc5dafb1c8546ce9be1fca5fd6bd6c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Settings/Built-In_PostProcessVolume_Profile.asset
+  uploadId: 831922

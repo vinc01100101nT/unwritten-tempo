@@ -726,6 +726,13 @@ public class GameNetwork : NetworkManager
         public Vector3 aimPoint;
     }
 
+    /// <summary>The player pressed a movement key during a release-early skill's wind-up: fire it now. Intent only —
+    /// the server measures how much of its own wind-up was filled.</summary>
+    public struct CastReleaseRequest : NetworkMessage
+    {
+        public string skillId;
+    }
+
     /// <summary>A skill going off, as everybody else sees it — sent to every machine watching the caster so the
     /// effect, the pose and the sound play there too. It carries no outcome: what the skill DID arrives through
     /// the doors that already announce a blow, a heal and a death.</summary>
@@ -825,6 +832,10 @@ public class GameNetwork : NetworkManager
         /// message that ends it can say which one — two people poisoned at once is the ordinary case, and each
         /// one's glow has to come off its own body.</summary>
         public int auraKey;
+
+        /// <summary>Which weapon's own version of the cue to draw (<see cref="VfxCueBinding.weapon"/>); None = the
+        /// every-weapon look.</summary>
+        public WeaponType weapon;
     }
 
     /// <summary>A LASTING CUE THAT IS OVER — the ailment expired, the wind-up ended, the body went away. Sent from
@@ -1010,6 +1021,7 @@ public class GameNetwork : NetworkManager
         NetworkServer.RegisterHandler<AttackIntentRequest>(OnAttackIntentRequest);
         NetworkServer.RegisterHandler<ReviveRequest>(OnReviveRequest);
         NetworkServer.RegisterHandler<SkillCastRequest>(OnSkillCastRequest);
+        NetworkServer.RegisterHandler<CastReleaseRequest>(OnCastReleaseRequest);
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
         NetworkServer.RegisterHandler<MobInfoRequest>(OnMobInfoRequest);
@@ -2372,6 +2384,15 @@ public class GameNetwork : NetworkManager
         return true;
     }
 
+    /// <summary>Ask the server to release this skill's wind-up now (<see cref="CastReleaseRequest"/>). Silent on the
+    /// machine that owns the world, and before anyone has joined.</summary>
+    public static void SendCastRelease(SkillDef def)
+    {
+        if (def == null || NetworkServer.active) return;
+        if (!NetworkClient.active || !NetworkClient.isConnected) return;
+        NetworkClient.Send(new CastReleaseRequest { skillId = def.id });
+    }
+
     // What the caster picked, as the shared thing that speaks for it. A creature answers through its shell, a
     // person through theirs; anything else was never shared and is named as nothing.
     static uint IdentityOfAimed(Transform aimed)
@@ -2387,6 +2408,15 @@ public class GameNetwork : NetworkManager
     // a named strike already answers to, read from the same constant so the two cannot drift apart.
     // EVERY PRESS IS ANSWERED, whichever way it went, so the pressing machine — which starts no cooldown of its own —
     // knows when it may send the next one.
+    void OnCastReleaseRequest(NetworkConnectionToClient conn, CastReleaseRequest msg)
+    {
+        var caster = FighterFor(conn) as Character;
+        if (caster == null) { WarnNoFighter(conn.connectionId); return; }
+        var runner = PlayerFighter.RunnerFor(caster, msg.skillId);
+        if (runner == null || !runner.ReleaseWindup())
+            WhyCastRefused(msg.skillId, "a release was asked for, but that skill is not winding up a release-early cast");
+    }
+
     void OnSkillCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
     {
         bool cast = RunCastRequest(conn, msg);
@@ -2478,6 +2508,16 @@ public class GameNetwork : NetworkManager
                                  + " units away and it reaches " + def.castRange);
                 return false;
             }
+        }
+
+        // A CAST THAT MOVES THEM TO THE AIMED SPOT lands only where a body can stand — never inside a prop, never on
+        // ground no walk reaches from where they are. Refused, not moved to the nearest open spot: the user's rule.
+        if (aimed == null && def.MovesCasterToAimPoint
+            && !Pathfinder3D.CanLandAt(casterBody.position, point, SkillEffectApplier.TripRadius))
+        {
+            WhyCastRefused(msg.skillId, "nobody could stand where they aimed it");
+            castShell?.TellOwner("You can't land there.");
+            return false;
         }
 
         // The cast itself announces each of its plays as they start (see AnnounceCastPlayed) — including its
@@ -2639,7 +2679,7 @@ public class GameNetwork : NetworkManager
             startedAt = NetworkTime.time,
             seconds = seconds,
             aimPoint = MapManager.InMap(aimPoint, caster.Map),
-        }, includeOwner: false);
+        }, includeOwner: true);   // the caster's own bar follows these numbers too (SkillRunner.TellWindup)
     }
 
     /// <summary>Say that a wind-up is over — finished or broken. The pair of the one above, sent from the same
@@ -2662,6 +2702,13 @@ public class GameNetwork : NetworkManager
     {
         if (!NetworkClient.spawned.TryGetValue(msg.casterNetId, out var identity) || identity == null) return;
         var def = SkillCatalog.Get(msg.skillId);
+        // YOUR OWN WIND-UP: the bar over your head takes the server's length and start, not a sum worked out here.
+        if (identity.isOwned)
+        {
+            var mine = Character.Instance != null ? Character.Instance.RunnerById(msg.skillId) : null;
+            if (mine != null) mine.TellWindup(msg.startedAt, msg.seconds);
+            return;
+        }
         var shell = identity.GetComponent<NetPlayer>();
         if (shell != null) { shell.ShowCastWindup(def, msg.startedAt, msg.seconds, msg.aimPoint); return; }
         var creature = identity.GetComponent<NetMob>();
@@ -2685,7 +2732,8 @@ public class GameNetwork : NetworkManager
     ///
     /// <para>Called from the one door every cue in the game passes through, so nothing has to remember to do this
     /// and nothing can be added later that forgets to.</para></summary>
-    public static uint AnnounceCue(Transform actor, Transform target, VfxCueId cue, int auraKey)
+    public static uint AnnounceCue(Transform actor, Transform target, VfxCueId cue, int auraKey,
+                                   WeaponType weapon = WeaponType.None)
     {
         if (!NetworkServer.active || actor == null) return 0u;
         var identity = SharedIdentityOnServer(actor);
@@ -2699,6 +2747,7 @@ public class GameNetwork : NetworkManager
             targetNetId = aimed != null ? aimed.netId : 0u,
             cue = cue,
             auraKey = auraKey,
+            weapon = weapon,
         });
         return identity.netId;
     }
@@ -2787,7 +2836,7 @@ public class GameNetwork : NetworkManager
         if (msg.targetNetId != 0u && NetworkClient.spawned.TryGetValue(msg.targetNetId, out var other) && other != null)
             at = DrawnBodyOf(other);
 
-        VfxCue.PlayFromServer(msg.cue, on, at, msg.auraKey, msg.onNetId);
+        VfxCue.PlayFromServer(msg.cue, on, at, msg.auraKey, msg.onNetId, msg.weapon);
         // No word over a person away on a teleport, exactly as no effect is drawn on them.
         if (!TeleportLook.Covers(on)) CueWords.Show(msg.cue, on, identity.TryGetComponent<NetMob>(out _));
     }
@@ -2974,6 +3023,12 @@ public class GameNetwork : NetworkManager
         // AN AUTO-COMBAT SLOT IS A BAR TOO — the four skills auto-combat presses, held to the same learned-and-in-hand
         // test below. Read off the settings this server holds, never off the press.
         if (!onTheirBar) onTheirBar = InAutoSlots(caster.AutoCombat, skillId);
+        // A STAFF COMBINATION is pressed through the Release on their bar, never bound itself.
+        if (!onTheirBar)
+        {
+            var combo = SkillCatalog.Get(skillId);
+            onTheirBar = combo != null && combo.IsOrbCombo && caster.HoldsOrbRelease();
+        }
         if (!onTheirBar) return false;
         return caster.MayUse(skillId);
     }

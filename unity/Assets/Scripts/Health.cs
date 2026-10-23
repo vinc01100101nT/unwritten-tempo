@@ -47,6 +47,24 @@ public class Health : MonoBehaviour, ICombatUnit
     /// <summary>How strongly <see cref="element"/> resists and is weak, 1 to 4 — copied from the creature data by
     /// <see cref="MobSpawner"/>, the one door every creature is made through, exactly like <see cref="kind"/>.</summary>
     [System.NonSerialized] public int elementLevel = 1;
+    /// <summary>Seconds between turns of this creature's element around the cycle (Fire, Earth, Wind, Water), copied
+    /// from its data; 0 = it keeps its element. Kaelen's shadow turns.</summary>
+    [System.NonSerialized] public float elementCycleSeconds;
+    float nextElementTurn;
+    Element turnedTo = Element.Neutral;
+
+    /// <summary>SERVER, from the creature's brain: turn its element once its time is up. One compare when nothing is due.</summary>
+    public void TickElementCycle()
+    {
+        if (elementCycleSeconds <= 0f) return;
+        if (nextElementTurn <= 0f) { nextElementTurn = Time.time + elementCycleSeconds; turnedTo = element; return; }
+        if (Time.time < nextElementTurn) return;
+        nextElementTurn = Time.time + elementCycleSeconds;
+        turnedTo = MarkMath.WeakTo(turnedTo == Element.Neutral ? element : turnedTo);
+        if (turnedTo == Element.Neutral) { elementCycleSeconds = 0f; return; }
+        States.BeginCycledElement(turnedTo, elementCycleSeconds + 0.5f);
+        VfxCue.Fire(VfxCueId.OnElementTurn, Body);
+    }
 
     [Tooltip("Invoked once, just before the GameObject is removed.")]
     public UnityEngine.Events.UnityEvent onDeath;
@@ -219,7 +237,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (StatBlock == null) return 0f;
         var def = SkillCatalog.Get(skillId);
         float level = def != null && def.RidesWeaponMastery(HeldWeapon)
-            ? MasteryMath.SkillLevelLift(Mastery.LevelOf(skillId))
+            ? MasteryMath.LevelLift(def, Mastery.LevelOf(skillId))
             : 0f;
         return level + TrademarkLift(skillId);
     }

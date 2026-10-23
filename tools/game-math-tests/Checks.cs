@@ -267,6 +267,44 @@ static class Checks
     // is what every strike authored before them carries.
     const string StrikeF = "unity/Assets/Scripts/StrikeMath.cs";
 
+    const string OrbF = "unity/Assets/Scripts/OrbMath.cs";
+
+    static void StaffOrbRules()
+    {
+        // Combinations are matched by counts, never by order.
+        That(OrbMath.KeyOf("FFE") == OrbMath.KeyOf("EFF") && OrbMath.KeyOf("FFE") == OrbMath.KeyOf("FEF"), OrbF, "FFE, EFF and FEF should be one combination");
+        That(OrbMath.KeyOf("FFE") != OrbMath.KeyOf("FEE"), OrbF, "FFE and FEE should be two combinations");
+        That(OrbMath.KeyOf("FF") == -1 && OrbMath.KeyOf("FFX") == -1, OrbF, "a combination needs exactly three valid letters");
+        That(OrbMath.IsPure("WWW") && !OrbMath.IsPure("WWA"), OrbF, "three of one element is pure, a mix is not");
+        // Orb levels: level 1 lifts nothing; level 35 lifts as much as a level-10 skill (about +45%).
+        That(OrbMath.LevelLift(1) == 0f, OrbF, "a level-1 orb should lift nothing");
+        That(Math.Abs(OrbMath.LevelLift(35) - 0.4488f) < 0.001f, OrbF, "a level-35 orb should lift about +44.9%");
+        That(OrbMath.HeldStat(0.4f) == OrbMath.StatCap, OrbF, "held orbs should stop at their stat cap");
+        // Runs that grow with cast speed: never fewer than authored, never past the ceiling.
+        That(OrbMath.RepeatsWithCastSpeed(6, 0f, 12) == 6, OrbF, "no cast speed should leave the authored count");
+        That(OrbMath.RepeatsWithCastSpeed(6, 0.5f, 12) == 9, OrbF, "50% cast speed should make 6 into 9");
+        That(OrbMath.RepeatsWithCastSpeed(6, 5f, 12) == 12, OrbF, "a huge cast speed should stop at the ceiling");
+        // Chill: three stacks freeze; a ceiling of 2 never freezes.
+        That(MarkMath.ChillAfter(2, 1, 0, out bool f1) == 3 && f1, OrbF, "a third chill should freeze");
+        That(MarkMath.ChillAfter(2, 5, 2, out bool f2) == 2 && !f2, OrbF, "a skill held to 2 chill should never freeze");
+        That(MarkMath.ChillCount(1, true) == MarkMath.FrozenCountsAs, OrbF, "a frozen target should pay out as a full shatter");
+        // Burn left: damage per tick times whole ticks left.
+        That(MarkMath.BurnLeft(4f, 3.3f, 0.8f) == 16, OrbF, "4 a tick with 3.3s left at 0.8s ticks should be 16");
+        That(MarkMath.BurnAgeGrowth(0.3f, 30f) == 3f, OrbF, "burn age should stop at 10 seconds");
+        That(MarkMath.MaxManaGrowth(0.001f, 5000) == MarkMath.MaxManaGrowthCap, OrbF, "max-MP growth should stop at its cap");
+        // The held orbs on the wire: oldest first, and whether a Staff is in hand.
+        var held = new[] { OrbElement.Fire, OrbElement.Water, OrbElement.Earth };
+        int packed = OrbMath.Pack(held, 3, true);
+        That(OrbMath.Unpack(packed, 0) == OrbElement.Fire && OrbMath.Unpack(packed, 1) == OrbElement.Water
+             && OrbMath.Unpack(packed, 2) == OrbElement.Earth && OrbMath.StaffInHand(packed), OrbF, "three orbs should come back in order with the Staff bit");
+        That(!OrbMath.StaffInHand(OrbMath.Pack(held, 3, false)) && OrbMath.Unpack(OrbMath.Pack(held, 1, true), 1) == OrbElement.None, OrbF,
+             "no Staff should clear the bit, and one orb should leave the rest empty");
+        // The cycle: each element turns into the one it beats.
+        That(MarkMath.WeakTo(Element.Fire) == Element.Earth && MarkMath.WeakTo(Element.Earth) == Element.Wind
+             && MarkMath.WeakTo(Element.Wind) == Element.Water && MarkMath.WeakTo(Element.Water) == Element.Fire, OrbF,
+             "the cycle should run Fire, Earth, Wind, Water");
+    }
+
     static void StrikeGrowthRules()
     {
         That(StrikeMath.Growth(0f, 500, 0f, 30f) == 0f, StrikeF, "a strike with both growth numbers at 0 grew");
@@ -275,6 +313,17 @@ static class Checks
         That(Math.Abs(StrikeMath.Growth(0f, 0, 0.05f, 20f) - 1f) < 0.001f, StrikeF, "0.05 per metre at 20 metres should add 1");
         That(Math.Abs(StrikeMath.Growth(0.1f, 10, 0.05f, 20f) - 2f) < 0.001f, StrikeF, "the two growths should add together");
         That(StrikeMath.Growth(0.1f, -5, 0.05f, -3f) == 0f, StrikeF, "a negative amount given up or distance should add nothing");
+        // Release early (decided 2026-10-23): 0.30× let go at once, 1.50× at a full wind-up, evenly between.
+        That(Math.Abs(StrikeMath.ReleaseScale(10f, 10f, 2f) - 0.30f) < 0.001f, StrikeF, "a release the instant the wind-up starts should be 0.30");
+        That(Math.Abs(StrikeMath.ReleaseScale(10f, 11f, 2f) - 0.90f) < 0.001f, StrikeF, "a release halfway through the wind-up should be 0.90");
+        That(Math.Abs(StrikeMath.ReleaseScale(10f, 12f, 2f) - 1.50f) < 0.001f, StrikeF, "a full wind-up should be 1.50");
+        That(Math.Abs(StrikeMath.ReleaseScale(10f, 15f, 2f) - 1.50f) < 0.001f, StrikeF, "a release after the wind-up ended should stay at 1.50");
+        That(Math.Abs(StrikeMath.ReleaseScale(10f, 9f, 2f) - 0.30f) < 0.001f, StrikeF, "a release before the wind-up began should stay at 0.30");
+        That(Math.Abs(StrikeMath.ReleaseScale(10f, 10f, 0f) - 1.50f) < 0.001f, StrikeF, "a wind-up of no length should count as full");
+        That(Math.Abs(UnitStatMath.CastWindupSeconds(1.5f, 0.5f, 2f) - 2.75f) < 0.001f, StatMath, "1.5 s shortened to half, plus 2 s fixed, should be 2.75 s");
+        That(Math.Abs(UnitStatMath.CastWindupSeconds(0f, 1f, 2f) - 2f) < 0.001f, StatMath, "a fixed-only wind-up should be its fixed time");
+        That(UnitStatMath.CastWindupSeconds(2f, 0f, 0f) == 0f, StatMath, "a variable wind-up at 150 DEX should be instant");
+        That(Math.Abs(UnitStatMath.CastWindupSeconds(0f, 0f, 2f) - 2f) < 0.001f, StatMath, "150 DEX should not shorten a fixed cast time");
         // A lobbed arrow (Rainbow, 2026-10-21): real throw physics on level ground.
         That(Math.Abs(Ballistics.FlightSeconds(11f, 45f, 9.81f) - 1.4976f) < 0.001f, StrikeF, "an 11 m lob at 45 degrees should fly about 1.5 s");
         That(Ballistics.FlightSeconds(4f, 45f, 9.81f) < Ballistics.FlightSeconds(11f, 45f, 9.81f), StrikeF, "a shorter lob should land sooner");
@@ -289,6 +338,10 @@ static class Checks
         That(Math.Abs(StrikeMath.SpeedBonusPoints(1.45f, true) - 45f) < 0.01f, StrikeF, "a x1.45 pace on the move should count 45");
         That(StrikeMath.SpeedBonusPoints(1.45f, false) == 0f, StrikeF, "standing still should count nothing");
         That(StrikeMath.SpeedBonusPoints(0.7f, true) == 0f, StrikeF, "a slowed caster should count nothing, not a penalty");
+        // Crit chance against a slowed target (Hailstone): the extra only when the target moves slower than normal.
+        That(Math.Abs(StrikeMath.CritBonus(0.25f, 0.25f, 0.75f) - 0.5f) < 0.001f, StrikeF, "a slowed target should add the vs-slowed crit chance");
+        That(Math.Abs(StrikeMath.CritBonus(0.25f, 0.25f, 1f) - 0.25f) < 0.001f, StrikeF, "a target at normal pace should add nothing extra");
+        That(Math.Abs(StrikeMath.CritBonus(0.25f, 0.25f, 1.3f) - 0.25f) < 0.001f, StrikeF, "a hasted target should add nothing extra");
         // The sniper (decided 2026-10-06): its ordinary attack is a magic shot that grows 2% a metre, and it is the only
         // weapon whose magic can crit.
         That(Math.Abs(StrikeMath.SniperShotGrowth(0f) - 1f) < 0.001f, StrikeF, "a point-blank sniper shot should be x1");
@@ -2068,6 +2121,7 @@ static class Checks
         WornAccuracyAndEvasion();
         ArmourWordRules();
         StrikeGrowthRules();
+        StaffOrbRules();
         FlightRules();
         GlideTripSeconds();
         Ring();

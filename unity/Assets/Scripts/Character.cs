@@ -292,6 +292,8 @@ public class Character : MonoBehaviour, ICombatUnit
         if (def == null) return false;
         if (def.ItemUseEntry != null) return false;
         if (def.weaponType == WeaponType.None) return true;
+        // A STAFF COMBINATION is never learned: it is cast through Release when the orbs held make it.
+        if (def.IsOrbCombo) return OrbCombos.MayCast(this, def, HeldWeaponType);
         return Mastery.HasLearned(skillId) && HeldWeaponType == def.weaponType;
     }
 
@@ -393,6 +395,7 @@ public class Character : MonoBehaviour, ICombatUnit
         var def = SkillCatalog.Get(skillId);
         if (def == null || def.weaponType == WeaponType.None) return null;
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
+        if (def.IsOrbCombo) return OrbCombos.WhyNot(this, def, HeldWeaponType);
         if (!Mastery.HasLearned(skillId))
             return name + " is not learned yet — spend a " + WeaponTypes.Label(def.weaponType) + " mastery point on it in the Skills window.";
         if (HeldWeaponType != def.weaponType)
@@ -422,7 +425,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (string.IsNullOrEmpty(skillId)) return 0f;
         var def = SkillCatalog.Get(skillId);
         if (def == null || !def.RidesWeaponMastery(HeldWeaponType)) return 0f;
-        return MasteryMath.SkillLevelLift(Mastery.LevelOf(skillId));
+        return MasteryMath.LevelLift(def, Mastery.LevelOf(skillId));
     }
 
     /// <summary>What the weapon in hand's trademark adds to <paramref name="skillId"/>'s main numbers — the finished
@@ -1402,6 +1405,9 @@ public class Character : MonoBehaviour, ICombatUnit
         // EVERY LEARNED PASSIVE — a passive is live the moment it is learned (PassiveLoadout).
         PassiveSkills.CollectLearned(usableIds);
 
+        // THE STAFF'S RELEASE casts a combination, so whoever has it on the bar needs a runner for each one.
+        if (HoldsOrbRelease()) OrbCombos.CollectIds(usableIds);
+
         for (int i = 0; i < bag.Count; i++)
         {
             var def = bag[i] != null ? bag[i].def : null;
@@ -1426,6 +1432,24 @@ public class Character : MonoBehaviour, ICombatUnit
             if (def != null && !string.IsNullOrEmpty(def.id) && usableIds.Contains(def.id)) usable.Add(def);
         }
         return usable;
+    }
+
+    /// <summary>True when the Staff's Release is on this character's bar or in an auto-combat slot.</summary>
+    public bool HoldsOrbRelease()
+    {
+        for (int i = 0; i < HotbarBindings.SlotCount; i++)
+        {
+            var def = SkillCatalog.Get(Hotbar.SkillAt(i));
+            if (def != null && def.isOrbRelease) return true;
+        }
+        var slots = autoCombat.slots;
+        if (slots != null)
+            for (int i = 0; i < slots.Length; i++)
+            {
+                var def = SkillCatalog.Get(slots[i]);
+                if (def != null && def.isOrbRelease) return true;
+            }
+        return false;
     }
 
     /// <summary>Every place a piece can be worn — what <see cref="UsableSkills"/> and <see cref="WearsSkill"/> walk.</summary>
@@ -1490,6 +1514,10 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>The component this character casts <paramref name="skillId"/> with, built on first use, or null if
     /// that is not one of their skills. One lookup, whatever the size of the skill catalog.</summary>
     public SkillRunner RunnerById(string skillId) => Skills.RunnerById(skillId);
+
+    /// <summary>SERVER: the runner whose wind-up this character is in right now, or null. Set and cleared by that
+    /// runner (SkillRunner.CastWindup / EndCast); read by the movement check, which holds a winding-up player still.</summary>
+    public SkillRunner WindupRunner { get; set; }
 
     StatusController boundStatusHost;
 

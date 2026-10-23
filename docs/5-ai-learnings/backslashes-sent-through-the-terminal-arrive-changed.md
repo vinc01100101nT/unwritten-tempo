@@ -46,6 +46,11 @@ and the shell refused the whole command with "parse error near `else'". Nothing 
 parses a whole command before running any of it; each cost a round. Both edits went through first time once the
 script was a file written with the Write tool.
 
+2026-10-22, again with this page on disk and unread. Adding two test cases to a checker's self-test by a piped
+`<<'PYEOF'` script, the `\\n` typed for a literal `\n` arrived as a real line break, so the self-test itself would
+not load ("unterminated string literal"). The same night a search for a line of that self-test containing `\n`
+failed three times before the fix was written as a file using `chr(92)`. Each cost a round.
+
 ## How to apply
 
 1. Any edit whose new text contains a `\` goes through the editor's Edit or Write tool.

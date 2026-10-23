@@ -265,9 +265,32 @@ public enum SkillEffectKind
     /// ready again at once — its cooldown is cut to nothing, once, the moment this runs. It stores nothing and lasts
     /// nothing. A skill the unit does not have is left alone. The shared ultimate cooldown is not touched.
     ///
-    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
     ResetCooldown,
+    /// <summary>The Staff's ORB: puts one orb of <see cref="SkillEffect.orb"/> into the caster's three orb slots, the
+    /// oldest dropping out. A held orb gives its stat while a Staff is in hand (<see cref="OrbMath"/>).</summary>
+    AddOrb,
+    /// <summary>Water's mark: adds chill stacks to the one shared count on the unit; a full count freezes it. Refused on
+    /// a burning or frozen unit. Stacks = stacks-per-apply, how long it lasts = seconds.</summary>
+    Chill,
+    /// <summary>Wind's mark: adds Static stacks, each cutting the unit's attack speed a little, up to a fixed cap.</summary>
+    Static,
+    /// <summary>Copies the mark named by <see cref="SkillEffect.markKind"/> (Chill or Burn) from the unit it lands on to
+    /// every enemy within <see cref="SkillEffect.copyRadius"/> — never more than the unit itself holds, so a copy can
+    /// never grow.</summary>
+    CopyMark,
+    /// <summary>Makes the mark named by <see cref="SkillEffect.markKind"/> on the unit it lands on last
+    /// <see cref="SkillEffect.seconds"/> longer, and each of its stacks <see cref="SkillEffect.magnitude"/> stronger
+    /// (0.2 = +20%) — once, at the moment it lands.</summary>
+    ExtendMarks,
 }
+
+/// <summary>The four orbs of the Staff, and which one an effect's part grows with. Serialized by int, append-only.</summary>
+public enum OrbElement { None, Fire, Earth, Wind, Water }
+
+/// <summary>The mark a strike cashes in — only the element that beats a mark cashes it (<see cref="MarkMath"/>).
+/// Serialized by int, append-only.</summary>
+public enum MarkKind { None, Burn, Chill, Static, Stone }
 
 /// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
 /// moves. Every timed change to a sub-stat is authored here — there is no second effect kind for any one of them, so
@@ -465,6 +488,43 @@ public class SkillEffect
     [Tooltip("Added to the caster's crit chance for THIS strike only (0.25 = +25%). A magic strike still cannot crit " +
              "outside a sniper's hands. 0 = the caster's own crit chance — which is every strike authored before this existed.")]
     public ScaledNumber critChanceBonus = new ScaledNumber(0f);
+    [Tooltip("Added to the caster's crit chance for THIS strike only, and only when the unit struck moves slower than " +
+             "its normal pace — any slow, from any source (0.25 = +25%). Added on top of the crit chance bonus above. " +
+             "0 = a slowed target changes nothing — which is every strike authored before this existed.")]
+    public ScaledNumber critChanceBonusVsSlowed = new ScaledNumber(0f);
+    [Tooltip("Staff combinations: the orb whose level grows this effect's numbers (its practice lift is that orb's). " +
+             "On an Add Orb effect: which orb it adds. None = the skill's own level, which is every effect before orbs.")]
+    public OrbElement orb = OrbElement.None;
+    [Tooltip("The mark this strike cashes in on the unit struck, then removes: Burn (put out — the burn damage still to " +
+             "come lands at once, times the burn payoff), Chill (scattered, a frozen unit counts as a full shatter), " +
+             "Static (grounded) or Stone (melted — only the Staff's own Stone). None = cashes nothing.")]
+    public MarkKind cashMark = MarkKind.None;
+    [Tooltip("On: the strike COUNTS the mark above for its bonus and leaves it where it is, for another skill to cash. " +
+             "Off = the mark is cashed and removed.")]
+    public bool keepsMark;
+    [Tooltip("Lands only on a unit that carried this mark when the tick reached it — read before any effect of the " +
+             "tick ran, so a mark this same tick cashes still counts. None = lands on every unit the tick reaches.")]
+    public MarkKind onlyIfMarked = MarkKind.None;
+    [Tooltip("With 'only if marked': one stack for every one of that mark the unit carried (a frozen unit counts as " +
+             "a full Chill count), instead of the stacks-per-apply number.")]
+    public bool stackPerMark;
+    [Tooltip("Copy Mark / Extend Marks: which mark it works on.")]
+    public MarkKind markKind = MarkKind.None;
+    [Tooltip("Reset Cooldown only: reset the last Staff combination the unit cast, ultimates included, instead of a " +
+             "named skill.")]
+    public bool resetsLastCombination;
+    [Tooltip("Chill, Static and Stone: added to the damage multiplier for every stack or charge cashed. 0 = no payoff.")]
+    public ScaledNumber damageMultPerMark = new ScaledNumber(0f);
+    [Tooltip("Burn only: the burn damage still to come lands at once, times this (1.5 = half as much again).")]
+    public ScaledNumber burnPayoff = new ScaledNumber(1f);
+    [Tooltip("Added to the damage multiplier for every second the burn on the unit struck has already been ticking, " +
+             "counted at most 10 seconds. 0 = burn age changes nothing.")]
+    public ScaledNumber damageMultPerBurnSecond = new ScaledNumber(0f);
+    [Tooltip("Added to the damage multiplier for every point of the caster's max MP. 0.001 = +1 at 1,000 MP, counted " +
+             "at most +2. 0 = max MP changes nothing.")]
+    public ScaledNumber damageMultPerMaxMana = new ScaledNumber(0f);
+    [Tooltip("Copy Burns only: how far from the unit struck, in world units, its burn is copied to enemies.")]
+    public ScaledNumber copyRadius = new ScaledNumber(2.5f);
     [Tooltip("Attack element (RO property), checked against the target's armor element. On an Element Converter, " +
              "the element the converted slot takes.")]
     public Element element = Element.Neutral;
@@ -617,6 +677,9 @@ public class SkillEffect
             case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
             case SkillEffectKind.Shield:        id = StateId.Shield;        return true;
             case SkillEffectKind.ElementConverter: id = ConverterPile(e.converts); return true;
+            case SkillEffectKind.AddOrb:        id = OrbMath.PileOf(e.orb);  return e.orb != OrbElement.None;
+            case SkillEffectKind.Chill:         id = StateId.Chill;         return true;
+            case SkillEffectKind.Static:        id = StateId.Static;        return true;
             default: return false;
         }
     }
@@ -786,6 +849,13 @@ public static class EffectScaling
             case SkillEffectKind.ReduceOutgoingDamage:
             case SkillEffectKind.AddStacks:
             case SkillEffectKind.DrainMana:
+            // An orb's main number is the stat it gives — what a Staff trademark on that orb raises.
+            case SkillEffectKind.AddOrb:
+            // A mark's strength — how much each Chill slows, each Static cuts, each lengthened stack grows.
+            case SkillEffectKind.Chill:
+            case SkillEffectKind.Static:
+            case SkillEffectKind.CopyMark:
+            case SkillEffectKind.ExtendMarks:
                 return true;
             case SkillEffectKind.Status:
                 return StatusController.IsDot(e.ailment);
@@ -884,6 +954,8 @@ public static class EffectScaling
             case SkillEffectKind.Shield:
             case SkillEffectKind.Taunt:
             case SkillEffectKind.ElementConverter:
+            case SkillEffectKind.Chill:
+            case SkillEffectKind.Static:
                 return true;
             default:
                 return false;

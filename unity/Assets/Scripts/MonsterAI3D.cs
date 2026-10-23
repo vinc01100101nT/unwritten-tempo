@@ -110,8 +110,8 @@ public class MonsterAI3D : MonoBehaviour
     }
     bool chasing;
     float nextTouch;
-    float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
-    StatusController status;   // poison/bleed/burn/blind host (Stun/Slow still delegate to the fields above)
+    float knockedUntil;   // sliding from a knockback — the brain holds still so it doesn't fight the slide
+    StatusController status;   // ailments and states, the same host a person reads (stun and freeze included)
 
     /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-pilot target
     /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
@@ -542,22 +542,6 @@ public class MonsterAI3D : MonoBehaviour
     /// whoever measures against this mob blends the real pair.</summary>
     public float MeleeScale => MobSizes.MeleeScale(size, UnitScale.CharacterScale);
 
-    /// <summary>Briefly freeze this mob (chase + touch-attack) — a reusable stagger/crowd-control hook for
-    /// skills like the Swordsman's Bash. Stacks by taking the later end time, not by adding.</summary>
-    public void Stagger(float seconds)
-    {
-        if (seconds > 0f) stunnedUntil = Mathf.Max(stunnedUntil, Time.time + seconds);
-    }
-
-    /// <summary>Stun this mob for <paramref name="seconds"/> — freezes it (reusing the <see cref="Stagger"/>
-    /// freeze). A reusable status hook for per-hit procs (e.g. the Mage's multi-hit Meteor). Re-stunning while already
-    /// stunned just refreshes the duration.</summary>
-    public void Stun(float seconds)
-    {
-        if (seconds <= 0f) return;
-        Stagger(seconds);   // freeze chase + attack (shares stunnedUntil)
-    }
-
     /// <summary>The brain's half of the taunt verb: engage the player NOW rather than waiting to be provoked, and take
     /// the store the window was just stamped on. The WINDOW itself is not kept here — <see cref="UnitStates.BeginTaunt"/>
     /// holds it for every taunted unit alike, so the mob brain, the player rig and the skill door read one answer
@@ -583,7 +567,8 @@ public class MonsterAI3D : MonoBehaviour
         Vector3 dir = transform.position - worldFrom; dir.y = 0f;
         if (dir.sqrMagnitude < 1e-4f) dir = transform.forward;   // standing on the source → any direction
         if (agent != null) agent.Knockback(dir, speed, time);
-        Stagger(Mathf.Max(stagger, time));
+        float hold = Mathf.Max(stagger, time);
+        if (hold > 0f) knockedUntil = Mathf.Max(knockedUntil, Time.time + hold);
     }
 
     /// <summary>Roll this mob's configured on-hit ailment onto <paramref name="victim"/> — the unit the blow actually
@@ -609,11 +594,15 @@ public class MonsterAI3D : MonoBehaviour
         // targeted, hit and drawn on the map.
         if (!ThinksForItself) return;
 
+        // A creature whose element turns (Kaelen's shadow) turns it here, on the machine that decides.
+        if (Health != null) Health.TickElementCycle();
+
         // A swing already begun connects at its contact moment whatever else this frame holds — a stagger or a root
         // landing during the swing does not take back a blow already on its way, the same as for a person.
         LandSwingIfDue();
 
-        if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
+        // Stunned, frozen, or sliding from a knockback.
+        if (Time.time < knockedUntil || (status != null && status.CannotAct)) { if (agent != null) agent.Halt(); return; }
 
         // ROOTED BY ITS OWN SKILL — a wind-up, an aftercast, a run that holds it. The rule a person plays by: no walking
         // and no attacking until the skill lets go.

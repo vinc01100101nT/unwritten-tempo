@@ -57,14 +57,17 @@ public static class EffectTiming
     public static Measured Of(GameObject root)
     {
         if (root == null) return default;
-        return Of(root.GetComponentsInChildren<ParticleSystem>(true));
+        return Of(root.GetComponentsInChildren<ParticleSystem>(true), root.GetComponentInChildren<Light>(true) != null);
     }
 
     /// <summary>The formula itself, over systems the caller already gathered — the effect pool holds its own array
     /// and must not build a second one.</summary>
-    public static Measured Of(ParticleSystem[] systems)
+    public static Measured Of(ParticleSystem[] systems, bool hasLight = false)
     {
         if (systems == null) return default;
+        // A LIGHT AND NOTHING ELSE (the shared light effect) has no animation to end on: it shines until stopped, like an
+        // attached loop, and dims over the same short tail. Measured as a 0.15 s one-shot it went out before an arrow landed.
+        if (systems.Length == 0 && hasLight) return new Measured(Slack, Slack, true);
         float play = 0f, fade = 0f;
         bool loops = false;
         for (int i = 0; i < systems.Length; i++)

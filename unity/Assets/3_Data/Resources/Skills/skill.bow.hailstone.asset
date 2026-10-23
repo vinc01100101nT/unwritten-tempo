@@ -26,7 +26,7 @@ MonoBehaviour:
   description: 'Draw, hold, release.
 
     A heavy shot for 220% Attack with +25%
-    crit chance.'
+    crit chance, and +25% more against a slowed target.'
   archetype: 0
   family: 2
   shape: 0
@@ -45,6 +45,8 @@ MonoBehaviour:
   manaCost: 16
   cooldown: 8
   castTime: 1
+  fixedCastTime: 0
+  releaseEarly: 0
   aim: 2
   castRange: 13
   tier: 0
@@ -124,6 +126,12 @@ MonoBehaviour:
         read: 0
         scaler: 1
       critChanceBonus:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
         value: 0.25
         useStacks: 0
         op: 0

@@ -25,8 +25,11 @@ public interface IStancePose
     /// <summary>Drive a jump/fall clip with a freeze point (in SECONDS into the clip). <paramref name="releaseToEnd"/>
     /// false = play forward but HOLD once the clip reaches <paramref name="freezeSeconds"/> (the airborne pose); true =
     /// resume from that frame and play to the end once (the landing tail). Used for the Jump + Fall stances.
-    /// <paramref name="mult"/> is the stance's × mult — the crouch/landing play at that speed; the airborne HOLD stays 0.</summary>
-    void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f);
+    /// <paramref name="mult"/> is the stance's × mult — the crouch/landing play at that speed; the airborne HOLD stays 0.
+    /// <paramref name="blendSeconds"/> above 0 = glide from the current pose straight into the freeze frame over that
+    /// many real seconds, then hold (a bow drawn across the whole cast); 0 = play the clip up to the freeze frame.</summary>
+    void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f,
+                        bool restart = false, float blendSeconds = 0f);
 
     /// <summary>Scale the current action's playback speed (1 = natural). Used for FitWindow / stat-synced stances.</summary>
     void SetActionSpeed(CharacterAction a, float multiplier);
@@ -54,6 +57,7 @@ public interface IStancePose
     float VisualWorldHeight { get; }
 
     /// <summary>Aim the visual at a world-space XZ direction (the 3D model yaws toward it).
-    /// Lets gameplay turn a unit to face something — e.g. a talked-to townsperson turning to the player.</summary>
-    void SetFacing(Vector3 worldDir);
+    /// Lets gameplay turn a unit to face something — e.g. a talked-to townsperson turning to the player.
+    /// <paramref name="snap"/> turns it there at once instead of at its turning speed.</summary>
+    void SetFacing(Vector3 worldDir, bool snap = false);
 }

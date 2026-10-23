@@ -49,6 +49,18 @@ public static class SkillTooltip
 
     static string Pct(float f01) => Hl(Mathf.RoundToInt(f01 * 100f) + "%");
 
+    // The stat an orb's element raises, in the words the character sheet uses.
+    static string OrbStatName(OrbElement orb)
+    {
+        switch (orb)
+        {
+            case OrbElement.Fire:  return "magic attack";
+            case OrbElement.Earth: return "defence";
+            case OrbElement.Wind:  return "cast speed";
+            default:               return "max MP";
+        }
+    }
+
     public static string ArchetypeName(SkillArchetype a)
     {
         switch (a)
@@ -164,7 +176,7 @@ public static class SkillTooltip
         var t = new StringBuilder(96);
         t.Append(Chipped("MP ")).Append(Hl(def.manaCost.ToString()));
         t.Append("  ").Append(Chipped("CD ")).Append(Hl(def.cooldown.ToString("0.#") + "s"));
-        if (def.castTime > 0f) t.Append("  ").Append(Chipped("Cast ")).Append(Hl(def.castTime.ToString("0.#") + "s"));
+        if (def.HasWindup) t.Append("  ").Append(Chipped("Cast ")).Append(Hl(UnitStatMath.CastWindupSeconds(def.castTime, 1f, def.fixedCastTime).ToString("0.#") + "s"));
         else                   t.Append("  ").Append(Chipped("Instant"));
         if (def.Reticle != CastReticle.Instant) t.Append("  ").Append(Chipped("Range ")).Append(Hl(def.castRange.ToString("0.#")));
         return t.ToString();
@@ -230,7 +242,8 @@ public static class SkillTooltip
             for (int i = 0; i < lines.Count; i++) sb.Append("\n• ").Append(lines[i]);
 
             // What it takes to learn it and what its levels move — only a skill that belongs to a weapon has either.
-            if (def.weaponType != WeaponType.None) LevelSection(def, d);
+            if (def.IsOrbCombo) OrbSection(def, d);
+            else if (def.weaponType != WeaponType.None) LevelSection(def, d);
 
             return sb.ToString();
         }
@@ -325,6 +338,9 @@ public static class SkillTooltip
     {
         if (e == null) return null;
         string line = DescribeEffectBody(e);
+        if (line != null && e.onlyIfMarked != MarkKind.None)
+            line += e.stackPerMark ? " — one for every " + MarkName(e.onlyIfMarked) + " the target carried, only on one that carried any"
+                                   : " — only on a target that carried " + MarkName(e.onlyIfMarked);
         // The odds are said ONCE, here, for every kind that has them — so a new effect never has to remember to
         // mention its own chance. A certain effect (the default) says nothing, because "100%" is just noise.
         if (line == null || !SkillEffect.RollsChance(e.kind) || e.chance.value >= 1f) return line;
@@ -339,8 +355,9 @@ public static class SkillTooltip
         {
             case SkillEffectKind.Damage:
             {
+                bool payoffOnly = e.damageMult.value <= 0f && e.cashMark != MarkKind.None;
                 float mult = e.damageMult.value <= 0f ? 1f : e.damageMult.value;
-                string s = "Deals " + Hl(mult.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
+                string s = payoffOnly ? "" : "Deals " + Hl(mult.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
                 int hits = SkillEffectApplier.EffectiveHits(e, Character.Instance);   // affinity-scaled, matches what actually lands
                 if (hits > 1) s += ", " + Hl(hits + "×") + " hits";
                 // Any number may answer to the pile now, so the note belongs to the NUMBER, said the same way
@@ -354,8 +371,37 @@ public static class SkillTooltip
                     s += ", +" + Hl(e.damageMultPerAccuracyOver.value.ToString("0.###") + "×") + " per point of hit chance above 100% (up to " + StrikeMath.MaxAccuracyOverPoints + ")";
                 if (e.critChanceBonus.value > 0f)
                     s += ", +" + Pct(e.critChanceBonus.value) + " crit chance";
+                if (e.critChanceBonusVsSlowed.value > 0f)
+                    s += ", +" + Pct(e.critChanceBonusVsSlowed.value) + " more crit chance against a slowed target";
                 if (e.damageMultPerSpeedBonus.value > 0f)
                     s += ", +" + Hl(e.damageMultPerSpeedBonus.value.ToString("0.###") + "×") + " per 1% movement speed bonus while moving";
+                if (e.damageMultPerBurnSecond.value > 0f)
+                    s += ", +" + Hl(e.damageMultPerBurnSecond.value.ToString("0.###") + "×") + " per second the target has been burning (up to "
+                         + MarkMath.BurnAgeCap.ToString("0") + "s)";
+                if (e.damageMultPerMaxMana.value > 0f)
+                    s += ", +" + Hl(e.damageMultPerMaxMana.value.ToString("0.####") + "×") + " per point of your max MP (up to +"
+                         + MarkMath.MaxManaGrowthCap.ToString("0") + "×)";
+                string per = Hl("+" + e.damageMultPerMark.value.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
+                if (e.keepsMark && e.cashMark != MarkKind.None)
+                    s += ", " + per + " for every " + MarkName(e.cashMark) + " on the target (left in place)";
+                else switch (e.cashMark)
+                {
+                    case MarkKind.Burn:
+                        s += Joined(s, "Puts out the target's burn");
+                        if (e.damageMultPerMark.value > 0f) s += ": " + per + " per burn stack";
+                        if (e.burnPayoff.value > 0f) s += ", and the burn damage it had left lands at once, ×" + Hl(e.burnPayoff.value.ToString("0.##"));
+                        break;
+                    case MarkKind.Chill:
+                        s += Joined(s, "Scatters the target's Chill") + ": " + per + " per stack, a frozen target shatters as "
+                             + Hl(MarkMath.FrozenCountsAs.ToString());
+                        break;
+                    case MarkKind.Static:
+                        s += Joined(s, "Grounds the target's Static") + ": " + per + " per stack";
+                        break;
+                    case MarkKind.Stone:
+                        s += Joined(s, "Melts the target's Stone") + ": " + per + " per charge";
+                        break;
+                }
                 return s;
             }
             case SkillEffectKind.Status:
@@ -428,6 +474,7 @@ public static class SkillTooltip
             }
             case SkillEffectKind.ResetCooldown:
             {
+                if (e.resetsLastCombination) return "The last combination you cast is ready again at once, ultimates included";
                 var of = SkillCatalog.Get(e.modifierSkillId);
                 return (of != null ? Hl(of.displayName) : "A skill") + " is ready again at once";
             }
@@ -493,6 +540,34 @@ public static class SkillTooltip
                 return of == null ? null
                      : "Adds " + Hl(Mathf.Max(1, e.modifierStacks.value).ToString()) + " to " + Hl(of.displayName);
             }
+            // ---- the Staff ----
+            case SkillEffectKind.AddOrb:
+                return e.orb == OrbElement.None ? null
+                     : "Holds one " + Hl(e.orb.ToString()) + " orb: +" + Pct(e.magnitude.value * LiveMult(e)) + " "
+                       + OrbStatName(e.orb) + " while a Staff is in hand (three orbs at most, the oldest drops)";
+            case SkillEffectKind.Chill:
+            {
+                int n = Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value));
+                int ceiling = Mathf.RoundToInt(e.stackLimit.value);
+                string cap = ceiling > 0 && ceiling < MarkMath.FreezeAt ? " (never past " + Hl(ceiling.ToString()) + ", so never a freeze)" : "";
+                return "Adds " + Hl(n.ToString()) + " Chill for " + Hl(e.seconds.value.ToString("0.#") + "s") + cap
+                       + " — each slows " + Pct(e.magnitude.value * LiveMult(e)) + ", " + Hl(MarkMath.FreezeAt.ToString())
+                       + " freeze for " + Hl(MarkMath.FreezeSeconds.ToString("0") + "s") + ". Not on a burning target";
+            }
+            case SkillEffectKind.Static:
+            {
+                int n = Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value));
+                return "Adds " + Hl(n.ToString()) + " Static for " + Hl(e.seconds.value.ToString("0.#") + "s")
+                       + " — each cuts attack speed " + Pct(e.magnitude.value * LiveMult(e)) + ", up to " + Hl(MarkMath.MaxStatic.ToString());
+            }
+            case SkillEffectKind.CopyMark:
+                return e.markKind == MarkKind.Chill
+                    ? "Carries the target's Chill to every enemy within " + Hl(e.copyRadius.value.ToString("0.#") + "m")
+                      + ", never past its own count — each slows " + Pct(e.magnitude.value * LiveMult(e))
+                    : "Copies the target's " + MarkName(e.markKind) + " to every enemy within " + Hl(e.copyRadius.value.ToString("0.#") + "m");
+            case SkillEffectKind.ExtendMarks:
+                return "Every " + MarkName(e.markKind) + " on the target lasts " + Hl(e.seconds.value.ToString("0.#") + "s")
+                       + " longer" + (e.magnitude.value > 0f ? " and grows " + Pct(e.magnitude.value * LiveMult(e)) + " stronger" : "");
             default:                            return null;
         }
     }
@@ -553,6 +628,89 @@ public static class SkillTooltip
     // neither pressed from the bar nor fired by a moment of the fight.
     static string KindTag(SkillDef def)
         => def.ItemUseEntry != null ? null : def.IsPassive ? "PASSIVE" : "ACTIVE";
+
+    // A mark's name as a player reads it.
+    static string MarkName(MarkKind m) => m == MarkKind.None ? "mark" : m.ToString();
+
+    // A payoff part with no base of its own starts its own sentence; one that follows a hit is joined to it.
+    static string Joined(string before, string clause) => before.Length == 0 ? clause : ". " + clause;
+
+    // A STAFF COMBINATION has no levels of its own: every part grows with one of its orbs. Said per orb in the recipe —
+    // the level the server sent, what each level adds, and each part it grows at the number the server worked out.
+    static void OrbSection(SkillDef def, Dialect d)
+    {
+        var mastery = Character.Instance != null ? Character.Instance.Mastery : null;
+        SkillLevelView view = default;
+        bool hasView = mastery != null && mastery.SentView(def.id, out view);
+        sb.Append('\n');
+        for (int o = 1; o <= 4; o++)
+        {
+            var orb = (OrbElement)o;
+            if (def.orbCombo.IndexOf(OrbLetter(orb)) < 0) continue;
+            string parts = OrbParts(def, orb, hasView ? view.now : null);
+            if (parts.Length == 0) continue;
+            sb.Append('\n').Append(Hl(orb + " Orb"));
+            if (mastery != null) sb.Append(" level ").Append(Hl(mastery.LevelOf(OrbMath.SkillIdOf(orb)).ToString()));
+            sb.Append(", ").Append(Hl("+" + (OrbMath.LevelPercent * 100f).ToString("0.##") + "%"))
+              .Append(" a level to: ").Append(parts);
+        }
+    }
+
+    static char OrbLetter(OrbElement orb)
+    {
+        switch (orb)
+        {
+            case OrbElement.Fire:  return 'F';
+            case OrbElement.Earth: return 'E';
+            case OrbElement.Wind:  return 'W';
+            default:               return 'A';
+        }
+    }
+
+    // The parts of a combination one orb grows, in a player's words: "damage, bonus per Stone".
+    // Each part carries the number the server sent for it ("damage 2.56×") — one per raised part, in effect order
+    // (SkillLevelNumbers.Collect).
+    static string OrbParts(SkillDef def, OrbElement orb, float[] sentNow)
+    {
+        var parts = new System.Text.StringBuilder(48);
+        int channel = 0;
+        for (int b = 0; def.bindings != null && b < def.bindings.Count; b++)
+        {
+            var effects = def.bindings[b] != null ? def.bindings[b].effects : null;
+            for (int k = 0; effects != null && k < effects.Count; k++)
+            {
+                var e = effects[k];
+                if (e == null || !SkillLevelNumbers.MainNumber(e, out var number, out bool whole)) continue;
+                int at = channel++;
+                if (e.orb != orb) continue;
+                string word = OrbPartWord(e);
+                if (word == null) continue;
+                if (parts.Length > 0) parts.Append(", ");
+                parts.Append(word);
+                if (sentNow != null && at < sentNow.Length) parts.Append(' ').Append(Hl(LevelNumber(e, number, whole, sentNow[at])));
+            }
+        }
+        return parts.ToString();
+    }
+
+    static string OrbPartWord(SkillEffect e)
+    {
+        switch (e.kind)
+        {
+            case SkillEffectKind.Damage:
+                if (e.cashMark == MarkKind.None) return "damage";
+                if (e.keepsMark) return "damage, and the bonus per " + MarkName(e.cashMark);
+                return e.damageMult.value > 0f ? "damage, and the bonus per " + MarkName(e.cashMark) + " cashed"
+                                               : "the bonus per " + MarkName(e.cashMark) + " cashed";
+            case SkillEffectKind.Chill:              return "how much its Chill slows";
+            case SkillEffectKind.Static:             return "how much its Static cuts attack speed";
+            case SkillEffectKind.CopyMark:           return "how much the carried Chill slows";
+            case SkillEffectKind.ReduceOutgoingDamage: return "how much its Stone weakens blows";
+            case SkillEffectKind.ExtendMarks:        return "how much stronger the lengthened " + MarkName(e.markKind) + " grows";
+            case SkillEffectKind.DrainMana:          return "MP drained";
+            default:                                 return MainNumberWord(e);
+        }
+    }
 
     // ---- learning and levels ----------------------------------------------------------------------------------
 
@@ -639,6 +797,10 @@ public static class SkillTooltip
             case SkillEffectKind.BoostOutgoingDamage:
             case SkillEffectKind.BoostBasicAttackDamage:
             case SkillEffectKind.ReduceOutgoingDamage:
+            case SkillEffectKind.Chill:
+            case SkillEffectKind.Static:
+            case SkillEffectKind.CopyMark:
+            case SkillEffectKind.ExtendMarks:
                 return FinePct(v);
             default:
                 return whole && !authored.useStacks ? Mathf.RoundToInt(v).ToString() : v.ToString("0.##") + "×";

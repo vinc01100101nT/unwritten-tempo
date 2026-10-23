@@ -5,6 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 6bc6e3bb-cdfe-4fb4-b57e-d43acc183fec
+  modified: 2026-10-23T12:44:28.586Z
 ---
 
 The player ROOT `Player3D` (the `Player3DController` object) holds only a **disabled** `SpriteRenderer` — the
@@ -15,6 +16,11 @@ controller (snaps to its feet each frame); it is NOT parented under the player, 
 
 **Consequence:** any component/flag that must touch the *visible* player renderers (renderingLayerMask, a
 material swap, an outline marker, dye) MUST be placed on the `Character3DVisual` object, not the player root.
+
+**Facing too:** the root `Player3D` NEVER turns (measured 2026-10-23: yaw 0 while the visual stood at yaw 69).
+Which way the player faces = `Player3DController.WorldFacing` (creatures mirror it: `MonsterAI3D.WorldFacing`);
+never `transform.forward` of the root, and `GetComponentInChildren<Character3DPose>()` on it finds nothing. Cost
+one failed fix: an effect's "face the aim" fallback read the root and stayed world-aligned.
 
 **Where it's built (single place):** `Player3DVisualBuilder.Attach` (Editor) instantiates the model `go` and
 adds its rig — add such markers there so a model swap (which rebuilds `go`) re-tags automatically.

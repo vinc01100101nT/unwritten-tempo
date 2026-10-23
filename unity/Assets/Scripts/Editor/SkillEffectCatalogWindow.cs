@@ -46,6 +46,7 @@ public class SkillEffectCatalogWindow : EditorWindow
         C("cost",           "Mana Cost",        "MP",     "skill-delivery","—",    "SkillDef.manaCost"),
         C("cooldown",       "Cooldown",         "sec",    "skill-delivery","—",    "SkillDef.cooldown"),
         C("cast_time",      "Cast Time",        "sec",    "skill-delivery","—",    "SkillDef.castTime (DEX shortens at runtime)"),
+        C("fixed_cast_time","Fixed Cast Time",  "sec",    "skill-delivery","—",    "SkillDef.fixedCastTime (nothing shortens it)"),
         C("range",          "Range",            "u",      "skill-delivery","—",    "SkillDef.castRange"),
         C("radius",         "Radius",           "u",      "skill-delivery","—",    "SkillTickBinding.radius (AoE / hit width)"),
         C("projectiles",    "Projectiles / Spread","int/°","skill-delivery","—",   "SkillTickBinding.projectileCount / projectileSpread"),

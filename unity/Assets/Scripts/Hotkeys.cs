@@ -12,14 +12,14 @@ using UnityEngine.InputSystem;
 /// directly — so the one <see cref="Typing"/> guard suppresses them all while the player is typing into a text
 /// box, and there's a single place to change the input backend later.
 ///
-/// <see cref="Typing"/> covers both input worlds this project uses:
-///   • IMGUI dev tuners (EffectTuner/SequenceTuner filter boxes) via <c>GUIUtility.keyboardControl</c>.
-///   • uGUI input fields via the focused EventSystem selection (future-proofing; no runtime uGUI input
-///     fields exist today, but any we add will suppress hotkeys automatically).
+/// <see cref="Typing"/> reads the focused EventSystem selection: a uGUI or TMP input field (the chat).
 ///
-/// Perf: the getter runs per-frame from hotkey handlers. In normal play <c>keyboardControl</c> is 0 and
-/// nothing is selected, so it early-outs before any GetComponent; the lookup only runs while a selectable
-/// is actually focused (rare), never during combat.
+/// <para>NOT <c>GUIUtility.keyboardControl</c>. The game draws no IMGUI, and in the editor that value belongs to
+/// whichever editor window is drawing — measured 2026-10-23: while W was held in Play mode it flipped on and off
+/// every frame, so every other frame read as typing, the run stopped and started, and the legs blended to a walk.</para>
+///
+/// Perf: the getter runs per-frame from hotkey handlers. In normal play nothing is selected, so it early-outs before
+/// any GetComponent; the lookup only runs while a selectable is actually focused (rare), never during combat.
 /// </summary>
 public static class Hotkeys
 {
@@ -48,11 +48,7 @@ public static class Hotkeys
 
     /// <summary>Nobody is at the keyboard of a server, so no key is ever down there. Checked by every reader
     /// below, which is the whole point of this being the one gate: the answer is given ONCE and no input site
-    /// can forget it.
-    ///
-    /// <para>Not merely tidy — <b>required</b>. <see cref="Typing"/> asks <c>GUIUtility.keyboardControl</c>, and a
-    /// dedicated server build strips the graphics stack that owns it, so touching it there crashes the process
-    /// outright rather than returning a value.</para></summary>
+    /// can forget it.</summary>
     static bool NoKeyboard => GameServer.IsServer;
 
     /// <summary>True while a text box owns the keyboard — every key query below returns false.</summary>
@@ -61,7 +57,6 @@ public static class Hotkeys
         get
         {
             if (NoKeyboard) return false;
-            if (GUIUtility.keyboardControl != 0) return true;   // IMGUI text field focused (dev tuners)
             var es = EventSystem.current;
             var go = es != null ? es.currentSelectedGameObject : null;
             if (go == null) return false;

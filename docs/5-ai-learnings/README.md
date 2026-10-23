@@ -31,6 +31,8 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 
 | You are seeing this | Open this |
 | --- | --- |
+| You are making new behaviour wait on an existing "is it happening" flag — or a feature works once, then never again until a restart | [A Flag You Gate On Must Actually Clear](a-flag-you-gate-on-must-clear.md) |
+| One asset a script authored differs from its siblings (a colour, a flag, a leftover) — or you are writing a load-or-create builder | [Rebuilding Onto an Existing Asset Keeps Its Old Values](rebuilding-onto-an-existing-asset-keeps-its-old-values.md) |
 | The user's instruction uses a word you also use for something specific ("volley", "set", "wave"), or a fix matching your reading of it is still wrong | [The User's Word Is Not My Word](the-users-word-is-not-my-word.md) |
 | An editor or program shows its loading screen then closes or freezes on every open, and clearing a cache is the next idea | [An App Crashing on Start: Read Windows' Crash Record First](an-app-crashing-on-start-read-windows-crash-record-first.md) |
 | A formula that scores how hard something is to beat explodes at an edge and a cap looks necessary — or a sub-agent hands back such a formula | [A "How Hard Is It" Measure Must List Every Way Round It](a-difficulty-measure-must-list-every-way-round.md) |

@@ -1,6 +1,6 @@
 ---
 name: compose-skill
-description: Use when composing, authoring, editing or reviewing a game SKILL for this project — a new active or passive, a change to an existing skill's effects/cost/cooldown/triggers, or anything touching the Skill Composer or the skill .asset files under Resources/Skills. Covers which side an effect lands on, the pricing rules, and the mandatory verification pass.
+description: Use when brainstorming, designing, composing, authoring, editing or reviewing a game SKILL for this project — a weapon's whole pool of new skills, a new active or passive, a change to an existing skill's effects/cost/cooldown/triggers, or anything touching the Skill Composer or the skill .asset files under Resources/Skills. Covers the design rules for a new pool (Kashira naming, lanes, ultimate builds, no trash passives, points budget, caps), which side an effect lands on, the pricing rules, and the mandatory verification pass. A skill's look (VFX) is the linked skill-vfx skill.
 ---
 
 # Composing a skill
@@ -15,6 +15,112 @@ grep -n "enum SubStat" -A 30 unity/Assets/Scripts/SkillEffect.cs            # su
 grep -n "enum SkillTrigger" -A 60 unity/Assets/Scripts/SkillDef.cs          # triggers, in order
 grep -n "enum StateId" -A 60 unity/Assets/Scripts/UnitStates.cs             # piles, in order
 ```
+
+## 0. Brainstorming a weapon's pool — the rules to design inside
+
+Learned designing the Bow's pool with the user (2026-10-21). Read these before proposing a single skill.
+
+- **Names come from the Kashira's style picture** (`docs/3-world/story-setting-canon.md`, The Fourteen Kashira):
+  every skill is a numbered form of that style, built only from its picture (the Bow's Passing Cloud = cloud, sky,
+  rain and the weather that moves them). Real English, nature only, never a material or a machine. **No name may repeat
+  another weapon's skill, a creature's name, a Kashira's style name (Wildfire is the Axe's) or an item's name (Quench
+  Oil)** — grep `data docs wiki/content unity/Assets/3_Data` for each one. A name also becomes a weapon's name when it
+  rolls as a trademark, so it must read as one.
+- **Elements combine by the chart** (`Element.cs`, level 1): Fire beats Earth, Earth beats Wind, Wind beats Water,
+  Water beats Fire; Fire–Wind and Earth–Water are neutral. A skill mixing two elements must make sense on it — never
+  burn and freeze on one target (water puts out fire). Each element leaves one mark and **only the element that beats
+  a mark cashes it in** (the Staff: Water puts out Burn, Wind scatters Chill, Earth grounds Static, Fire melts Stone).
+- **The boring test — every skill gets at least one yes, an ultimate two:** does it READ the fight (the target's
+  state, crowd, your piles), LEAVE something another skill uses (a mark, a pile, or a stat another skill reads), make
+  you CHOOSE when (now or wait, cash in or let it run — aiming a shot does not count), or PAY OFF at an end (breaks,
+  expires, kills)? Write "reads: ___ / leaves: ___" under each idea; both blank = redesign it. **A read must vary
+  between casts:** "makes a mark, then spends it" in one cast, or a Staff combination that reads the orbs it was cast
+  from, gives the same output every time and fails the test (both proposed and rejected on 2026-10-22).
+- **Audit the pool yourself before showing it:** two skills doing one job (count the skills per job — more than two is
+  a duplicate), a part that changes nothing, and whether the build that MAXES a skill can trigger its main mechanic on
+  its own (a pure-Earth build has no water to freeze with). Fix, then present.
+- **A level only grows OUTPUT numbers** — damage, a damage-over-time's damage, a sub-stat change, a charge's cut. It
+  never grows a duration, a range or a size, so "this part grows its range" is a part that does nothing.
+- **Any hit that costs health breaks a freeze** (damage over time does not) — never design a skill that freezes and
+  then hits again; a run of beats chills to 2 at most. Every mark and stack needs a written cap.
+- **Every skill keeps to the weapon's job** (the identity sentence in `weapon-roster-12-identities.md`) **and stays out
+  of other weapons' lanes**: stun and knockback are the Warhammer's, pull the Spear's, taunt the Fist's, slowing a whole
+  area the Staff's (same doc, §3–4).
+- **Three ultimates, each defining a separate build** — ideally one per mastery stat of the weapon (the Bow: attack
+  speed → Cloudburst, evasion → Wandering Sky, accuracy → Thunderhead). Mix their shapes: one or two may grow from a
+  stack pile, never all three. Each ultimate gets one feeder that specialises in it while still helping the other two.
+- **No trash passives.** A passive that fires on a general action (a basic attack landing, a kill, taking damage) and
+  only builds a pile with no effect of its own is trash. Either give the pile its own effect (Gathering Clouds: +1%
+  accuracy per stack) or tie the passive to one named skill (Petrichor: kills made by Cloudburst).
+- **Points budget:** a weapon gives 70 mastery points; the pool's max levels should total about twice that (~50%; the
+  Sword is 54%). Max level per skill is the `skill-tree` skill's 10 / 5 / 1 rule — work it out while brainstorming,
+  because a short pool shows up here first.
+- **Caps, summed at the top.** Every power source has a cap. Add up every buff on a capped stat at max level with the
+  best trademark (+5% per level after the first, up to +20% from an A-grade trademark, one trademark per weapon) plus
+  the existing gear and consumables, and keep the total under the cap — speed under 250%, slows inside the 30% floor.
+  A buff past the cap is wasted mana, time and points.
+- **Ask what the user's words mean** when they reuse one of yours ("volley", "set") — see
+  `docs/5-ai-learnings/the-users-word-is-not-my-word.md`. And list the ideas before writing numbers; the numbers
+  are a separate pass the user asks for.
+
+### What already exists — reuse it, never build a second one
+
+Added for the Bow (2026-10-21). Each is a field or kind you author; read its tooltip before using it.
+
+- **A new weapon needs its colour saved** in `Resources/WeaponColors.asset` (the colour picker on its group in the
+  Skill Composer). Without it every tile of that weapon is grey in game.
+- **Triggers:** `OnDodge` — an attack aimed at you missed (Slipstream, Wandering Sky's counter). `OnKill` with
+  `triggerSkillId` = kills made by that skill only (Petrichor, Second Bloom).
+- **Charges:** `BoostBasicAttackDamage` — the next N basic attacks hit harder, never a skill strike (Rain Shadow);
+  `SureHit` — the next basic attack cannot miss (Slipstream). **Modifier:** `ResetCooldown` of a named skill (Fair Weather).
+- **Damage growth on a strike:** `damageMultPerAccuracyOver` (hit chance above 100%, at most 100 points —
+  Thunderhead), `damageMultPerSpeedBonus` (movement-speed bonus while moving — Sunbreak), `critChanceBonus` (this
+  strike only — Hailstone), plus the older per-metre and per-point-given-up.
+- **Delivery:** ground `AroundCaster` — a splash centred on the caster, no aim, follows them each beat (Cloudburst).
+- **Runs:** `repeatWhilePileHeld` + `repeatMaxSeconds` — a run that lasts while its own pile is held, so an Extend
+  Duration lengthens it, under a ceiling (Cloudburst + Petrichor); `repeatBonusSkillId` — when the run ends, read a
+  pile ONCE, spend it, play one extra beat per stack (it never refills itself). `showRepeatsTotalDamage` totals the
+  whole cast (a new cast starts from zero); `repeatTotalPerBeat` totals each beat alone.
+- **Skill flags:** `statesEndWhenHit` — every pile the skill gives ends when a hit costs health (Wandering Sky);
+  `companionOf` — a hidden skill learned with, and at the level of, another (the counter-arrow, for a moment the
+  parent's body cannot answer); `releaseIsWeaponAttack` — the release animation is the held weapon's own attack.
+- **Effects:** a Carrier step can `carrierDrawsArrow` (the bow's arrow model) and `carrierArc` with a launch angle.
+
+Added for the Staff (2026-10-22):
+
+- **Orbs and combinations:** `freeFirstLevel` (known at level 1 by everyone — the orbs and Release), `orbCombo`
+  (three letters F/E/W/A — a combination cast through Release, max level 0, never learned), `isOrbRelease`. Effect
+  kind `AddOrb` with `orb` = which orb. On a combination's effect, `orb` = whose level lifts that part.
+- **Marks:** effect kinds `Chill` and `Static` (stacks-per-apply; `magnitude` = each stack's slow / attack-speed cut,
+  grown by the effect's orb; `stackLimit` caps Chill below the freeze), `CopyMark` (`markKind` Chill or Burn,
+  `copyRadius`; never past the source's own count), `ExtendMarks` (`markKind`; `seconds` longer, `magnitude` stronger).
+  Stone = `ReduceOutgoingDamage` from a Staff skill (capped 5 charges, 30%). Every mark turns its unit's armour into
+  its element at level 1 (Burn Fire, Chill/freeze Water, Static Wind, Stone Earth; the newest mark wins). A freeze lasts
+  10s and any hit that costs health breaks it.
+- **Cash-ins on a Damage effect:** `cashMark` + `damageMultPerMark` (Burn, Chill, Static, Stone), `burnPayoff` (Burn);
+  `keepsMark` counts the mark without removing it (the ultimates). A part with `damageMult` 0 is a payoff only: with no
+  mark it lands no blow at all.
+- **Gate on any effect:** `onlyIfMarked` — lands only on units that carried that mark when the tick reached them (read
+  before the tick's cash-in ran); `stackPerMark` — one stack per mark carried. `ResetCooldown` +
+  `resetsLastCombination` resets the last combination cast, ultimates and their shared wait included (Weathering).
+- **None of these Staff fields has a Skill Composer control yet** — author them in the asset files.
+- **Growth on a strike:** `critChanceBonusVsSlowed`, `damageMultPerBurnSecond` (at most 10s),
+  `damageMultPerMaxMana` (at most +2).
+- **Runs:** `repeatScaleWithCastSpeed` + `repeatMaxCount` — more beats the faster you cast, under a ceiling.
+- **Rebuilding onto an existing skill asset keeps every field you did not write** — reset them all (the old Meteor
+  kept its orange name colour). See `docs/5-ai-learnings/rebuilding-onto-an-existing-asset-keeps-its-old-values.md`.
+
+### Many hits — two different things, never confuse them
+
+- **`hitCount` above 1 on a Damage effect = a MULTI-HIT, worked out ONCE per target**: one roll, one blow through
+  defence — so one parry charge, one brace charge or one block stops the whole of it — shown as that many pieces with
+  one rising total. Even with `resolveAsBasicAttack` it is ONE swing: one accuracy roll, one crit roll, one charge.
+  Chance effects still roll once per hit.
+- **A REPEAT (`repeatCount`, `repeatScaleWithAttackSpeed`, a pile-held run) = separate strikes**, each its own roll,
+  its own defence, its own parry. With `resolveAsBasicAttack` every beat is a real basic attack: its own accuracy,
+  crit and damage, and it fires every "basic attack lands" passive (Sun Shower's 5 shots, Cloudburst's volleys).
+- Pick by the design: one heavy flurry that a single parry should answer → hitCount; a stream of shots where each can
+  miss and each feeds on-hit passives → repeats.
 
 ## 1. WHO an effect lands on — say it, never assume it
 
@@ -85,25 +191,19 @@ The window is **Tools ▸ unwritten ▸ Composers ▸ Skill Composer**. Use it w
 
 Related windows: **Tools ▸ unwritten ▸ Catalogs ▸ Skill Channels & Effects** (what every effect kind and channel means) and **Tools ▸ unwritten ▸ Composers ▸ Vfx Composer**.
 
-## 7. A skill's effects (VFX) — sized to this world
+## 7. A skill's look (VFX) — the `skill-vfx` skill
 
-Learned 2026-10-21 on the Bow, after effects five times too big filled the screen and target effects played on the
-caster.
+**Everything about what a skill LOOKS like lives in the `skill-vfx` skill — load it before choosing, sizing, importing
+or fixing any effect.** It owns the never-make-your-own-VFX rule, sizes in this world, rendering before use, importing
+a pack, and fixing a broken effect at the smallest place first. The three rules below stay here because they are
+authored on the skill itself, not on its look.
 
-- **A person is `CharacterSpec.Active.bodyHeight` = 0.327 world units tall.** Library effects are authored at human
-  size, so a step scale of 1 is about five people tall. The game's own world-sized references: cast cue `aura.star`
-  0.226, heal cue `aura.buff` 0.212, sprint cue `smoke.dust-ground` 0.26, normal hit `hit.holy` 1 (its library scale
-  is already 0.21). Chest height is bodyHeight × 0.5; a bow's hand height about bodyHeight × 0.6.
-- **Look before you use one.** Render each effect next to a capsule of that height in a hidden preview scene
-  (`EditorSceneManager.NewPreviewScene`, a camera with `cam.scene` set, `ParticleSystem.Simulate`, `cam.Render`) and
-  look at the picture. Never open or change the user's scene for it. Measured: the `water.splash*` effects render
-  as nothing, and the smoke effects carry a stray blue mesh — avoid both.
-- **One sequence per skill** in `Resources/VfxSequences/`, its tick named to match the skill's binding `tickId`.
-- **A single-target shot is an arrow that arrives:** a Carrier step from the caster (`carrierFromCaster`, offset at
-  hand height) to the Target (offset at chest height), `carrierDrawsArrow` on, the tick on arrival (`tickWhen: End`),
-  and the hit effects on `emitEventOnEnd`. A lob adds `carrierArc` with a launch angle (25° stays inside the world's
-  scale).
-- **Self buffs** are an Attach step on the caster with the tick at its start; a splash around the caster uses the
-  binding's `AroundCaster` delivery and needs no aim.
+- **Every ground-aimed area skill gets a cast circle, automatically** (rule set by the user, 2026-10-23): any skill
+  aimed at a point whose tick hits an area there shows the default circle while it casts, sized to its largest area
+  radius (`SkillDef.CastCircle`). Leave `castCircleId` empty; set only `castCircleTint` to the skill's element colour.
+  Fill `castCircleId` only to use a different circle.
+- **An effect that plays for a long time before or while it hits** (a dome, a flood) lands its plain hit as a
+  multi-hit: `hitCount` 10 with `damageMult` divided by 10 — the same total, worked out once at the first hit and
+  shown as 10 pieces. Never `resolveAsBasicAttack` for this.
 - **A release animation** for a skill whose shots are basic attacks: `hasReleaseStance` + `releaseIsWeaponAttack`
   plays the held weapon's own attack. Never give one to a dash or to a passive — it roots the caster for one swing.

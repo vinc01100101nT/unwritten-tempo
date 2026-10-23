@@ -31,6 +31,9 @@ public static class CharacterBrain
         /// <summary>Which way this body wants to look, in world space. ZERO means "no opinion" — and no opinion means
         /// the line it just travelled, which is what a body walking somewhere wants.</summary>
         public Vector3 facing;
+        /// <summary>Turn to <see cref="facing"/> at once this frame instead of at the body's turning speed — the
+        /// frame an attack starts.</summary>
+        public bool snapFacing;
 
         /// <summary>Ground speed in units per second, and which travel gear it is in. The gear is a FACT, never
         /// guessed from the speed: a hasted run and a sprint are both simply fast, and no number can tell them
@@ -105,6 +108,7 @@ public static class CharacterBrain
 
         public Vector3 facing;
         public bool applyFacing;
+        public bool snapFacing;
     }
 
     /// <summary>THE SPEED AT WHICH A BODY COUNTS AS MOVING, in units per second. One number for every character,
@@ -126,6 +130,7 @@ public static class CharacterBrain
         Vector3 dir = it.facing; dir.y = 0f;
         d.applyFacing = dir.sqrMagnitude > 1e-6f;
         d.facing = d.applyFacing ? dir.normalized : Vector3.zero;
+        d.snapFacing = d.applyFacing && it.snapFacing;
 
         // DEATH OUTRANKS EVERYTHING, including a swing still in the air.
         if (it.dead)
@@ -182,7 +187,7 @@ public static class CharacterBrain
         if (d.hasAction) stance.DriveStance(d.id, d.window, d.release, d.beat);
         else             stance.ClearAction();
 
-        if (d.applyFacing && pose != null) pose.SetFacing(d.facing);
+        if (d.applyFacing && pose != null) pose.SetFacing(d.facing, d.snapFacing);
     }
 
     /// <summary>WHICH WAY A BODY WANTS TO LOOK, held by whoever decides it — the person's controller, a creature's

@@ -42,6 +42,10 @@ public class EffectDef
     [Tooltip("AUTOMATIC — do not edit. True when one of its particle systems loops, so it never ends on its own.")]
     public bool measuredLoops = false;
 
+    [Tooltip("AUTOMATIC — do not edit. True when one of its materials draws with the picture behind it (a heat haze), " +
+             "which needs the camera's copy of the screen. The game keeps that copy only while such an effect plays.")]
+    public bool measuredReadsScreen = false;
+
     /// <summary>What this effect's particles say about its length — the same answer a machine holding the real
     /// prefab gets from <see cref="EffectTiming"/>, read from the table instead of from an instance.</summary>
     public EffectTiming.Measured Timing => new EffectTiming.Measured(measuredPlaySeconds, measuredFadeSeconds, measuredLoops);

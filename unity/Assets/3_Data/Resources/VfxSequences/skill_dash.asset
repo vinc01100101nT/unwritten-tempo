@@ -13,6 +13,46 @@ MonoBehaviour:
   m_Name: skill_dash
   m_EditorClassIdentifier: Assembly-CSharp::VfxSequence
   steps:
+  - note: 
+    schedule: 0
+    delay: 0
+    startEvent: 
+    snapToEventPoint: 0
+    kind: 1
+    anchor: 0
+    offset: {x: 0, y: 0.2, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: slash.trails-earth
+    scale: 0.18
+    speed: 3
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 0.06679422, g: 0.29295716, b: 0.745283, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    faceAim: 1
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    tickId: dash_tick
+    tickWhen: 0
+    tickInterval: 0.02
+    carrierFromCaster: 0
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
   - note: VFX
     schedule: 0
     delay: 0
@@ -31,9 +71,10 @@ MonoBehaviour:
     tint: {r: 0.06679422, g: 0.29295716, b: 0.745283, a: 1}
     looping: 0
     stopPreviousOnReplay: 0
+    faceAim: 0
     emitEventOnStart: 
     emitEventOnEnd: 
-    tickId: dash_tick
+    tickId: 
     tickWhen: 0
     tickInterval: 0.02
     carrierFromCaster: 0

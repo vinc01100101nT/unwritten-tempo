@@ -24777,6 +24777,118 @@
             ]
         },
         {
+            "name": "Earth Orb",
+            "weapon": "Staff",
+            "chance": "25%",
+            "byGrade": [
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                }
+            ]
+        },
+        {
+            "name": "Fire Orb",
+            "weapon": "Staff",
+            "chance": "25%",
+            "byGrade": [
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                }
+            ]
+        },
+        {
+            "name": "Water Orb",
+            "weapon": "Staff",
+            "chance": "25%",
+            "byGrade": [
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                }
+            ]
+        },
+        {
+            "name": "Wind Orb",
+            "weapon": "Staff",
+            "chance": "25%",
+            "byGrade": [
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                },
+                {
+                    "lines": []
+                }
+            ]
+        },
+        {
             "name": "Bare Branch",
             "weapon": "Sword",
             "chance": "7.071%",

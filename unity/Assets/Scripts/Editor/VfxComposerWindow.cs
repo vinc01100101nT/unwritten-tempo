@@ -701,6 +701,13 @@ public class VfxComposerWindow : EditorWindow
                     "earlier play is removed instantly (no fade), so a dash trail never doubles up. Other casters are " +
                     "untouched. Off: copies overlap and each fades on its own."),
                     st.stopPreviousOnReplay);
+                st.faceAim = EditorGUILayout.Toggle(new GUIContent("face the aim",
+                    "On: turn the effect, flat on the ground, so its forward points from the caster to the aimed spot — " +
+                    "a dash's trail streaming behind the body — and turn the offset with it, so +Z is in front of the " +
+                    "caster. The preview here has no aim, so it aims along +Z. Off: the effect keeps its own facing and " +
+                    "the offset runs along the world's directions."),
+                    st.faceAim);
+                st.leaveParticlesBehind = LeaveBehindToggle(st.leaveParticlesBehind);
                 // Playback rate — shared by PlayAt and Attach (an aura can smoulder slowly or flicker fast). For an
                 // Attach it changes only the animation's pace, never how long the aura lives (that's Stay Duration).
                 st.speed = EditorGUILayout.Slider(new GUIContent("speed",
@@ -730,6 +737,10 @@ public class VfxComposerWindow : EditorWindow
                     st.carrierFromCaster ? "Offset from the caster, e.g. (0,1,0) leaves the hand 1 unit up."
                                          : "Offset from the landing, e.g. (0,9,0) falls from 9 units up."), st.carrierFrom);
                 st.carrierFaceTravel = EditorGUILayout.Toggle("rotate to travel", st.carrierFaceTravel);
+                st.leaveParticlesBehind = LeaveBehindToggle(st.leaveParticlesBehind);
+                st.speed = EditorGUILayout.Slider(new GUIContent("speed",
+                    "Playback rate of the effect riding the flight (1 = authored). How fast it flies is 'fly speed'."),
+                    st.speed <= 0f ? 1f : st.speed, 0.1f, 3f);
                 st.carrierScatter = EditorGUILayout.Slider("scatter", st.carrierScatter, 0f, 3f);
                 st.clipStart = EditorGUILayout.Slider(new GUIContent("clip start (s)",
                     "Fast-forward the travel effect into its clip on launch (skip the intro / desync a salvo)."),
@@ -845,6 +856,12 @@ public class VfxComposerWindow : EditorWindow
     }
 
     // Effect-id dropdown built from the EffectLibrary — pick a valid id (no typos → no silent no-op).
+    // One control for the option on every kind that plays an effect, so the label and tooltip cannot drift apart.
+    static bool LeaveBehindToggle(bool on) => EditorGUILayout.Toggle(new GUIContent("leave particles behind",
+        "On: this play's particles stay where they were born, so an effect riding something that moves leaves a trail " +
+        "behind it (dust behind an arrow). Only this step's copy changes; every other use of the effect is untouched. " +
+        "The preview here shows the effect as authored."), on);
+
     string IdPopup(string label, string current)
     {
         if (idOptions == null || idOptions.Length == 0) RebuildIdOptions();
@@ -1424,8 +1441,8 @@ public class VfxComposerWindow : EditorWindow
                 && TryCarrierLanding(st.startEvent, loopSeed - inst.slot, out var landPt))
                 anchorPt = landPt + st.offset + inst.def.offset;
             float scale = inst.def.scale * (st.scale <= 0f ? 1f : st.scale);
-            // Carrier ignores speed (its pace is the flight time); PlayAt and Attach both play at the authored rate.
-            float speed = st.kind == VfxStepKind.Carrier ? 1f : (st.speed <= 0f ? 1f : st.speed);
+            // Every kind plays its effect at the authored rate; a Carrier's FLIGHT is paced by its fly speed, apart.
+            float speed = st.speed <= 0f ? 1f : st.speed;
 
             Vector3 pos = anchorPt;
             Quaternion rot = Quaternion.Euler(st.rotationEuler);
@@ -1453,6 +1470,12 @@ public class VfxComposerWindow : EditorWindow
                 {
                     Vector3 dir = land - from;
                     if (dir.sqrMagnitude > 1e-6f) rot = Quaternion.FromToRotation(Vector3.down, dir.normalized);
+                }
+                // An effect riding the arrow points where the arrow points — the runtime's rule (VfxDirector.DrawFlight).
+                else if (st.carrierDrawsArrow)
+                {
+                    Vector3 dir = land - from;
+                    if (dir.sqrMagnitude > 1e-6f) rot = Quaternion.LookRotation(dir.normalized);
                 }
             }
 

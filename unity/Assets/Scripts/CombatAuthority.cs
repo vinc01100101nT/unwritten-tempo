@@ -100,7 +100,7 @@ public static class CombatAuthority
         if (!presentationOnly && dealt > 0 && target is ICombatUnit unit)
         {
             var status = unit.StatusHost;
-            if (status != null) status.TookHit(dealt);
+            if (status != null) { status.TookHit(dealt); status.BreakFreeze(); }
         }
         // The same DEALT number read from the ATTACKER's side: a hit that cost the victim nothing ends their run. This
         // is the ONLY place that fact exists — a miss, a parry and a fully absorbed hit fire no trigger for anything to
@@ -276,6 +276,9 @@ public static class CombatAuthority
         int dealt = target.ApplyTrueDamage(amount);
         if (credited != null && dealt <= 0) credited.NoteAttacker(priorAttacker);
         NoteHurtBy(attacker, target, dealt);
+        // Every damage but an ailment's own tick shatters a freeze — reflect and a Brace's debt coming due included.
+        if (dealt > 0 && !TrueDamageCauses.IsDot(cause) && target is ICombatUnit frozen && frozen.StatusHost != null)
+            frozen.StatusHost.BreakFreeze();
 
         // "field_15 Snake #3 took 4 from Poison by Alpha #1 [HP 40/60]" — damage that is not a blow still writes a line,
         // or a bar drops in the log with nothing to explain it.
@@ -313,6 +316,8 @@ public enum TrueDamageCause : byte
     ReflectedByCreature,
     /// <summary>A game master's kill command.</summary>
     GmKill,
+    /// <summary>A burn put out by Water: the damage it had left, landing at once (the Staff's Deluge).</summary>
+    Extinguished,
 }
 
 /// <summary>The one table for <see cref="TrueDamageCause"/>: its name in the log and its colour on screen.</summary>
@@ -322,8 +327,12 @@ public static class TrueDamageCauses
     public static TrueDamageCause OfDot(Ailment a) =>
         a == Ailment.Poison ? TrueDamageCause.Poison : a == Ailment.Bleed ? TrueDamageCause.Bleed : TrueDamageCause.Burn;
 
+    /// <summary>True for an ailment's own damage-over-time tick.</summary>
+    public static bool IsDot(TrueDamageCause cause) =>
+        cause == TrueDamageCause.Poison || cause == TrueDamageCause.Bleed || cause == TrueDamageCause.Burn;
+
     // Built once: an enum's ToString builds a string per call, and this runs per tick per unit.
-    static readonly string[] LogNames = { "", "Poison", "Bleed", "Burn", "brace debt", "reflect", "reflect", "GM kill" };
+    static readonly string[] LogNames = { "", "Poison", "Bleed", "Burn", "brace debt", "reflect", "reflect", "GM kill", "a burn put out" };
 
     /// <summary>The cause as its log line names it — "field_15 Snake #3 took 4 from Poison …".</summary>
     public static string LogName(TrueDamageCause cause) => LogNames[(int)cause];
@@ -343,6 +352,7 @@ public static class TrueDamageCauses
             case TrueDamageCause.ReflectedByPerson:   return new Color(0.85f, 0.85f, 0.95f);
             case TrueDamageCause.ReflectedByCreature: return new Color(1f, 0.6f, 0.9f);
             case TrueDamageCause.GmKill:              return new Color(1f, 0.3f, 0.3f);
+            case TrueDamageCause.Extinguished:        return new Color(0.55f, 0.8f, 1f);
             default:                                  return Color.white;
         }
     }

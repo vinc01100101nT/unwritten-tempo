@@ -42,6 +42,7 @@ public static class DashLandings
         public Vector3? aimPoint;
         public StackVars vars;
         public bool efficient;
+        public float release = 1f;
         public ulong chain;
 
         public void Clear()
@@ -62,7 +63,8 @@ public static class DashLandings
     /// when it cannot be held (not the server, or no caster) — the caller then lands it at once.</summary>
     public static bool Hold(float seconds, float giveUpSeconds, Vector3 arriveAt, Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                             List<SkillEffect> effects, Transform singleTarget, string symbol, string skillName,
-                            string skillId, Vector3? aimPoint, ICombatUnit caster, StackVars vars, bool efficient)
+                            string skillId, Vector3? aimPoint, ICombatUnit caster, StackVars vars, bool efficient,
+                            float release = 1f)
     {
         if (!NetworkServer.active || caster == null || effects == null || seconds <= 0f) return false;
         var h = spare.Count > 0 ? spare.Pop() : new Held();
@@ -84,6 +86,7 @@ public static class DashLandings
         h.aimPoint = aimPoint;
         h.vars = vars;
         h.efficient = efficient;
+        h.release = release;
         h.chain = PassiveEvents.CurrentChain;
         live.Add(h);
         return true;
@@ -146,7 +149,7 @@ public static class DashLandings
         {
             SkillEffectApplier.ApplyBurst(h.point, h.radius, h.scope, h.targets, h.effects, h.singleTarget,
                                           h.symbol, h.skillName, h.skillId, aimPoint: h.aimPoint, caster: c,
-                                          vars: h.vars, efficient: h.efficient, casterPass: false);
+                                          vars: h.vars, efficient: h.efficient, casterPass: false, release: h.release);
         }
         finally { PassiveEvents.Pop(prev); }
     }

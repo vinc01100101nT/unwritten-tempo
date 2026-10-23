@@ -26,7 +26,8 @@ MonoBehaviour:
   description: 'An arc that lands where they will be.
 
     An arrow lobbed onto a
-    spot; it lands a moment later for 180% Attack to everything within 2.5m.'
+    spot; it lands a moment later for 180% Attack to everything within 2.5m,
+    +5% Attack for every metre between you and each enemy hit.'
   archetype: 0
   family: 2
   shape: 0
@@ -45,6 +46,8 @@ MonoBehaviour:
   manaCost: 12
   cooldown: 7
   castTime: 0
+  fixedCastTime: 0
+  releaseEarly: 0
   aim: 2
   castRange: 11
   tier: 0
@@ -94,7 +97,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 1.8
+        value: 0.15
         useStacks: 0
         op: 0
         read: 0
@@ -106,7 +109,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       damageMultPerMetre:
-        value: 0
+        value: 0.004166667
         useStacks: 0
         op: 0
         read: 0
@@ -124,6 +127,12 @@ MonoBehaviour:
         read: 0
         scaler: 1
       critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
         value: 0
         useStacks: 0
         op: 0
@@ -232,7 +241,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       hitCount:
-        value: 1
+        value: 12
         useStacks: 0
         op: 0
         read: 0

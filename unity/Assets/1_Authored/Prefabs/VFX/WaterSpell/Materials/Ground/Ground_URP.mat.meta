@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 50b88d6d6ec3a4f3fb96b07cec6aec3e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 327177
+  packageName: Stylized Water Spell VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/WaterSpell/Materials/Ground/Ground_URP.mat
+  uploadId: 830582

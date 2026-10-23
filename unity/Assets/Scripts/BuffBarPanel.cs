@@ -28,7 +28,7 @@ public class BuffBarPanel : MonoBehaviour
         public int lastStacks = -1;
     }
 
-    static readonly Color StackColor = new Color(1f, 0.87f, 0.45f);   // warm gold — reads as "count", distinct from the white timer
+    public static readonly Color StackColor = new Color(1f, 0.87f, 0.45f);   // warm gold — reads as "count", distinct from the white timer
     // Pre-built "x1".."x99" labels: the count changes on every stack gain/expiry, and building the string there would
     // allocate during combat. Indexed by count, so a refresh is a lookup (PERFORMANCE.md: no per-frame/per-hit strings).
     /// <summary>The "x1".."x99" labels, built once.</summary>
@@ -164,6 +164,9 @@ public class BuffBarPanel : MonoBehaviour
         return cell;
     }
 
+    // Anything with this many seconds left is held, not timed — the Staff's orbs.
+    const int HeldForeverSecs = 100000;
+
     void Refresh()
     {
         for (int i = 0; i < cells.Count; i++)
@@ -172,7 +175,8 @@ public class BuffBarPanel : MonoBehaviour
             if (c.buff == null || c.fill == null) continue;
             c.fill.fillAmount = 1f - c.buff.Fraction01;   // dark ring grows as the buff expires
             int secs = Mathf.CeilToInt(c.buff.Remaining);
-            if (secs != c.lastSecs) { c.time.text = secs > 0 ? secs.ToString() : ""; c.lastSecs = secs; }
+            // A held orb has no clock of its own (it stays until replaced), so it shows no seconds.
+            if (secs != c.lastSecs) { c.time.text = secs > 0 && secs < HeldForeverSecs ? secs.ToString() : ""; c.lastSecs = secs; }
             // Stack badge — rewritten only when the count actually moves, from the pre-built label table (no alloc).
             int n = c.buff.StackCount;
             if (n != c.lastStacks && c.stacks != null)

@@ -10,6 +10,21 @@ public static class StrikeMath
     public static float Growth(float perPoint, int givenUp, float perMetre, float metres) =>
         perPoint * Mathf.Max(0, givenUp) + perMetre * Mathf.Max(0f, metres);
 
+    /// <summary>A release-early skill let go the instant its wind-up starts (decided 2026-10-23): 0.30× its damage.</summary>
+    public const float ReleaseScaleAtStart = 0.30f;
+    /// <summary>A release-early skill whose wind-up filled completely (decided 2026-10-23): 1.50× its damage.</summary>
+    public const float ReleaseScaleAtFull = 1.50f;
+
+    /// <summary>What a release-early skill's damage is multiplied by when let go at <paramref name="releasedAt"/> of a
+    /// wind-up that began at <paramref name="startedAt"/> and lasts <paramref name="windupSeconds"/>: evenly from
+    /// <see cref="ReleaseScaleAtStart"/> to <see cref="ReleaseScaleAtFull"/> across the wind-up, held at either end.</summary>
+    public static float ReleaseScale(float startedAt, float releasedAt, float windupSeconds)
+    {
+        if (windupSeconds <= 0f) return ReleaseScaleAtFull;
+        float filled = Mathf.Clamp01((releasedAt - startedAt) / windupSeconds);
+        return Mathf.Lerp(ReleaseScaleAtStart, ReleaseScaleAtFull, filled);
+    }
+
     /// <summary>How much a sniper's magic shot grows for every metre to its target (decided 2026-10-06): 2%.</summary>
     public const float SniperGrowthPerMetre = 0.02f;
 
@@ -26,6 +41,11 @@ public static class StrikeMath
     /// HitBase + HIT − FLEE (<see cref="Combat.RawHitPoints"/>). Counted at most <see cref="MaxAccuracyOverPoints"/>.</summary>
     public static int AccuracyOverPoints(int rawHitPoints) =>
         Mathf.Clamp(rawHitPoints - 100, 0, MaxAccuracyOverPoints);
+
+    /// <summary>A strike's extra crit chance: <paramref name="always"/>, plus <paramref name="vsSlowed"/> when the unit
+    /// struck moves slower than its normal pace (<paramref name="targetMoveMult"/> below 1). Never negative.</summary>
+    public static float CritBonus(float always, float vsSlowed, float targetMoveMult) =>
+        Mathf.Max(0f, always) + (targetMoveMult < 1f ? Mathf.Max(0f, vsSlowed) : 0f);
 
     /// <summary>How many points of movement-speed bonus a caster has right now, as a percent (a ×1.45 pace = 45) — 0
     /// when standing still, so a growth on it only pays while moving. Never negative: a slowed caster gets nothing,

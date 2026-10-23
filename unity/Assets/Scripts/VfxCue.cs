@@ -30,9 +30,9 @@ public static class VfxCue
         GameNetwork.AnnounceCue(actor, target, id, 0);
     }
 
-    static bool Bound(VfxCueId id)
+    static bool Bound(VfxCueId id, WeaponType weapon = WeaponType.None)
     {
-        var b = VfxCueCatalog.Get(id);
+        var b = VfxCueCatalog.Get(id, weapon);
         return b != null && b.vfx != null;
     }
 
@@ -78,18 +78,19 @@ public static class VfxCue
     /// <summary>SERVER: announce a lasting cue that TRACKS <paramref name="actor"/> (a status aura), and return its
     /// name — the caller MUST hand it to <see cref="End"/> when the state ends (e.g. the ailment expires), which tells
     /// every watching machine to take it off the body it rides. Not running (nothing to end) off the server, for an
-    /// unbound cue, a null actor, or a unit nobody can watch.</summary>
-    public static Aura Begin(VfxCueId id, Transform actor)
+    /// unbound cue, a null actor, or a unit nobody can watch. <paramref name="weapon"/> picks that weapon's own
+    /// version of the cue when it has one (the Bow's cast); every screen is told which, so all draw the same.</summary>
+    public static Aura Begin(VfxCueId id, Transform actor, WeaponType weapon = WeaponType.None)
     {
         if (actor == null || !GameServer.IsServer) return default;
         // NO LOOK, BUT A WORD: said once, as a one-shot — there is no glow for anybody to take off later.
-        if (!Bound(id)) { if (CueWords.Has(id)) GameNetwork.AnnounceCue(actor, actor, id, 0); return default; }
+        if (!Bound(id, weapon)) { if (CueWords.Has(id)) GameNetwork.AnnounceCue(actor, actor, id, 0); return default; }
 
         // NAMED, so the ending can be said as plainly as the beginning. A one-shot needs no name — it is over by
         // the time the message lands — but an aura has to be taken OFF a body later, and a watching machine can
         // only do that if both sides call it the same thing.
         int key = NextAuraKey();
-        uint on = GameNetwork.AnnounceCue(actor, actor, id, key);
+        uint on = GameNetwork.AnnounceCue(actor, actor, id, key, weapon);
         return on != 0u ? new Aura { on = on, key = key } : default;
     }
 
@@ -129,10 +130,11 @@ public static class VfxCue
     /// <summary>Play a cue the SERVER said happened, on the body THIS machine draws for that unit. The only door a
     /// joined client draws a cue through — it never decides one for itself, so nothing here announces anything and
     /// there is no way for a cue to echo back and forth.</summary>
-    public static void PlayFromServer(VfxCueId id, Transform actor, Transform target, int auraKey, uint onNetId)
+    public static void PlayFromServer(VfxCueId id, Transform actor, Transform target, int auraKey, uint onNetId,
+                                      WeaponType weapon = WeaponType.None)
     {
         if (actor == null) return;
-        var b = VfxCueCatalog.Get(id);
+        var b = VfxCueCatalog.Get(id, weapon);
         if (b == null || b.vfx == null) return;
 
         if (auraKey == 0) { Draw(b, actor, target); return; }

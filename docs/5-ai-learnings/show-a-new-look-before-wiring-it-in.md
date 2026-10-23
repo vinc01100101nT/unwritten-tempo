@@ -59,3 +59,7 @@ cape's side panel drawn over the arm, with the lining showing between arm and bo
   shipped unseen was fine in isolation but in the game (1) only added light, so it vanished on the pale town floor, and
   (2) was cut by the full-screen ink outlines drawn after it in the Overlay queue — neither was visible to any check
   short of the game's own picture. The user found the first; the second took six renders to name.
+- **Anything with a lifetime: sample it across the WHOLE of that lifetime, not once.** Measured 2026-10-23: a light
+  riding an arrow was read once, 0.12 s into the flight — on, right colour — and reported working. It went out at
+  0.15 s, because an effect with no particles was timed as a 0.15 s one-shot; the user saw no light at all. Sampling
+  every 0.15 s until the arrow landed would have shown it gone on the second reading.

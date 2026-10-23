@@ -121,6 +121,8 @@ public static class SkillExport
             Num(json, "manaCost", d.manaCost);
             Num(json, "cooldown", d.cooldown);
             Num(json, "castTime", d.castTime);
+            Num(json, "fixedCastTime", d.fixedCastTime);
+            Bool(json, "releaseEarly", d.releaseEarly);
             Num(json, "castRange", d.castRange);
             Field(json, "trigger", SkillTooltip.TriggerLine(d, SkillTooltip.Dialect.Markdown), true);
             Field(json, "description", d.description, true);

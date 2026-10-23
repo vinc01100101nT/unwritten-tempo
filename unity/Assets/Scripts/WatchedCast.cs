@@ -74,7 +74,8 @@ public class WatchedCast
     {
         windingUp = null;
         if (body != null) CastBar.Hide(body);
-        if (windupRing != null) { windupRing.Stop(); windupRing = null; }
+        // Gone the instant the wind-up ends, exactly as on the caster's own screen — a fading ring followed the body.
+        if (windupRing != null) { windupRing.Stop(immediate: true); windupRing = null; }
     }
 
     /// <summary>Draw this frame of a wind-up. Its own clock running out ends it too, not only the server saying so — the
@@ -98,9 +99,9 @@ public class WatchedCast
     // shoved mid-cast takes their ring with them.
     void ShowRing(Transform body, string map)
     {
-        if (body == null || windingUp == null || string.IsNullOrEmpty(windingUp.castCircleId)) return;
+        if (body == null || windingUp == null || string.IsNullOrEmpty(windingUp.CastCircle)) return;
         Vector3 at = MapManager.InWorld(windupAimPointInMap, map);
-        windupRing = Vfx.AttachGroundCircle(windingUp.castCircleId, body, at - body.position,
+        windupRing = Vfx.AttachGroundCircle(windingUp.CastCircle, body, at - body.position,
                                             windingUp.LargestAreaRadius, windingUp.castCircleTint);
     }
 }

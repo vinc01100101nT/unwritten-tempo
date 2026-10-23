@@ -97,3 +97,12 @@ MonoBehaviour:
     vfx: {fileID: 0}
     offset: {x: 0, y: 0, z: 0}
     scale: 1
+  - id: 21
+    vfx: {fileID: 11400000, guid: 7f56272b62ee3d646bb23b458da9fd7d, type: 2}
+    offset: {x: 0, y: 0, z: 0}
+    scale: 1
+  - id: 18
+    weapon: 9
+    vfx: {fileID: 11400000, guid: df9836ca3cef4351844104b6f590180d, type: 2}
+    offset: {x: 0, y: 0, z: 0}
+    scale: 1

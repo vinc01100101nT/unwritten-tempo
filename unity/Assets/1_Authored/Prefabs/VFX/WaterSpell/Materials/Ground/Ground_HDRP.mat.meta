@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 207485ec717c044d49b8abe2a5f94b6c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 327177
+  packageName: Stylized Water Spell VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/WaterSpell/Materials/Ground/Ground_HDRP.mat
+  uploadId: 830582

@@ -805,7 +805,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         //
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
-        if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushMyRing(); PushWorn(); PushDraw(); ForgetSpeedIfTheyStopped(); return; }
+        if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushMyRing(); PushWorn(); PushOrbs(); PushDraw(); ForgetSpeedIfTheyStopped(); return; }
         if (isOwned)
         {
             ReportMyPosition();
@@ -813,6 +813,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             // THE SMOKE AT THE LEVEL CAP, on the avatar this machine really draws for its own person.
             var mine = PersistentPlayer3D.Instance;
             levelAura.Show(netLevel, mine != null && !TeleportLook.OwnWaitingToAppear ? mine.transform : null);
+            orbHalo.Show(heldOrbs, mine != null && !TeleportLook.OwnWaitingToAppear ? mine.transform : null);
             return;
         }
         if (isClient) FollowTheServer();
@@ -4285,6 +4286,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     // spends loading something, and the small shove a crowd or a slope can give.
     const float StepSlack = 1.5f;
 
+    // Movement allowed in a report while the server holds them in a wind-up, in world units: a rooted body sends the
+    // spot it stands on, so this only covers rounding and a crowd's nudge. StepSlack would let a body walk a cast away.
+    const float WindupSlack = 0.1f;
+
     // Nothing legitimate crosses this in one report, whatever the clock says. The backstop for a report that
     // arrives after a long silence, where elapsed time alone would justify almost any distance.
     const float NeverThisFarInOneStep = 40f;
@@ -4410,6 +4415,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (now < orderedMoveUntil) top = Mathf.Max(top, orderedMoveSpeed);
 
         float allowed = top * SpeedForgiveness * elapsed + StepSlack;
+        // WINDING UP A CAST HOLDS THEM STILL HERE TOO, not only on their own machine: a client that ignores its own root
+        // must not walk through a wind-up and still get the full cast. A move the server itself ordered still counts.
+        if (unit is Character windingUp && windingUp.WindupRunner != null && now >= orderedMoveUntil) allowed = WindupSlack;
 
         // MEASURED FLAT. Falling is not travelling: gravity can move somebody down faster than they can ever walk,
         // and a checker that counted it would refuse honest players stepping off ledges. The height is covered by
@@ -4511,6 +4519,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         // THE SMOKE AT THE LEVEL CAP, from the level the server sent — the same one every kind of unit wears.
         levelAura.Show(netLevel, awayShown ? null : body.transform);
+        // THE STAFF'S HELD ORBS circling them, from the set the server sent.
+        orbHalo.Show(heldOrbs, awayShown ? null : body.transform);
 
         // WHAT THIS PERSON IS DOING, handed over rather than worked out from where their body has been placed.
         // Without it their character walked in a fixed standing pose whenever the glide flickered, and never swung
@@ -4659,6 +4669,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         VfxCue.ForgetAurasOn(netId);
         // The level-cap smoke too — on a watched body, and on this machine's own avatar when this person leaves.
         levelAura.Stop();
+        orbHalo.Stop();
         // …and a move being drawn on the body, with any see-through fade that move put on it.
         watchedMove.Stop();
         // …and its place among the hidden bodies, if it was away.

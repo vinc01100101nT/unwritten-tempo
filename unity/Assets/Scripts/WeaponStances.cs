@@ -12,6 +12,45 @@ public static class WeaponStances
     public static StanceId AttackFor(WeaponType w, bool ranged)
         => ranged && WeaponTypes.ThrowsItself(w) ? StanceId.AttackShurikenThrow : AttackFor(w);
 
+    /// <summary>The pose held through a skill's cast time for a skill of weapon <paramref name="w"/> — one per weapon,
+    /// mapped exactly like <see cref="AttackFor(WeaponType)"/>; each is authored in the Stance Composer.</summary>
+    public static StanceId CastFor(WeaponType w)
+    {
+        switch (w)
+        {
+            case WeaponType.Sword:        return StanceId.CastOneHandSword;
+            case WeaponType.TwoHandSword: return StanceId.CastSword;
+            case WeaponType.Axe:          return StanceId.CastAxe;
+            case WeaponType.Mace:         return StanceId.CastMace;
+            case WeaponType.Dagger:       return StanceId.CastDagger;
+            case WeaponType.Katar:        return StanceId.CastKatar;
+            case WeaponType.Staff:        return StanceId.CastStaff;
+            case WeaponType.Wand:         return StanceId.CastWand;
+            case WeaponType.Scythe:       return StanceId.CastScythe;
+            case WeaponType.Shuriken:     return StanceId.CastShuriken;
+            case WeaponType.Spear:        return StanceId.CastLance;
+            case WeaponType.Bow:          return StanceId.CastBow;
+            case WeaponType.Firearm:      return StanceId.CastRifle;
+            case WeaponType.Knuckle:      return StanceId.CastKnuckle;
+            case WeaponType.None:
+            default:                      return StanceId.CastBareHands;
+        }
+    }
+
+    /// <summary>True for every pose <see cref="CastFor"/> can hand out — what a flat character reads as "casting".
+    /// Kept beside CastFor so a weapon added there is covered here the same day.</summary>
+    public static bool IsCast(StanceId id)
+    {
+        switch (id)
+        {
+            case StanceId.CastBow:       case StanceId.CastBareHands: case StanceId.CastSword: case StanceId.CastOneHandSword:
+            case StanceId.CastAxe:       case StanceId.CastMace:      case StanceId.CastDagger: case StanceId.CastKatar:
+            case StanceId.CastStaff:     case StanceId.CastWand:      case StanceId.CastScythe: case StanceId.CastShuriken:
+            case StanceId.CastLance:     case StanceId.CastRifle:     case StanceId.CastKnuckle: return true;
+            default:                     return false;
+        }
+    }
+
     public static StanceId AttackFor(WeaponType w)
     {
         switch (w)

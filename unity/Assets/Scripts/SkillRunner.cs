@@ -142,8 +142,21 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // whether finishing it announces "the player cast this". Never null while a run is resolving.
     SkillTriggerEntry firedBy;
     Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
+    // RELEASE EARLY (SkillDef.releaseEarly): the server's wind-up start and length, and whether a release was asked
+    // for and when. The server decides the scale from its own clock; the owner's machine only sends the request.
+    float windupStartedAt, windupSeconds, releasedAt;
+    bool releaseAsked;
+    // The damage scale this cast's strikes carry (StrikeMath.ReleaseScale) — 1 for every cast that is not one.
+    float castReleaseScale = 1f;
+    // ON THE OWNER'S MACHINE: the wind-up the server announced (seconds, and its start on the shared clock), so the
+    // owner's bar shows the server's numbers rather than a sum worked out here. Not told yet = an empty bar.
+    bool windupTold;
+    double toldStartedAt;
+    float toldSeconds;
     int pendingMana;                    // this cast's cost, checked at the press and taken at the release (never both)
     VfxCue.Aura castAura;               // the server's announced OnCastStart aura for this wind-up; MUST be Ended at every exit
+    // The pose held through this skill's wind-up — one answer for the push, the pop and every screen told about it.
+    StanceId CastPose => WeaponStances.CastFor(def != null ? def.weaponType : WeaponType.None);
     Vfx.EffectHandle castCircle;        // the caster's own ring (def.castCircleId) on their screen; MUST be Stopped at every exit
     VfxContext lastCtx;                 // captured per cast so OnTick can read the Single-scope target unit
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
@@ -251,6 +264,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         pendingUnit = null;   // a half-aimed cast dies with the runner; never resume stage 2 against a stale pick
         pendingMana = 0;      // …and an unfinished wind-up is never charged for
         awaitingOn = null;
+        runRoutine = null;   // Unity stopped it with the component; a stopped run is not a run in progress
         if (castRoutine != null || castAura.Running || castCircle != null) EndCast();
     }
 
@@ -310,6 +324,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public bool CastFromRequest(Transform aimedAt, Vector3 point, out string why)
     {
         why = null;
+        // The Release is never cast itself: the press arrives as the combination it made.
+        if (def != null && def.isOrbRelease) { why = "the Release is pressed as the combination the orbs make"; return false; }
         if (!CanStart()) { why = lastRefusal; return false; }
         // A skill that asks the caster to PICK something must have been given one; without it the cast would silently
         // fall back to an area sweep the person never aimed. Asked BEFORE anything is paid, so a cast that cannot
@@ -323,6 +339,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     public bool Activate()
     {
+        if (def != null && def.isOrbRelease) return PressRelease(null);
         if (!CanStart()) return false;
         // A weapon skill needs the weapon in hand. Pressed with it away, the press is held, the weapon comes out, and
         // the press runs again — aimed fresh — once the server says it is in hand.
@@ -375,6 +392,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public bool ActivateAt(Transform target)
     {
         if (target == null || def == null) return false;
+        if (def.isOrbRelease) return PressRelease(target);
         // ANYTHING ALREADY ON SCREEN WINS: an aim the player started, or a walk into range, is theirs.
         if (UnitTargeter.Active || GroundTargeter.Active || waitingForRange) return false;
         // A weapon skill with the weapon away is left for the hunt, which takes the weapon out on its own way in.
@@ -392,7 +410,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // Stage 2 of the aim. Entered straight from Activate (no entity to pick) or from the stage-1 confirm below.
     void BeginPointAim() =>
         GroundTargeter.Begin(transform, def.castRange, onGround,
-                             def.castCircleId, def.castCircleTint, def.LargestAreaRadius, def.IsProjectileAim);
+                             def.CastCircle, def.castCircleTint, def.LargestAreaRadius, def.IsProjectileAim);
 
     // Stage-1 confirm: bank the entity, then either ask for the point or fire straight away.
     void CastTargeted(Transform unit)
@@ -434,6 +452,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void Cast(Vector3 point)
     {
         var unit = pendingUnit; pendingUnit = null;
+        // Said here as well as refused by the server, so a press at a spot nobody can stand on spends nothing and
+        // plays nothing. The server asks the same question and its answer is the one that counts.
+        if (unit == null && def.MovesCasterToAimPoint && !Pathfinder3D.CanLandAt(transform.position, point, SkillEffectApplier.TripRadius))
+        { OverheadNotice.Warn("Can't land there"); return; }
         CastResolved(unit, point);
     }
 
@@ -477,18 +499,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // bar and NO OnCastStart cue (the cue marks a real wind-up). Otherwise a coroutine winds up first, then plays.
     void StartCastOrPlay()
     {
-        // Turn the caster to face where it aimed — for every skill regardless of scope (ground/target/aoe).
-        // A self-cast aims at the caster's own feet, so FaceWorldPoint no-ops (planar dir ~0): no exception needed.
-        if (body != null)
-        {
-            body.FaceWorldPoint(lastCtx.target);
-            // A skill aimed at a unit keeps the body facing it for the skill's own length — its wind-up, then one
-            // swing's beat for the release (the release animation's window) — then walking turns it again.
-            if (lastCtx.targetUnit != null)
-                body.FocusOn(lastCtx.targetUnit, def.castTime + (CasterGone ? 0f : Caster.SwingTime));
-        }
+        // Turn the caster to face where it aimed — for every skill regardless of scope (ground/target/aoe), on this
+        // first frame only. A self-cast aims at the caster's own feet, so it changes nothing.
+        if (body != null) body.FaceAtAttackStart(lastCtx.target);
 
-        if (def.castTime > 0f && isActiveAndEnabled)
+        if (def.HasWindup && isActiveAndEnabled)
             castRoutine = StartCoroutine(CastWindup());
         else
             PlayCycles();
@@ -503,8 +518,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     System.Collections.IEnumerator CastWindup()
     {
         float mult = CasterGone ? 1f : Caster.CastTimeMult;
-        float dur = def.castTime * mult;
+        float dur = UnitStatMath.CastWindupSeconds(def.castTime, mult, def.fixedCastTime);
         float startedAt = Time.time;   // any HP lost after this instant breaks the wind-up
+        windupStartedAt = startedAt; windupSeconds = dur; releaseAsked = false; windupTold = false;
+        // THE SERVER HOLDS A WINDING-UP PLAYER IN PLACE: its movement check refuses travel while this is set
+        // (NetPlayer.MoveWasPossible), so a client that ignores its own root cannot walk through a cast.
+        if (!Watching && Caster is Character windingUp) windingUp.WindupRunner = this;
 
         if (dur > 0f)
         {
@@ -517,14 +536,20 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // and not only the caster's. A watcher holds the same authored skill and reads its own ring off that;
             // the one thing it cannot know is the spot, which is why the spot is what travels.
             GameNetwork.AnnounceCastWindup(Caster, def, dur, lastCtx.target);
-            if (Mine && StanceController.Player != null) StanceController.Player.Push(StanceId.Casting, dur);   // hold the cast pose, stretched to span the whole wind-up (FitWindow)
+            // HOLD THE CAST POSE for the whole wind-up: the skill's weapon's own (WeaponStances.CastFor) — stretched to
+            // the cast bar, or stopped part-way and held like the bow's draw.
+            if (Mine && StanceController.Player != null) StanceController.Player.Push(CastPose, dur);
             // A CREATURE holds the same pose for the same window, told to every screen watching it.
-            GameNetwork.AnnounceHeldOnCaster(Caster, true, StanceId.Casting, dur);
+            GameNetwork.AnnounceHeldOnCaster(Caster, true, CastPose, dur);
             var sc = Status;
             if (sc != null) sc.LockActions(dur);   // fully root for the wind-up (no move/attack/other skills); freed in EndCast on complete or interrupt
             string label = def.displayName;
-            for (float t = 0f; t < dur; t += Time.deltaTime)
+            for (float t = 0f; ; t += Time.deltaTime)
             {
+                // THE OWNER'S MACHINE follows the server's wind-up once told it; until then it waits out its own.
+                bool ownerTold = Watching && windupTold;
+                double toldElapsed = ownerTold ? Mirror.NetworkTime.time - toldStartedAt : 0d;
+                if (ownerTold ? toldElapsed >= toldSeconds : t >= dur) break;
                 // Broken by death, silence, hard CC — and now by any hit that actually cost HP, which is the whole
                 // reason a long wind-up is a gamble. The earned footing does NOT save a cast (shrugging off a stagger
                 // is not the same as keeping your concentration); only the bought window does, which is what makes
@@ -533,13 +558,56 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                     (sc != null && (sc.Silenced || sc.CannotAct ||
                                     (!sc.DisablesBlocked && sc.LastHpLossTime > startedAt))))
                 { pendingMana = 0; EndCast(); yield break; }
-                if (Mine) CastBar.Set(transform, t / dur, label, def.tint);
+                // RELEASE EARLY: the player pressed a movement key. Their machine plays the release and asks the
+                // server, which fires the skill scaled by how much of ITS wind-up was filled.
+                if (Mine && Watching && def.releaseEarly && !releaseAsked && MovementKeyPressed()) AskRelease();
+                if (releaseAsked)
+                {
+                    float scale = Watching ? 1f : StrikeMath.ReleaseScale(windupStartedAt, releasedAt, windupSeconds);
+                    EndCast();
+                    PlayCycles(scale);
+                    yield break;
+                }
+                if (Mine) CastBar.Set(transform, ownerTold ? (float)(toldElapsed / toldSeconds) : 0f, label, def.tint);
                 yield return null;
             }
         }
 
         EndCast();
-        PlayCycles();
+        PlayCycles(def.releaseEarly && !Watching ? StrikeMath.ReleaseScale(startedAt, startedAt + dur, dur) : 1f);
+    }
+
+    static bool MovementKeyPressed() =>
+        Hotkeys.Down(GameKeys.MoveForward) || Hotkeys.Down(GameKeys.MoveLeft)
+        || Hotkeys.Down(GameKeys.MoveBack) || Hotkeys.Down(GameKeys.MoveRight);
+
+    // The owner's machine: end its own picture of the wind-up and ask the server to fire. Intent only — the server
+    // measures the moment on its own clock (ReleaseWindup).
+    void AskRelease()
+    {
+        releaseAsked = true;
+        releasedAt = Time.time;
+        GameNetwork.SendCastRelease(def);
+    }
+
+    /// <summary>SERVER: the owner asked to release this skill's wind-up now. Ignored unless this skill is winding up,
+    /// allows releasing early, and has not already been released.</summary>
+    public bool ReleaseWindup()
+    {
+        if (Watching || castRoutine == null || def == null || !def.releaseEarly || releaseAsked) return false;
+        releaseAsked = true;
+        releasedAt = Time.time;
+        return true;
+    }
+
+    /// <summary>THE OWNER'S MACHINE: the server's wind-up for this skill began at <paramref name="startedAt"/> on the
+    /// shared clock and lasts <paramref name="seconds"/> — the bar shows that from now on.</summary>
+    public void TellWindup(double startedAt, float seconds)
+    {
+        if (castRoutine == null || seconds <= 0f) return;
+        windupTold = true;
+        toldStartedAt = startedAt;
+        toldSeconds = seconds;
     }
 
     // The ONE cast-SETUP choke point (paired with EndCast): begin BOTH wind-up visuals together.
@@ -553,9 +621,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // together in EndCast. Never the release sequence.
     void BeginCastVisuals()
     {
-        castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform);
-        if (Mine && !string.IsNullOrEmpty(def.castCircleId))
-            castCircle = Vfx.AttachGroundCircle(def.castCircleId, transform, lastCtx.target - transform.position,
+        // The skill's weapon picks the look when it has its own (the Bow's water charge), else the shared one.
+        castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform, def != null ? def.weaponType : WeaponType.None);
+        if (Mine && !string.IsNullOrEmpty(def.CastCircle))
+            castCircle = Vfx.AttachGroundCircle(def.CastCircle, transform, lastCtx.target - transform.position,
                                                 def.LargestAreaRadius, def.castCircleTint);
     }
 
@@ -564,11 +633,17 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void EndCast()
     {
         VfxCue.End(ref castAura);
-        if (castCircle != null) { castCircle.Stop(); castCircle = null; }
-        if (Mine && StanceController.Player != null) StanceController.Player.Pop(StanceId.Casting);   // release the cast pose (complete/interrupt/OnDisable)
-        if (!CasterGone) GameNetwork.AnnounceHeldOnCaster(Caster, false, StanceId.Casting, 0f);
+        // THE RING GOES THE INSTANT THE CAST RELEASES. A soft stop let its particles fade for seconds while the effect
+        // kept following the caster, so the ring slid along under a player walking away after the release.
+        if (castCircle != null) { castCircle.Stop(immediate: true); castCircle = null; }
+        if (Mine && StanceController.Player != null) StanceController.Player.Pop(CastPose);   // release the cast pose (complete/interrupt/OnDisable)
+        if (!CasterGone) GameNetwork.AnnounceHeldOnCaster(Caster, false, CastPose, 0f);
         var unlock = Status;
         if (unlock != null) unlock.Unlock();   // free the wind-up root; on completion PlayCycles re-locks for the aftercast beat
+        if (!CasterGone && Caster is Character windingUp && ReferenceEquals(windingUp.WindupRunner, this))
+            windingUp.WindupRunner = null;
+        releaseAsked = false;
+        windupTold = false;
         if (Mine) CastBar.Hide(transform);
         // AND EVERY MACHINE WATCHING THIS CASTER LETS GO OF ITS BAR TOO. This is the one place a wind-up ends —
         // finished, interrupted, or the runner switched off — so saying it here is saying it for all three.
@@ -582,8 +657,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // The total this cast's strikes add up into — a new one every cast, so its yellow number starts from zero.
     int castTotalId;
 
-    void PlayCycles()
+    void PlayCycles(float releaseScale = 1f)
     {
+        castReleaseScale = releaseScale;
         castTotalId = StrikeTotals.NewTotal();
         // THE RELEASE: the skill is actually going off, so this is where its mana is taken. Only a press ever
         // left a cost here, so a run started by one of the skill's own moments still fires free.
@@ -656,7 +732,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
         // A charge-driven run has no fixed length — it goes until the pile is empty — so the count is only consulted
         // for the plain fixed-repeat case.
-        int extra = def.repeatCostsCharge || def.repeatWhilePileHeld ? int.MaxValue : Mathf.Max(0, def.repeatCount - 1);
+        // A run that grows with cast speed plays more beats the faster its caster casts, under its own ceiling.
+        int count = def.repeatScaleWithCastSpeed && !CasterGone
+            ? OrbMath.RepeatsWithCastSpeed(def.repeatCount, 1f - Caster.CastTimeMult, def.repeatMaxCount)
+            : def.repeatCount;
+        int extra = def.repeatCostsCharge || def.repeatWhilePileHeld ? int.MaxValue : Mathf.Max(0, count - 1);
         if (extra > 0 && isActiveAndEnabled)
         {
             HoldForBeat(BeatInterval());   // the opening beat; every later one re-takes the hold inside the loop
@@ -811,6 +891,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // However the run stopped — last charge spent, nothing left in reach, caster down — it is over here, so the
         // piles it set up are over too.
         EndRunPiles();
+        // AND THE RUN ITSELF IS OVER: without this the runner reported a run in progress forever after its first one,
+        // which turned away every orb press after a Staff run (orbs wait for your own run to end).
+        runRoutine = null;
     }
 
     /// <summary>End every pile the cast's opening play granted on the caster. A charge-driven run has no length of its
@@ -896,6 +979,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // AN ULTIMATE ALSO STARTS THE SHARED COOLDOWN: every ultimate this unit has waits on one moment from here.
         if (def.IsUltimate && Caster.Skills != null && !noCooldowns)
             GameNetwork.TellOwnerCooldownStarted(Caster, SharedCooldown.UltimateKey, Caster.Skills.StartSharedUltimate());
+        // THE LAST STAFF COMBINATION cast, for Weathering to make ready again. The resetting skill never counts itself.
+        if (def.IsOrbCombo && !def.ResetsLastCombination && Caster.Skills != null) Caster.Skills.LastCombinationId = def.id;
         return true;
     }
 
@@ -979,7 +1064,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           // EVERY effect this burst runs — so a skill's damage and its lifesteal read
                                           // the SAME pile, and the first one can't spend it out from under the second.
                                           vars: castVars,
-                                          efficient: castEfficient);
+                                          efficient: castEfficient,
+                                          release: castReleaseScale);
 
             // A BOUNCING TICK carries on from the unit it just landed on — its target effects jump to the nearest
             // enemies it has not hit, each worth less than the last (Flights). Every play starts its own chain: a repeat
@@ -989,7 +1075,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 var firstVictim = SkillEffectApplier.UnitStandingOn(tick.aimUnit);
                 if (firstVictim != null && Sides.Hostile(Caster, firstVictim))
                     Flights.StartSkillBounce(Caster, firstVictim, b, effects, castVars, castChain,
-                                             def.id, def.Symbol, def.displayName, castEfficient);
+                                             def.id, def.Symbol, def.displayName, castEfficient, castReleaseScale);
             }
         }
         finally { batch.Dispose(); PassiveEvents.Pop(prevCause); }
@@ -1043,23 +1129,72 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         return true;
     }
 
+    // ---- the Staff's Release -------------------------------------------------------
+    // The Release plays nothing of its own: it presses whichever combination the caster's three orbs make, and the bar
+    // shows that combination's icon, cost and cooldown. Which one is read again only when the caster's states change.
+    int releaseSeen = -1;
+    SkillDef releaseCombo;
+
+    SkillDef ReleaseCombo
+    {
+        get
+        {
+            var st = CasterStates;
+            if (st == null) return null;
+            if (st.ChangeCount != releaseSeen) { releaseSeen = st.ChangeCount; releaseCombo = OrbCombos.ComboFor(Caster); }
+            return releaseCombo;
+        }
+    }
+
+    SkillRunner ReleaseRunner
+    {
+        get
+        {
+            var c = ReleaseCombo;
+            return c != null && !CasterGone && Caster.Skills != null ? Caster.Skills.RunnerById(c.id) : null;
+        }
+    }
+
+    /// <summary>What this button stands for right now: for the Release, the combination the orbs make (or the Release
+    /// itself while fewer than three are held); for any other skill, itself.</summary>
+    public SkillDef ShownDef => def != null && def.isOrbRelease ? (ReleaseCombo ?? def) : def;
+
+    // A refused Release says why, short, on the stacking notice; the press goes nowhere and costs nothing.
+    bool PressRelease(Transform at)
+    {
+        var combo = ReleaseCombo;
+        if (combo == null) { if (Mine) OverheadNotice.Warn("Hold three orbs"); return false; }
+        if (!OrbCombos.Opened(Caster, combo)) { if (Mine) OverheadNotice.Warn("Not learned: " + combo.displayName); return false; }
+        var runner = ReleaseRunner;
+        if (runner == null) { if (Mine) OverheadNotice.Warn("Not learned: " + combo.displayName); return false; }
+        return at != null ? runner.ActivateAt(at) : runner.Activate();
+    }
+
     // ---- IHotbarSkill -------------------------------------------------------
     public int SlotOrder => def != null ? def.slotOrder : 100;
-    public string ShortLabel => def != null ? def.HotbarLabel : SkillDef.DefaultShortLabel;
+    public string ShortLabel => ShownDef != null ? ShownDef.HotbarLabel : SkillDef.DefaultShortLabel;
     public string KeyLabel => def != null ? def.keyLabel : "";
-    public string Symbol => def != null ? def.Symbol : "";
-    public Sprite Icon => SkillSymbol.IconFor(def);
+    public string Symbol => ShownDef != null ? ShownDef.Symbol : "";
+    public Sprite Icon => SkillSymbol.IconFor(ShownDef);
     public Color SymbolColor => SkillSymbol.ColorFor(def);
-    public int ManaCost => def != null ? def.manaCost : 0;
-    public bool Affordable => !CasterGone && def != null && Caster.CurrentMP >= def.manaCost;
+    public int ManaCost => ShownDef != null ? ShownDef.manaCost : 0;
+    public bool Affordable => !CasterGone && ShownDef != null && Caster.CurrentMP >= ShownDef.manaCost;
     // An ultimate shows whichever is longer: its own cooldown or the shared one — the one that actually holds it.
     float SharedRemaining => def != null && def.IsUltimate && !CasterGone && Caster.Skills != null
                              ? Caster.Skills.SharedUltimateRemaining : 0f;
-    public float CooldownRemaining => Mathf.Max(Mathf.Max(0f, nextUse - Time.time), SharedRemaining);
+    public float CooldownRemaining
+    {
+        get
+        {
+            if (def != null && def.isOrbRelease) { var r = ReleaseRunner; return r != null ? r.CooldownRemaining : 0f; }
+            return Mathf.Max(Mathf.Max(0f, nextUse - Time.time), SharedRemaining);
+        }
+    }
     public float CooldownFraction01
     {
         get
         {
+            if (def != null && def.isOrbRelease) { var r = ReleaseRunner; return r != null ? r.CooldownFraction01 : 0f; }
             float own = Mathf.Max(0f, nextUse - Time.time), shared = SharedRemaining;
             if (shared > own) return Mathf.Clamp01(shared / SharedCooldown.UltimateSeconds);
             return lastDuration <= 0.001f ? 0f : Mathf.Clamp01(own / lastDuration);

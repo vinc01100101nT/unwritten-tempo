@@ -272,8 +272,10 @@ public class SkillComposerWindow : EditorWindow
     {
         if (WeaponOfGroup(name, out var w))
         {
+            // A WEAPON SHOWS EXACTLY WHAT THE GAME DRAWS: its chosen colour, or the game's own "no colour" grey. An
+            // invented colour here made the Bow read green in this window while every tile in the game was grey.
             var chosen = WeaponColors.Load()?.Lookup(w);
-            if (chosen.HasValue) return chosen.Value;
+            return chosen.HasValue ? chosen.Value : SkillSymbol.NoWeapon;
         }
         return Color.HSVToRGB(GroupHue(name), 0.65f, 0.9f);
     }
@@ -1058,8 +1060,17 @@ public class SkillComposerWindow : EditorWindow
             sel.cooldown = EditorGUILayout.Slider(new GUIContent("cooldown (s)",
                 "Seconds before the skill can be used again after casting."), sel.cooldown, 0f, 120f);
             sel.castTime = EditorGUILayout.Slider(
-                new GUIContent("cast time (s)", "Wind-up before the skill fires (0 = instant). DEX shortens it at runtime."),
+                new GUIContent("cast time (s)", "Variable wind-up before the skill fires (0 = none). DEX, the cast-speed " +
+                               "ring and cast-speed buffs shorten it at runtime."),
                 sel.castTime, 0f, 10f);
+            sel.fixedCastTime = EditorGUILayout.Slider(
+                new GUIContent("fixed cast time (s)", "Wind-up added after the cast time that nothing shortens (0 = none)."),
+                sel.fixedCastTime, 0f, 10f);
+            // Release early means nothing without a fixed wind-up to fill (the data check refuses it), so it is only asked then.
+            if (sel.fixedCastTime > 0f)
+                sel.releaseEarly = EditorGUILayout.Toggle(new GUIContent("release early",
+                    "A movement key pressed during the wind-up fires the skill at once. Damage scales with how much of " +
+                    "the wind-up was filled: 0.30x let go at once, up to 1.50x at a full wind-up."), sel.releaseEarly);
             // Aim is DERIVED from each tick's targeting (see Gameplay below) — no field here. Cast range only matters
             // when the skill actually aims at something (a ground point or a unit); an instant self-cast has none.
             // castRange is reused as the projectile's TRAVEL distance (a projectile aims a direction, not a spot) —
@@ -1250,8 +1261,8 @@ public class SkillComposerWindow : EditorWindow
     {
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Cast circle (wind-up only)", EditorStyles.boldLabel);
-        if (sel.castTime <= 0f)
-        { EditorGUILayout.HelpBox("Set a cast time > 0 to show a casting circle.", MessageType.Info); return; }
+        if (!sel.HasWindup)
+        { EditorGUILayout.HelpBox("Set a cast time or a fixed cast time > 0 to show a casting circle.", MessageType.Info); return; }
 
         var all = EffectCatalog.All;
         var ids = new List<string> { "" };
@@ -1892,6 +1903,10 @@ public class SkillComposerWindow : EditorWindow
                     NumberRow("crit chance bonus",
                         "Added to the caster's crit chance for THIS strike only (0.25 = +25%). A magic strike still can't " +
                         "crit outside a sniper's hands.", ref ef.critChanceBonus, ef.useStacks);
+                    NumberRow("crit chance bonus vs slowed",
+                        "Added on top of the crit chance bonus, for THIS strike only, when the unit struck moves slower " +
+                        "than its normal pace — any slow, from any source. 0 = a slowed target changes nothing.",
+                        ref ef.critChanceBonusVsSlowed, ef.useStacks);
                     NumberRow("damage mult per accuracy over 100",
                         "Added to the damage mult for every point of hit chance the caster has ABOVE 100 against the " +
                         "unit struck — accuracy an ordinary attack would waste. Counted at most " + StrikeMath.MaxAccuracyOverPoints +

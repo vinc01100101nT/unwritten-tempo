@@ -122,6 +122,7 @@ public class Character3DVisual : MonoBehaviour
         var it = new CharacterBrain.Intent
         {
             facing        = player.WorldFacing,
+            snapFacing    = player.AttackFaceFrame == Time.frameCount,
             groundSpeed   = speed,
             sprinting     = player.Sprinting,
             walkingSlow   = player.WalkingSlow,

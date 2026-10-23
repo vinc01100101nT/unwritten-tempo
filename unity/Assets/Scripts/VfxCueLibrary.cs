@@ -52,6 +52,8 @@ public enum VfxCueId
     // Active Verb (actor-side, one-shot): fired ONCE on the player the moment V-sprint engages. Grouped under
     // "Movement" in the composer UI; appended here to keep the enum APPEND-ONLY (the int index is serialized).
     OnSprint,
+
+    OnElementTurn,  // a creature whose element turns (Kaelen's shadow) has just turned to the next one
 }
 
 /// <summary>Binds ONE <see cref="VfxCueId"/> to the composed look it should play — the status/verb analog of a
@@ -61,6 +63,9 @@ public enum VfxCueId
 public class VfxCueBinding
 {
     public VfxCueId id;
+    [Tooltip("None = this cue's look for every weapon. A weapon here makes this row that weapon's own version of " +
+             "the cue, played instead of the None row when the cue happens for that weapon's skill (the Bow's cast).")]
+    public WeaponType weapon = WeaponType.None;
     [Tooltip("The composed look from the Vfx Composer. *Start cues should be an Attach/looping sequence so the " +
              "aura lives for the ailment's duration; everything else is one-shot.")]
     public VfxSequence vfx;

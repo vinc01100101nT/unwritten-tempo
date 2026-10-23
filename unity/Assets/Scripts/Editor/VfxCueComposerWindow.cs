@@ -54,7 +54,7 @@ public class VfxCueComposerWindow : EditorWindow
     VfxCueBinding Find(VfxCueId id)
     {
         for (int i = 0; i < lib.cues.Count; i++)
-            if (lib.cues[i] != null && lib.cues[i].id == id) return lib.cues[i];
+            if (lib.cues[i] != null && lib.cues[i].id == id && lib.cues[i].weapon == WeaponType.None) return lib.cues[i];
         return null;
     }
 
@@ -132,5 +132,20 @@ public class VfxCueComposerWindow : EditorWindow
             EditorGUIUtility.labelWidth = 0;
         }
         b.offset = EditorGUILayout.Vector3Field(GUIContent.none, b.offset);
+        // A WEAPON'S OWN VERSION of this cue (VfxCueBinding.weapon) — played instead of the row above for that weapon's skills.
+        for (int i = 0; i < lib.cues.Count; i++)
+        {
+            var w = lib.cues[i];
+            if (w == null || w.id != id || w.weapon == WeaponType.None) continue;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField("   " + w.weapon, GUILayout.Width(120));
+                w.vfx = (VfxSequence)EditorGUILayout.ObjectField(w.vfx, typeof(VfxSequence), false);
+                EditorGUIUtility.labelWidth = 34;
+                w.scale = EditorGUILayout.FloatField("×", w.scale, GUILayout.Width(70));
+                EditorGUIUtility.labelWidth = 0;
+            }
+            w.offset = EditorGUILayout.Vector3Field(GUIContent.none, w.offset);
+        }
     }
 }

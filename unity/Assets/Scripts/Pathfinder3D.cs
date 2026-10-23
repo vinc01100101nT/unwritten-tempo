@@ -514,6 +514,27 @@ public static class Pathfinder3D
         if (labels is AreaGrid g) areaGrids.Remove(g);
     }
 
+    /// <summary>Can a body <paramref name="radius"/> wide be set down at <paramref name="to"/> by something that moves it
+    /// there without walking (a teleport, a blink, a leap) from <paramref name="from"/>? Only on open, walkable ground
+    /// — nothing solid in the way, ground under it — on the same stretch of ground they stand on, so they can always
+    /// walk back out. A map with no area labels is judged on the open-ground test alone. Asked once per cast.</summary>
+    public static bool CanLandAt(Vector3 from, Vector3 to, float radius)
+    {
+        if (Blocked(new Vector2(to.x, to.z), radius)) return false;
+        int gx = Floor(to.x), gy = Floor(to.z), sx = Floor(from.x), sy = Floor(from.z);
+        for (int i = 0; i < areaGrids.Count; i++)
+        {
+            var g = areaGrids[i];
+            if (!g.Holds(gx, gy)) continue;
+            ushort at = g.At(gx, gy);
+            if (at == 0) return false;                                // not walkable ground (inside a prop, a basin)
+            if (!g.Holds(sx, sy)) return true;
+            ushort own = g.At(sx, sy);
+            return own == 0 || own == at;                             // another stretch no walk reaches = refused
+        }
+        return true;
+    }
+
     /// <summary>TRUE when the map's area labels say no walk joins these two spots — a cliff top and the ground below it.
     /// FALSE when they share an area, or when it cannot be told (no labels, or a spot off the walkable ground). Two
     /// array lookups; no search.</summary>

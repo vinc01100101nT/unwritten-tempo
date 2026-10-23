@@ -62,9 +62,21 @@ public sealed class MapServers(Config config)
     readonly ConcurrentDictionary<string, (string id, string name)> heldNames = new();
     readonly ConcurrentDictionary<string, string> idToNameKey = new();
 
-    void Hold(string characterId, string characterName, string serverId)
+    /// <summary>The sign-in each character was last sent into the world under, by character id — written and dropped
+    /// beside heldBy. A walk through a door names no sign-in, so it keeps the one already written.</summary>
+    readonly ConcurrentDictionary<string, string> heldSession = new();
+
+    /// <summary>Is this character in the world right now under THIS sign-in? Then a read made with it is that player's
+    /// own game reading its own character, never somebody taking over.</summary>
+    public bool IsPlayedBySession(string characterId, string? sessionId) =>
+        !string.IsNullOrEmpty(sessionId) && heldBy.ContainsKey(characterId)
+        && heldSession.TryGetValue(characterId, out var held)
+        && string.Equals(held, sessionId, StringComparison.OrdinalIgnoreCase);
+
+    void Hold(string characterId, string characterName, string serverId, string? sessionId)
     {
         heldBy[characterId] = serverId;
+        if (!string.IsNullOrEmpty(sessionId)) heldSession[characterId] = sessionId;
         if (string.IsNullOrEmpty(characterName)) return;
         var key = characterName.ToLowerInvariant();
         heldNames[key] = (characterId, characterName);
@@ -74,6 +86,7 @@ public sealed class MapServers(Config config)
     void Unhold(string characterId)
     {
         heldBy.TryRemove(characterId, out _);
+        heldSession.TryRemove(characterId, out _);
         if (idToNameKey.TryRemove(characterId, out var key)
             && heldNames.TryGetValue(key, out var held) && held.id == characterId)
             heldNames.TryRemove(new KeyValuePair<string, (string id, string name)>(key, held));
@@ -414,7 +427,7 @@ public sealed class MapServers(Config config)
                                           JsonElement progress, IReadOnlyDictionary<string, JsonElement?> rows,
                                           JsonElement quests, bool isGm,
                                           int handover, bool signingIn,
-                                          CancellationToken ct = default)
+                                          CancellationToken ct = default, string? sessionId = null)
     {
         var body = JsonSerializer.Serialize(WithRows(new
         {
@@ -448,7 +461,7 @@ public sealed class MapServers(Config config)
         try
         {
             var reply = await wire.SendAsync(request, ct);
-            if (reply.IsSuccessStatusCode) Hold(ticket.CharacterId, characterName, to.Id);
+            if (reply.IsSuccessStatusCode) Hold(ticket.CharacterId, characterName, to.Id, sessionId);
             return reply.IsSuccessStatusCode;
         }
         catch (Exception e)

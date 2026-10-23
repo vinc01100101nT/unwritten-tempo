@@ -109,4 +109,9 @@ public static class MasteryMath
     /// <summary>The lift a skill at <paramref name="level"/> puts on its output. Level 1 is the skill exactly as
     /// authored; 0 is not learned, and lifts nothing.</summary>
     public static float SkillLevelLift(int level) => Mathf.Max(0, level - 1) * SkillLevelPercent;
+
+    /// <summary>The lift <paramref name="def"/> at <paramref name="level"/> puts on its output: a Staff orb grows by
+    /// its own smaller step (<see cref="OrbMath.LevelLift"/>), every other skill by <see cref="SkillLevelLift"/>.</summary>
+    public static float LevelLift(SkillDef def, int level) =>
+        def != null && OrbMath.IsOrbSkill(def.id) ? OrbMath.LevelLift(level) : SkillLevelLift(level);
 }

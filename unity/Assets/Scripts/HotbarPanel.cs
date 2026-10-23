@@ -40,6 +40,7 @@ public class HotbarPanel : MonoBehaviour
         public int lastSecs = -1;
         public sbyte lastOnCd = -1, lastAff = -1;
         public Color weaponColor = CellReady;   // the cell's own colour; affordability DIMS this, never replaces it
+        public SkillDef shownDef;               // what the cell was built showing — the Release rebuilds when it changes
     }
 
     static readonly Color CellReady = Color.white;
@@ -354,7 +355,11 @@ public class HotbarPanel : MonoBehaviour
         s.cdNum.gameObject.SetActive(false);
 
         // Skill-info hover card (tags, cost, description, effects, levels).
-        if (skill is SkillRunner sr && sr.def != null) SkillHoverCard.Attach(cell.transform, sr.def);
+        if (skill is SkillRunner sr && sr.def != null)
+        {
+            s.shownDef = sr.ShownDef;
+            SkillHoverCard.Attach(cell.transform, sr.ShownDef);
+        }
     }
 
     void BuildItem(Slot s, string itemId)
@@ -452,6 +457,9 @@ public class HotbarPanel : MonoBehaviour
     void RefreshSlot(Slot s, bool ringOn)
     {
         if (s == null || s.kind != Kind.Skill || s.skill == null || s.cooldown == null) return;
+        // THE STAFF'S RELEASE wears the combination the orbs make: a new set of orbs rebuilds the bar once.
+        if (s.skill is SkillRunner release && release.def != null && release.def.isOrbRelease
+            && !ReferenceEquals(release.ShownDef, s.shownDef)) { Rebuild(); return; }
 
         float frac = s.skill.CooldownFraction01;
         s.cooldown.fillAmount = frac;

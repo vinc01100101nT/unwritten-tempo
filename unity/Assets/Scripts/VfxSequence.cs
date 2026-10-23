@@ -147,6 +147,16 @@ public class VfxStep
              "next dash starts before the last one's trail has faded. Other casters are untouched. Off = copies " +
              "overlap and each fades on its own.")]
     public bool stopPreviousOnReplay = false;
+    [Tooltip("Play At / Attach only: turn the effect, flat on the ground, so its forward points from the caster to the " +
+             "aimed spot — a dash's trail streaming behind the body — and turn the offset with it, so +Z is in front of " +
+             "the caster. The step's rotation is applied on top. Off = the effect keeps its own facing and the offset " +
+             "runs along the world's directions.")]
+    public bool faceAim = false;
+    [Tooltip("Play At / Attach / Carrier: this play's particles stay where they were born instead of moving with the " +
+             "effect, so an effect riding something that moves leaves a trail behind it (dust behind an arrow). Only " +
+             "this step's copy changes; the effect itself and every other use of it keep their own behaviour. The " +
+             "composer preview shows the effect as authored.")]
+    public bool leaveParticlesBehind = false;
 
     [Header("Event (visual chaining — gameplay-neutral)")]
     [Tooltip("Raise this event tag the moment the step STARTS (the effect is spawned / launched). OnEvent steps " +

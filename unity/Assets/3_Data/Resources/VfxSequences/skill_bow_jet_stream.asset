@@ -23,8 +23,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1635, z: 0}
     scatter: 0
     rotationEuler: {x: 0, y: 0, z: 0}
-    effectId: 
-    scale: 1
+    effectId: slash.projectile-water
+    scale: 0.12
     speed: 1
     trimEnd: 0
     clipStart: 0
@@ -88,6 +88,92 @@ MonoBehaviour:
     carrierArc: 0
     carrierLaunchDegrees: 45
     carrierDrawsArrow: 0
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
+  - note: dust trail
+    schedule: 0
+    delay: 0
+    startEvent: 
+    snapToEventPoint: 0
+    kind: 2
+    anchor: 1
+    offset: {x: 0, y: 0.1635, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: smoke.dust-ground
+    scale: 0.07
+    speed: 3
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    tickId: 
+    tickWhen: 0
+    tickInterval: 0.08
+    carrierFromCaster: 1
+    carrierFrom: {x: 0, y: 0.1962, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 18
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    carrierArc: 0
+    carrierLaunchDegrees: 45
+    carrierDrawsArrow: 0
+    leaveParticlesBehind: 1
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    soundDuration: 0
+    soundFadeIn: 0
+    soundFadeOut: 0
+  - note: arrow light
+    schedule: 0
+    delay: 0
+    startEvent: 
+    snapToEventPoint: 0
+    kind: 2
+    anchor: 1
+    offset: {x: 0, y: 0.1635, z: 0}
+    scatter: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: light.point
+    scale: 1
+    speed: 1
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 0, g: 0.951, b: 1, a: 1}
+    looping: 0
+    stopPreviousOnReplay: 0
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    tickId: 
+    tickWhen: 0
+    tickInterval: 0.08
+    carrierFromCaster: 1
+    carrierFrom: {x: 0, y: 0.1962, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 18
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    carrierArc: 0
+    carrierLaunchDegrees: 45
+    carrierDrawsArrow: 0
+    leaveParticlesBehind: 0
     shakeStrength: 0.3
     shakeDuration: 0.18
     sound:

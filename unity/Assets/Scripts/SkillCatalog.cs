@@ -57,5 +57,5 @@ public static class SkillCatalog
     }
 
     /// <summary>Drop the cache so a freshly built/edited asset is picked up (editor tools call this).</summary>
-    public static void Reload() { byId = null; all = null; orderedIds = null; Trademarks.Forget(); }
+    public static void Reload() { byId = null; all = null; orderedIds = null; Trademarks.Forget(); OrbCombos.Forget(); }
 }

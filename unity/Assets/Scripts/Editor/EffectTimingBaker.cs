@@ -48,6 +48,7 @@ public static class EffectTimingBaker
         if (lib == null || lib.effects == null) return 0;
 
         int changed = 0, unresolved = 0;
+        shaderReadsScreen.Clear();
         for (int i = 0; i < lib.effects.Count; i++)
         {
             var e = lib.effects[i];
@@ -55,15 +56,18 @@ public static class EffectTimingBaker
             if (e.prefab == null) { unresolved++; continue; }
 
             var m = EffectTiming.Of(e.prefab);
+            bool readsScreen = ReadsScreen(e.prefab);
             if (Mathf.Abs(e.measuredPlaySeconds - m.playSeconds) < Epsilon
                 && Mathf.Abs(e.measuredFadeSeconds - m.fadeSeconds) < Epsilon
-                && e.measuredLoops == m.loops) continue;
+                && e.measuredLoops == m.loops
+                && e.measuredReadsScreen == readsScreen) continue;
 
             changed++;
             if (!write) continue;
             e.measuredPlaySeconds = m.playSeconds;
             e.measuredFadeSeconds = m.fadeSeconds;
             e.measuredLoops = m.loops;
+            e.measuredReadsScreen = readsScreen;
         }
 
         if (write && changed > 0)
@@ -83,6 +87,43 @@ public static class EffectTimingBaker
         else if (!silent)
             Debug.Log("[effects] measured " + lib.effects.Count + " effects: " + changed + " updated" + tail + ".");
         return changed;
+    }
+
+    // One answer per shader per sweep — many effects share a handful of shaders, and each answer is a file read.
+    static readonly System.Collections.Generic.Dictionary<Shader, bool> shaderReadsScreen =
+        new System.Collections.Generic.Dictionary<Shader, bool>();
+
+    /// <summary>TRUE when any material this effect draws with reads the picture behind it — a heat haze: a Shader
+    /// Graph with a Scene Color node, or a written shader reading the camera's opaque texture. Such an effect draws a
+    /// dark sheet unless the camera keeps a copy of the screen, which the game turns on only while one plays
+    /// (ScreenCopy).</summary>
+    static bool ReadsScreen(GameObject prefab)
+    {
+        foreach (var r in prefab.GetComponentsInChildren<Renderer>(true))
+        {
+            foreach (var mat in r.sharedMaterials)
+                if (mat != null && ShaderReadsScreen(mat.shader)) return true;
+            if (r is ParticleSystemRenderer psr && psr.trailMaterial != null && ShaderReadsScreen(psr.trailMaterial.shader))
+                return true;
+        }
+        return false;
+    }
+
+    static bool ShaderReadsScreen(Shader shader)
+    {
+        if (shader == null) return false;
+        if (shaderReadsScreen.TryGetValue(shader, out bool known)) return known;
+        bool reads = false;
+        string path = AssetDatabase.GetAssetPath(shader);
+        if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
+        {
+            string text = System.IO.File.ReadAllText(path);
+            reads = path.EndsWith(".shadergraph", System.StringComparison.OrdinalIgnoreCase)
+                ? text.Contains("UnityEditor.ShaderGraph.SceneColorNode")
+                : text.Contains("_CameraOpaqueTexture") || text.Contains("SampleSceneColor");
+        }
+        shaderReadsScreen[shader] = reads;
+        return reads;
     }
 
     static EffectLibrary Load()
@@ -109,9 +150,25 @@ public static class EffectTimingBaker
     {
         static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moved, string[] movedFrom)
         {
+            if (EditorApplication.isPlaying) { RefreshPlaying(imported); return; }
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
             if (!Interesting(imported) && !Interesting(deleted) && !Interesting(moved)) return;
             EditorApplication.delayCall += () => Sweep(write: false, silent: true);
+        }
+
+        /// <summary>Play mode only: an effect prefab saved while the game runs is shown from its next use, by
+        /// throwing away the copies the game built from the old version. Measures and writes nothing.</summary>
+        static void RefreshPlaying(string[] imported)
+        {
+            if (imported == null) return;
+            for (int i = 0; i < imported.Length; i++)
+            {
+                var path = imported[i];
+                // Any prefab, not only the effect folder: two effects live elsewhere, and a prefab no effect was built
+                // from is one dictionary miss.
+                if (path == null || !path.EndsWith(".prefab", System.StringComparison.OrdinalIgnoreCase)) continue;
+                Vfx.DropPoolInEditor(AssetDatabase.LoadAssetAtPath<GameObject>(path));
+            }
         }
 
         // Only the effect prefabs and the table itself. Before this filter, importing ANY prefab or data asset

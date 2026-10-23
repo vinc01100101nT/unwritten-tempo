@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2c5d0cc43077e443ba8d98f3d5883789
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328097
+  packageName: Stylized Thundercloud VFX
+  packageVersion: 1.1.0
+  assetPath: Assets/FlexUnit/Thundercloud/Materials/Ground/Ground_URP.mat
+  uploadId: 831922

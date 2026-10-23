@@ -18,7 +18,9 @@ public static class StanceCatalog
     static void EnsureLoaded()
     {
         if (_byId != null) return;
-        int count = System.Enum.GetValues(typeof(StanceId)).Length;
+        // Sized by the HIGHEST stance number, not by how many there are: the numbers skip 0–3 (the removed held poses).
+        int count = 0;
+        foreach (StanceId s in System.Enum.GetValues(typeof(StanceId))) count = Mathf.Max(count, (int)s + 1);
         _byId = new StanceBinding[count];
         var lib = Resources.Load<StanceLibrary>(ResourcePath);
         // Sized by the HIGHEST weapon number, not by how many there are: the numbers skip 5 (the removed off-hand), so

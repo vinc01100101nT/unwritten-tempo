@@ -44,12 +44,14 @@ MonoBehaviour:
   manaCost: 8
   cooldown: 5
   castTime: 0
+  fixedCastTime: 0
+  releaseEarly: 0
   aim: 2
   castRange: 5
   tier: 0
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
-  vfx: {fileID: 11400000, guid: 4a4968306728aee4783b65ef806d15ff, type: 2}
+  vfx: {fileID: 11400000, guid: d2894bf833c371843b778e0ad6cf1427, type: 2}
   repeatCount: 1
   repeatInterval: 0
   repeatScaleWithAttackSpeed: 0
