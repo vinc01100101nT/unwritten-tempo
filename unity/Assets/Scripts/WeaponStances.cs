@@ -51,6 +51,62 @@ public static class WeaponStances
         }
     }
 
+    /// <summary>The skill animation a skill of weapon <paramref name="w"/> plays — the weapon's <paramref name="which"/>
+    /// one (<see cref="SkillDef.weaponSkillAnimation"/>). Mapped exactly like <see cref="AttackFor(WeaponType)"/>; each
+    /// is authored in the Stance Composer.</summary>
+    public static StanceId SkillAnimationFor(WeaponType w, WeaponSkillAnimation which)
+    {
+        if (which == WeaponSkillAnimation.Third) return ThirdFor(w);
+        bool first = which != WeaponSkillAnimation.Second;
+        switch (w)
+        {
+            case WeaponType.Sword:        return first ? StanceId.SkillAnimation1OneHandSword : StanceId.SkillAnimation2OneHandSword;
+            case WeaponType.TwoHandSword: return first ? StanceId.SkillAnimation1Sword    : StanceId.SkillAnimation2Sword;
+            case WeaponType.Axe:          return first ? StanceId.SkillAnimation1Axe      : StanceId.SkillAnimation2Axe;
+            case WeaponType.Mace:         return first ? StanceId.SkillAnimation1Mace     : StanceId.SkillAnimation2Mace;
+            case WeaponType.Dagger:       return first ? StanceId.SkillAnimation1Dagger   : StanceId.SkillAnimation2Dagger;
+            case WeaponType.Katar:        return first ? StanceId.SkillAnimation1Katar    : StanceId.SkillAnimation2Katar;
+            case WeaponType.Staff:        return first ? StanceId.SkillAnimation1Staff    : StanceId.SkillAnimation2Staff;
+            case WeaponType.Wand:         return first ? StanceId.SkillAnimation1Wand     : StanceId.SkillAnimation2Wand;
+            case WeaponType.Scythe:       return first ? StanceId.SkillAnimation1Scythe   : StanceId.SkillAnimation2Scythe;
+            case WeaponType.Shuriken:     return first ? StanceId.SkillAnimation1Shuriken : StanceId.SkillAnimation2Shuriken;
+            case WeaponType.Spear:        return first ? StanceId.SkillAnimation1Lance    : StanceId.SkillAnimation2Lance;
+            case WeaponType.Bow:          return first ? StanceId.SkillAnimation1Bow      : StanceId.SkillAnimation2Bow;
+            case WeaponType.Firearm:      return first ? StanceId.SkillAnimation1Rifle    : StanceId.SkillAnimation2Rifle;
+            case WeaponType.Knuckle:      return first ? StanceId.SkillAnimation1Knuckle  : StanceId.SkillAnimation2Knuckle;
+            case WeaponType.None:
+            default:                      return first ? StanceId.SkillAnimation1BareHands : StanceId.SkillAnimation2BareHands;
+        }
+    }
+
+    /// <summary>True for every pose <see cref="SkillAnimationFor"/> can hand out. They are one contiguous run of the
+    /// enum, so a weapon added to SkillAnimationFor is covered here as long as it is appended inside that run.</summary>
+    public static bool IsWeaponSkillAnimation(StanceId id)
+        => id >= StanceId.SkillAnimation1BareHands && id <= StanceId.SkillAnimation3Bow;
+
+    static StanceId ThirdFor(WeaponType w)
+    {
+        switch (w)
+        {
+            case WeaponType.Sword:        return StanceId.SkillAnimation3OneHandSword;
+            case WeaponType.TwoHandSword: return StanceId.SkillAnimation3Sword;
+            case WeaponType.Axe:          return StanceId.SkillAnimation3Axe;
+            case WeaponType.Mace:         return StanceId.SkillAnimation3Mace;
+            case WeaponType.Dagger:       return StanceId.SkillAnimation3Dagger;
+            case WeaponType.Katar:        return StanceId.SkillAnimation3Katar;
+            case WeaponType.Staff:        return StanceId.SkillAnimation3Staff;
+            case WeaponType.Wand:         return StanceId.SkillAnimation3Wand;
+            case WeaponType.Scythe:       return StanceId.SkillAnimation3Scythe;
+            case WeaponType.Shuriken:     return StanceId.SkillAnimation3Shuriken;
+            case WeaponType.Spear:        return StanceId.SkillAnimation3Lance;
+            case WeaponType.Bow:          return StanceId.SkillAnimation3Bow;
+            case WeaponType.Firearm:      return StanceId.SkillAnimation3Rifle;
+            case WeaponType.Knuckle:      return StanceId.SkillAnimation3Knuckle;
+            case WeaponType.None:
+            default:                      return StanceId.SkillAnimation3BareHands;
+        }
+    }
+
     public static StanceId AttackFor(WeaponType w)
     {
         switch (w)

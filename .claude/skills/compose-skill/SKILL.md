@@ -74,7 +74,7 @@ Added for the Bow (2026-10-21). Each is a field or kind you author; read its too
 - **Charges:** `BoostBasicAttackDamage` — the next N basic attacks hit harder, never a skill strike (Rain Shadow);
   `SureHit` — the next basic attack cannot miss (Slipstream). **Modifier:** `ResetCooldown` of a named skill (Fair Weather).
 - **Damage growth on a strike:** `damageMultPerAccuracyOver` (hit chance above 100%, at most 100 points —
-  Thunderhead), `damageMultPerSpeedBonus` (movement-speed bonus while moving — Sunbreak), `critChanceBonus` (this
+  Thunderhead), `damageMultPerSpeedBonus` (movement-speed bonus, moving or standing still — Silver Lining), `critChanceBonus` (this
   strike only — Hailstone), plus the older per-metre and per-point-given-up.
 - **Delivery:** ground `AroundCaster` — a splash centred on the caster, no aim, follows them each beat (Cloudburst).
 - **Runs:** `repeatWhilePileHeld` + `repeatMaxSeconds` — a run that lasts while its own pile is held, so an Extend
@@ -83,7 +83,7 @@ Added for the Bow (2026-10-21). Each is a field or kind you author; read its too
   whole cast (a new cast starts from zero); `repeatTotalPerBeat` totals each beat alone.
 - **Skill flags:** `statesEndWhenHit` — every pile the skill gives ends when a hit costs health (Wandering Sky);
   `companionOf` — a hidden skill learned with, and at the level of, another (the counter-arrow, for a moment the
-  parent's body cannot answer); `releaseIsWeaponAttack` — the release animation is the held weapon's own attack.
+  parent's body cannot answer); `weaponSkillAnimation` — the skill plays one of the held weapon's two skill animations (First / Second).
 - **Effects:** a Carrier step can `carrierDrawsArrow` (the bow's arrow model) and `carrierArc` with a launch angle.
 
 Added for the Staff (2026-10-22):
@@ -205,5 +205,8 @@ authored on the skill itself, not on its look.
 - **An effect that plays for a long time before or while it hits** (a dome, a flood) lands its plain hit as a
   multi-hit: `hitCount` 10 with `damageMult` divided by 10 — the same total, worked out once at the first hit and
   shown as 10 pieces. Never `resolveAsBasicAttack` for this.
-- **A release animation** for a skill whose shots are basic attacks: `hasReleaseStance` + `releaseIsWeaponAttack`
-  plays the held weapon's own attack. Never give one to a dash or to a passive — it roots the caster for one swing.
+- **A weapon's skill animation:** `hasReleaseStance` + `weaponSkillAnimation` plays one of the two skill animations
+  the held weapon owns — `First` (1) or `Second` (2), whichever the skill is mapped to. Each is one clip: up to its mark
+  (its Timing in the Stance Composer) is held through the cast time, the rest plays when the skill fires at the clip's
+  own speed; an instant skill plays all of it. Never give one to a dash or to a passive — it roots the caster for the
+  animation's length.

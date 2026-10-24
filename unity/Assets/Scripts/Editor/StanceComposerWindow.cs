@@ -174,6 +174,9 @@ public class StanceComposerWindow : EditorWindow
         Section("Skill-release cues (a SkillDef's 'skill type' — plays once at release)");
         foreach (var id in SkillReleaseStances.All) Row(id);
 
+        Section("Skill animations by weapon (Timing = the mark: before it is the cast, after it the release)");
+        for (var id = StanceId.SkillAnimation1BareHands; id <= StanceId.SkillAnimation3Bow; id++) Row(id);
+
         Section("By weapon: standing idle (whole body) · carry pose (the arms while moving)");
         foreach (WeaponType w in Enum.GetValues(typeof(WeaponType)))
             if (w != WeaponType.None) WeaponRow(w);
@@ -225,13 +228,26 @@ public class StanceComposerWindow : EditorWindow
         EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
     }
 
+    // A skill animation's full name is cut off by the narrow column, so it shows its number then its weapon
+    // ("1 · Bow"); the full name stays in the tooltip.
+    static string RowLabel(StanceId id)
+    {
+        if (!WeaponStances.IsWeaponSkillAnimation(id)) return id.ToString();
+        string n = id.ToString();
+        const string first = "SkillAnimation1", second = "SkillAnimation2", third = "SkillAnimation3";
+        if (n.StartsWith(first)) return "1 · " + n.Substring(first.Length);
+        if (n.StartsWith(second)) return "2 · " + n.Substring(second.Length);
+        if (n.StartsWith(third)) return "3 · " + n.Substring(third.Length);
+        return n;
+    }
+
     void Row(StanceId id)
     {
         var b = Find(id);
         if (b == null) return;
         using (new EditorGUILayout.HorizontalScope())
         {
-            EditorGUILayout.LabelField(id.ToString(), GUILayout.Width(80));
+            EditorGUILayout.LabelField(new GUIContent(RowLabel(id), id.ToString()), GUILayout.Width(80));
             string clipBefore = b.clip ?? "";
             ClipField(b);
             bool walkCycle = StanceCatalog.IsWalkCycle(id);
@@ -242,10 +258,9 @@ public class StanceComposerWindow : EditorWindow
             if (id == StanceId.Jump) JumpTimingButton(b);
             else if (id == StanceId.Roll) RollRootButton(b);
             else if (walkCycle) StepFramesButton(b);
-            // A held pose that stops part-way (the bow's cast): where in the clip it stops, in seconds.
-            else if (WeaponStances.IsCast(id))
-                b.holdAt = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("", "Seconds into the clip where it " +
-                    "stops and holds for the whole cast. 0 = plays normally."), b.holdAt, GUILayout.Width(94)));
+            // A held pose that stops part-way (the bow's cast): the clip frame it stops on, and the clip's frame count.
+            else if (WeaponStances.IsCast(id) || WeaponStances.IsWeaponSkillAnimation(id))
+                HoldFrameField(b);
             else GUILayout.Space(94);
             // A walk cycle's legs are locked to the ground, so no speed source applies to it; a blank keeps columns aligned.
             if (walkCycle) GUILayout.Space(110);
@@ -262,7 +277,7 @@ public class StanceComposerWindow : EditorWindow
                 var d = StanceDefaults.For(id);
                 b.action = d.action; b.speedSource = d.speedSource; b.speedMult = d.speedMult;
                 b.priority = d.priority; b.crouchEnd = d.crouchEnd; b.airborneFreeze = d.airborneFreeze;
-                b.rootFromFrame = d.rootFromFrame; b.clip = d.clip; b.holdAt = d.holdAt;
+                b.rootFromFrame = d.rootFromFrame; b.clip = d.clip; b.holdAtFrame = d.holdAtFrame;
                 b.footPlants = new List<FootPlant>();
                 if (walkCycle) MeasureSteps(b);
                 GUI.changed = true;
@@ -285,6 +300,20 @@ public class StanceComposerWindow : EditorWindow
         var rect = GUILayoutUtility.GetRect(label, EditorStyles.miniButton, GUILayout.Width(90));
         if (GUI.Button(rect, label, EditorStyles.miniButton))
             PopupWindow.Show(rect, new JumpTimingPopup(b, fps, total, () => { EditorUtility.SetDirty(lib); Repaint(); }));
+    }
+
+    // A held pose's hold frame, typed as a frame of its clip, with the clip's frame count beside it ("/21").
+    void HoldFrameField(StanceBinding b)
+    {
+        int total = ClipFrameCount(b.clip);
+        using (new EditorGUILayout.HorizontalScope(GUILayout.Width(94)))
+        {
+            int f = EditorGUILayout.IntField(new GUIContent("", "The clip frame where it stops and holds for the whole " +
+                "cast. 0 = plays normally. On a skill animation the rest plays when the skill fires; 0 = the weapon's " +
+                "cast pose shows during the cast."), b.holdAtFrame, GUILayout.Width(50));
+            b.holdAtFrame = total > 0 ? Mathf.Clamp(f, 0, total) : Mathf.Max(0, f);
+            EditorGUILayout.LabelField(total > 0 ? "/" + total : "", GUILayout.Width(40));
+        }
     }
 
     // The Roll row's timing button: label shows the root-start FRAME (e.g. "f31/60" when the clip's frame count is

@@ -481,8 +481,8 @@ public class SkillEffect
              "struck — accuracy an ordinary attack would waste. Counted at most 100 points. 0.075 = +7.5 multiplier at " +
              "100 points over. 0 = accuracy changes nothing — which is every strike authored before this existed.")]
     public ScaledNumber damageMultPerAccuracyOver = new ScaledNumber(0f);
-    [Tooltip("Added to the damage multiplier for every point (1%) of movement-speed bonus the caster has WHILE MOVING " +
-             "when the strike lands. Standing still, or slowed, adds nothing. 0.01 = +1.5 multiplier at +150% speed. " +
+    [Tooltip("Added to the damage multiplier for every point (1%) of movement-speed bonus the caster has when the " +
+             "strike lands, moving or standing still. Slowed adds nothing. 0.01 = +1.5 multiplier at +150% speed. " +
              "0 = speed changes nothing — which is every strike authored before this existed.")]
     public ScaledNumber damageMultPerSpeedBonus = new ScaledNumber(0f);
     [Tooltip("Added to the caster's crit chance for THIS strike only (0.25 = +25%). A magic strike still cannot crit " +

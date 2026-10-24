@@ -75,10 +75,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         GameNetwork.TellOwnerCooldownStarted(Caster, def.id, WorldClock.UtcNow);
     }
 
-    // The animation this skill's release plays: its authored cue, or the caster's own basic attack with the weapon in
-    // hand when the skill says its shots are basic attacks.
-    StanceId ReleaseStance => def.releaseIsWeaponAttack && !CasterGone
-        ? WeaponStances.AttackFor(Caster.HeldWeapon) : def.releaseStance;
+    // The animation this skill's release plays: its authored cue, or one of the two releases the weapon in hand owns.
+    StanceId ReleaseStance => UsesWeaponSkillAnimation
+        ? WeaponStances.SkillAnimationFor(Caster.HeldWeapon, def.weaponSkillAnimation) : def.releaseStance;
+
+    bool UsesWeaponSkillAnimation => def.weaponSkillAnimation != WeaponSkillAnimation.None && !CasterGone;
 
     /// <summary>Make this skill ready now, as if it had never been cast — a creature starting a new life.</summary>
     public void ForgetCooldown()
@@ -155,8 +156,19 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     float toldSeconds;
     int pendingMana;                    // this cast's cost, checked at the press and taken at the release (never both)
     VfxCue.Aura castAura;               // the server's announced OnCastStart aura for this wind-up; MUST be Ended at every exit
-    // The pose held through this skill's wind-up — one answer for the push, the pop and every screen told about it.
-    StanceId CastPose => WeaponStances.CastFor(def != null ? def.weaponType : WeaponType.None);
+    // The pose held through this skill's wind-up: the first part of the weapon's skill animation when that animation
+    // has a mark to hold at, else the weapon's own cast pose. Chosen once when the wind-up starts, so the push, the pop
+    // and every screen told about it name the same pose.
+    StanceId castPose;
+    StanceId PickCastPose()
+    {
+        if (def.hasReleaseStance && UsesWeaponSkillAnimation)
+        {
+            var b = StanceCatalog.Get(ReleaseStance);
+            if (b != null && b.holdAtFrame > 0) return ReleaseStance;
+        }
+        return WeaponStances.CastFor(def != null ? def.weaponType : WeaponType.None);
+    }
     Vfx.EffectHandle castCircle;        // the caster's own ring (def.castCircleId) on their screen; MUST be Stopped at every exit
     VfxContext lastCtx;                 // captured per cast so OnTick can read the Single-scope target unit
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
@@ -266,6 +278,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         awaitingOn = null;
         runRoutine = null;   // Unity stopped it with the component; a stopped run is not a run in progress
         if (castRoutine != null || castAura.Running || castCircle != null) EndCast();
+        // its yellow totals leave with it (a runner that never struck looks nothing up)
+        if (castTotals.Count > 0) StrikeTotals.Forget(castTotals, SkillNumber);
+        if (landingTotals.Count > 0) StrikeTotals.Forget(landingTotals, SkillNumber);
     }
 
     // ---- activation ---------------------------------------------------------
@@ -538,9 +553,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             GameNetwork.AnnounceCastWindup(Caster, def, dur, lastCtx.target);
             // HOLD THE CAST POSE for the whole wind-up: the skill's weapon's own (WeaponStances.CastFor) — stretched to
             // the cast bar, or stopped part-way and held like the bow's draw.
-            if (Mine && StanceController.Player != null) StanceController.Player.Push(CastPose, dur);
+            castPose = PickCastPose();
+            if (Mine && StanceController.Player != null) StanceController.Player.Push(castPose, dur);
             // A CREATURE holds the same pose for the same window, told to every screen watching it.
-            GameNetwork.AnnounceHeldOnCaster(Caster, true, CastPose, dur);
+            GameNetwork.AnnounceHeldOnCaster(Caster, true, castPose, dur);
             var sc = Status;
             if (sc != null) sc.LockActions(dur);   // fully root for the wind-up (no move/attack/other skills); freed in EndCast on complete or interrupt
             string label = def.displayName;
@@ -636,8 +652,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // THE RING GOES THE INSTANT THE CAST RELEASES. A soft stop let its particles fade for seconds while the effect
         // kept following the caster, so the ring slid along under a player walking away after the release.
         if (castCircle != null) { castCircle.Stop(immediate: true); castCircle = null; }
-        if (Mine && StanceController.Player != null) StanceController.Player.Pop(CastPose);   // release the cast pose (complete/interrupt/OnDisable)
-        if (!CasterGone) GameNetwork.AnnounceHeldOnCaster(Caster, false, CastPose, 0f);
+        if (Mine && StanceController.Player != null) StanceController.Player.Pop(castPose);   // release the cast pose (complete/interrupt/OnDisable)
+        if (!CasterGone) GameNetwork.AnnounceHeldOnCaster(Caster, false, castPose, 0f);
         var unlock = Status;
         if (unlock != null) unlock.Unlock();   // free the wind-up root; on completion PlayCycles re-locks for the aftercast beat
         if (!CasterGone && Caster is Character windingUp && ReferenceEquals(windingUp.WindupRunner, this))
@@ -654,13 +670,18 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // Play the composed VFX once, then (if the def asks for a shower) replay the WHOLE cycle repeatCount times,
     // repeatInterval apart, at the SAME cast-time context — carrierScatter spreads the individual falls. Repetition
     // of the whole effect is owned HERE (gameplay), not the Vfx Composer (which stays WYSIWYG: one cycle = one fall).
-    // The total this cast's strikes add up into — a new one every cast, so its yellow number starts from zero.
-    int castTotalId;
+    // Which units this cast's strikes have struck, for its yellow totals: emptied at every cast, so a cast's number
+    // starts from zero. The same for one landing, emptied at every landing. Made once per skill and reused.
+    readonly System.Collections.Generic.HashSet<ulong> castTotals = new System.Collections.Generic.HashSet<ulong>(),
+                                                      landingTotals = new System.Collections.Generic.HashSet<ulong>();
+    // This skill's place in the skill list, which names its totals (StrikeTotals.CurrentSkill). Looked up once.
+    int skillNumber = -1;
+    int SkillNumber => skillNumber >= 0 ? skillNumber : (skillNumber = SkillCatalog.NumberOf(def));
 
     void PlayCycles(float releaseScale = 1f)
     {
         castReleaseScale = releaseScale;
-        castTotalId = StrikeTotals.NewTotal();
+        StrikeTotals.Forget(castTotals, SkillNumber);
         // THE RELEASE: the skill is actually going off, so this is where its mana is taken. Only a press ever
         // left a cost here, so a run started by one of the skill's own moments still fires free.
         if (pendingMana > 0 && !CasterGone)
@@ -709,7 +730,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // creature time a skill by one rule. Attack speed shortens it (and the root with it); movement speed,
             // slows, shoes and which gear the legs are in have no say, because the clip is FIT to the window rather
             // than paced by the walking gait it used to follow (which once held a caster still for two minutes).
-            releaseDur = StanceController.Player.PlayActionFor(ReleaseStance, Caster.SwingTime, 1f, fitToWindow: true);
+            // A WEAPON'S SKILL ANIMATION is the exception: it plays at its own length — the rest of it after a cast, all
+            // of it when instant — and roots the caster for exactly that.
+            // Its stance's speed source decides how fast (Attack Speed = sped up the way a swing is).
+            releaseDur = UsesWeaponSkillAnimation
+                ? StanceController.Player.PlayActionFor(ReleaseStance)
+                : StanceController.Player.PlayActionFor(ReleaseStance, Caster.SwingTime, 1f, fitToWindow: true);
             // RO-style aftercast: fully root the caster for the (attack-speed-scaled) release animation's length.
             // Stacks on top of the skill's own cooldown; a skill with no release stance roots for nothing.
             var aftercast = Status;
@@ -718,7 +744,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // A CREATURE'S RELEASE: the same stance, told to every screen watching it. Its beat is its swing — the length
         // every action a creature takes is sized to — because the machine deciding it has no animation to measure.
         if (def.hasReleaseStance && !Mine && !Watching && !CasterGone)
-            GameNetwork.AnnounceActionOnCaster(Caster, ReleaseStance, Caster.SwingTime);
+            GameNetwork.AnnounceActionOnCaster(Caster, ReleaseStance, UsesWeaponSkillAnimation ? 0f : Caster.SwingTime);
 
         // A projectile aims a DIRECTION, not a landing spot: the shot flies a FIXED travel distance (the reused
         // castRange = "travel range"), NOT to the cursor. Project the aim onto that range so the Carrier flies the
@@ -1049,9 +1075,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // authored per NUMBER, so cashing stacks composes with the damage effect
             // instead of being a second damage channel bolted onto the skill.
             // WHICH YELLOW TOTAL these strikes add into: the whole cast's (a new cast starts from zero), or this beat's
-            // alone when the skill totals per beat.
-            using var beatTotals = new StrikeTotals.BeatScope(!def.showRepeatsTotalDamage ? 0
-                : def.repeatTotalPerBeat ? StrikeTotals.NewTotal() : castTotalId);
+            // alone when the skill totals per beat — or, for a skill that does not total its repeats, this landing's
+            // alone, so a multi-hit's total is that one strike's hits. Before, such a strike named no total, and a skill
+            // pressed again inside a second (Silver Lining, no cooldown) added every cast into one climbing number.
+            bool wholeCast = def.showRepeatsTotalDamage && !def.repeatTotalPerBeat;
+            if (!wholeCast) StrikeTotals.Forget(landingTotals, SkillNumber);
+            using var beatTotals = new StrikeTotals.BeatScope(wholeCast ? castTotals : landingTotals, SkillNumber);
             SkillEffectApplier.ApplyBurst(burstPoint, radius, scope, targets, effects,
                                           // The aim rides the TICK, not a field on this runner: one cast can have
                                           // several plays in flight, and a re-aiming repeat would otherwise resolve a

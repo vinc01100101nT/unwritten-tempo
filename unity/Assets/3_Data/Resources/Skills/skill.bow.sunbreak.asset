@@ -13,20 +13,23 @@ MonoBehaviour:
   m_Name: skill.bow.sunbreak
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.bow.sunbreak
-  displayName: Sunbreak
+  displayName: Silver Lining
   symbol: Sk
   icon: {fileID: 21300000, guid: 8530e91dec6810741bc6180e4aefeb7e, type: 3}
   weaponType: 9
-  masteryLevel: 36
+  masteryLevel: 1
   needsSkillId: 
   companionOf: 
   statesEndWhenHit: 0
   published: 1
   maxLevel: 10
+  freeFirstLevel: 0
+  orbCombo: 
+  isOrbRelease: 0
   description: 'Light through a moving cloud.
 
-    A shot for 100% Attack, +1% Attack
-    for every 1% movement speed bonus you have while moving.'
+    A shot that hits twice, each for
+    50% Attack, +0.5% Attack each for every 1% movement speed bonus you have.'
   archetype: 0
   family: 2
   shape: 0
@@ -42,8 +45,8 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-  manaCost: 12
-  cooldown: 6
+  manaCost: 6
+  cooldown: 0
   castTime: 0
   fixedCastTime: 0
   releaseEarly: 0
@@ -56,6 +59,8 @@ MonoBehaviour:
   repeatCount: 1
   repeatInterval: 0
   repeatScaleWithAttackSpeed: 0
+  repeatScaleWithCastSpeed: 0
+  repeatMaxCount: 1
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
   showRepeatsTotalDamage: 0
@@ -74,7 +79,7 @@ MonoBehaviour:
   hasReleaseStance: 1
   releaseStance: 14
   releaseStanceReplayPerRepeat: 0
-  releaseIsWeaponAttack: 1
+  weaponSkillAnimation: 3
   bindings:
   - tickId: shot
     targetMode: 1
@@ -96,7 +101,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 1
+        value: 0.5
         useStacks: 0
         op: 0
         read: 0
@@ -120,13 +125,56 @@ MonoBehaviour:
         read: 0
         scaler: 1
       damageMultPerSpeedBonus:
-        value: 0.01
+        value: 0.005
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
       critChanceBonus:
         value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
         useStacks: 0
         op: 0
         read: 0
@@ -234,7 +282,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       hitCount:
-        value: 1
+        value: 2
         useStacks: 0
         op: 0
         read: 0
@@ -253,7 +301,7 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-  shortLabel: Sunbreak
+  shortLabel: Silver Lining
   keyLabel: 
   slotOrder: 10
   tint: {r: 1, g: 1, b: 1, a: 1}

@@ -22,7 +22,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -36,7 +36,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants:
     - frame: 8
@@ -156,7 +156,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants:
     - frame: 7
@@ -276,7 +276,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -290,7 +290,7 @@ MonoBehaviour:
     priority: 10
     crouchEnd: 0.5
     airborneFreeze: 1.0666667
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -304,7 +304,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 31
     footPlants: []
     bodyStrides: []
@@ -318,7 +318,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -332,7 +332,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -346,7 +346,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -360,7 +360,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -374,7 +374,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -388,7 +388,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -402,7 +402,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -416,7 +416,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -430,7 +430,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -444,7 +444,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -458,7 +458,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -472,7 +472,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -486,7 +486,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -500,7 +500,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -514,7 +514,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -528,7 +528,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -542,7 +542,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -556,7 +556,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -570,7 +570,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -584,7 +584,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -598,7 +598,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -612,7 +612,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants:
     - frame: 4
@@ -736,7 +736,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -750,7 +750,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -764,7 +764,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -778,7 +778,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -792,7 +792,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -806,7 +806,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -820,7 +820,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -834,7 +834,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -848,7 +848,7 @@ MonoBehaviour:
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -862,7 +862,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0.033333335
+    holdAtFrame: 1
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -876,7 +876,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -890,7 +890,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -904,7 +904,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -918,7 +918,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -932,7 +932,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -946,7 +946,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -960,7 +960,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -974,7 +974,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -988,7 +988,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -1002,7 +1002,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -1016,7 +1016,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -1030,7 +1030,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -1044,7 +1044,7 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []
@@ -1058,7 +1058,637 @@ MonoBehaviour:
     priority: 30
     crouchEnd: 0
     airborneFreeze: 1.5
-    holdAt: 0
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 56
+    action: 3
+    clip: Punch
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 71
+    action: 3
+    clip: Punch
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 58
+    action: 3
+    clip: AttackOneHandSword
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 73
+    action: 3
+    clip: AttackOneHandSword
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 57
+    action: 3
+    clip: AttackSword2H
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 72
+    action: 3
+    clip: AttackSword2H
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 61
+    action: 3
+    clip: AttackDaggerStab
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 76
+    action: 3
+    clip: AttackDaggerStab
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 59
+    action: 3
+    clip: AttackAxe
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 74
+    action: 3
+    clip: AttackAxe
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 60
+    action: 3
+    clip: AttackMace
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 75
+    action: 3
+    clip: AttackMace
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 67
+    action: 3
+    clip: AttackSpear
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 82
+    action: 3
+    clip: AttackSpear
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 63
+    action: 3
+    clip: AttackStaffSwing
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 78
+    action: 3
+    clip: AttackStaffSwing
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 70
+    action: 3
+    clip: ReleaseBowRecoil
+    mirrored: 1
+    speedSource: 4
+    speedMult: 0.4
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 21
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 85
+    action: 3
+    clip: AttackBow
+    mirrored: 1
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 1
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 62
+    action: 3
+    clip: AttackKatar
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 77
+    action: 3
+    clip: AttackKatar
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 69
+    action: 3
+    clip: AttackKnuckle
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 84
+    action: 3
+    clip: AttackKnuckle
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 68
+    action: 3
+    clip: AttackSniper
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 83
+    action: 3
+    clip: AttackSniper
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 64
+    action: 3
+    clip: AttackWand
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 79
+    action: 3
+    clip: AttackWand
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 65
+    action: 3
+    clip: AttackScytheSweep
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 80
+    action: 3
+    clip: AttackScytheSweep
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 66
+    action: 3
+    clip: AttackShurikenSwing
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 81
+    action: 3
+    clip: AttackShurikenSwing
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 86
+    action: 3
+    clip: Punch
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 88
+    action: 3
+    clip: AttackOneHandSword
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 87
+    action: 3
+    clip: AttackSword2H
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 91
+    action: 3
+    clip: AttackDaggerStab
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 89
+    action: 3
+    clip: AttackAxe
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 90
+    action: 3
+    clip: AttackMace
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 97
+    action: 3
+    clip: AttackSpear
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 93
+    action: 3
+    clip: AttackStaffSwing
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 100
+    action: 3
+    clip: ReleaseBowRecoil
+    mirrored: 1
+    speedSource: 1
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 92
+    action: 3
+    clip: AttackKatar
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 99
+    action: 3
+    clip: AttackKnuckle
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 98
+    action: 3
+    clip: AttackSniper
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 94
+    action: 3
+    clip: AttackWand
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 95
+    action: 3
+    clip: AttackScytheSweep
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 96
+    action: 3
+    clip: AttackShurikenSwing
+    mirrored: 0
+    speedSource: 4
+    speedMult: 1
+    priority: 30
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    holdAtFrame: 0
     rootFromFrame: 0
     footPlants: []
     bodyStrides: []

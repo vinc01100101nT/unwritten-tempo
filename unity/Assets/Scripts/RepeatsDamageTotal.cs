@@ -30,6 +30,10 @@ public class RepeatsDamageTotal : MonoBehaviour
         /// pick the same target.</summary>
         public uint attacker;
 
+        /// <summary>WHICH SKILL's total it is (the number the server sent with it), so two skills one person has hitting
+        /// the same creature keep two numbers.</summary>
+        public int skill;
+
         public DamagePopup popup;
         public int total;
         public float lastHit;
@@ -43,8 +47,9 @@ public class RepeatsDamageTotal : MonoBehaviour
 
     /// <summary>Show the total an ARRIVED strike brought its attacker's run over that creature to — the server's sum,
     /// put up as it is. Only a strike the server counted into a run carries one, so a machine cannot ask for a number it
-    /// was not owed.</summary>
-    public static void ReportArrived(Transform mob, int total, uint attacker)
+    /// was not owed. <paramref name="amount"/> is that strike's own number: a total equal to it is the FIRST strike of a
+    /// new run (the server starts every run from zero), which gets a number of its own while the last one fades.</summary>
+    public static void ReportArrived(Transform mob, int total, int amount, uint attacker, int skill)
     {
         if (mob == null || total <= 0) return;
         if (watching == null)
@@ -52,15 +57,17 @@ public class RepeatsDamageTotal : MonoBehaviour
             var go = new GameObject("RepeatsDamageTotal_Watching") { hideFlags = HideFlags.DontSaveInEditor };
             watching = go.AddComponent<RepeatsDamageTotal>();
         }
-        watching.Report(mob, total, attacker);
+        watching.Report(mob, total, total == amount, attacker, skill);
     }
 
-    void Report(Transform mob, int total, uint attacker)
+    void Report(Transform mob, int total, bool startsRun, uint attacker, int skill)
     {
         for (int i = 0; i < entries.Count; i++)
         {
-            if (entries[i].mob != mob || entries[i].attacker != attacker) continue;
+            if (entries[i].mob != mob || entries[i].attacker != attacker || entries[i].skill != skill) continue;
             var e = entries[i];
+            // A NEW RUN never takes over the last one's number: that one is let go to fade where it is.
+            if (startsRun && e.popup != null) { e.popup.Release(); e.popup = null; }
             e.total = total;
             e.lastHit = Time.time;
             if (e.popup == null) e.popup = DamagePopup.SpawnHeld(UnitAnchor.Overhead(mob), e.total, TotalColor, 1.7f);
@@ -72,6 +79,7 @@ public class RepeatsDamageTotal : MonoBehaviour
         {
             mob = mob,
             attacker = attacker,
+            skill = skill,
             total = total,
             lastHit = Time.time,
             popup = DamagePopup.SpawnHeld(UnitAnchor.Overhead(mob), total, TotalColor, 1.7f),
@@ -98,27 +106,37 @@ public class RepeatsDamageTotal : MonoBehaviour
 /// </summary>
 public static class StrikeTotals
 {
-    struct Run { public int total; public float lastHit; public int beat; }
+    // grouped = counted under a cast's or a landing's group, which alone decides when it starts over; it is forgotten
+    // when that group is (Forget). Only a strike with no group falls back to the idle rule.
+    struct Run { public int total; public float lastHit; public bool grouped; }
 
-    // WHICH TOTAL the strikes landing right now belong to (0 = no say): a cast's whole run, or a single beat of it. A
-    // run struck under a different id than its last strike starts again from zero — so a new cast never carries the
-    // last cast's number on, and a skill that totals per beat shows each beat's alone.
-    static int currentBeat, beatCounter;
+    // WHICH GROUP the strikes landing right now belong to (null = no say): the set of runs this group has already
+    // struck. The first strike of a group on a unit starts that unit's run from zero; later ones add to it. The caller
+    // owns the set and empties it when its group begins — a new cast, or a new landing — so nothing is numbered and
+    // nothing counts up while the server runs (replaced 2026-10-24: each group used to be stamped with a new number).
+    static HashSet<ulong> currentGroup;
 
-    /// <summary>A fresh id for one total — handed out per cast (or per beat), never reused.</summary>
-    public static int NewTotal() => ++beatCounter == 0 ? ++beatCounter : beatCounter;
+    /// <summary>WHICH SKILL the strikes landing right now belong to (0 = none): its place in the skill list, so it is
+    /// never bigger than the number of skills. Two skills one person has hitting the same unit keep two sums, and
+    /// every strike carries this so the screen keeps two numbers.</summary>
+    public static int CurrentSkill { get; private set; }
 
-    /// <summary>Every total struck until the scope closes belongs to <c>id</c> (0 = no say). Server only; nests by
-    /// putting the outer id back.</summary>
+    /// <summary>Every total struck until the scope closes belongs to <c>group</c> (null = no say) of the skill numbered
+    /// <c>skill</c>. Server only; nests by putting the outer group back.</summary>
     public readonly struct BeatScope : System.IDisposable
     {
-        readonly int outer;
-        public BeatScope(int id) { outer = currentBeat; if (id != 0) currentBeat = id; }
-        public void Dispose() => currentBeat = outer;
+        readonly HashSet<ulong> outer;
+        readonly int outerSkill;
+        public BeatScope(HashSet<ulong> group, int skill)
+        {
+            outer = currentGroup; outerSkill = CurrentSkill;
+            if (group != null) { currentGroup = group; CurrentSkill = skill; }
+        }
+        public void Dispose() { currentGroup = outer; CurrentSkill = outerSkill; }
     }
 
-    static readonly Dictionary<ulong, Run> open = new Dictionary<ulong, Run>(64);
-    static readonly List<ulong> closing = new List<ulong>(16);
+    static readonly Dictionary<(ulong, int), Run> open = new Dictionary<(ulong, int), Run>(64);
+    static readonly List<(ulong, int)> closing = new List<(ulong, int)>(16);
     static float nextSweep;
 
     /// <summary>Count <paramref name="damage"/> into <paramref name="strikerNetId"/>'s run over the unit called
@@ -127,24 +145,36 @@ public static class StrikeTotals
     {
         float now = Time.time;
         if (now >= nextSweep) Sweep(now);
-        ulong key = ((ulong)struckNetId << 32) | strikerNetId;
-        if (!open.TryGetValue(key, out var run) || now - run.lastHit >= RepeatsDamageTotal.IdleCloseSeconds) run.total = 0;
-        if (currentBeat != 0 && run.beat != currentBeat) run.total = 0;
-        run.beat = currentBeat;
+        ulong pair = ((ulong)struckNetId << 32) | strikerNetId;
+        var key = (pair, CurrentSkill);
+        bool known = open.TryGetValue(key, out var run);
+        // A STRIKE IN A GROUP starts over only when its group begins — never because time passed, so a run whose beats
+        // are slow (Cloudburst fires once a swing, 1.1 s at a normal bow's speed) keeps one total for the whole cast.
+        if (currentGroup != null) { if (currentGroup.Add(pair) || !known) run.total = 0; }
+        else if (!known || now - run.lastHit >= RepeatsDamageTotal.IdleCloseSeconds) run.total = 0;
+        run.grouped = currentGroup != null;
         run.total += damage;
         run.lastHit = now;
         open[key] = run;
         return run.total;
     }
 
-    // Runs nobody has struck for a while are forgotten, at most once a second — so the table holds only the fights
-    // going on now, however many have come and gone.
+    /// <summary>A group is over (a new cast or landing begins, or its skill is switched off): drop its runs and empty
+    /// it. The table therefore holds only the groups still going.</summary>
+    public static void Forget(HashSet<ulong> group, int skill)
+    {
+        foreach (var pair in group) open.Remove((pair, skill));
+        group.Clear();
+    }
+
+    // Ungrouped runs nobody has struck for a while are forgotten, at most once a second — so the table holds only the
+    // fights going on now, however many have come and gone. Grouped runs leave with their group (Forget).
     static void Sweep(float now)
     {
         nextSweep = now + 1f;
         closing.Clear();
         foreach (var pair in open)
-            if (now - pair.Value.lastHit >= RepeatsDamageTotal.IdleCloseSeconds) closing.Add(pair.Key);
+            if (!pair.Value.grouped && now - pair.Value.lastHit >= RepeatsDamageTotal.IdleCloseSeconds) closing.Add(pair.Key);
         for (int i = 0; i < closing.Count; i++) open.Remove(closing[i]);
     }
 }

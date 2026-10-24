@@ -74,7 +74,7 @@ MonoBehaviour:
   hasReleaseStance: 1
   releaseStance: 14
   releaseStanceReplayPerRepeat: 0
-  releaseIsWeaponAttack: 1
+  weaponSkillAnimation: 2
   bindings:
   - tickId: cast
     targetMode: 0

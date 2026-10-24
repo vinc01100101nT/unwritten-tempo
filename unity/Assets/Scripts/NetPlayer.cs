@@ -4845,7 +4845,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// which is all a bystander can honestly know.</para></summary>
     public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated, bool tick = false,
                          TrueDamageCause tickCause = TrueDamageCause.None, int total = 0, uint attackerNetId = 0u,
-                         bool dodged = false)
+                         bool dodged = false, int totalSkill = 0)
     {
         if (isOwned)
         {
@@ -4863,14 +4863,14 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
                 if (av != null) UnitMitigation.Show(mitigated, av);
                 if (mitigated.blocked) Sfx.Play(me.blockSfx);   // the clang of the block
             }
-            ShowRisingTotal(total, attackerNetId);
+            ShowRisingTotal(total, info.amount, attackerNetId, totalSkill);
             return;
         }
 
         if (body == null || info.amount <= 0 || info.missed) return;
         // The SAME colour the person it happened to sees over their own body — one owner, read here.
         DamagePopup.Spawn(body.transform, info.amount, Character.ColourOfBlow(info, tick, tickCause));
-        ShowRisingTotal(total, attackerNetId);
+        ShowRisingTotal(total, info.amount, attackerNetId, totalSkill);
     }
 
     /// <summary>Put the RISING YELLOW TOTAL the server summed up over the body this machine draws for this person, when
@@ -4880,11 +4880,11 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <para>Called from BOTH halves of <see cref="ShowBlow"/> on purpose: the person it happened to and everybody
     /// watching them see the same climbing number, the same way both see the same white one. Keyed by who struck, so
     /// two creatures flurrying one person keep two numbers.</para></summary>
-    void ShowRisingTotal(int total, uint attackerNetId)
+    void ShowRisingTotal(int total, int amount, uint attackerNetId, int totalSkill)
     {
         if (total <= 0) return;
         var on = DrawnBody;
-        if (on != null) RepeatsDamageTotal.ReportArrived(on, total, attackerNetId);
+        if (on != null) RepeatsDamageTotal.ReportArrived(on, total, amount, attackerNetId, totalSkill);
     }
 
     /// <summary>Show this person casting a skill, on the machines watching them. The EFFECT and nothing else — no

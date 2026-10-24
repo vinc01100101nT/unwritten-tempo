@@ -73,7 +73,7 @@ MonoBehaviour:
   hasReleaseStance: 0
   releaseStance: 14
   releaseStanceReplayPerRepeat: 0
-  releaseIsWeaponAttack: 0
+  weaponSkillAnimation: 0
   bindings:
   - tickId: dash_tick
     targetMode: 2

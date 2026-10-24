@@ -569,6 +569,10 @@ public class GameNetwork : NetworkManager
         /// the sum is the server's.</summary>
         public int total;
 
+        /// <summary>WHICH SKILL's total <see cref="total"/> is (<see cref="StrikeTotals.CurrentSkill"/>), so the screen
+        /// keeps one number per skill.</summary>
+        public int totalSkill;
+
         /// <summary>Damage that bypassed defence — a poison tick, a reflected blow — and what it was, so the number is
         /// coloured by its cause (<see cref="TrueDamageCauses.Colour"/>). <see cref="TrueDamageCause.None"/> for a blow.</summary>
         public TrueDamageCause tickCause;
@@ -592,6 +596,9 @@ public class GameNetwork : NetworkManager
         /// server (<see cref="StrikeTotals"/>) — 0 when the blow belongs to no run that shows one. The exact twin of
         /// the field on a creature's blow, so the same flurry draws the same total whichever side of it you stand on.</summary>
         public int total;
+
+        /// <summary>WHICH SKILL's total <see cref="total"/> is — the twin of the field on a creature's blow.</summary>
+        public int totalSkill;
 
         /// <summary>The blow passed through them while they were dodging (a dash's moment of being untouchable), so their
         /// screen says "Dodge" rather than nothing.</summary>
@@ -1140,7 +1147,7 @@ public class GameNetwork : NetworkManager
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
                                       attackerHit: msg.attackerHit, missed: msg.missed),
-                       msg.mitigated, msg.tick, msg.tickCause, msg.total, msg.attackerNetId, msg.dodged);
+                       msg.mitigated, msg.tick, msg.tickCause, msg.total, msg.attackerNetId, msg.dodged, msg.totalSkill);
     }
 
     // Green digits the server said it healed, over the body this machine draws for that unit.
@@ -1489,6 +1496,7 @@ public class GameNetwork : NetworkManager
                     attackerNetId = striker,
                     total = SkillEffectApplier.StrikeShowsTotal && !tick && !info.missed && piece > 0
                         ? StrikeTotals.Add(identity.netId, striker, piece) : 0,
+                    totalSkill = StrikeTotals.CurrentSkill,
                     dodged = dodgedOnce,
                 }, k, k == 0 ? dealt : -1);
             }
@@ -1517,6 +1525,7 @@ public class GameNetwork : NetworkManager
             // the server's. A damage-over-time tick never folds in: it is a different thing happening at the same time.
             total = SkillEffectApplier.StrikeShowsTotal && !tick && !info.missed && dealt > 0
                 ? StrikeTotals.Add(identity.netId, striker, dealt) : 0,
+            totalSkill = StrikeTotals.CurrentSkill,
             dodged = dealt <= 0 && CombatAuthority.WhyNoDamage == NoDamageReason.Dodged,
         });
     }
@@ -1609,6 +1618,7 @@ public class GameNetwork : NetworkManager
                     tickCause = blow.cause,
                     total = SkillEffectApplier.StrikeShowsTotal && runs && piece > 0
                         ? StrikeTotals.Add(shell.netId, striker, piece) : 0,
+                    totalSkill = StrikeTotals.CurrentSkill,
                 }, k, k == 0 ? blow.number : -1);
             }
             return;
@@ -1631,6 +1641,7 @@ public class GameNetwork : NetworkManager
             // is the server's. Damage that bypassed defence is never part of a run.
             total = SkillEffectApplier.StrikeShowsTotal && blow.cause == TrueDamageCause.None && !blow.missed && blow.number > 0
                 ? StrikeTotals.Add(shell.netId, striker, blow.number) : 0,
+            totalSkill = StrikeTotals.CurrentSkill,
         });
     }
 
@@ -1913,7 +1924,7 @@ public class GameNetwork : NetworkManager
         // THE RISING YELLOW TOTAL, exactly as the server summed it. Keyed by WHO struck — the shared name every machine
         // agrees on — so two people flurrying one creature keep two climbing numbers instead of pooling into a third
         // that belongs to neither. It hangs over the watched copy the number was just drawn on.
-        if (msg.total > 0) RepeatsDamageTotal.ReportArrived(victim.transform, msg.total, msg.attackerNetId);
+        if (msg.total > 0) RepeatsDamageTotal.ReportArrived(victim.transform, msg.total, msg.number, msg.attackerNetId, msg.totalSkill);
     }
 
     /// <summary>The shared name for something both halves know about, or null when this machine is the authority,

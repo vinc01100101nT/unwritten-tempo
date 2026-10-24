@@ -322,13 +322,8 @@ public class Character3DPose : MonoBehaviour, IStancePose
     // takeoff crouch and landing tail play at that speed, while the airborne HOLD stays a hard 0 regardless. The
     // freeze POINT (freezeN) is a normalized clip fraction, so it's unaffected by mult. No allocation — struct state
     // info + cached clip length. Falls back to a plain hold if the clip has no dedicated one-shot state.
-    // The animator's speed while gliding into a held frame (see PlayClipPhase): slow enough that the clip itself
-    // stays on that frame for the whole glide, not zero, because a stopped animator would stop the blend too.
-    const float BlendCrawl = 1e-4f;
-    bool phaseBlending;
-
     public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f,
-                              bool restart = false, float blendSeconds = 0f)
+                              bool restart = false, float aimSeconds = -1f)
     {
         if (string.IsNullOrEmpty(clip) || !stateHash.TryGetValue(clip, out int h)) { Play(src, clip); return; }
 
@@ -341,29 +336,10 @@ public class Character3DPose : MonoBehaviour, IStancePose
         if (currentState != h || restart)
         {
             currentState = h;
-            if (blendSeconds > 0f)
-            {
-                // GLIDE INTO THE FREEZE FRAME over blendSeconds of real time: start the clip already on that frame
-                // and run the animator at a crawl, with the blend sized so the crawl takes exactly that long. The
-                // clip barely moves meanwhile, so what shows is the body easing from its pose into the held one.
-                phaseBlending = true;
-                anim.CrossFadeInFixedTime(h, blendSeconds * BlendCrawl, 0, freezeSeconds);
-                anim.speed = BlendCrawl;
-                return;
-            }
-            phaseBlending = false;
             anim.CrossFadeInFixedTime(h, crossFade, 0);
             anim.speed = mult;
             return;
         }
-        if (phaseBlending)
-        {
-            if (anim.IsInTransition(0)) { anim.speed = BlendCrawl; return; }
-            phaseBlending = false;
-            anim.speed = 0f;
-            return;
-        }
-
         // Still crossfading INTO the jump state (or the animator's current state isn't the jump clip yet): keep
         // playing at speed and DON'T freeze. Reading normalizedTime here returns the OUTGOING state (e.g. the
         // looping Run, whose accumulated time is far past freezeN) — zeroing speed on that would pause the animator
@@ -379,7 +355,10 @@ public class Character3DPose : MonoBehaviour, IStancePose
         }
         else
         {
-            anim.speed = t >= freezeN ? 0f : mult;       // hold on the freeze frame while airborne; play up to it at mult before that
+            // Given a point to be at, the clip is PUT there every frame (stopped, so nothing drifts): it follows its
+            // schedule exactly, whatever the frame rate. Otherwise: play up to the freeze frame at mult, then hold.
+            if (aimSeconds >= 0f) { anim.Play(h, 0, Mathf.Min(aimSeconds, freezeSeconds) / len); anim.speed = 0f; }
+            else anim.speed = t >= freezeN ? 0f : mult;
         }
     }
 

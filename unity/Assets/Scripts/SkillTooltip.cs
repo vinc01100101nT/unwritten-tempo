@@ -374,7 +374,7 @@ public static class SkillTooltip
                 if (e.critChanceBonusVsSlowed.value > 0f)
                     s += ", +" + Pct(e.critChanceBonusVsSlowed.value) + " more crit chance against a slowed target";
                 if (e.damageMultPerSpeedBonus.value > 0f)
-                    s += ", +" + Hl(e.damageMultPerSpeedBonus.value.ToString("0.###") + "×") + " per 1% movement speed bonus while moving";
+                    s += ", +" + Hl(e.damageMultPerSpeedBonus.value.ToString("0.###") + "×") + " per 1% movement speed bonus";
                 if (e.damageMultPerBurnSecond.value > 0f)
                     s += ", +" + Hl(e.damageMultPerBurnSecond.value.ToString("0.###") + "×") + " per second the target has been burning (up to "
                          + MarkMath.BurnAgeCap.ToString("0") + "s)";

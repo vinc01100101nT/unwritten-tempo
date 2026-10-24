@@ -78,7 +78,7 @@ MonoBehaviour:
   hasReleaseStance: 1
   releaseStance: 14
   releaseStanceReplayPerRepeat: 0
-  releaseIsWeaponAttack: 0
+  weaponSkillAnimation: 0
   bindings:
   - tickId: meteor_ball
     targetMode: 2

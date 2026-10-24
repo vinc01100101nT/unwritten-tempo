@@ -92,6 +92,21 @@ public enum StanceId
     CastLance,
     CastRifle,
     CastKnuckle,
+    // Each weapon's three skill animations (WeaponStances.SkillAnimationFor; the third run follows the second), mapped like the attack variants; a skill
+    // picks one in the Skill Composer. One clip each: up to its holdAtFrame mark is the cast, the rest the release. Each
+    // began as that weapon's own attack clip (2026-10-24).
+    SkillAnimation1BareHands, SkillAnimation1Sword, SkillAnimation1OneHandSword, SkillAnimation1Axe,
+    SkillAnimation1Mace, SkillAnimation1Dagger, SkillAnimation1Katar, SkillAnimation1Staff, SkillAnimation1Wand,
+    SkillAnimation1Scythe, SkillAnimation1Shuriken, SkillAnimation1Lance, SkillAnimation1Rifle,
+    SkillAnimation1Knuckle, SkillAnimation1Bow,
+    SkillAnimation2BareHands, SkillAnimation2Sword, SkillAnimation2OneHandSword, SkillAnimation2Axe,
+    SkillAnimation2Mace, SkillAnimation2Dagger, SkillAnimation2Katar, SkillAnimation2Staff,
+    SkillAnimation2Wand, SkillAnimation2Scythe, SkillAnimation2Shuriken, SkillAnimation2Lance,
+    SkillAnimation2Rifle, SkillAnimation2Knuckle, SkillAnimation2Bow,
+    SkillAnimation3BareHands, SkillAnimation3Sword, SkillAnimation3OneHandSword, SkillAnimation3Axe,
+    SkillAnimation3Mace, SkillAnimation3Dagger, SkillAnimation3Katar, SkillAnimation3Staff,
+    SkillAnimation3Wand, SkillAnimation3Scythe, SkillAnimation3Shuriken, SkillAnimation3Lance,
+    SkillAnimation3Rifle, SkillAnimation3Knuckle, SkillAnimation3Bow,
 }
 
 /// <summary>
@@ -103,9 +118,11 @@ public enum StanceId
 public enum StanceSpeedSource
 {
     Baked = 0,      // the baked action's authored fps (× speedMult) — no live link
-    // 1,2 (was AttackSpeed / CastSpeed) retired: the actual swing / cast stances use FitWindow (they fit the
-    // gameplay swing time / cast-bar window). The ASPD & cast-speed STATS are unchanged (Character.AttackSpeedMult /
-    // CastTimeMult) — only the stance-animation source is gone. Ints kept stable so saved FitWindow rows survive.
+    // The clip sped up by the body's attack speed the way a basic attack swing is (UnitOffense.EffectiveSpeedMult),
+    // brought back 2026-10-24 for the skill animations a spam skill plays. Read for the player's own body; a watched
+    // body is told the length it came to.
+    AttackSpeed = 1,
+    // 2 (was CastSpeed) retired: cast stances use FitWindow (they fit the cast-bar window). Int kept stable.
     // 3 (was MoveGait) retired 2026-10-12: it let ANY stance play at how fast its body walks, so a movement buff or a
     // skill's own root changed how long a skill took. Walk, run and sprint follow the ground by being walk cycles,
     // never from this list (StanceController.ResolveSpeedMult) — no stance can choose it.
@@ -156,10 +173,13 @@ public class StanceBinding
              "as the landing tail (player rooted for that tail). The Fall stance (ledge walk-off) reuses THIS value.")]
     public float airborneFreeze = 1.5f;
 
-    [Tooltip("HELD stances: seconds into the clip where it stops and holds on that frame for as long as the stance is " +
-             "held (the bow's cast: drawn and waiting). The clip plays up to here at its own speed, never stretched " +
-             "to the cast time. 0 = the clip plays normally.")]
-    public float holdAt = 0f;
+    [Tooltip("HELD stances: the clip FRAME where it stops and holds for as long as the stance is held (the bow's " +
+             "cast: drawn and waiting). The clip plays up to it at its own speed, never stretched to the cast time. " +
+             "0 = the clip plays normally. A weapon's SKILL ANIMATION: the mark between its cast and its release — " +
+             "held here through the cast time, then played on from here when the skill fires; 0 = no cast part (the " +
+             "weapon's cast pose shows instead, and the release plays the whole clip). Turned into a point in the clip " +
+             "at runtime (frame ÷ the clip's own frame count), like the roll's root frame.")]
+    [Min(0)] public int holdAtFrame = 0;
 
     [Tooltip("ROLL only: the clip FRAME from which the player is ROOTED (no move) until the clip ends — the roll's " +
              "recovery. Runtime turns this into a normalized point (frame ÷ the clip's own frame count) so it survives " +
@@ -249,6 +269,13 @@ public static class StanceDefaults
             case StanceId.AttackOneHandSword: case StanceId.AttackAxe: case StanceId.AttackMace:
             case StanceId.AttackKatar:     case StanceId.AttackKnuckle: case StanceId.AttackWand:
                 b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
+
+            // Weapon skill animations: held through a cast like the cast poses (Fit Window glides into the mark across
+            // the cast bar), and played at their own length when the skill fires, since no window is given then.
+            default:
+                if (WeaponStances.IsWeaponSkillAnimation(id))
+                { b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; b.priority = 30; }
+                break;
         }
         return b;
     }

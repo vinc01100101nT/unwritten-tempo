@@ -1402,7 +1402,7 @@ public static class SkillEffectApplier
                 Combat.RawHitPoints(caster.BasicHit, unit.Flee, MonsterAI3D.AttackersOn(unit)));
         float perSpeed = e.damageMultPerSpeedBonus.Resolve(vars);
         if (perSpeed != 0f && caster != null && caster.States != null)
-            mult.value += perSpeed * StrikeMath.SpeedBonusPoints(caster.States.MoveMult, caster.IsMoving);
+            mult.value += perSpeed * StrikeMath.SpeedBonusPoints(caster.States.MoveMult);
         // THE STAFF'S CASH-INS read the mark BEFORE the strike lands; it is removed after (CashIn).
         var marks = unit != null ? unit.States : null;
         float perMark = e.damageMultPerMark.Resolve(vars);

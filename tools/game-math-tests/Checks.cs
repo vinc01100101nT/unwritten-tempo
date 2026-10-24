@@ -334,10 +334,10 @@ static class Checks
         That(StrikeMath.AccuracyOverPoints(160) == 60, StrikeF, "160 raw hit points should count 60 over");
         That(StrikeMath.AccuracyOverPoints(90) == 0, StrikeF, "a hit chance under 100 should count nothing");
         That(StrikeMath.AccuracyOverPoints(400) == 100, StrikeF, "the accuracy overflow should stop at 100 points");
-        // Speed bonus while moving (Sunbreak): percent points of bonus, 0 standing still or slowed.
-        That(Math.Abs(StrikeMath.SpeedBonusPoints(1.45f, true) - 45f) < 0.01f, StrikeF, "a x1.45 pace on the move should count 45");
-        That(StrikeMath.SpeedBonusPoints(1.45f, false) == 0f, StrikeF, "standing still should count nothing");
-        That(StrikeMath.SpeedBonusPoints(0.7f, true) == 0f, StrikeF, "a slowed caster should count nothing, not a penalty");
+        // Speed bonus (Silver Lining): percent points of bonus, moving or standing still (2026-10-24); 0 when slowed.
+        That(Math.Abs(StrikeMath.SpeedBonusPoints(1.45f) - 45f) < 0.01f, StrikeF, "a x1.45 pace should count 45");
+        That(StrikeMath.SpeedBonusPoints(1f) == 0f, StrikeF, "no speed bonus should count nothing");
+        That(StrikeMath.SpeedBonusPoints(0.7f) == 0f, StrikeF, "a slowed caster should count nothing, not a penalty");
         // Crit chance against a slowed target (Hailstone): the extra only when the target moves slower than normal.
         That(Math.Abs(StrikeMath.CritBonus(0.25f, 0.25f, 0.75f) - 0.5f) < 0.001f, StrikeF, "a slowed target should add the vs-slowed crit chance");
         That(Math.Abs(StrikeMath.CritBonus(0.25f, 0.25f, 1f) - 0.25f) < 0.001f, StrikeF, "a target at normal pace should add nothing extra");

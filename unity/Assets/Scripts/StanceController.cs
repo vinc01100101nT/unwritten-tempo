@@ -40,7 +40,7 @@ public class StanceController : MonoBehaviour
 
     // One held stance: its id + the FitWindow duration its clip is fit to (0 = none). Kept as a single unit so the id
     // and its window can't drift apart.
-    struct Held { public StanceId id; public float window; }
+    struct Held { public StanceId id; public float window; public float since; }   // since = when it was first pushed
 
     // Active held stances in push order (oldest first). Push/Pop mutate on transitions, not per frame; the per-frame
     // resolve only INDEX-reads this list, so the hot path allocates nothing.
@@ -71,6 +71,7 @@ public class StanceController : MonoBehaviour
     float overrideUntil;
     float overrideWindow;
     bool overrideFit;                // this play was asked to fit its window, whatever the stance's own speed source
+    bool overrideFromHold;           // this play continues a clip just held at its mark (holdAtFrame) rather than starting it
     // Where in the clip this override must START, as a 0→1 fraction; negative = at the beginning. Set when a beat
     // that began before we heard about it is joined part-way through, and spent on the first frame it is applied.
     float overrideSeekTo = -1f;
@@ -158,14 +159,28 @@ public class StanceController : MonoBehaviour
     public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f, bool fitToWindow = false,
                                float startedSecondsAgo = 0f)
     {
-        float played = ActionDuration(id, seconds, durationScale, fitToWindow);
+        float whole = ActionDuration(id, seconds, durationScale, fitToWindow);
+
+        // A CLIP THAT WAS JUST HELD AT ITS MARK PLAYS ON FROM THE MARK: a weapon's skill animation is one clip whose
+        // first part was the cast, so its release is the rest of it, never the whole clip again. Anything else — an
+        // instant cast, a beat forced to fit a window — plays the whole clip, ignoring the mark.
+        var b = StanceCatalog.Get(id);
+        bool fromHold = !fitToWindow && b != null && b.holdAtFrame > 0 && JustHeld(id);
+        float played = whole;
+        if (fromHold)
+        {
+            played = whole * (1f - HoldPoint(b));
+            lastLetGoAt = float.NegativeInfinity;
+        }
 
         float left = played - Mathf.Max(0f, startedSecondsAgo);
         if (left <= 0f) return 0f;
 
-        overrideId = id; overrideWindow = played; overrideUntil = Time.time + left; overrideFit = fitToWindow;
+        // The window stays the WHOLE clip's, so the clip plays at its whole-clip speed; only how long it runs shrinks.
+        overrideId = id; overrideWindow = whole; overrideUntil = Time.time + left; overrideFit = fitToWindow;
+        overrideFromHold = fromHold;
         // The clip is still fit to its WHOLE length, so it plays at the right speed; only the entry point moves.
-        overrideSeekTo = startedSecondsAgo > 0f ? Mathf.Clamp01(startedSecondsAgo / played)
+        overrideSeekTo = startedSecondsAgo > 0f ? Mathf.Clamp01(startedSecondsAgo / whole)
                        : shownOverride && shownOverrideId == id ? 0f : -1f;
 
         // SAID OUT LOUD, so a skill's release swing happens on every screen and not only the caster's. It travels as
@@ -182,7 +197,9 @@ public class StanceController : MonoBehaviour
         // for everybody else than for the person casting it: the watching side takes the SHORTER of the two answers,
         // so the caster's number could only ever cut its own play short, never lengthen it, and any disagreement at
         // all between the two machines came out as a clipped animation on every screen but the caster's.
-        float windowToTell = (fitToWindow || seconds > 0f) ? played : 0f;
+        // …and a play sped up by THIS body's attack speed is told too: the watching machine cannot read those stats.
+        float windowToTell = (fitToWindow || seconds > 0f || (b != null && b.speedSource == StanceSpeedSource.AttackSpeed))
+            ? played : 0f;
         if (Player == this && startedSecondsAgo <= 0f) GameNetwork.ReportActionBegan(id, windowToTell);
         return played;
     }
@@ -228,16 +245,28 @@ public class StanceController : MonoBehaviour
     public void Push(StanceId id, float window = 0f)
     {
         int i = IndexOf(id);
-        if (i < 0) active.Add(new Held { id = id, window = window });
-        else active[i] = new Held { id = id, window = window };
+        if (i < 0) active.Add(new Held { id = id, window = window, since = Time.time });
+        else active[i] = new Held { id = id, window = window, since = active[i].since };
     }
 
     /// <summary>Leave a held stance (idempotent).</summary>
     public void Pop(StanceId id)
     {
         int i = IndexOf(id);
-        if (i >= 0) active.RemoveAt(i);
+        if (i < 0) return;
+        active.RemoveAt(i);
+        var b = StanceCatalog.Get(id);
+        if (b != null && b.holdAtFrame > 0) { lastLetGoId = id; lastLetGoAt = Time.time; }
     }
+
+    // The last held clip let go at its mark, and when. Its release usually arrives the same frame on the caster's
+    // machine, and a little before or after on a watcher's, where the two news travel separately.
+    StanceId lastLetGoId;
+    float lastLetGoAt = float.NegativeInfinity;
+    const float HoldHandover = 0.5f;
+
+    bool JustHeld(StanceId id)
+        => IndexOf(id) >= 0 || (lastLetGoId == id && Time.time - lastLetGoAt <= HoldHandover);
 
     /// <summary>Push or pop by a bool — the natural call for a condition (e.g. Set(Combat, attacker.Engaged)).</summary>
     public void Set(StanceId id, bool on) { if (on) Push(id); else Pop(id); }
@@ -263,6 +292,14 @@ public class StanceController : MonoBehaviour
     {
         var b = StanceCatalog.Get(id);
         return b != null && pose != null ? ResolveSpeedMult(b, 0f) : 1f;
+    }
+
+    /// <summary>Where a binding's hold frame falls in its clip on THIS visual, 0→1 (frame ÷ the clip's frame count);
+    /// 0 when it has none or the clip is absent.</summary>
+    float HoldPoint(StanceBinding b)
+    {
+        int total = pose != null ? pose.NaturalFrameCount(b.action, b.clip) : 0;
+        return b.holdAtFrame > 0 && total > 0 ? Mathf.Clamp01((float)b.holdAtFrame / total) : 0f;
     }
 
     /// <summary>The authored FRAME COUNT of a stance's clip on THIS visual, 0 if absent. Lets a caller turn an authored
@@ -383,7 +420,8 @@ public class StanceController : MonoBehaviour
                 // Spent here, not in the setter: it must be applied on the first frame this override actually
                 // renders, and cleared so the following frames do not keep snapping back to the entry point.
                 overrideSeekTo = -1f;
-                ApplyStance(ob, overrideWindow, forceFit: overrideFit, seekTo: seek);
+                var part = ob.holdAtFrame <= 0 ? ClipPart.AsAuthored : overrideFromHold ? ClipPart.FromHold : ClipPart.Whole;
+                ApplyStance(ob, overrideWindow, forceFit: overrideFit, seekTo: seek, part: part);
                 return;
             }
         }
@@ -405,19 +443,19 @@ public class StanceController : MonoBehaviour
         // 2) Highest-priority active, BAKED held stance. Ties break toward the most-recently pushed (active is in push
         // order, so scanning with >= keeps the later one). Zero-alloc index loop.
         StanceBinding best = null;
-        float bestWindow = 0f;
+        float bestWindow = 0f, bestSince = 0f;
         int bestPri = int.MinValue;
         for (int i = 0; i < active.Count; i++)
         {
             var b = StanceCatalog.Get(active[i].id);
             if (b == null || !pose.HasAction(b.action, b.clip)) continue;
-            if (b.priority >= bestPri) { bestPri = b.priority; best = b; bestWindow = active[i].window; }
+            if (b.priority >= bestPri) { bestPri = b.priority; best = b; bestWindow = active[i].window; bestSince = active[i].since; }
         }
         if (best != null)
         {
             bool fresh = currentResolved != best.id;
             driving = true; currentResolved = best.id;
-            ApplyStance(best, bestWindow, restart: fresh);
+            ApplyStance(best, bestWindow, restart: fresh, heldFor: Time.time - bestSince);
             return;
         }
 
@@ -437,20 +475,36 @@ public class StanceController : MonoBehaviour
     }
 
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
+    // Which part of a clip with a hold mark to play: as authored (held at the mark), all of it, or the rest after it.
+    enum ClipPart { AsAuthored, Whole, FromHold }
+
     void ApplyStance(StanceBinding b, float window, bool release = false, bool forceFit = false, float seekTo = -1f,
-                     bool restart = false)
+                     bool restart = false, ClipPart part = ClipPart.AsAuthored, float heldFor = 0f)
     {
         pose.SetShownStance(b.id);
         // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
         // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
         if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, ResolveSpeedMult(b, window)); return; }
-        // A HELD POSE THAT STOPS PART-WAY: the clip reaches holdAt, then stays on that frame for as long as the stance
+        // A HELD POSE THAT STOPS PART-WAY: the clip reaches its hold frame, then stays on that frame for as long as the stance
         // is held — the same phase drive the jump's airborne freeze uses. Fit Window = the body glides into that frame
         // across the whole window (a bow drawn over the cast); otherwise the clip plays up to it at its own speed.
-        if (b.holdAt > 0f)
+        float holdSeconds = b.holdAtFrame > 0 ? HoldPoint(b) * pose.NaturalDuration(b.action, b.clip) : 0f;
+        if (holdSeconds > 0f && part == ClipPart.FromHold)
         {
-            float glide = b.speedSource == StanceSpeedSource.FitWindow && window > 0.01f ? window : 0f;
-            pose.PlayClipPhase(b.action, b.clip, b.holdAt, false, ResolveSpeedMult(b, window), restart, glide);
+            pose.PlayClipPhase(b.action, b.clip, holdSeconds, true, ResolveSpeedMult(b, window, forceFit));
+            return;
+        }
+        // Fit Window: the clip starts at its own speed and eases out, slowing until it stops on the mark exactly as the
+        // window (the cast bar) ends. Otherwise it plays up to the mark at its own speed and waits there.
+        if (holdSeconds > 0f && part == ClipPart.AsAuthored)
+        {
+            if (b.speedSource == StanceSpeedSource.FitWindow && window > 0.01f)
+            {
+                float aim = HoldEase.ClipAt(heldFor + Time.deltaTime, window, holdSeconds);
+                pose.PlayClipPhase(b.action, b.clip, holdSeconds, false, HoldEase.Speed(heldFor, window, holdSeconds),
+                                   restart, aim);
+            }
+            else pose.PlayClipPhase(b.action, b.clip, holdSeconds, false, ResolveSpeedMult(b, window), restart);
             return;
         }
 
@@ -479,6 +533,39 @@ public class StanceController : MonoBehaviour
         // their own speed. Their saved speedSource is never read, so a movement buff or a root can never change how
         // long any other animation takes.
         else if (walkCycle && TryGroundLocked(b, out float locked)) m *= locked;
+        // ATTACK SPEED: sped up the way a basic attack swing is. Only this machine's own body reads its stats; a body
+        // watched from another machine is told how long the play came to (ReportActionBegan), so it fits that instead.
+        else if (b.speedSource == StanceSpeedSource.AttackSpeed && Player == this && Character.Instance != null)
+            m *= UnitOffense.EffectiveSpeedMult(Character.Instance.BaseSwingTime, Character.Instance.AttackSpeedMult);   // server-math: how fast this machine's own body plays an animation, from the attack speed the server told it
         return Mathf.Max(0.01f, m);
+    }
+}
+
+/// <summary>How a held clip plays into its hold frame across a window (a cast bar): the first half of the way at one
+/// steady speed, then an ease-out over the second half — the speed falling evenly to zero — that lands on the hold
+/// frame exactly as the window ends. The steady half takes the first third of the window and the ease the other two
+/// thirds, which is what makes the speed the same on both sides of the middle frame, so there is no jump where the
+/// slowing starts. The window alone sets the pace: the clip is fit to it.
+/// Numbers in, numbers out — how fast this machine's own body plays an animation, never a game number.</summary>
+public static class HoldEase
+{
+    /// <summary>How far into the clip it is <paramref name="elapsed"/> seconds into the window.</summary>
+    public static float ClipAt(float elapsed, float window, float clipSeconds)
+    {
+        if (window <= 0.01f || clipSeconds <= 0f) return clipSeconds;
+        float half = clipSeconds * 0.5f, steadyFor = window / 3f;
+        if (elapsed <= steadyFor) return half * Mathf.Max(0f, elapsed) / steadyFor;
+        float u = Mathf.Clamp01((elapsed - steadyFor) / (window - steadyFor));
+        return half + half * (1f - (1f - u) * (1f - u));
+    }
+
+    /// <summary>The speed the clip plays at <paramref name="elapsed"/> seconds into the window: 1.5 × clipSeconds ÷
+    /// window through the first third, then falling evenly to 0 at the window's end.</summary>
+    public static float Speed(float elapsed, float window, float clipSeconds)
+    {
+        if (window <= 0.01f || clipSeconds <= 0f) return 1f;
+        float steady = 1.5f * clipSeconds / window, steadyFor = window / 3f;
+        if (elapsed <= steadyFor) return steady;
+        return steady * (1f - Mathf.Clamp01((elapsed - steadyFor) / (window - steadyFor)));
     }
 }

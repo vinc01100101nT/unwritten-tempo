@@ -485,6 +485,16 @@ public class SkillTickBinding
     // change finishes on disk, so nothing is left needing a conversion.
 }
 
+/// <summary>Which of the held weapon's two skill animations a skill plays (<see cref="WeaponStances.SkillAnimationFor"/>).
+/// Serialized by int: 1 was the old "weapon's own attack" bool's true.</summary>
+public enum WeaponSkillAnimation
+{
+    None = 0,     // the skill plays its release cue instead
+    First = 1,
+    Second = 2,
+    Third = 3,
+}
+
 /// <summary>
 /// A data-authored SKILL — the output of the Skill Composer. It references a composed <see cref="VfxSequence"/>
 /// (the look, authored in the Vfx Composer) and binds each of its exposed <b>ticks</b> to gameplay
@@ -808,9 +818,12 @@ public class SkillDef : ScriptableObject
              "repeat's interval — so a repeating skill shows one WHOLE animation per beat instead of one animation " +
              "stretched across the run. Off = it plays once, when the skill fires. Does nothing if the skill never repeats.")]
     public bool releaseStanceReplayPerRepeat = false;
-    [Tooltip("ON = the release animation is the caster's OWN basic attack with the weapon in hand (a bow's draw and " +
-             "loose), instead of a release cue — for a skill whose shots are basic attacks. Needs a release animation on.")]
-    public bool releaseIsWeaponAttack = false;
+    [Tooltip("First / Second = the skill plays one of the two skill animations the weapon in hand owns, instead of a " +
+             "release cue: the part up to its mark is held through the cast time, the rest plays when the skill fires; " +
+             "an instant skill plays all of it. None = the release cue above. Needs a release animation on.")]
+    // Was the bool releaseIsWeaponAttack: its saved 1 reads as First, the weapon's attack that bool used to play.
+    [UnityEngine.Serialization.FormerlySerializedAs("releaseIsWeaponAttack")]
+    public WeaponSkillAnimation weaponSkillAnimation = WeaponSkillAnimation.None;
 
     [Header("Gameplay — one binding per tickId you want to matter")]
     public List<SkillTickBinding> bindings = new List<SkillTickBinding>();

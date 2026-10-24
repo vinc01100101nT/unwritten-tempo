@@ -1246,10 +1246,12 @@ public class SkillComposerWindow : EditorWindow
     {
         if (_skillTypeLabels != null) return _skillTypeLabels;
         var all = SkillReleaseStances.All;
-        _skillTypeLabels = new GUIContent[all.Length + 2];
+        _skillTypeLabels = new GUIContent[all.Length + 4];
         _skillTypeLabels[0] = new GUIContent("None (no release anim)");
         for (int i = 0; i < all.Length; i++) _skillTypeLabels[i + 1] = new GUIContent(SkillReleaseStances.Label(all[i]));
-        _skillTypeLabels[all.Length + 1] = new GUIContent("Weapon's own basic attack");
+        _skillTypeLabels[all.Length + 1] = new GUIContent("Weapon's skill animation 1");
+        _skillTypeLabels[all.Length + 2] = new GUIContent("Weapon's skill animation 2");
+        _skillTypeLabels[all.Length + 3] = new GUIContent("Weapon's skill animation 3");
         return _skillTypeLabels;
     }
 
@@ -1296,7 +1298,9 @@ public class SkillComposerWindow : EditorWindow
         EditorGUILayout.LabelField("Skill Release Animation", EditorStyles.miniBoldLabel);
         var all = SkillReleaseStances.All;
         int cur = 0;   // None
-        if (sel.hasReleaseStance && sel.releaseIsWeaponAttack) cur = all.Length + 1;
+        if (sel.hasReleaseStance && sel.weaponSkillAnimation == WeaponSkillAnimation.First) cur = all.Length + 1;
+        else if (sel.hasReleaseStance && sel.weaponSkillAnimation == WeaponSkillAnimation.Second) cur = all.Length + 2;
+        else if (sel.hasReleaseStance && sel.weaponSkillAnimation == WeaponSkillAnimation.Third) cur = all.Length + 3;
         else if (sel.hasReleaseStance)
         {
             int i = System.Array.IndexOf(all, sel.releaseStance);
@@ -1304,10 +1308,12 @@ public class SkillComposerWindow : EditorWindow
         }
         int next = EditorGUILayout.Popup(new GUIContent("release animation",
             "The animation the caster plays when this skill FIRES (after any cast wind-up). Bind each cue to a clip in " +
-            "the Stance Composer."), cur, SkillTypeLabels());
-        if (next == 0) { sel.hasReleaseStance = false; sel.releaseIsWeaponAttack = false; }
-        else if (next == all.Length + 1) { sel.hasReleaseStance = true; sel.releaseIsWeaponAttack = true; }
-        else { sel.hasReleaseStance = true; sel.releaseIsWeaponAttack = false; sel.releaseStance = all[next - 1]; }
+            "the Stance Composer; each weapon's two skill animations are on its rows there."), cur, SkillTypeLabels());
+        if (next == 0) { sel.hasReleaseStance = false; sel.weaponSkillAnimation = WeaponSkillAnimation.None; }
+        else if (next == all.Length + 1) { sel.hasReleaseStance = true; sel.weaponSkillAnimation = WeaponSkillAnimation.First; }
+        else if (next == all.Length + 2) { sel.hasReleaseStance = true; sel.weaponSkillAnimation = WeaponSkillAnimation.Second; }
+        else if (next == all.Length + 3) { sel.hasReleaseStance = true; sel.weaponSkillAnimation = WeaponSkillAnimation.Third; }
+        else { sel.hasReleaseStance = true; sel.weaponSkillAnimation = WeaponSkillAnimation.None; sel.releaseStance = all[next - 1]; }
 
         if (sel.hasReleaseStance)
         {

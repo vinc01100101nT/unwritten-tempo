@@ -56,6 +56,15 @@ public static class SkillCatalog
         return orderedIds;
     }
 
+    /// <summary>A skill's place in <see cref="All"/>, counted from 1 (0 = not in it). Never bigger than the number of
+    /// skills; the same for as long as the list is loaded.</summary>
+    public static int NumberOf(SkillDef def)
+    {
+        EnsureLoaded();
+        for (int i = 0; i < all.Length; i++) if (all[i] == def) return i + 1;
+        return 0;
+    }
+
     /// <summary>Drop the cache so a freshly built/edited asset is picked up (editor tools call this).</summary>
     public static void Reload() { byId = null; all = null; orderedIds = null; Trademarks.Forget(); OrbCombos.Forget(); }
 }

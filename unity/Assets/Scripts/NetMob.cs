@@ -579,7 +579,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
             viewBillboard.TellTravel(netSpeed > 0f, netHeading);
             // A FLAT CHARACTER'S POSES, from the same beats a live-3D body plays: its casting picture while a wind-up is
             // held, and its attack picture for a swing — each swing once, and only while it is fresh.
-            viewBillboard.HoldCast(netHasHeld && WeaponStances.IsCast(netHeld));
+            viewBillboard.HoldCast(netHasHeld && (WeaponStances.IsCast(netHeld) || WeaponStances.IsWeaponSkillAnimation(netHeld)));
             if (netActionAt > 0d && netActionAt != poseShownAt)
             {
                 poseShownAt = netActionAt;

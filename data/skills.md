@@ -139,7 +139,7 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | `Sr` | Scattered Rain | active | MP **12**  CD **6s**  Instant  Range **11** | pressed | Deals **1×** physical damage |
 | `Sl` | Slipstream | passive | MP **0**  CD **0s**  Instant | When you dodge an attack | Your next basic attack can't miss within **4s** |
 | `Ss` | Sun Shower | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Deals **0.7×** physical damage |
-| `Sk` | Sunbreak | active | MP **12**  CD **6s**  Instant  Range **11** | pressed | Deals **1×** physical damage, +**0.01×** per 1% movement speed bonus while moving |
+| `Sk` | Silver Lining | active | MP **6**  CD **0s**  Instant  Range **11** | pressed | Deals **0.5×** physical damage, **2×** hits, +**0.005×** per 1% movement speed bonus |
 | `Th` | Thunderhead | **ULT** | MP **40**  CD **50s**  Cast **1.5s**  Range **13** | pressed | Deals **5×** physical damage, +**0.075×** per point of hit chance above 100% (up to 100) |
 | `Ud` | Updraft | active | MP **8**  CD **5s**  Instant  Range **5** | pressed | Dashes to the target location |
 | `Ws` | Wandering Sky | **ULT** | MP **40**  CD **55s**  Instant | pressed | +**12%** evasion for **20s** · +**45%** movement speed for **20s** |

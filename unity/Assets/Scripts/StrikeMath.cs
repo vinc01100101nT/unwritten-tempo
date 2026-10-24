@@ -47,11 +47,10 @@ public static class StrikeMath
     public static float CritBonus(float always, float vsSlowed, float targetMoveMult) =>
         Mathf.Max(0f, always) + (targetMoveMult < 1f ? Mathf.Max(0f, vsSlowed) : 0f);
 
-    /// <summary>How many points of movement-speed bonus a caster has right now, as a percent (a ×1.45 pace = 45) — 0
-    /// when standing still, so a growth on it only pays while moving. Never negative: a slowed caster gets nothing,
-    /// not a penalty. It stops by itself at the speed cap (<see cref="UnitStatMath.MaxMoveMult"/>).</summary>
-    public static float SpeedBonusPoints(float moveMult, bool moving) =>
-        moving ? Mathf.Max(0f, moveMult - 1f) * 100f : 0f;
+    /// <summary>How many points of movement-speed bonus a caster has right now, as a percent (a ×1.45 pace = 45),
+    /// moving or standing still (the user, 2026-10-24). Never negative: a slowed caster gets nothing, not a penalty.
+    /// It stops by itself at the speed cap (<see cref="UnitStatMath.MaxMoveMult"/>).</summary>
+    public static float SpeedBonusPoints(float moveMult) => Mathf.Max(0f, moveMult - 1f) * 100f;
 
     /// <summary>The straight-line distance between two units' positions, in metres.</summary>
     public static float Metres(Vector3 from, Vector3 to) => Vector3.Distance(from, to);

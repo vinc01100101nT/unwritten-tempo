@@ -31,6 +31,8 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     looping: 0
     stopPreviousOnReplay: 0
+    faceAim: 0
+    leaveParticlesBehind: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: rain
@@ -65,7 +67,7 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     scatter: 0
     rotationEuler: {x: 0, y: 0, z: 0}
-    effectId: aoe.thundercloud-prewarm
+    effectId: aoe.plexus
     scale: 0.6
     speed: 1
     trimEnd: 0
@@ -73,6 +75,8 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     looping: 0
     stopPreviousOnReplay: 1
+    faceAim: 0
+    leaveParticlesBehind: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 
