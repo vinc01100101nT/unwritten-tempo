@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.octi-beak
   displayName: Octi Beak
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 2f4796ed7ddf19b44890480eb1158749, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

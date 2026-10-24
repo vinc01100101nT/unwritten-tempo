@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-gillie-fin
   displayName: Blighted Gillie Fin
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: e662164305b3d1b42bdca4e7d6e1dfda, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

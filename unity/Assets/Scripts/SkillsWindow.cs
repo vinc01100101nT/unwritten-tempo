@@ -23,8 +23,10 @@ public class SkillsWindow : MonoBehaviour
 {
 
     // The timeline: pixels per mastery level, the left margin, one skill's box, one row, the ruler's height.
-    const float Px = 20f, Left = 14f, NodeW = 92f, NodeH = 44f, Lane = 50f, RulerH = 34f, TileSize = 22f;
-    const float Unreached = 0.3f;
+    // A box is wide enough for a two-word name on one line beside its icon.
+    const float Px = 20f, Left = 14f, NodeW = 124f, NodeH = 44f, Lane = 50f, RulerH = 34f, TileSize = 30f;
+    // A skill the mastery has not reached yet is dimmed — but still readable, so the player can plan toward it.
+    const float Unreached = 0.55f;
 
     static ThemeColor LineBg     => UiKit.Rule;
     static ThemeColor LockedTile => UiKit.Rule;
@@ -140,19 +142,49 @@ public class SkillsWindow : MonoBehaviour
     {
         var col = NewRect("WeaponList", content);
         UiKit.Fill(col, Vector2.zero, Vector2.zero);
-        var vlg = col.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 8; vlg.padding = new RectOffset(4, 4, 4, 4);
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
-        vlg.childAlignment = TextAnchor.UpperCenter;
+        // TWO CARDS ACROSS: all fourteen weapons, once each has skills, fit the window in seven rows without scrolling.
+        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        float width = content.rect.width > 0f ? content.rect.width : 744f;
+        var grid = col.gameObject.AddComponent<GridLayoutGroup>();
+        grid.padding = new RectOffset(4, 4, 4, 4);
+        grid.spacing = new Vector2(8f, 8f);
+        grid.cellSize = new Vector2((width - 8f - 8f) * 0.5f, WeaponCardH);
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = 2;
+        grid.childAlignment = TextAnchor.UpperCenter;
 
+        // ONE CARD PER WEAPON — the shop's item row (ItemRow), showing the weapon item's own picture, its name, its
+        // mastery and the points waiting to be spent, every number as the server sent it. A click opens its skills.
+        var me = Character.Instance;
+        var mastery = me != null ? me.Mastery : null;
         var weapons = WeaponsWithSkills();
         for (int i = 0; i < weapons.Count; i++)
         {
             var w = weapons[i];
-            var btn = UiKit.Btn(WeaponTypes.Label(w) + " Skills", col, () => { UISounds.PlayClick(); Show(w); });
-            btn.gameObject.AddComponent<LayoutElement>().preferredHeight = 40;
+            var holder = NewRect("Weapon_" + w, col);
+            var card = ItemRow.Make(holder, WeaponCardH, interactive: false, raritySquare: false);
+            int level = mastery != null ? mastery.SentLevel(w) : 0;
+            int points = mastery != null ? mastery.SentPointsLeft(w) : 0;
+            card.Show(WeaponItem(w), null, Rarity.Common, WeaponTypes.Label(w) + " Skills", "Mastery " + level,
+                      null, UiKit.TextDim, points > 0 ? points + (points == 1 ? " point to spend" : " points to spend") : null, "");
+            var edge = card.root.GetComponent<Image>();
+            edge.raycastTarget = true;
+            card.root.gameObject.AddComponent<UiButtonFx>();
+            var btn = card.root.gameObject.AddComponent<Button>();
+            btn.transition = Selectable.Transition.None;
+            btn.onClick.AddListener(() => { UISounds.PlayClick(); Show(w); });
         }
+    }
+
+    const float WeaponCardH = 56f;
+
+    // The weapon item of a kind — its picture is the weapon's face here. Null when no item of that kind exists.
+    static Item WeaponItem(WeaponType w)
+    {
+        var all = ItemCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+            if (all[i] != null && all[i].slot == EquipSlotType.Weapon && all[i].weaponType == w) return all[i];
+        return null;
     }
 
     void BuildTimeline(WeaponType weapon, Vector2 keepScroll)
@@ -206,7 +238,7 @@ public class SkillsWindow : MonoBehaviour
 
         // The timeline itself, scrolling both ways.
         var viewport = UiKit.Img("TimelineView", content, new Color(0, 0, 0, 0)).rectTransform;
-        UiKit.Fill(viewport, new Vector2(0, 14), new Vector2(0, -(38 + RulerH)));
+        UiKit.Fill(viewport, new Vector2(0, 14), new Vector2(-12, -(38 + RulerH)));
         viewport.gameObject.AddComponent<RectMask2D>();
         scroll = viewport.gameObject.AddComponent<ScrollRect>();
         scroll.horizontal = scroll.vertical = true;
@@ -216,8 +248,11 @@ public class SkillsWindow : MonoBehaviour
         TopLeft(track, 0, 0, trackW, trackH);
         scroll.viewport = viewport;
         scroll.content = track;
-        scroll.horizontalScrollbar = NewScrollbar();
+        scroll.horizontalScrollbar = NewScrollbar(false);
         scroll.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+        // AND UP AND DOWN: a weapon with more rows than the window holds has them below the edge, reached by this.
+        scroll.verticalScrollbar = NewScrollbar(true);
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
         var follow = rulerTrack;
         scroll.onValueChanged.AddListener(_ => { if (follow != null) follow.anchoredPosition = new Vector2(track.anchoredPosition.x, follow.anchoredPosition.y); });
 
@@ -537,12 +572,21 @@ public class SkillsWindow : MonoBehaviour
     }
 
     // The thin bar along the timeline's bottom edge that shows, and drags, where along the mastery levels it is.
-    Scrollbar NewScrollbar()
+    Scrollbar NewScrollbar(bool vertical)
     {
-        var track = UiKit.Round(UiKit.Img("HorizontalScroll", content, LineBg), 3);
+        var track = UiKit.Round(UiKit.Img(vertical ? "VerticalScroll" : "HorizontalScroll", content, LineBg), 3);
         var rt = track.rectTransform;
-        rt.anchorMin = new Vector2(0, 0); rt.anchorMax = new Vector2(1, 0); rt.pivot = new Vector2(0.5f, 0);
-        rt.sizeDelta = new Vector2(0, 8); rt.anchoredPosition = new Vector2(0, 2);
+        if (vertical)
+        {
+            // Down the right side, between the ruler and the sideways bar.
+            rt.anchorMin = new Vector2(1, 0); rt.anchorMax = new Vector2(1, 1); rt.pivot = new Vector2(1, 0.5f);
+            rt.offsetMin = new Vector2(-8, 14); rt.offsetMax = new Vector2(0, -(38 + RulerH));
+        }
+        else
+        {
+            rt.anchorMin = new Vector2(0, 0); rt.anchorMax = new Vector2(1, 0); rt.pivot = new Vector2(0.5f, 0);
+            rt.sizeDelta = new Vector2(0, 8); rt.anchoredPosition = new Vector2(0, 2);
+        }
         var area = NewRect("Area", rt);
         UiKit.Fill(area, Vector2.zero, Vector2.zero);
         var handle = UiKit.Round(UiKit.Img("Handle", area, UiKit.WindowEdge), 3);
@@ -550,7 +594,7 @@ public class SkillsWindow : MonoBehaviour
         var bar = track.gameObject.AddComponent<Scrollbar>();
         bar.handleRect = handle.rectTransform;
         bar.targetGraphic = handle;
-        bar.direction = Scrollbar.Direction.LeftToRight;
+        bar.direction = vertical ? Scrollbar.Direction.BottomToTop : Scrollbar.Direction.LeftToRight;
         return bar;
     }
 

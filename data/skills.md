@@ -64,83 +64,83 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 
 | Symbol | Skill | Tier | Cost | When | What it does |
 | --- | --- | --- | --- | --- | --- |
-| `Tp` | Thousand Petals | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1×** physical damage · Parries the next hit within **8s** — no damage taken · +**1%** damage per stack for **8s** · Dashes to the target location |
+| `Tp` | Thousand Petals | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **0.6×** physical damage · Parries the next hit within **8s** — no damage taken · +**1%** damage per stack for **8s** · Dashes to the target location |
 | `Hb` | Held Breath | active | MP **12**  CD **7s**  Instant | pressed | Delays the next **5** hits within **4s** — the delayed damage all lands at once when the window ends |
 | `Hw` | Howling Wind | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Taunts nearby enemies for **5s** |
-| `Sp` | Single Petal | active | MP **16**  CD **8s**  Cast **1.2s**  Range **5** | pressed | Deals **2×** physical damage |
+| `Sp` | Single Petal | active | MP **16**  CD **8s**  Cast **1.2s**  Range **5** | pressed | Deals **2.75×** physical damage |
 | `Es` | Eye of the Storm | passive | MP **0**  CD **0s**  Instant | When you parry | +2 MP regen for **4s** |
-| `Lp` | Last Petal | **ULT** | MP **40**  CD **60s**  Cast **1s**  Range **5** | pressed | Deals **6×** physical damage **+ 0.4 × stacks** |
-| `St` | Stripped Bough | active | MP **12**  CD **9s**  Instant  Range **5** | pressed | Deals **1×** physical damage · Their next attack deals −**40%** damage within **6s** |
-| `Sb` | Second Bloom | passive | MP **0**  CD **0s**  Instant | When you kill a mob | Adds **7** to **Thousand Petals** |
+| `Lp` | Last Petal | **ULT** | MP **40**  CD **60s**  Cast **1s**  Range **5** | pressed | Deals **7.8×** physical damage **+ 0.4 × stacks** |
+| `St` | Stripped Bough | active | MP **12**  CD **9s**  Instant  Range **5** | pressed | Deals **1.25×** physical damage · Their next attack deals −**40%** damage within **6s** |
+| `Sb` | Second Bloom | passive | MP **0**  CD **0s**  Instant | When you kill a mob | Adds **4** to **Thousand Petals** |
 | `Tw` | Tailwind | passive | MP **0**  CD **0s**  Instant  Range **1** | When a basic attack lands | Adds **1** to **Rising Breeze** |
-| `Sa` | Still Air | active | MP **12**  CD **9s**  Instant | pressed | +**6%** defense for **6s** · +**6%** magic defense for **6s** |
+| `Sa` | Still Air | active | MP **12**  CD **9s**  Instant | pressed | Removes **8** debuff(s) · +**4%** defense for **6s** · +**4%** magic defense for **6s** · Heals **10%** of max HP |
 | `Bb` | Bare Branch | passive | MP **0**  CD **0s**  Instant | When your HP drops low | Adds **5** to **Held Breath** |
-| `Cb` | Crossed Branches | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Piercing Gust | Gives **5** charges for **5s** |
-| `Pg` | Piercing Gust | active | MP **8**  CD **5s**  Instant  Range **8** | When you start a basic attack | Dashes to the target location · Deals **1×** physical damage |
+| `Cb` | Crossed Branches | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Piercing Gust | Gives **1** charge for **0.6s** |
+| `Pg` | Piercing Gust | active | MP **8**  CD **5s**  Instant  Range **8** | When you start a basic attack | Dashes to the target location · Deals **0.2×** physical damage |
 | `Rb` | Rising Breeze | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**3%** damage per stack for **5s** |
-| `Sc` | Scattered Petals | active | MP **12**  CD **8s**  Instant  Range **5** | pressed | Deals **1×** physical damage · −**30%** attack speed for **5s** |
+| `Sc` | Scattered Petals | active | MP **12**  CD **8s**  Instant  Range **5** | pressed | Deals **1×** physical damage · −**11%** attack speed for **5s** |
 | `Ps` | Petal Storm | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | +**1%** damage per stack for **5s** · Deals **1×** physical damage |
-| `Pc` | Parting Clouds | passive | MP **0**  CD **0s**  Instant  Range **11** | When you parry | **50%** per hit: your next attack deals +**200%** damage within **5s** |
-| `Sq` | Squall | active | MP **12**  CD **12s**  Instant | pressed | +**30%** attack speed for **8s** · −**6%** defense for **3s** · −**6%** magic defense for **3s** |
-| `Br` | Bending Reed | active | MP **8**  CD **5s**  Instant | pressed | Parries the next hit within **3s** — no damage taken |
-| `Hd` | Headwind | passive | MP **0**  CD **0s**  Instant  Range **11** | When you deal damage | −3 HP regen per stack for **5s** |
-| `Rw` | Returning Wind | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1×** physical damage, **5×** hits **+ 2.5 × banked total** |
-| `Dr` | Deep Roots | passive | MP **0**  CD **0s**  Instant | After casting Still Air | Nothing stops you for **6s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts |
+| `Pc` | Parting Clouds | passive | MP **0**  CD **0s**  Instant  Range **11** | When you parry | **50%** per hit: your next attack deals +**100%** damage within **5s** |
+| `Sq` | Squall | active | MP **12**  CD **12s**  Instant | pressed | +**45%** attack speed for **8s** · −**6%** defense for **3s** · −**6%** magic defense for **3s** |
+| `Br` | Bending Reed | active | MP **8**  CD **5s**  Instant | pressed | Parries the next **2** hits within **3s** — no damage taken |
+| `Hd` | Headwind | passive | MP **0**  CD **0s**  Instant  Range **11** | When you deal damage | −1.3 HP regen per stack for **5s** |
+| `Rw` | Returning Wind | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1.38×** physical damage, **5×** hits **+ 2.5 × banked total** |
+| `Dr` | Deep Roots | passive | MP **0**  CD **0s**  Instant | After casting Still Air | Nothing stops you for **3s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts |
 
 ## Staff  —  colour `#3C3C3C`
 
 | Symbol | Skill | Tier | Cost | When | What it does |
 | --- | --- | --- | --- | --- | --- |
-| `As` | Ashfall *(unpublished)* | **ULT** | MP **40**  CD **55s**  Cast **1.2s**  Range **11** | pressed | Deals **2.6×** magic damage, **+0.5×** magic damage for every Stone on the target (left in place) · Deals **0.3×** magic damage |
-| `Bf` | Brushfire *(unpublished)* | active | MP **14**  CD **10s**  Cast **0.6s**  Range **10** | pressed | Deals **0.25×** magic damage · Burn **2**/tick for **10s** |
+| `As` | Ashfall *(unpublished)* | **ULT** | MP **40**  CD **55s**  Cast **1.2s**  Range **11** | pressed | Deals **0.23×** magic damage, **+0.11×** magic damage for every Stone on the target (left in place) · Deals **0.07×** magic damage |
+| `Bf` | Brushfire *(unpublished)* | active | MP **14**  CD **10s**  Cast **0.6s**  Range **10** | pressed | Deals **0.21×** magic damage · Burn **1**/tick for **10s** |
 | `Dl` | Deluge *(unpublished)* | active | MP **16**  CD **8s**  Cast **0.8s**  Range **10** | pressed | Deals **0.07×** magic damage, **21×** hits · Puts out the target's burn, and the burn damage it had left lands at once, ×**1.5** |
 | `GS` | Ground Strike *(unpublished)* | active | MP **12**  CD **8s**  Cast **0.3s** | pressed | Grounds the target's Static: **+0.4×** magic damage per stack · Their next attack deals −**20%** damage within **10s** — one for every Static the target carried, only on one that carried any |
-| `Dd` | Dust Devil *(unpublished)* | **ULT** | MP **40**  CD **50s**  Instant | pressed | Deals **0.9×** magic damage, **+0.15×** magic damage for every Chill on the target (left in place) |
-| `Er` | Eruption *(unpublished)* | active | MP **12**  CD **15s**  Cast **1s**  Range **10** | pressed | Every Burn on the target lasts **10s** longer and grows **20%** stronger · Every Stone on the target lasts **10s** longer and grows **20%** stronger · Every Static on the target lasts **10s** longer and grows **20%** stronger · Every Chill on the target lasts **10s** longer |
-| `Gy` | Geyser *(unpublished)* | active | MP **16**  CD **9s**  Cast **0.3s**  Range **8** | pressed | Deals **0.03×** magic damage, **21×** hits · Deals **0.03×** magic damage, **21×** hits · Deals **0.03×** magic damage, **21×** hits · Blinks to the target location · Deals **0.03×** magic damage, **21×** hits · Deals **0.03×** magic damage, **21×** hits · Deals **0.03×** magic damage, **21×** hits |
-| `Ho` | Hoarfrost *(unpublished)* | active | MP **12**  CD **8s**  Cast **0.3s** | pressed | Deals **0.04×** magic damage, **14×** hits · Carries the target's Chill to every enemy within **2.5m**, never past its own count — each slows **15%** |
-| `Eq` | Earthquake *(unpublished)* | **ULT** | MP **40**  CD **50s**  Cast **1s**  Range **10** | pressed | Deals **0.75×** magic damage, **+0.06×** magic damage for every Static on the target (left in place) |
+| `Dd` | Dust Devil *(unpublished)* | **ULT** | MP **40**  CD **50s**  Instant | pressed | Deals **0.45×** magic damage, **+0.08×** magic damage for every Chill on the target (left in place) |
+| `Er` | Eruption *(unpublished)* | active | MP **12**  CD **15s**  Cast **1s**  Range **10** | pressed | Deals **1.9×** magic damage · Every Burn on the target lasts **10s** longer and grows **20%** stronger · Every Stone on the target lasts **10s** longer and grows **20%** stronger · Every Static on the target lasts **10s** longer and grows **20%** stronger · Every Chill on the target lasts **10s** longer |
+| `Gy` | Geyser *(unpublished)* | active | MP **16**  CD **9s**  Cast **0.3s**  Range **8** | pressed | Deals **0.01×** magic damage, **21×** hits · Deals **0.01×** magic damage, **21×** hits · Deals **0.01×** magic damage, **21×** hits · Blinks to the target location · Deals **0.01×** magic damage, **21×** hits · Deals **0.01×** magic damage, **21×** hits · Deals **0.01×** magic damage, **21×** hits |
+| `Ho` | Hoarfrost *(unpublished)* | active | MP **12**  CD **8s**  Cast **0.3s** | pressed | Deals **0.07×** magic damage, **14×** hits · Carries the target's Chill to every enemy within **2.5m**, never past its own count — each slows **15%** |
+| `Eq` | Earthquake *(unpublished)* | **ULT** | MP **40**  CD **50s**  Cast **1s**  Range **10** | pressed | Deals **0.49×** magic damage, **+0.05×** magic damage for every Static on the target (left in place) |
 | `Me` | Meteor *(unpublished)* | active | MP **16**  CD **8s**  Cast **1s**  Range **11** | pressed | Deals **2×** magic damage · Melts the target's Stone: **+0.5×** magic damage per charge |
-| `Ob` | Obsidian *(unpublished)* | active | MP **12**  CD **8s**  Cast **0.3s** | pressed | Melts the target's Stone: **+0.4×** magic damage per charge · Their next **5** attacks deal −**20%** damage within **10s** — only on a target that carried Stone |
+| `Ob` | Obsidian *(unpublished)* | active | MP **12**  CD **8s**  Cast **0.3s** | pressed | Melts the target's Stone: **+0.4×** magic damage per charge · Their next **3** attacks deal −**20%** damage within **10s** — only on a target that carried Stone |
 | `Eo` | Earth Orb | active | MP **0**  CD **0s**  Instant | pressed | Holds one **Earth** orb: +**4%** defence while a Staff is in hand (three orbs at most, the oldest drops) |
 | `Fo` | Fire Orb | active | MP **0**  CD **0s**  Instant | pressed | Holds one **Fire** orb: +**4%** magic attack while a Staff is in hand (three orbs at most, the oldest drops) |
 | `Ao` | Water Orb | active | MP **0**  CD **0s**  Instant | pressed | Holds one **Water** orb: +**4%** max MP while a Staff is in hand (three orbs at most, the oldest drops) |
 | `Wo` | Wind Orb | active | MP **0**  CD **0s**  Instant | pressed | Holds one **Wind** orb: +**4%** cast speed while a Staff is in hand (three orbs at most, the oldest drops) |
-| `Pf` | Permafrost *(unpublished)* | active | MP **14**  CD **10s**  Cast **0.6s**  Range **10** | pressed | Adds **1** Chill for **4s** — each slows **15%**, **3** freeze for **10s**. Not on a burning target · Deals **1.2×** magic damage |
+| `Pf` | Permafrost *(unpublished)* | active | MP **14**  CD **10s**  Cast **0.6s**  Range **10** | pressed | Adds **1** Chill for **4s** — each slows **15%**, **3** freeze for **10s**. Not on a burning target · Deals **0.4×** magic damage |
 | `Re` | Release *(unpublished)* | active | MP **0**  CD **0s**  Instant | pressed |  |
-| `Er` | Erosion *(unpublished)* | active | MP **12**  CD **9s**  Cast **0.5s**  Range **10** | pressed | Deals **0.8×** magic damage · −**15%** magic defense for **6s** · Drains up to **30** MP and gives it to you |
+| `Er` | Erosion *(unpublished)* | active | MP **12**  CD **9s**  Cast **0.5s**  Range **10** | pressed | Deals **0.8×** magic damage · −**5%** magic defense for **6s** · Drains up to **10** MP and gives it to you |
 | `Ss` | Sandstorm *(unpublished)* | active | MP **16**  CD **8s**  Cast **0.8s**  Range **10** | pressed | Deals **0.07×** magic damage, **19×** hits · , **19×** hits. Grounds the target's Static: **+0.02×** magic damage per stack |
 | `Sc` | Scald *(unpublished)* | active | MP **12**  CD **8s**  Cast **0.3s** | pressed | Puts out the target's burn: **+0.4×** magic damage per burn stack · Adds **1** Chill for **4s** — each slows **15%**, **3** freeze for **10s**. Not on a burning target — only on a target that carried Burn |
-| `HL` | Heat Lightning *(unpublished)* | active | MP **14**  CD **10s**  Cast **0.6s**  Range **10** | pressed | Deals **0.25×** magic damage · Adds **2** Static for **10s** — each cuts attack speed **6%**, up to **5** |
-| `Sl` | Stalactite *(unpublished)* | active | MP **12**  CD **6s**  Cast **0.6s**  Range **10** | pressed | Deals **0.6×** magic damage · Their next attack deals −**20%** damage within **10s** |
+| `HL` | Heat Lightning *(unpublished)* | active | MP **14**  CD **10s**  Cast **0.6s**  Range **10** | pressed | Deals **0.25×** magic damage · Adds **2** Static for **10s** — each cuts attack speed **2%**, up to **5** |
+| `Sl` | Stalactite *(unpublished)* | active | MP **12**  CD **6s**  Cast **0.6s**  Range **10** | pressed | Deals **0.88×** magic damage · Their next attack deals −**20%** damage within **10s** |
 | `We` | Weathering *(unpublished)* | active | MP **40**  CD **55s**  Cast **0.5s**  Range **10** | pressed | The last combination you cast is ready again at once, ultimates included · Deals **0.4×** magic damage · Deals **0.4×** magic damage · Deals **0.4×** magic damage |
-| `Wh` | Whiteout *(unpublished)* | **ULT** | MP **40**  CD **55s**  Cast **1s**  Range **10** | pressed | Deals **0.8×** magic damage, +**0.0008×** per point of your max MP (up to +2×), **+0.15×** magic damage for every Burn on the target (left in place) |
+| `Wh` | Whiteout *(unpublished)* | **ULT** | MP **40**  CD **55s**  Cast **1s**  Range **10** | pressed | Deals **0.42×** magic damage, +**0.0008×** per point of your max MP (up to +2×), **+0.1×** magic damage for every Burn on the target (left in place) |
 | `Wi` | Windshear *(unpublished)* | active | MP **16**  CD **8s**  Cast **0.6s**  Range **10** | pressed | Scatters the target's Chill: **+0.4×** magic damage per stack, a frozen target shatters as **6** · Deals **1.4×** magic damage |
 
 ## Bow  —  colour `#2F7FD1`
 
 | Symbol | Skill | Tier | Cost | When | What it does |
 | --- | --- | --- | --- | --- | --- |
-| `Cy` | Clear Sky | active | MP **12**  CD **12s**  Instant | pressed | +**30%** accuracy for **7s** |
-| `Cc` | Cloud Cover | passive | MP **0**  CD **0s**  Instant | After casting Updraft | +**7%** evasion for **4s** |
-| `Cl` | Cloudburst | **ULT** | MP **40**  CD **50s**  Instant | pressed | Gives **1** charge for **6s** · Deals **0.4×** physical damage |
-| `Fw` | Fair Weather | passive | MP **0**  CD **0s**  Instant | When your HP drops low | **Updraft** is ready again at once |
-| `Gc` | Gathering Clouds | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**1%** accuracy per stack for **6s** |
-| `Gf` | Gust Front | passive | MP **0**  CD **0s**  Instant | When you kill a mob | +**15%** movement speed for **3s** |
-| `Hs` | Hailstone | active | MP **16**  CD **8s**  Cast **1s**  Range **13** | pressed | Deals **2.2×** physical damage, +**25%** crit chance, +**25%** more crit chance against a slowed target |
-| `Hc` | High Cirrus | active | MP **12**  CD **12s**  Instant | pressed | +**30%** movement speed for **7s** · +**20%** attack speed for **7s** |
+| `Cy` | Clear Sky | active | MP **12**  CD **45s**  Instant | pressed | +**30%** accuracy for **30s** |
+| `Cc` | Cloud Cover | passive | MP **0**  CD **0s**  Instant | After casting Updraft | +**12%** evasion for **4s** |
+| `Cl` | Cloudburst | **ULT** | MP **40**  CD **50s**  Instant | pressed | Gives **1** charge for **6s** · Deals **0.6×** physical damage |
+| `Fw` | Fair Weather | passive | MP **0**  CD **0s**  Instant | When your HP drops low | **Updraft** is ready again at once · +**20%** evasion for **10s** |
+| `Gc` | Gathering Clouds | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**2%** accuracy per stack for **6s** |
+| `Gf` | Gust Front | passive | MP **0**  CD **0s**  Instant | When you kill a mob | +**15%** movement speed for **15s** |
+| `Hs` | Hailstone | active | MP **16**  CD **8s**  Cast **1s**  Range **13** | pressed | Deals **2.85×** physical damage, +**25%** crit chance, +**25%** more crit chance against a slowed target |
+| `Hc` | High Cirrus | active | MP **12**  CD **12s**  Instant | pressed | +**50%** movement speed for **7s** · +**20%** attack speed for **7s** |
 | `Js` | Jet Stream | active | MP **12**  CD **7s**  Cast **2s**  Range **12** | pressed | Deals **1.3×** physical damage |
-| `Lc` | Low Cloud | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Deals **1.2×** physical damage · −**25%** movement speed for **4s** |
+| `Lc` | Low Cloud | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Deals **2.05×** physical damage · −**25%** movement speed for **4s** |
 | `Nb` | Nimbus | passive | MP **0**  CD **0s**  Instant | When you take damage | +**4%** evasion for **3s** |
-| `Oc` | Overcast | active | MP **12**  CD **10s**  Instant  Range **11** | pressed | −**25%** accuracy for **5s** |
-| `Pt` | Petrichor | passive | MP **0**  CD **0s**  Instant | When you kill a mob | Extends **Cloudburst** by **1s** |
-| `Rs` | Rain Shadow | passive | MP **0**  CD **0s**  Instant | After casting Updraft | Your next **3** basic attacks deal +**40%** damage within **5s** |
-| `Ra` | Rainbow | active | MP **12**  CD **7s**  Instant  Range **11** | pressed | Deals **0.15×** physical damage, **12×** hits, +**0.004×** per metre to the target |
-| `Sr` | Scattered Rain | active | MP **12**  CD **6s**  Instant  Range **11** | pressed | Deals **1×** physical damage |
-| `Sl` | Slipstream | passive | MP **0**  CD **0s**  Instant | When you dodge an attack | Your next basic attack can't miss within **4s** |
-| `Ss` | Sun Shower | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Deals **0.7×** physical damage |
-| `Sk` | Silver Lining | active | MP **6**  CD **0s**  Instant  Range **11** | pressed | Deals **0.5×** physical damage, **2×** hits, +**0.005×** per 1% movement speed bonus |
-| `Th` | Thunderhead | **ULT** | MP **40**  CD **50s**  Cast **1.5s**  Range **13** | pressed | Deals **5×** physical damage, +**0.075×** per point of hit chance above 100% (up to 100) |
+| `Oc` | Overcast | active | MP **12**  CD **10s**  Instant  Range **11** | pressed | −**40%** accuracy for **6s** |
+| `Pt` | Petrichor | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | Extends **Cloudburst** by **0.4s** |
+| `Rs` | Rain Shadow | passive | MP **0**  CD **0s**  Instant | After casting Updraft | Your next **3** basic attacks deal +**17%** damage within **5s** |
+| `Ra` | Rainbow | active | MP **12**  CD **7s**  Instant  Range **11** | pressed | Deals **0.08×** physical damage, **12×** hits, +**0.004×** per metre to the target |
+| `Sr` | Scattered Rain | active | MP **12**  CD **6s**  Instant  Range **11** | pressed | Deals **0.78×** physical damage |
+| `Sl` | Slipstream | passive | MP **0**  CD **0s**  Instant | When you dodge an attack | Your next **3** basic attacks can't miss within **3s** |
+| `Ss` | Sun Shower | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Deals **0.58×** physical damage |
+| `Sk` | Silver Lining | active | MP **6**  CD **0s**  Instant  Range **11** | pressed | Deals **0.59×** physical damage, **2×** hits, +**0.005×** per 1% movement speed bonus |
+| `Th` | Thunderhead | **ULT** | MP **40**  CD **50s**  Cast **1.5s**  Range **13** | pressed | Deals **9.3×** physical damage, +**0.075×** per point of hit chance above 100% (up to 100) |
 | `Ud` | Updraft | active | MP **8**  CD **5s**  Instant  Range **5** | pressed | Dashes to the target location |
 | `Ws` | Wandering Sky | **ULT** | MP **40**  CD **55s**  Instant | pressed | +**12%** evasion for **20s** · +**45%** movement speed for **20s** |
 | `Ws` | Wandering Sky *(unpublished)* | passive | MP **0**  CD **0s**  Instant  Range **0** | When you dodge an attack | Deals **1.5×** physical damage |

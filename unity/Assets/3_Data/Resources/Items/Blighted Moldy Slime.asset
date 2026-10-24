@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-moldy-slime
   displayName: Blighted Moldy Slime
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: 839d2f7607965d647a6c5f7692794986, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

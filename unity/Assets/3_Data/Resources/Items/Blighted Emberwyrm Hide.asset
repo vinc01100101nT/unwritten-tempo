@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-emberwyrm-hide
   displayName: Blighted Emberwyrm Hide
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: f049ff395016ca14eb756b4ff2560c50, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

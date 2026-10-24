@@ -424,6 +424,13 @@ public static class SkillTooltip
             case SkillEffectKind.Heal:
             {
                 float mult = LiveMult(e);
+                if (e.healShareOfMaxHP)
+                {
+                    string lowPct = Mathf.RoundToInt(e.amount.value * mult * 100f) + "%";
+                    return e.healAmountMaxSet && e.healAmountMax.value > e.amount.value
+                        ? "Heals " + Hl(lowPct + "–" + Mathf.RoundToInt(e.healAmountMax.value * mult * 100f) + "%") + " of max HP"
+                        : "Heals " + Hl(lowPct) + " of max HP";
+                }
                 string low = Mathf.RoundToInt(e.amount.value * mult).ToString();
                 return e.healAmountMaxSet && e.healAmountMax.value > e.amount.value
                     ? "Heals " + Hl(low + "–" + Mathf.RoundToInt(e.healAmountMax.value * mult)) + " HP"

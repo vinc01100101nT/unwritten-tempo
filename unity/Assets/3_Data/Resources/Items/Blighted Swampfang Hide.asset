@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-swampfang-hide
   displayName: Blighted Swampfang Hide
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: e657aba2c4d712548b2721e44ffb58c6, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.glowcoil-glowing-eye
   displayName: Glowcoil Glowing Eye
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 8279256c3d6c2bc45b223165a3b0762c, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

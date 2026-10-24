@@ -220,7 +220,10 @@ public class CharacterPlates : MonoBehaviour
                 n.body = body;
                 n.drawnName = npc.personName;
                 n.plate.SetBars(false);
-                n.plate.Begin(UnitAnchor.HalfWidth(body.transform), n.drawnName, null);
+                // What they offer — their station, shop, the Keeper's window, a summon — as a picture beside the name,
+                // in the place a creature's portrait sits. Looked up once per plate built, never per frame.
+                n.plate.Begin(UnitAnchor.HalfWidth(body.transform), n.drawnName,
+                              UiIcons.ServiceOf(WorldTownsfolkIds.Find(npc.personId)));
                 n.drawnDescription = npc.personDescription;
                 n.plate.SetDescription(n.drawnDescription);
             }

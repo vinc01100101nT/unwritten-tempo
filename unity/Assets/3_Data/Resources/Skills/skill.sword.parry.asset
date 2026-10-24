@@ -23,8 +23,8 @@ MonoBehaviour:
   maxLevel: 1
   description: 'Read the hit and punish it.
 
-    Fully negates the next incoming
-    hit within 3 seconds.'
+    Fully negates the next 2 incoming
+    hits within 3 seconds.'
   archetype: 2
   family: 0
   shape: 3
@@ -60,8 +60,8 @@ MonoBehaviour:
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
-  hasReleaseStance: 0
-  releaseStance: 14
+  hasReleaseStance: 1
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
@@ -137,13 +137,13 @@ MonoBehaviour:
         scaler: 1
       stacking: 1
       stackLimit:
-        value: 1
+        value: 2
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
       stacksPerApply:
-        value: 1
+        value: 2
         useStacks: 0
         op: 0
         read: 0

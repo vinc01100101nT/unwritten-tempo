@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.tharos
   displayName: Tharos, the Starbreaker
+  versionOf: {fileID: 0}
   kind: 2
   size: 1
   flies: 0
@@ -47,16 +48,16 @@ MonoBehaviour:
   ringRankStats: 000000000400000002000000
   ringRankValues: 210000002100000021000000
   aggroRadius: 8
-  leashRadius: 14
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
   element: 2
   elementLevel: 3
+  elementCycleSeconds: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  material: {fileID: 0}
+  material: {fileID: 11400000, guid: f373d2beb8942a94fa5ace51f04a8490, type: 2}
   itemDropNames: []
   itemDropChances: []

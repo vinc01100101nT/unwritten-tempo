@@ -23,7 +23,7 @@ MonoBehaviour:
   maxLevel: 5
   description: 'The dance goes on.
 
-    A kill during Thousand Petals adds 7 more
+    A kill during Thousand Petals adds 4 more
     dance charges.'
   archetype: 1
   family: 2
@@ -198,7 +198,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       modifierStacks:
-        value: 7
+        value: 4
         useStacks: 0
         op: 0
         read: 0

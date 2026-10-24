@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.velmora
   displayName: Velmora, the Poisoned Rose
+  versionOf: {fileID: 0}
   kind: 2
   size: 1
   flies: 0
@@ -47,16 +48,16 @@ MonoBehaviour:
   ringRankStats: 080000000700000000000000
   ringRankValues: 210000002100000021000000
   aggroRadius: 8
-  leashRadius: 14
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
   element: 5
   elementLevel: 3
+  elementCycleSeconds: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  material: {fileID: 0}
+  material: {fileID: 11400000, guid: 0ae8babfb8fa1f5449c28a10254e36b5, type: 2}
   itemDropNames: []
   itemDropChances: []

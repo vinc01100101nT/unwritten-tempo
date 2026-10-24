@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-pando-fur
   displayName: Blighted Pando Fur
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: 03d5c9a0660052f4bb32b8c987027344, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

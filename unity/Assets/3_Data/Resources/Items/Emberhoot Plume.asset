@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.emberhoot-plume
   displayName: Emberhoot Plume
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 2cf110dc775b81f44abb4c268d0fff18, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

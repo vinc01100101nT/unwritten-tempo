@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-squirt-tentacle
   displayName: Tainted Squirt Tentacle
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 0158f38447e0a914b9f335115cf3cdc9, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

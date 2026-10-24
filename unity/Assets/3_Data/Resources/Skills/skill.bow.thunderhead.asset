@@ -25,7 +25,7 @@ MonoBehaviour:
   maxLevel: 10
   description: 'The storm gathers into one strike.
 
-    A heavy shot for 500% Attack,
+    A heavy shot for 930% Attack,
     +7.5% for every point of hit chance above 100% against the target (up to 100
     points).'
   archetype: 0
@@ -97,7 +97,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 5
+        value: 9.3
         useStacks: 0
         op: 0
         read: 0

@@ -71,3 +71,4 @@
 - [Recompile: check Play mode first, separately](recompile-gate-check-playmode-first.md) — never chain editor_status and recompile; recompile only after reading playMode stopped.
 - [List it = keep in chat](../list-it-means-keep-in-chat.md) — mid-brainstorm "list that for now" means a running list in my replies to batch later, never a backlog task or file.
 - [Fix the scope, never remove the feature](../fix-the-scope-never-remove-the-feature.md) — "it should only X" = keep the feature, narrow it to X; switching it off is not a fix (Cloudburst yellow total).
+- [Deliver first, then work while waiting](../deliver-first-then-work-while-waiting.md) — "give me X, and while waiting do Y": X goes out in a reply BEFORE starting Y.

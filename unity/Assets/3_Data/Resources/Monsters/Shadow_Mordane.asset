@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.mordane
   displayName: Mordane, King Beneath the Waves
+  versionOf: {fileID: 0}
   kind: 2
   size: 1
   flies: 0
@@ -47,16 +48,16 @@ MonoBehaviour:
   ringRankStats: 000000000900000002000000
   ringRankValues: 210000002100000021000000
   aggroRadius: 8
-  leashRadius: 14
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
   element: 1
   elementLevel: 3
+  elementCycleSeconds: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  material: {fileID: 0}
+  material: {fileID: 11400000, guid: 95764646a226d0644850c8141ae1f225, type: 2}
   itemDropNames: []
   itemDropChances: []

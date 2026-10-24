@@ -147,6 +147,9 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 - [ON-GOING] `MT-59` **`[E]` Draw far props with simpler models** — the game is held back by the graphics card (town, 2026-09-07: 30.3 ms a frame on the graphics card against 2.5 ms of game code, 1.09 million triangles in view). Built 2026-10-11: the 17 families with hand-made simpler copies are wired (`LodGroupWirer.WireAllCore()`), and the other props of 500 triangles or more carry two generated simpler levels (`PropLodBaker.BakeCore(null)`) — except houses, which stay whole at every distance: their generated levels came out visibly broken in play (2026-10-12), and kept whole at their texture seams a house cannot be simplified at all. The simplest level is never hidden. Left: re-run the bake so the houses' old levels come off, then measure the same town view again.
   *Done when:* every placed prop switches to a simpler model at a distance, nothing visibly pops up close, and the town's frame time on the graphics card is measured lower than before.
 
+- [ON-GOING] `MT-60` **`[E]` Skill balance report — step 1, the simple version** — built 2026-10-24: `python tools/skill-balance/extract.py` prints every weapon skill's % off its budget, a play-test shortlist and the skills it cannot price; the calculator page beside it shows the same. — **built** — see [Skill Balancing System — Plan](../../2-systems/active-skill-system-v3/skill-balancing-system-plan.md)
+  *Done when:* the shortlist is play-tested and the formula's guessed constants are corrected from what was played.
+
 ---
 
 ## Related

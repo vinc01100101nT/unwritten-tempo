@@ -25,10 +25,6 @@ public class CalendarPanel : MonoBehaviour
     const int Columns = 7, Days = 42;
     static readonly string[] WeekdayShort = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
-    [Header("Weather icons — Ninja Adventure 'Meteo' set, assigned by UIShellBuilder at bake time")]
-    public Sprite sunIcon;       // Clear (and dimmed for Cloudy)
-    public Sprite rainIcon;      // LightRain / Thunderstorm
-    public Sprite snowIcon;      // Snow
 
     GameObject panel;            // the CalendarPanel root (toggled by PanelToggle / the widget button)
     TMP_Text titleText;
@@ -253,7 +249,7 @@ public class CalendarPanel : MonoBehaviour
             cellDay[i].text  = isToday ? dayOfMonth + " ★" : dayOfMonth.ToString();
             cellTag[i].text  = WeatherDirector.TagOf(p);
             UiKit.PaintReadable(cellTag[i], c);
-            // Weather icon (sprite + tint). Hide gracefully if the art wasn't assigned (e.g. pre-rebake).
+            // Weather icon. Hidden if its picture is missing.
             var (sprite, iconTint) = IconFor(p);
             if (sprite != null) { cellIcon[i].sprite = sprite; cellIcon[i].color = iconTint; cellIcon[i].enabled = true; }
             else cellIcon[i].enabled = false;
@@ -264,21 +260,8 @@ public class CalendarPanel : MonoBehaviour
         }
     }
 
-    // Icon sprite + tint per weather. The pack ships clean Sun/Rain/Snow pixel icons but no Cloud/Storm,
-    // so the gaps reuse the closest icon with a wash — overcast = dimmed Sun, storm = violet-washed Rain — and
-    // the coloured text tag underneath names each one exactly.
-    (Sprite sprite, Color tint) IconFor(Preset p)
-    {
-        switch (p)
-        {
-            case Preset.Clear:        return (sunIcon,  Color.white);
-            case Preset.Cloudy:       return (sunIcon,  new Color(0.62f, 0.65f, 0.70f));   // dimmed = overcast
-            case Preset.LightRain:    return (rainIcon, Color.white);
-            case Preset.Thunderstorm: return (rainIcon, new Color(0.80f, 0.74f, 1.00f));   // violet storm wash
-            case Preset.Snow:         return (snowIcon, Color.white);
-            default:                  return (sunIcon,  Color.white);
-        }
-    }
+    // Each weather's own painted picture (UiIcons), drawn as painted.
+    static (Sprite sprite, Color tint) IconFor(Preset p) => (UiIcons.WeatherOf(p), Color.white);
 
     // ── Wiring + helpers ─────────────────────────────────────────────────────────────────────────────────────────
 

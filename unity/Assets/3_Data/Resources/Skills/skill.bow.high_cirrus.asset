@@ -25,7 +25,7 @@ MonoBehaviour:
   maxLevel: 5
   description: 'Thin, fast and far above.
 
-    +30% movement speed and +20% attack
+    +50% movement speed and +20% attack
     speed for 7s.'
   archetype: 0
   family: 2
@@ -72,9 +72,9 @@ MonoBehaviour:
   repeatBonusStateIdSet: 0
   repeatBonusInterval: 0.2
   hasReleaseStance: 1
-  releaseStance: 14
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
-  weaponSkillAnimation: 2
+  weaponSkillAnimation: 0
   bindings:
   - tickId: cast
     targetMode: 0
@@ -160,7 +160,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.3
+        value: 0.5
         useStacks: 0
         op: 0
         read: 0

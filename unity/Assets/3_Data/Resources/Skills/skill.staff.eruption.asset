@@ -28,7 +28,10 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'The mountain wakes.
 
-    An ash cloud over the aimed area makes every mark on the enemies in it last 10 seconds longer, and stronger.'
+
+    The ground erupts for 190% Attack, and
+    an ash cloud over the aimed area makes every mark on the enemies in it last 10
+    seconds longer, and stronger.'
   archetype: 1
   family: 1
   shape: 1
@@ -95,6 +98,211 @@ MonoBehaviour:
     bounceReturns: 0
     bounceEffectId: 
     effects:
+    - kind: 0
+      useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
+      damageMult:
+        value: 1.9
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 1
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      element: 3
+      converts: 3
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
+      ailment: 2
+      seconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      magnitude:
+        value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      side: 1
+      subStat: 0
+      affinity:
+      - stat: 1
+        weight: 100
+      chanceAffinity: []
+      durationAffinity: []
+      hitCountAffinity: []
     - kind: 35
       useStacks: 0
       resolveAsBasicAttack: 0

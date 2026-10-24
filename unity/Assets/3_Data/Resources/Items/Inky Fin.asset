@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.inky-fin
   displayName: Inky Fin
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 0be8c58cfadee5e4fbac7d1127a67f8f, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

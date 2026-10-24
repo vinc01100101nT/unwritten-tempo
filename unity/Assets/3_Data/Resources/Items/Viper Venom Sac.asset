@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.viper-venom-sac
   displayName: Viper Venom Sac
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 24a7b1dae72d3a0409e37e527479e39a, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

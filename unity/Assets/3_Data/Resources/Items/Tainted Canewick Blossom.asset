@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-canewick-blossom
   displayName: Tainted Canewick Blossom
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: cf9483ceadc2f7c43a1e8db9ffc6ac65, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

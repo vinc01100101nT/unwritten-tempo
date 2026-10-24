@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-horngore-crown-horn
   displayName: Blighted Horngore Crown Horn
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: 6e0c84977166f7c4190e15c64fc5f5b3, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

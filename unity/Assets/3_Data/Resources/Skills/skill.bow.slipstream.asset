@@ -26,7 +26,7 @@ MonoBehaviour:
   description: 'Ride the air they missed.
 
     When you dodge an attack: your next
-    basic attack can''t miss within 4s.'
+    3 basic attacks can''t miss within 3s.'
   archetype: 0
   family: 2
   shape: 0
@@ -70,8 +70,8 @@ MonoBehaviour:
   repeatBonusStateId: 0
   repeatBonusStateIdSet: 0
   repeatBonusInterval: 0.2
-  hasReleaseStance: 0
-  releaseStance: 14
+  hasReleaseStance: 1
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
@@ -146,7 +146,7 @@ MonoBehaviour:
       healAmountMaxSet: 0
       ailment: 2
       seconds:
-        value: 4
+        value: 3
         useStacks: 0
         op: 0
         read: 0
@@ -165,13 +165,13 @@ MonoBehaviour:
         scaler: 1
       stacking: 1
       stackLimit:
-        value: 1
+        value: 3
         useStacks: 0
         op: 0
         read: 0
         scaler: 1
       stacksPerApply:
-        value: 1
+        value: 3
         useStacks: 0
         op: 0
         read: 0

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.hisser-fang
   displayName: Hisser Fang
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: e57364097c1b10e45a1dfb57cadda41b, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

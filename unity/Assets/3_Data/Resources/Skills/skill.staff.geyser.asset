@@ -100,7 +100,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.028571429
+        value: 0.0064
         useStacks: 0
         op: 0
         read: 0
@@ -305,7 +305,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.028571429
+        value: 0.0064
         useStacks: 0
         op: 0
         read: 0
@@ -510,7 +510,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.028571429
+        value: 0.0064
         useStacks: 0
         op: 0
         read: 0
@@ -948,7 +948,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.028571429
+        value: 0.0064
         useStacks: 0
         op: 0
         read: 0
@@ -1153,7 +1153,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.028571429
+        value: 0.0064
         useStacks: 0
         op: 0
         read: 0
@@ -1358,7 +1358,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.028571429
+        value: 0.0064
         useStacks: 0
         op: 0
         read: 0

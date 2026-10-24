@@ -25,7 +25,7 @@ MonoBehaviour:
   maxLevel: 5
   description: 'Darken their sky.
 
-    The target''s accuracy is cut by 25% for 5s.'
+    The target''s accuracy is cut by 40% for 6s.'
   archetype: 0
   family: 2
   shape: 0
@@ -147,7 +147,7 @@ MonoBehaviour:
       healAmountMaxSet: 0
       ailment: 2
       seconds:
-        value: 5
+        value: 6
         useStacks: 0
         op: 0
         read: 0
@@ -159,7 +159,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.25
+        value: 0.4
         useStacks: 0
         op: 0
         read: 0

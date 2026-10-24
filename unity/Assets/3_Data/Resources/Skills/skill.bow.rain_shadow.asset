@@ -26,7 +26,7 @@ MonoBehaviour:
   description: 'Strike from where they are not looking.
 
     After casting Updraft:
-    your next 3 basic attacks deal +40% within 5s.'
+    your next 3 basic attacks deal +17% within 5s.'
   archetype: 0
   family: 2
   shape: 0
@@ -70,8 +70,8 @@ MonoBehaviour:
   repeatBonusStateId: 0
   repeatBonusStateIdSet: 0
   repeatBonusInterval: 0.2
-  hasReleaseStance: 0
-  releaseStance: 14
+  hasReleaseStance: 1
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
@@ -158,7 +158,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.4
+        value: 0.17
         useStacks: 0
         op: 0
         read: 0

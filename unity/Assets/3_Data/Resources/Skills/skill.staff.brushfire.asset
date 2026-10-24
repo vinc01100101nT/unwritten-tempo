@@ -100,7 +100,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.25
+        value: 0.21
         useStacks: 0
         op: 0
         read: 0
@@ -402,7 +402,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 2
+        value: 1
         useStacks: 0
         op: 0
         read: 0

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-frostwick-cold-ember
   displayName: Tainted Frostwick Cold Ember
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: d64c9d48083a6724dae9cbd2666bb89d, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

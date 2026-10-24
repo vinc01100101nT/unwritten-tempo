@@ -68,8 +68,10 @@ public sealed class UnitPlate
     float nameY;
     // A quest mark over the name — "!" or "?" (see QuestMarks) — or nothing.
     TextMeshProUGUI markLabel;
+    // The painted mark, drawn in place of the letter whenever there is a picture for it.
+    Image markIcon;
     string shownMark = "";
-    const float MarkH = 18f;
+    const float MarkH = 18f, MarkIconSize = 22f;
     Image elementTile;
     TextMeshProUGUI elementText;
     // The creature's face, left of its name — see CreaturePortraits. Hidden for anyone without one.
@@ -126,6 +128,9 @@ public sealed class UnitPlate
 
     public void Show(bool on)
     {
+        // A CLOSE-UP (the bag framing you, a conversation) puts the camera a step from the body, where a plate sized
+        // for the normal camera would cover the screen — so no plate shows while one lasts.
+        on &= !InCloseUp;
         if (root == null || on == shown) return;
         shown = on;
         root.gameObject.SetActive(on);
@@ -137,6 +142,33 @@ public sealed class UnitPlate
     {
         root.position = UnitAnchor.Overhead(unit);
         root.rotation = facing;
+        float scale = WorldScale * ShrinkAt(root.position);
+        if (!Mathf.Approximately(scale, drawnScale)) { drawnScale = scale; root.localScale = Vector3.one * scale; }
+    }
+
+    float drawnScale = WorldScale;
+
+    /// <summary>True while the camera frames a close-up (<see cref="CameraFollow3D.Cinematic"/>).</summary>
+    public static bool InCloseUp => CameraFollow3D.Main != null && CameraFollow3D.Main.Cinematic;
+
+    /// <summary>How tall a plate with a name, a caption and both bars stands at full size, in world units — what a
+    /// speech bubble clears so it never sits on a name (<see cref="SpeechBubble.ShowOverHead"/>).</summary>
+    public const float NamedStackHeight = (NameH + DescriptionH + HpBarH + MpBarH + 3f * RowGap) * WorldScale;
+
+    // The camera distance a plate is drawn at its full size from: the normal follow distance.
+    const float FullSizeFrom = 4f;
+    // The smallest a plate shrinks to, as a share of its full size.
+    const float SmallestShare = 0.3f;
+
+    /// <summary>How much a widget floating at <paramref name="at"/> is shrunk: 1 from the normal camera distance or
+    /// further, less as the camera comes closer — so it keeps about the same size on screen instead of growing to
+    /// cover it. One answer for every overhead widget (this plate, <see cref="CastBar"/>).</summary>
+    public static float ShrinkAt(Vector3 at)
+    {
+        var cam = CameraRig.Cam;
+        if (cam == null) return 1f;
+        float d = Vector3.Distance(cam.transform.position, at);   // perf-ok: a size ratio needs the real distance, one per plate a frame
+        return Mathf.Clamp(d / FullSizeFrom, SmallestShare, 1f);
     }
 
     /// <summary>Point the plate at a new unit: its body's half-width (<see cref="UnitAnchor.HalfWidth"/>), its name,
@@ -195,8 +227,12 @@ public sealed class UnitPlate
         mark ??= "";
         if (markLabel == null || mark == shownMark) return;
         shownMark = mark;
-        markLabel.text = mark;
-        markLabel.gameObject.SetActive(mark.Length > 0);
+        var picture = mark == QuestMarks.Offer ? UiIcons.Get("QuestOffer")
+                    : mark == QuestMarks.Ongoing ? UiIcons.Get("QuestTurnIn") : null;
+        markIcon.sprite = picture;
+        markIcon.gameObject.SetActive(picture != null);
+        markLabel.text = picture != null ? "" : mark;
+        markLabel.gameObject.SetActive(picture == null && mark.Length > 0);
     }
 
     /// <summary>The element tile beside the name, or none.</summary>
@@ -271,7 +307,7 @@ public sealed class UnitPlate
             for (int i = 0; i < list.Count; i++)
             {
                 var s = list[i];
-                if (s.endTime <= now) continue;
+                if (s.endTime <= now || !stateStore.IsShown(s)) continue;
                 PaintState(StateTileAt(n++), s);
                 if (s.endTime < statesNextExpiry) statesNextExpiry = s.endTime;
             }
@@ -369,6 +405,7 @@ public sealed class UnitPlate
 
         root = NewRect(objectName, MobNameplate.SharedHost);
         root.localScale = Vector3.one * WorldScale;
+        drawnScale = WorldScale;
 
         // Anchored at the BOTTOM, so the whole stack sits above the unit's head and grows upward as rows are added
         // rather than creeping down over their face.
@@ -390,6 +427,11 @@ public sealed class UnitPlate
         markLabel.fontSharedMaterial = UiKit.WorldNameMaterial();
         Place(markLabel.rectTransform, new Vector2(0f, MarkH + 2f), new Vector2(MarkH * 2f, MarkH));
         markLabel.gameObject.SetActive(false);
+        markIcon = NewImage("QuestMarkIcon", root, Color.white);
+        markIcon.preserveAspect = true;
+        markIcon.raycastTarget = false;
+        Place(markIcon.rectTransform, new Vector2(0f, MarkIconSize + 2f), new Vector2(MarkIconSize, MarkIconSize));
+        markIcon.gameObject.SetActive(false);
         shownMark = "";
 
         // The element tile: a plain coloured square with its letters on top.

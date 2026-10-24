@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.morwen
   displayName: Morwen, the Last Bloom
+  versionOf: {fileID: 0}
   kind: 2
   size: 1
   flies: 0
@@ -47,16 +48,16 @@ MonoBehaviour:
   ringRankStats: 010000000300000002000000
   ringRankValues: 210000002100000021000000
   aggroRadius: 8
-  leashRadius: 14
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
   element: 9
   elementLevel: 3
+  elementCycleSeconds: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  material: {fileID: 0}
+  material: {fileID: 11400000, guid: 1d89fcbdfe992e64491ee7e0f4ca38da, type: 2}
   itemDropNames: []
   itemDropChances: []

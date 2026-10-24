@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.emberlurk-golden-eye
   displayName: Emberlurk Golden Eye
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 3dcfc4a69404f6841ba55d45834ed647, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

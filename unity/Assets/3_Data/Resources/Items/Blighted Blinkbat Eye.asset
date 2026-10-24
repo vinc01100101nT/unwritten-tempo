@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-blinkbat-eye
   displayName: Blighted Blinkbat Eye
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: a9b6afc21bfb5f74194ebee06f989fc5, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

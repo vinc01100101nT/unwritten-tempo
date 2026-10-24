@@ -29,7 +29,7 @@ MonoBehaviour:
   description: 'Light through a moving cloud.
 
     A shot that hits twice, each for
-    50% Attack, +0.5% Attack each for every 1% movement speed bonus you have.'
+    59% Attack, +0.5% Attack each for every 1% movement speed bonus you have.'
   archetype: 0
   family: 2
   shape: 0
@@ -101,7 +101,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 0.5
+        value: 0.59
         useStacks: 0
         op: 0
         read: 0

@@ -15,10 +15,12 @@ public enum Rarity { Common = 0, Uncommon = 1, Rare = 2, Epic = 3, Legendary = 4
 public static class Rarities
 {
     /// <summary>How rare <paramref name="def"/> is. Gear has no rarity, so it is Common; a crafting material goes by
-    /// its kind and step (<see cref="OfMaterial"/>); consumables and everything else are Common.</summary>
+    /// its kind and step (<see cref="OfMaterial"/>); a crate goes by its own rarity; consumables and everything else
+    /// are Common.</summary>
     public static Rarity Of(Item def)
     {
         if (def == null) return Rarity.Common;
+        if (def.opensAsCrate) return def.crateRarity;
         if (def.materialKind != MaterialKind.None) return OfMaterial(def.materialKind, def.materialStep);
         return Rarity.Common;
     }

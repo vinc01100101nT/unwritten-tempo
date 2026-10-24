@@ -14,7 +14,7 @@ using TMPro;
 public class StatusBox : MonoBehaviour
 {
     const float Width = 330f, RowHeight = 18f, RowGap = 5f, BarHeight = 12f, LabelWidth = 124f;
-    const float ButtonHeight = 24f, ButtonGap = 4f, Pad = 10f;
+    const float ButtonGap = 4f, Pad = 10f;
 
     // Every bar fills in the theme's blue.
     static ThemeColor BarFill => UiKit.Accent;
@@ -95,28 +95,29 @@ public class StatusBox : MonoBehaviour
         toggleGlyph = toggle.GetComponentInChildren<TMP_Text>();
         y -= RowHeight + RowGap;
 
-        // The window buttons, three to a row.
+        // The window buttons: one row of pictures, each saying its name and its key when the pointer is on it.
         windowButtons = new GameObject("WindowButtons", typeof(RectTransform));
         windowButtons.transform.SetParent(content, false);
         var wrt = (RectTransform)windowButtons.transform;
-        int rows = (Windows.Length + 2) / 3;
-        float gridHeight = rows * ButtonHeight + (rows - 1) * ButtonGap;
+        float cell = (Width - 2 * 16f - 2 * Pad - (Windows.Length - 1) * ButtonGap) / Windows.Length;
+        float gridHeight = cell;
         Anchor(wrt, y, gridHeight, 0f, 0f);
         var grid = windowButtons.AddComponent<GridLayoutGroup>();
-        float cellWidth = (Width - 2 * 16f - 2 * Pad - 2 * ButtonGap) / 3f;
-        grid.cellSize = new Vector2(cellWidth, ButtonHeight);
+        grid.cellSize = new Vector2(cell, cell);
         grid.spacing = new Vector2(ButtonGap, ButtonGap);
         grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = 3;
+        grid.constraintCount = Windows.Length;
         foreach (var (label, key) in Windows)
         {
             var b = UiKit.Btn(label, windowButtons.transform, () => Open(label, key));
-            var t = b.GetComponentInChildren<TMP_Text>();
-            if (t != null)
+            string name = key != KeyCode.None ? $"{label} [{GameKeys.Label(key)}]" : label;
+            // A window with no picture keeps its word, so a button is never blank.
+            if (UiKit.ButtonIcon(b, UiIcons.Get(label), keepWords: false) == null)
             {
-                t.fontSize = 12;
-                if (key != KeyCode.None) t.text = $"{label} [{GameKeys.Label(key)}]";
+                var t = b.GetComponentInChildren<TMP_Text>();
+                if (t != null) t.fontSize = 9;
             }
+            HoverRelay.Set(b.gameObject, () => ItemTooltip.ShowName(name), ItemTooltip.HideTip);
         }
         windowButtons.SetActive(false);
 

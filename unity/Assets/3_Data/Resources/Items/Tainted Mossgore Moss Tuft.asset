@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-mossgore-moss-tuft
   displayName: Tainted Mossgore Moss Tuft
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 9da6fba1617084646bb39cdc43743a2a, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

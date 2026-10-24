@@ -22,7 +22,7 @@ MonoBehaviour:
   published: 1
   maxLevel: 5
   description: "Find the weakness.\nA parry has a 50% chance to charge your next
-    attack with +200% damage, within 5s \u2014 spent whether it hits or misses."
+    attack with +100% damage, within 5s \u2014 spent whether it hits or misses."
   archetype: 1
   family: 2
   shape: 3
@@ -128,7 +128,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 2
+        value: 1
         useStacks: 0
         op: 0
         read: 0

@@ -9,8 +9,9 @@ using UnityEditor;
 /// <item>gear: what a brand-new piece is worth (<see cref="CraftingMath.NewPieceWorth"/>) — the same rule every copy's
 /// own worth follows, so a piece is worth the same to a tooltip, a sale and a purchase;</item>
 /// <item>a creature's own material: the tier its creature's kind and grade give, and the value that pays what its
-/// creature's level, tier, grade and folds say (<see cref="CreatureMaterials.Derive"/>) — and its icon, the box drawn
-/// in its tier's colour (<see cref="BoxIconPath"/>), so no material's box is ever picked by hand.</item>
+/// creature's level, tier, grade and folds say (<see cref="CreatureMaterials.Derive"/>) — and, for a material with no
+/// painted picture of its own, its icon: the box drawn in its tier's colour (<see cref="BoxIconPath"/>), so no
+/// material's box is ever picked by hand.</item>
 /// </list>
 ///
 /// <para>It runs by itself whenever an item or a creature file is SAVED — the user's own save is the action that
@@ -98,6 +99,13 @@ public class DerivedItemValues : AssetModificationProcessor
         return boxIcons[t];
     }
 
+    static bool IsBox(UnityEngine.Sprite icon)
+    {
+        for (var r = Rarity.Common; r <= Rarity.Legendary; r++)
+            if (BoxIcon(r) == icon) return true;
+        return false;
+    }
+
     static int SetIcon(Item it, UnityEngine.Sprite box, bool write, StringBuilder said, List<string> changedPaths)
     {
         if (box == null)
@@ -106,6 +114,8 @@ public class DerivedItemValues : AssetModificationProcessor
             return 0;
         }
         if (it.icon == box) return 0;
+        // A material with its own painted picture keeps it; the box only stands in for one that has none.
+        if (it.icon != null && !IsBox(it.icon)) return 0;
         said?.Append(it.displayName).Append(": icon ").Append(it.icon != null ? it.icon.name : "none").Append(" -> ")
              .Append(box.name).Append('\n');
         if (write)

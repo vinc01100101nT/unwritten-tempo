@@ -234,6 +234,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 - [Unified Unit Stats](unified-unit-stats.md) — the unit half: one stat model, so an effect never asks what it hit.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — what a state IS, and the stacks/charges/gate rules.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the "how much" half, and the locked scaling defaults.
+- [Skill Balancing System — Plan](skill-balancing-system-plan.md) — step 1 (the simple balance report) built; the full system planned and waiting on play-test calibration.
 - [Weapon Roster — 14 Identities](weapon-roster-12-identities.md) — the fourteen identity sentences every skill must reinforce.
 - [Weapon Crafting & Economy](weapon-crafting-economy.md) — the rolled-kit economy design; the game does not use it (V4 replaced it).
 - [Sword — Skill Roster](sword-skill-roster.md) — the one fully-authored pool.

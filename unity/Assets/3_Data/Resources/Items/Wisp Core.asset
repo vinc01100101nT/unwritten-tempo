@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.wisp-core
   displayName: Wisp Core
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 34ef69107c491a5409a102e25ee32852, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

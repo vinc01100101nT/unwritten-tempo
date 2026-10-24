@@ -89,3 +89,4 @@
 - [Creature grade decides its material](../creature-grade-decides-material.md) — 2026-10-16: one material per creature by grade, newbie maps Raw +0, base HP 160, item tags are the rule, payout script at deploy.
 - [Weapon variants stay inside one type](../weapon-variants-stay-inside-one-type.md) — 2026-10-17: a variant is another item of the SAME weapon type (three Swords), never another kind; never invent kinds.
 - [All skill numbers are placeholders](../sword-skill-numbers-are-placeholders.md) — every number on every skill (all weapons, unattached too) is untuned; retune freely.
+- [Skill balance: step 1 only](../skill-balance-step1.md) — report built; full system planned in the balancing plan doc, waits on play-test calibration.

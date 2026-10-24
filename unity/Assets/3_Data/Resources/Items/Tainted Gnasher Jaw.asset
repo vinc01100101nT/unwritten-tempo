@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-gnasher-jaw
   displayName: Tainted Gnasher Jaw
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 1348103220e9d1c4bb040ce7c7df34f9, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

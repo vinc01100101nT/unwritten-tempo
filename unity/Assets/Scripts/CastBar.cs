@@ -113,6 +113,7 @@ public class CastBar : MonoBehaviour
         // Ride the caster's head and yaw to face the camera (same as HoverPlate/DamagePopup).
         bar.root.position = UnitAnchor.Head(over);
         bar.root.rotation = camT.rotation;
+        bar.root.localScale = Vector3.one * (WorldScale * UnitPlate.ShrinkAt(bar.root.position));
 
         bar.fill.fillAmount = progress01;
         bar.fill.color = tint;

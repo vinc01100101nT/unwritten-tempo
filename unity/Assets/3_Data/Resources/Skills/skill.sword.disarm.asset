@@ -23,7 +23,7 @@ MonoBehaviour:
   maxLevel: 5
   description: 'Blunt their swing.
 
-    A strike for 100% Attack; their next attack
+    A strike for 125% Attack; their next attack
     lands 40% weaker, within 6s.'
   archetype: 4
   family: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 1
+        value: 1.25
         useStacks: 0
         op: 0
         read: 0

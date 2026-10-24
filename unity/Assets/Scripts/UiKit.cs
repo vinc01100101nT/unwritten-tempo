@@ -728,6 +728,36 @@ public static class UiKit
         return btn;
     }
 
+    /// <summary>Put <paramref name="picture"/> on a <see cref="Btn"/>: at its left beside its words
+    /// (<paramref name="keepWords"/>), or filling it in their place. Returns the picture, so its sprite can be swapped
+    /// later; null (and the button untouched) when there is no picture.</summary>
+    public static Image ButtonIcon(Button button, Sprite picture, bool keepWords, float iconSize = 18f)
+    {
+        if (button == null || picture == null) return null;
+        var fill = button.transform.childCount > 0 ? button.transform.GetChild(0) : button.transform;
+        var img = NewImage("Icon", fill);
+        img.sprite = picture;
+        img.preserveAspect = true;
+        img.raycastTarget = false;
+        var rt = img.rectTransform;
+        var words = fill.GetComponentInChildren<TMP_Text>(true);
+        if (keepWords)
+        {
+            rt.anchorMin = new Vector2(0f, 0.5f); rt.anchorMax = new Vector2(0f, 0.5f); rt.pivot = new Vector2(0f, 0.5f);
+            rt.sizeDelta = new Vector2(iconSize, iconSize);
+            rt.anchoredPosition = new Vector2(ButtonIconPad, 0f);
+            if (words != null) words.rectTransform.offsetMin = new Vector2(ButtonIconPad + iconSize, words.rectTransform.offsetMin.y);
+        }
+        else
+        {
+            Fill(rt, new Vector2(ButtonIconPad, ButtonIconPad), new Vector2(-ButtonIconPad, -ButtonIconPad));
+            if (words != null) words.text = "";
+        }
+        return img;
+    }
+
+    const float ButtonIconPad = 3f;
+
     /// <summary>A button that says YES — Confirm, Accept, Enter, Create, Play: <see cref="Btn"/>, marked with
     /// <see cref="MarkPrimary"/>. Every affirming button in the game is made here, so it stands out from Cancel the same
     /// way everywhere.</summary>

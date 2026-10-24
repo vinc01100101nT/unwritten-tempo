@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-capling-spore
   displayName: Blighted Capling Spore
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: bc28a0d14c46c224fb2e1e8fbb008fc2, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

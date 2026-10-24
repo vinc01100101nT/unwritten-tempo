@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.wraithmother-tear
   displayName: Wraithmother Tear
-  icon: {fileID: 21300000, guid: ca4043df3eaf5c148b2df6b0b11dc8ef, type: 3}
+  icon: {fileID: 21300000, guid: e34ddec8623fffe4e8bf0665b69d03ad, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

@@ -412,7 +412,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.15
+        value: 0.05
         useStacks: 0
         op: 0
         read: 0
@@ -589,7 +589,7 @@ MonoBehaviour:
       element: 0
       converts: 3
       amount:
-        value: 30
+        value: 10
         useStacks: 0
         op: 0
         read: 0

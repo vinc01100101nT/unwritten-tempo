@@ -25,7 +25,7 @@ MonoBehaviour:
   maxLevel: 5
   description: 'Weigh their steps down.
 
-    A shot for 120% Attack that slows the
+    A shot for 205% Attack that slows the
     target 25% for 4s.'
   archetype: 0
   family: 2
@@ -96,7 +96,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 1.2
+        value: 2.05
         useStacks: 0
         op: 0
         read: 0

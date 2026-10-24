@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Balance Calculator</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1f; --muted: #6b6b70; --line: #dddbd6;
+    --accent: #2f7fd1; --good: #2e8b57; --warn: #c27c0e; --bad: #c0392b; --field: #fbfaf8; --sel: #e8f0fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151517; --panel: #1f1f22; --ink: #ececef; --muted: #9a9aa2; --line: #333338;
+      --accent: #5aa2ec; --good: #4cc38a; --warn: #e3a541; --bad: #ef6b5e; --field: #18181b; --sel: #24303d;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+  .layout { display: grid; grid-template-columns: 270px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  h3 { font-size: 17px; margin: 0; }
+  .list button { display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left; border: 0; background: none; color: var(--ink); padding: 5px 8px; border-radius: 6px; font: inherit; cursor: pointer; }
+  .list button:hover { background: var(--field); }
+  .list button.on { background: var(--sel); }
+  .list .grp { font-size: 12px; color: var(--muted); margin: 10px 8px 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .badge { font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .ok { color: var(--good); } .mid { color: var(--warn); } .bad { color: var(--bad); } .dim { color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  th { color: var(--muted); font-size: 12px; font-weight: normal; text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  td { padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  td.num { font-variant-numeric: tabular-nums; color: var(--muted); }
+  td.grp { color: var(--muted); font-size: 12px; padding-top: 10px; border-bottom: 0; }
+  input { width: 100%; padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); font: inherit; }
+  input:disabled { border-color: var(--accent); color: var(--accent); font-weight: 600; opacity: 1; }
+  input.changed { border-color: var(--warn); }
+  input[type=checkbox] { width: auto; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .big { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 8px 0 12px; }
+  .fact { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .fact .k { color: var(--muted); font-size: 12px; }
+  .fact .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .msgs div { margin-top: 6px; }
+  .note { color: var(--muted); font-size: 12px; }
+  button.act { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--field); color: var(--ink); cursor: pointer; }
+  textarea { width: 100%; min-height: 110px; font: 12px/1.4 ui-monospace, Consolas, monospace; background: var(--field); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+  .consts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px 16px; }
+  .consts label { display: grid; grid-template-columns: 1fr 90px; gap: 8px; align-items: center; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Skill Balance Calculator</h1>
+  <p class="sub">Step 1, the simple version — the full balancing system is planned in the skill balancing system plan and waits on play-test calibration. Skills are read from the saved skill files: re-run <b>python tools/skill-balance/extract.py</b> to refresh them. Type into any channel; tick "derive" on the channels to solve — several ticked scale together, keeping their proportions.</p>
+
+  <div class="layout">
+    <div><section><h2>Skills</h2><div class="list" id="list"></div></section></div>
+    <div>
+      <section id="editor"></section>
+      <section>
+        <h2>Your changes (copy and send these)</h2>
+        <textarea id="changes" readonly></textarea>
+        <p><button class="act" id="resetAll">Reset every skill</button></p>
+      </section>
+      <section>
+        <h2>Constants (proposals — play-testing corrects them)</h2>
+        <div class="consts" id="consts"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script src="formula.js"></script>
+<script src="skills-data.js"></script>
+<script>
+const LABELS = {
+  rate: "Per second of cooldown", ultRate: "Per second of an ultimate's cooldown", manaRate: "Per MP",
+  ranged: "Hit landing 8 m or more away", enemyRate: "Enemy attacks per second", releaseEarly: "Wind-up held to the end",
+  tolerance: "Balanced within ± (%)", shortlist: "Shortlist beyond ± (%)",
+};
+const SKILLS = JSON.parse(JSON.stringify(SKILL_DATA));
+const ORIG = JSON.parse(JSON.stringify(SKILL_DATA));
+const derive = {};      // skill index -> { channel path key: the value it had when ticked }
+let cur = SKILLS.findIndex(s => balanceEvaluate(s).status !== "not priced");
+if (cur < 0) cur = 0;
+
+function channels(s) {
+  // A passive has no cooldown, mana or cast — its budget is per second of fighting — so it shows only its effects.
+  const ch = s.passive ? [] : [
+    { g: "Timing and cost", label: "Cooldown (s)", path: ["cd"] },
+    { g: "Timing and cost", label: "Cast time (s)", path: ["cast"] },
+    { g: "Timing and cost", label: "Mana (MP)", path: ["mp"] },
+    { g: "Timing and cost", label: "Repeats", path: ["repeats"] },
+    { g: "Timing and cost", label: "Held in place (s)", path: ["run"] },
+  ];
+  s.parts.forEach((p, i) => {
+    const g = "Damage — " + p.label;
+    ch.push({ g, label: "Damage (× Attack)", path: ["parts", i, "dmg"] });
+    ch.push({ g, label: "Hits", path: ["parts", i, "hits"] });
+    ch.push({ g, label: "Targets", path: ["parts", i, "targets"] });
+  });
+  s.effects.forEach((f, i) => {
+    const g = "Effect — " + f.label;
+    if (f.type !== "count") ch.push({ g, label: "Size (1 = 100%)", path: ["effects", i, "size"] });
+    if ("secs" in f) ch.push({ g, label: "Seconds", path: ["effects", i, "secs"] });
+    if ("count" in f) ch.push({ g, label: "Count", path: ["effects", i, "count"] });
+    ch.push({ g, label: "Targets", path: ["effects", i, "targets"] });
+  });
+  return ch;
+}
+const get = (o, p) => p.reduce((a, k) => a[k], o);
+const set = (o, p, v) => { const last = p[p.length - 1]; p.slice(0, -1).reduce((a, k) => a[k], o)[last] = v; };
+
+// Every ticked channel is its base value × one shared factor k, solved so value = budget.
+function solve(s, bases) {
+  const keys = Object.keys(bases);
+  const apply = k => keys.forEach(key => set(s, JSON.parse(key), bases[key] * k));
+  const f = k => { apply(k); const r = balanceEvaluate(s); return r.value - r.budget; };
+  let lo = 0, hi = 2, flo = f(lo), fhi = f(hi), grow = 0;
+  while (flo * fhi > 0 && grow++ < 40) { hi *= 2; fhi = f(hi); }
+  if (flo * fhi > 0) { apply(1); return null; }
+  for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2, fm = f(m); if (flo * fm <= 0) { hi = m; fhi = fm; } else { lo = m; flo = fm; } }
+  const k = (lo + hi) / 2; apply(k); return k;
+}
+function runDerive(i) {
+  const d = derive[i]; if (!d || !Object.keys(d).length) return undefined;
+  return solve(SKILLS[i], d);
+}
+
+const fmt = (v, d = 2) => (isFinite(v) ? (+(+v).toFixed(d)).toString() : "—");
+function cls(r) {
+  if (r.status === "not priced") return "dim";
+  const a = Math.abs(r.off);
+  return a <= BALANCE.tolerance ? "ok" : a <= BALANCE.shortlist ? "mid" : "bad";
+}
+function offText(r) {
+  if (r.status === "not priced") return "not priced";
+  return (r.off >= 0 ? "+" : "") + fmt(r.off, 0) + "%" + (r.status === "partly priced" ? " (part)" : "");
+}
+
+function renderList() {
+  let html = "", last = "";
+  SKILLS.forEach((s, i) => {
+    runDerive(i);
+    if (s.weapon !== last) { html += `<div class="grp">${s.weapon}</div>`; last = s.weapon; }
+    const r = balanceEvaluate(s);
+    html += `<button class="${i === cur ? "on" : ""}" data-i="${i}"><span>${s.name}${s.ult ? " ★" : ""}</span><span class="badge ${cls(r)}">${offText(r)}</span></button>`;
+  });
+  document.getElementById("list").innerHTML = html;
+  document.querySelectorAll("#list button").forEach(b => b.onclick = () => { cur = +b.dataset.i; renderAll(); });
+}
+
+function renderEditor() {
+  const s = SKILLS[cur], o = ORIG[cur];
+  const solved = runDerive(cur);
+  const r = balanceEvaluate(s);
+  const d = derive[cur] || {};
+  const msgs = [];
+  if (s.reasons.length) msgs.push(`<div class="bad">Not priced: ${s.reasons.join("; ")}.</div>`);
+  if (s.unpriced.length) msgs.push(`<div class="mid">Not counted in the %: ${s.unpriced.join("; ")}. Judge these by hand.</div>`);
+  if (solved === null) msgs.push(`<div class="bad">The ticked channels can't balance the skill — no scaling of them makes value equal budget.</div>`);
+  else if (solved !== undefined) msgs.push(`<div class="note">Ticked channels scaled × ${fmt(solved, 3)} from the values they had when ticked.</div>`);
+  if (Object.keys(d).some(k => d[k] === 0)) msgs.push(`<div class="mid">A ticked channel is 0, so scaling can't move it — type a starting value first.</div>`);
+  if (s.ult && (s.cd < 45 || s.cd > 60)) msgs.push(`<div class="mid">Ultimates are meant to sit at 45–60 s cooldown.</div>`);
+  if (s.passive) msgs.push(`<div class="note">A passive: value and budget are per second of fighting — one firing's worth × how often its moment comes.</div>`);
+  else if (![8, 12, 16, 40].includes(Math.round(s.mp * 1000) / 1000)) msgs.push(`<div class="mid">${fmt(s.mp, 2)} MP is not one of the mana steps (8 · 12 · 16 · 40).</div>`);
+
+  let rows = "", lastG = "";
+  if (!s.reasons.length) channels(s).forEach(ch => {
+    if (ch.g !== lastG) { rows += `<tr><td class="grp" colspan="4">${ch.g}</td></tr>`; lastG = ch.g; }
+    const k = JSON.stringify(ch.path), now = get(s, ch.path), was = get(o, ch.path), isD = k in d;
+    const changed = Math.abs(now - was) > 1e-9 && !isD;
+    rows += `<tr><td>${ch.label}</td><td class="num">${fmt(was, 3)}</td>
+      <td><input data-k='${k}' type="number" step="any" value="${fmt(now, 3)}" ${isD ? "disabled" : ""} class="${changed ? "changed" : ""}"></td>
+      <td><input type="checkbox" data-k='${k}' ${isD ? "checked" : ""}></td></tr>`;
+  });
+
+  document.getElementById("editor").innerHTML = `
+    <div class="head"><h3>${s.name} <span class="note">${s.weapon}${s.ult ? " · ultimate" : ""} · swing ${fmt(s.swing, 2)} s · release lock ${fmt(s.lock, 2)} s</span></h3>
+      <span class="big ${cls(r)}">${offText(r)}</span></div>
+    ${s.reasons.length ? "" : `<div class="facts">
+      <div class="fact"><div class="k">Value</div><div class="v">${fmt(r.value)}</div></div>
+      <div class="fact"><div class="k">Budget</div><div class="v">${fmt(r.budget)}</div></div>
+      <div class="fact"><div class="k">Status</div><div class="v">${r.status}</div></div>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th>Channel</th><th>Now in game</th><th>Your value</th><th>Derive</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <p><button class="act" id="noDerive">Derive nothing</button> <button class="act" id="resetOne">Reset this skill</button></p>
+    <h2>Where the value comes from</h2>
+    <table><tbody>${r.rows.map(([k, v]) => `<tr><td>${k}</td><td class="num">${fmt(v)}</td></tr>`).join("")}</tbody></table>`}
+    <div class="msgs">${msgs.join("")}</div>`;
+
+  document.querySelectorAll("#editor input[type=number]").forEach(inp => inp.addEventListener("change", () => {
+    const v = parseFloat(inp.value); if (isNaN(v)) return;
+    set(SKILLS[cur], JSON.parse(inp.dataset.k), v); renderAll();
+  }));
+  document.querySelectorAll("#editor input[type=checkbox]").forEach(cb => cb.addEventListener("change", () => {
+    const dd = derive[cur] || (derive[cur] = {});
+    if (cb.checked) dd[cb.dataset.k] = get(SKILLS[cur], JSON.parse(cb.dataset.k));
+    else delete dd[cb.dataset.k];
+    renderAll();
+  }));
+  const nd = document.getElementById("noDerive"); if (nd) nd.onclick = () => { delete derive[cur]; renderAll(); };
+  const ro = document.getElementById("resetOne"); if (ro) ro.onclick = () => { SKILLS[cur] = JSON.parse(JSON.stringify(ORIG[cur])); delete derive[cur]; renderAll(); };
+}
+
+function renderChanges() {
+  const lines = [];
+  SKILLS.forEach((s, i) => {
+    if (s.reasons.length) return;
+    const diffs = [];
+    channels(s).forEach(ch => {
+      const now = get(s, ch.path), was = get(ORIG[i], ch.path);
+      if (Math.abs(now - was) > 1e-9)
+        diffs.push(`${ch.g === "Timing and cost" ? "" : ch.g.replace(/^(Damage|Effect) — /, "") + " · "}${ch.label}: ${fmt(was, 3)} → ${fmt(now, 3)}${derive[i] && JSON.stringify(ch.path) in derive[i] ? " (derived)" : ""}`);
+    });
+    if (diffs.length) lines.push(`${s.weapon} — ${s.name} (${offText(balanceEvaluate(s))})\n  ` + diffs.join("\n  "));
+  });
+  document.getElementById("changes").value = lines.join("\n") || "No changes yet.";
+}
+
+function renderConsts() {
+  document.getElementById("consts").innerHTML = Object.keys(BALANCE).map(k =>
+    `<label>${LABELS[k] || k}<input type="number" step="any" data-c="${k}" value="${BALANCE[k]}"></label>`).join("");
+  document.querySelectorAll("#consts input").forEach(inp => inp.addEventListener("change", () => {
+    const v = parseFloat(inp.value); if (!isNaN(v)) { BALANCE[inp.dataset.c] = v; renderAll(); }
+  }));
+}
+
+function renderAll() { renderList(); renderEditor(); renderChanges(); }
+document.getElementById("resetAll").onclick = () => {
+  SKILLS.splice(0, SKILLS.length, ...JSON.parse(JSON.stringify(ORIG)));
+  Object.keys(derive).forEach(k => delete derive[k]); renderAll();
+};
+renderConsts();
+renderAll();
+</script>
+</body>
+</html>

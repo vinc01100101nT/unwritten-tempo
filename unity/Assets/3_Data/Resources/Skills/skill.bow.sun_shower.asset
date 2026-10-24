@@ -25,7 +25,7 @@ MonoBehaviour:
   maxLevel: 10
   description: 'Rain in the sunlight.
 
-    5 quick shots in 1s, each 70% Attack and
+    5 quick shots in 1s, each 58% Attack and
     each a basic attack.'
   archetype: 0
   family: 2
@@ -96,7 +96,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 1
       damageType: 0
       damageMult:
-        value: 0.7
+        value: 0.58
         useStacks: 0
         op: 0
         read: 0

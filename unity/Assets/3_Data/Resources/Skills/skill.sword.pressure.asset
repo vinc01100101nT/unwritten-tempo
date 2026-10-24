@@ -24,7 +24,7 @@ MonoBehaviour:
   description: 'Never let them recover.
 
     Every hit cuts the target''s HP regen
-    by 3 a second for 5s, and the cuts stack.'
+    by 1.3 a second for 5s, and the cuts stack.'
   archetype: 0
   family: 0
   shape: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 3
+        value: 1.3
         useStacks: 0
         op: 0
         read: 0

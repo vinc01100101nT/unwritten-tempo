@@ -1575,6 +1575,26 @@ static class Checks
         return UnitStatMath.MaxHP(UnitStatMath.ReferenceBuild(level), eb, 0f);
     }
 
+    // THE INK CRATES: the split inside one, a share with nothing in it spread over the others, and the drop chance that
+    // makes a crate worth a tenth of the kill. Agreed with the user 2026-10-24.
+    static void InkCrateNumbers()
+    {
+        const string F = "unity/Assets/Scripts/CrateMath.cs";
+        CrateMath.Shares(10, 2, 8, out float m, out float f, out float c);
+        That(m == 0.55f && f == 0.20f && c == 0.25f, F, "a crate is 55% creature material, 20% forging, 25% potion or food");
+        CrateMath.Shares(0, 1, 8, out m, out f, out c);
+        That(m == 0f && System.Math.Abs(f - 0.2f / 0.45f) < 1e-6f && System.Math.Abs(c - 0.25f / 0.45f) < 1e-6f, F,
+             "an empty share is spread over the others in proportion");
+        That(CrateMath.ShareOf(0.54f, 10, 2, 8) == 0 && CrateMath.ShareOf(0.56f, 10, 2, 8) == 1
+             && CrateMath.ShareOf(0.76f, 10, 2, 8) == 2 && CrateMath.ShareOf(1f, 10, 2, 8) == 2, F, "a roll lands in the wrong share");
+        That(System.Math.Abs(CrateMath.DropChance(50, 1f, 500.0) - 0.10f) < 1e-6f, F,
+             "a level 50 x1 kill (worth 500) drops a crate averaging 500 one kill in ten");
+        That(CrateMath.DropChance(170, 150f, 10.0) == 1f && CrateMath.DropChance(10, 1f, 0.0) == 0f, F,
+             "a crate's chance stays between 0 and 1");
+        That(CrateMath.TierOf(CreatureKind.Shadow, 150f) == Rarity.Legendary && CrateMath.TierOf(CreatureKind.Elite, 30f) == Rarity.Epic, F,
+             "a crate's rarity is its creature's material's rarity");
+    }
+
     // A CREATURE'S OWN MATERIAL: the tier its grade gives it, what a tier sells for, how often it falls and in how many
     // piles. Pinned from docs/3-world/creature-materials.md, agreed 2026-10-16.
     static void CreatureMaterialNumbers()
@@ -1590,8 +1610,8 @@ static class Checks
              && CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Rare, 1f) == 0.02f && CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Epic, 1f) == 0.005f
              && CreatureMaterials.ExpectedPieces(CreatureKind.Normal, Rarity.Legendary, 1f) == 0.001f, F,
              "a x1 creature drops its tiers at 1 in 2, 10, 50, 200 and 1,000");
-        foreach (Rarity tier in System.Enum.GetValues(typeof(Rarity)))
-            That(CreatureMaterials.ExpectedPieces(CreatureKind.Shadow, tier, 120f) == 0f, F, "a shadow dropped a " + tier + " material of its own");
+        That(System.Math.Abs(CreatureMaterials.ExpectedPieces(CreatureKind.Shadow, Rarity.Legendary, 120f) - 0.12f) < 1e-6f, F,
+             "a x120 shadow should drop its Legendary material 0.12 times a kill, like any x120 creature");
         // The rule the whole table rests on: a kill's material is worth 10 gold x level x its multiplier on average at
         // the tier its multiplier gives, whatever the kind, so rarity changes how the value arrives and never how much.
         foreach (var kind in new[] { CreatureKind.Normal, CreatureKind.Elite })
@@ -1613,7 +1633,8 @@ static class Checks
                 That(CreatureMaterials.TierOfMultiplier(CreatureKind.Normal, tierFrom[t] - 0.01f, out got) && got == (Rarity)(t - 1), F,
                      "just under x" + tierFrom[t] + " should still be " + (Rarity)(t - 1));
         }
-        That(!CreatureMaterials.TierOfMultiplier(CreatureKind.Shadow, 120f, out got), F, "a shadow has a material tier");
+        That(CreatureMaterials.TierOfMultiplier(CreatureKind.Shadow, 120f, out got) && got == Rarity.Legendary, F,
+             "a x120 shadow's material should be Legendary, not " + got);
         for (int step = 1; step <= 5; step++)
             That(Rarities.OfMaterial(MaterialKind.Creature, step) == (Rarity)(step - 1)
                  && CreatureMaterials.StepOfTier((Rarity)(step - 1)) == step, RarityCheckFile, "a creature material's step " + step + " is not its tier");
@@ -2141,6 +2162,7 @@ static class Checks
         WaterRules();
         SavedCharacterNumbers();
         CreatureMaterialNumbers();
+        InkCrateNumbers();
         KillPointNumbers();
         CreaturePayNumbers();
         QuestSteps();

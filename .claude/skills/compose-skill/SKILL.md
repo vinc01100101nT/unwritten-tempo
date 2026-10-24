@@ -52,6 +52,12 @@ Learned designing the Bow's pool with the user (2026-10-21). Read these before p
 - **No trash passives.** A passive that fires on a general action (a basic attack landing, a kill, taking damage) and
   only builds a pile with no effect of its own is trash. Either give the pile its own effect (Gathering Clouds: +1%
   accuracy per stack) or tie the passive to one named skill (Petrichor: kills made by Cloudburst).
+- **A passive answers a MOMENT that varies with the fight, never a fixed event.** "When you cast Cloudburst, its rain
+  lasts 5 s longer" fires every cast, the same every time, so it is just a bigger Cloudburst wearing a passive's name —
+  fold it into the skill (a longer base, or growth per level) instead. The test: *does how often it fires, or how much
+  it gives, depend on what happens in the fight* (hits landed, enemies in reach, kills, dodges, health)? No ⇒ it is not a
+  passive. The same goes for rebalancing: never fix a weak passive by moving it onto its skill's own cast (rejected
+  2026-10-24).
 - **Points budget:** a weapon gives 70 mastery points; the pool's max levels should total about twice that (~50%; the
   Sword is 54%). Max level per skill is the `skill-tree` skill's 10 / 5 / 1 rule — work it out while brainstorming,
   because a short pool shows up here first.
@@ -109,6 +115,12 @@ Added for the Staff (2026-10-22):
 - **Runs:** `repeatScaleWithCastSpeed` + `repeatMaxCount` — more beats the faster you cast, under a ceiling.
 - **Rebuilding onto an existing skill asset keeps every field you did not write** — reset them all (the old Meteor
   kept its orange name colour). See `docs/5-ai-learnings/rebuilding-onto-an-existing-asset-keeps-its-old-values.md`.
+
+Added 2026-10-24:
+
+- **Heal as a share of max HP:** `healShareOfMaxHP` on a Heal effect makes its amount a share of the healed unit's
+  max HP (0.1 = 10%) instead of flat HP (Still Air). Use it for any heal meant to matter past the first levels —
+  a flat heal, regen or burn is worth less every level the character gains.
 
 ### Many hits — two different things, never confuse them
 

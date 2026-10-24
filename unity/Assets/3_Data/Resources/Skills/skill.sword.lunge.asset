@@ -23,8 +23,8 @@ MonoBehaviour:
   maxLevel: 10
   description: 'Close the distance.
 
-    Dashes to the target and strikes for 100%
-    Attack. With Crossed Branches, casting it also arms 5 charges.'
+    Dashes to the target and strikes for 20%
+    Attack. With Crossed Branches, casting it also arms 1 charge.'
   archetype: 1
   family: 2
   shape: 4
@@ -235,7 +235,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 1
+        value: 0.2
         useStacks: 0
         op: 0
         read: 0

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-cinder-ash
   displayName: Blighted Cinder Ash
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: 179236da823059e43b66fb75ae6fb469, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

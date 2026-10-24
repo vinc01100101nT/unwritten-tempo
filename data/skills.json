@@ -44,18 +44,18 @@
       "ultimate": false,
       "passive": false,
       "published": true,
-      "cost": "MP **12**  CD **12s**  Instant",
+      "cost": "MP **12**  CD **45s**  Instant",
       "manaCost": 12,
-      "cooldown": 12,
+      "cooldown": 45,
       "castTime": 0,
       "fixedCastTime": 0,
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Nothing between you and the mark.\n+30% accuracy for 7s.",
+      "description": "Nothing between you and the mark.\n+30% accuracy for 30s.",
       "trademark": "Clear Sky",
       "effects": [
-        "+**30%** accuracy for **7s**"
+        "+**30%** accuracy for **30s**"
       ]
     },
     {
@@ -78,10 +78,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "After casting Updraft",
-      "description": "Hard to see, harder to hit.\nAfter casting Updraft: +7% evasion for 4s.",
+      "description": "Hard to see, harder to hit.\nAfter casting Updraft: +12% evasion for 4s.",
       "trademark": "Cloud Cover",
       "effects": [
-        "+**7%** evasion for **4s**"
+        "+**12%** evasion for **4s**"
       ]
     },
     {
@@ -104,11 +104,11 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Celestia's rain, wherever she drifts.\nA rain cloud follows you for 6s, a volley each swing on everything within 3m for 40% Attack — each hit a basic attack. When it ends, every Gathering Clouds stack becomes one more volley.",
+      "description": "Celestia's rain, wherever she drifts.\nA rain cloud follows you for 6s, a volley each swing on everything within 3m for 60% Attack — each hit a basic attack. When it ends, every Gathering Clouds stack becomes one more volley.",
       "trademark": "Cloudburst",
       "effects": [
         "Gives **1** charge for **6s**",
-        "Deals **0.4×** physical damage"
+        "Deals **0.6×** physical damage"
       ]
     },
     {
@@ -131,10 +131,11 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When your HP drops low",
-      "description": "A clear sky opens when you need it.\nWhen your HP drops low, Updraft is ready again at once.",
-      "trademark": "",
+      "description": "A clear sky opens when you need it.\nWhen your HP drops low, Updraft is ready again at once and you gain +20% evasion for 10s.",
+      "trademark": "Fair Weather",
       "effects": [
-        "**Updraft** is ready again at once"
+        "**Updraft** is ready again at once",
+        "+**20%** evasion for **10s**"
       ]
     },
     {
@@ -157,10 +158,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When a basic attack lands",
-      "description": "The sky thickens with every shot.\nEach basic attack that lands gives +1% accuracy for 6s, stacking up to 20. Cloudburst spends them for extra volleys.",
+      "description": "The sky thickens with every shot.\nEach basic attack that lands gives +2% accuracy for 6s, stacking up to 20. Cloudburst spends them for extra volleys.",
       "trademark": "Gathering Clouds",
       "effects": [
-        "+**1%** accuracy per stack for **6s**"
+        "+**2%** accuracy per stack for **6s**"
       ]
     },
     {
@@ -183,10 +184,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When you kill a mob",
-      "description": "Move on with the wind.\nWhen you kill something: +15% movement speed for 3s.",
+      "description": "Move on with the wind.\nWhen you kill something: +15% movement speed for 15s.",
       "trademark": "Gust Front",
       "effects": [
-        "+**15%** movement speed for **3s**"
+        "+**15%** movement speed for **15s**"
       ]
     },
     {
@@ -209,10 +210,10 @@
       "releaseEarly": false,
       "castRange": 13,
       "trigger": "",
-      "description": "Draw, hold, release.\nA heavy shot for 220% Attack with +25% crit chance, and +25% more against a slowed target.",
+      "description": "Draw, hold, release.\nA heavy shot for 285% Attack with +25% crit chance, and +25% more against a slowed target.",
       "trademark": "Hailstone",
       "effects": [
-        "Deals **2.2×** physical damage, +**25%** crit chance, +**25%** more crit chance against a slowed target"
+        "Deals **2.85×** physical damage, +**25%** crit chance, +**25%** more crit chance against a slowed target"
       ]
     },
     {
@@ -235,10 +236,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Thin, fast and far above.\n+30% movement speed and +20% attack speed for 7s.",
+      "description": "Thin, fast and far above.\n+50% movement speed and +20% attack speed for 7s.",
       "trademark": "High Cirrus",
       "effects": [
-        "+**30%** movement speed for **7s**",
+        "+**50%** movement speed for **7s**",
         "+**20%** attack speed for **7s**"
       ]
     },
@@ -288,10 +289,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Weigh their steps down.\nA shot for 120% Attack that slows the target 25% for 4s.",
+      "description": "Weigh their steps down.\nA shot for 205% Attack that slows the target 25% for 4s.",
       "trademark": "Low Cloud",
       "effects": [
-        "Deals **1.2×** physical damage",
+        "Deals **2.05×** physical damage",
         "−**25%** movement speed for **4s**"
       ]
     },
@@ -315,7 +316,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When you take damage",
-      "description": "Wrap yourself in cloud.\nWhen you take damage: +4% evasion for 3s.",
+      "description": "Wrap yourself in cloud.\nWhen you take damage: +3.5% evasion for 3s.",
       "trademark": "Nimbus",
       "effects": [
         "+**4%** evasion for **3s**"
@@ -341,10 +342,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Darken their sky.\nThe target's accuracy is cut by 25% for 5s.",
+      "description": "Darken their sky.\nThe target's accuracy is cut by 40% for 6s.",
       "trademark": "Overcast",
       "effects": [
-        "−**25%** accuracy for **5s**"
+        "−**40%** accuracy for **6s**"
       ]
     },
     {
@@ -366,11 +367,11 @@
       "fixedCastTime": 0,
       "releaseEarly": false,
       "castRange": 0,
-      "trigger": "When you kill a mob",
-      "description": "The smell after rain.\nA kill made by Cloudburst makes its rain last 1s longer (at most 11s in all).",
+      "trigger": "When a basic attack lands",
+      "description": "The smell after rain.\nEvery hit that lands while Cloudburst rains makes the rain last 0.35s longer (at most 11s in all).",
       "trademark": "",
       "effects": [
-        "Extends **Cloudburst** by **1s**"
+        "Extends **Cloudburst** by **0.4s**"
       ]
     },
     {
@@ -393,10 +394,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "After casting Updraft",
-      "description": "Strike from where they are not looking.\nAfter casting Updraft: your next 3 basic attacks deal +40% within 5s.",
+      "description": "Strike from where they are not looking.\nAfter casting Updraft: your next 3 basic attacks deal +17% within 5s.",
       "trademark": "Rain Shadow",
       "effects": [
-        "Your next **3** basic attacks deal +**40%** damage within **5s**"
+        "Your next **3** basic attacks deal +**17%** damage within **5s**"
       ]
     },
     {
@@ -419,10 +420,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "An arc that lands where they will be.\nAn arrow lobbed onto a spot; it lands a moment later for 180% Attack to everything within 2.5m, +5% Attack for every metre between you and each enemy hit.",
+      "description": "An arc that lands where they will be.\nAn arrow lobbed onto a spot; it lands a moment later for 96% Attack to everything within 2.5m, +5% Attack for every metre between you and each enemy hit.",
       "trademark": "Rainbow",
       "effects": [
-        "Deals **0.15×** physical damage, **12×** hits, +**0.004×** per metre to the target"
+        "Deals **0.08×** physical damage, **12×** hits, +**0.004×** per metre to the target"
       ]
     },
     {
@@ -445,10 +446,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "One drop becomes three.\nA shot for 100% Attack that splits to 2 more enemies within 4m, each for 100%.",
+      "description": "One drop becomes three.\nA shot for 78% Attack that splits to 2 more enemies within 4m, each for 78%.",
       "trademark": "Scattered Rain",
       "effects": [
-        "Deals **1×** physical damage"
+        "Deals **0.78×** physical damage"
       ]
     },
     {
@@ -471,10 +472,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When you dodge an attack",
-      "description": "Ride the air they missed.\nWhen you dodge an attack: your next basic attack can't miss within 4s.",
+      "description": "Ride the air they missed.\nWhen you dodge an attack: your next 3 basic attacks can't miss within 3s.",
       "trademark": "",
       "effects": [
-        "Your next basic attack can't miss within **4s**"
+        "Your next **3** basic attacks can't miss within **3s**"
       ]
     },
     {
@@ -497,10 +498,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Rain in the sunlight.\n5 quick shots in 1s, each 70% Attack and each a basic attack.",
+      "description": "Rain in the sunlight.\n5 quick shots in 1s, each 58% Attack and each a basic attack.",
       "trademark": "Sun Shower",
       "effects": [
-        "Deals **0.7×** physical damage"
+        "Deals **0.58×** physical damage"
       ]
     },
     {
@@ -523,10 +524,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Light through a moving cloud.\nA shot that hits twice, each for 50% Attack, +0.5% Attack each for every 1% movement speed bonus you have.",
+      "description": "Light through a moving cloud.\nA shot that hits twice, each for 59% Attack, +0.5% Attack each for every 1% movement speed bonus you have.",
       "trademark": "Silver Lining",
       "effects": [
-        "Deals **0.5×** physical damage, **2×** hits, +**0.005×** per 1% movement speed bonus"
+        "Deals **0.59×** physical damage, **2×** hits, +**0.005×** per 1% movement speed bonus"
       ]
     },
     {
@@ -549,10 +550,10 @@
       "releaseEarly": false,
       "castRange": 13,
       "trigger": "",
-      "description": "The storm gathers into one strike.\nA heavy shot for 500% Attack, +7.5% for every point of hit chance above 100% against the target (up to 100 points).",
+      "description": "The storm gathers into one strike.\nA heavy shot for 930% Attack, +7.5% for every point of hit chance above 100% against the target (up to 100 points).",
       "trademark": "Thunderhead",
       "effects": [
-        "Deals **5×** physical damage, +**0.075×** per point of hit chance above 100% (up to 100)"
+        "Deals **9.3×** physical damage, +**0.075×** per point of hit chance above 100% (up to 100)"
       ]
     },
     {
@@ -1911,8 +1912,8 @@
       "description": "The sky turns to ash.\nBurning stones fall around the aimed spot in several strikes, each hitting harder for every Stone on its target. Leaves no mark. Opens at Fire Orb level 20.",
       "trademark": "",
       "effects": [
-        "Deals **2.6×** magic damage, **+0.5×** magic damage for every Stone on the target (left in place)",
-        "Deals **0.3×** magic damage"
+        "Deals **0.23×** magic damage, **+0.11×** magic damage for every Stone on the target (left in place)",
+        "Deals **0.07×** magic damage"
       ]
     },
     {
@@ -1938,8 +1939,8 @@
       "description": "Wind feeds the fire.\nThe aimed ground burns. Every second, a gust of hot wind hits everything standing in it and adds 1 Burn.",
       "trademark": "",
       "effects": [
-        "Deals **0.25×** magic damage",
-        "Burn **2**/tick for **10s**"
+        "Deals **0.21×** magic damage",
+        "Burn **1**/tick for **10s**"
       ]
     },
     {
@@ -2019,7 +2020,7 @@
       "description": "The wind stands up and walks.\nA whirlwind follows you, striking everything near you, more strikes the faster you cast. Each strike hits harder for every Chill on its target. Leaves no mark. Opens at Wind Orb level 20.",
       "trademark": "",
       "effects": [
-        "Deals **0.9×** magic damage, **+0.15×** magic damage for every Chill on the target (left in place)"
+        "Deals **0.45×** magic damage, **+0.08×** magic damage for every Chill on the target (left in place)"
       ]
     },
     {
@@ -2042,9 +2043,10 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "The mountain wakes.\nAn ash cloud over the aimed area makes every mark on the enemies in it last 10 seconds longer, and stronger.",
+      "description": "The mountain wakes.\n\nThe ground erupts for 190% Attack, and an ash cloud over the aimed area makes every mark on the enemies in it last 10 seconds longer, and stronger.",
       "trademark": "",
       "effects": [
+        "Deals **1.9×** magic damage",
         "Every Burn on the target lasts **10s** longer and grows **20%** stronger",
         "Every Stone on the target lasts **10s** longer and grows **20%** stronger",
         "Every Static on the target lasts **10s** longer and grows **20%** stronger",
@@ -2074,13 +2076,13 @@
       "description": "Fire under stone boils the water.\nSteam bursts where you stand and throws you to the aimed spot, and bursts again where you land.",
       "trademark": "",
       "effects": [
-        "Deals **0.03×** magic damage, **21×** hits",
-        "Deals **0.03×** magic damage, **21×** hits",
-        "Deals **0.03×** magic damage, **21×** hits",
+        "Deals **0.01×** magic damage, **21×** hits",
+        "Deals **0.01×** magic damage, **21×** hits",
+        "Deals **0.01×** magic damage, **21×** hits",
         "Blinks to the target location",
-        "Deals **0.03×** magic damage, **21×** hits",
-        "Deals **0.03×** magic damage, **21×** hits",
-        "Deals **0.03×** magic damage, **21×** hits"
+        "Deals **0.01×** magic damage, **21×** hits",
+        "Deals **0.01×** magic damage, **21×** hits",
+        "Deals **0.01×** magic damage, **21×** hits"
       ]
     },
     {
@@ -2106,7 +2108,7 @@
       "description": "Frost on the wind.\nA gust hits every enemy around you, then carries the Chill on each one to every enemy next to it.",
       "trademark": "",
       "effects": [
-        "Deals **0.04×** magic damage, **14×** hits",
+        "Deals **0.07×** magic damage, **14×** hits",
         "Carries the target's Chill to every enemy within **2.5m**, never past its own count — each slows **15%**"
       ]
     },
@@ -2133,7 +2135,7 @@
       "description": "The mountain shakes.\nThe aimed ground quakes 8 times over 4 seconds, each quake hitting harder for every Static on each enemy. Leaves no mark. Opens at Earth Orb level 20.",
       "trademark": "",
       "effects": [
-        "Deals **0.75×** magic damage, **+0.06×** magic damage for every Static on the target (left in place)"
+        "Deals **0.49×** magic damage, **+0.05×** magic damage for every Static on the target (left in place)"
       ]
     },
     {
@@ -2183,11 +2185,11 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Molten stone hardens again.\nMelts the Stone on every enemy around you into lava, a hit for each Stone melted. The lava then hardens on them as full Stone (5).",
+      "description": "Molten stone hardens again.\nMelts the Stone on every enemy around you into lava, a hit for each Stone melted. The lava then hardens on them as 3 Stone.",
       "trademark": "",
       "effects": [
         "Melts the target's Stone: **+0.4×** magic damage per charge",
-        "Their next **5** attacks deal −**20%** damage within **10s** — only on a target that carried Stone"
+        "Their next **3** attacks deal −**20%** damage within **10s** — only on a target that carried Stone"
       ]
     },
     {
@@ -2318,7 +2320,7 @@
       "trademark": "",
       "effects": [
         "Adds **1** Chill for **4s** — each slows **15%**, **3** freeze for **10s**. Not on a burning target",
-        "Deals **1.2×** magic damage"
+        "Deals **0.4×** magic damage"
       ]
     },
     {
@@ -2369,8 +2371,8 @@
       "trademark": "",
       "effects": [
         "Deals **0.8×** magic damage",
-        "−**15%** magic defense for **6s**",
-        "Drains up to **30** MP and gives it to you"
+        "−**5%** magic defense for **6s**",
+        "Drains up to **10** MP and gives it to you"
       ]
     },
     {
@@ -2451,7 +2453,7 @@
       "trademark": "",
       "effects": [
         "Deals **0.25×** magic damage",
-        "Adds **2** Static for **10s** — each cuts attack speed **6%**, up to **5**"
+        "Adds **2** Static for **10s** — each cuts attack speed **2%**, up to **5**"
       ]
     },
     {
@@ -2477,7 +2479,7 @@
       "description": "Stone that water made.\nThree drips fall on one enemy over 3 seconds. Each drip hits and adds 1 Stone.",
       "trademark": "",
       "effects": [
-        "Deals **0.6×** magic damage",
+        "Deals **0.88×** magic damage",
         "Their next attack deals −**20%** damage within **10s**"
       ]
     },
@@ -2533,7 +2535,7 @@
       "description": "The world goes white.\nA blizzard beats on the aimed area, growing with your max MP and hitting harder for every Burn on each enemy. Leaves no mark. Opens at Water Orb level 20.",
       "trademark": "",
       "effects": [
-        "Deals **0.8×** magic damage, +**0.0008×** per point of your max MP (up to +2×), **+0.15×** magic damage for every Burn on the target (left in place)"
+        "Deals **0.42×** magic damage, +**0.0008×** per point of your max MP (up to +2×), **+0.1×** magic damage for every Burn on the target (left in place)"
       ]
     },
     {
@@ -2609,10 +2611,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Become the storm.\nArms dance charges and half as many parries for 8s, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike for 100% Attack, hunting a new target within 3 units. Every charge still held is +1% damage.",
+      "description": "Become the storm.\nArms dance charges and half as many parries for 8s, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike for 60% Attack, hunting a new target within 3 units. Every charge still held is +1% damage.",
       "trademark": "Thousand Petals",
       "effects": [
-        "Deals **1×** physical damage",
+        "Deals **0.6×** physical damage",
         "Parries the next hit within **8s** — no damage taken",
         "+**1%** damage per stack for **8s**",
         "Dashes to the target location"
@@ -2690,10 +2692,10 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Wind up and commit.\nA slow, telegraphed heavy blow for 200% Attack.",
+      "description": "Wind up and commit.\nA slow, telegraphed heavy blow for 275% Attack.",
       "trademark": "Single Petal",
       "effects": [
-        "Deals **2×** physical damage"
+        "Deals **2.75×** physical damage"
       ]
     },
     {
@@ -2742,10 +2744,10 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Everything, in one swing.\nOne massive blow for 600% Attack, +40% per Rising Breeze stack, and spends them all.",
+      "description": "Everything, in one swing.\nOne massive blow for 780% Attack, +40% per Rising Breeze stack, and spends them all.",
       "trademark": "Last Petal",
       "effects": [
-        "Deals **6×** physical damage **+ 0.4 × stacks**"
+        "Deals **7.8×** physical damage **+ 0.4 × stacks**"
       ]
     },
     {
@@ -2768,10 +2770,10 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Blunt their swing.\nA strike for 100% Attack; their next attack lands 40% weaker, within 6s.",
+      "description": "Blunt their swing.\nA strike for 125% Attack; their next attack lands 40% weaker, within 6s.",
       "trademark": "Stripped Bough",
       "effects": [
-        "Deals **1×** physical damage",
+        "Deals **1.25×** physical damage",
         "Their next attack deals −**40%** damage within **6s**"
       ]
     },
@@ -2795,10 +2797,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When you kill a mob",
-      "description": "The dance goes on.\nA kill during Thousand Petals adds 7 more dance charges.",
+      "description": "The dance goes on.\nA kill during Thousand Petals adds 4 more dance charges.",
       "trademark": "Second Bloom",
       "effects": [
-        "Adds **7** to **Thousand Petals**"
+        "Adds **4** to **Thousand Petals**"
       ]
     },
     {
@@ -2847,11 +2849,13 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Weather it.\n+6% defence and magic defence for 6 seconds.",
+      "description": "Weather it.\n\nShrugs off poison, bleed and burn, heals 10% of your max HP, then +4% defence and magic defence for 6 seconds.",
       "trademark": "Still Air",
       "effects": [
-        "+**6%** defense for **6s**",
-        "+**6%** magic defense for **6s**"
+        "Removes **8** debuff(s)",
+        "+**4%** defense for **6s**",
+        "+**4%** magic defense for **6s**",
+        "Heals **10%** of max HP"
       ]
     },
     {
@@ -2900,10 +2904,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "After casting Piercing Gust",
-      "description": "No escape.\nCasting Piercing Gust gives 5 charges for 5s. Every basic attack you start on a target within Piercing Gust's range spends one to lunge at it again.",
+      "description": "No escape.\nCasting Piercing Gust gives 1 charge for 0.6s. The next basic attack you start on a target within Piercing Gust's range spends it to lunge at it again.",
       "trademark": "",
       "effects": [
-        "Gives **5** charges for **5s**"
+        "Gives **1** charge for **0.6s**"
       ]
     },
     {
@@ -2926,11 +2930,11 @@
       "releaseEarly": false,
       "castRange": 8,
       "trigger": "When you start a basic attack",
-      "description": "Close the distance.\nDashes to the target and strikes for 100% Attack. With Crossed Branches, casting it also arms 5 charges.",
+      "description": "Close the distance.\nDashes to the target and strikes for 20% Attack. With Crossed Branches, casting it also arms 1 charge.",
       "trademark": "Piercing Gust",
       "effects": [
         "Dashes to the target location",
-        "Deals **1×** physical damage"
+        "Deals **0.2×** physical damage"
       ]
     },
     {
@@ -2979,11 +2983,11 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Break their rhythm.\nA strike for 100% Attack; their attack speed drops 30% for 5s.",
+      "description": "Break their rhythm.\nA strike for 100% Attack; their attack speed drops 11% for 5s.",
       "trademark": "Scattered Petals",
       "effects": [
         "Deals **1×** physical damage",
-        "−**30%** attack speed for **5s**"
+        "−**11%** attack speed for **5s**"
       ]
     },
     {
@@ -3033,10 +3037,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When you parry",
-      "description": "Find the weakness.\nA parry has a 50% chance to charge your next attack with +200% damage, within 5s — spent whether it hits or misses.",
+      "description": "Find the weakness.\nA parry has a 50% chance to charge your next attack with +100% damage, within 5s — spent whether it hits or misses.",
       "trademark": "Parting Clouds",
       "effects": [
-        "**50%** per hit: your next attack deals +**200%** damage within **5s**"
+        "**50%** per hit: your next attack deals +**100%** damage within **5s**"
       ]
     },
     {
@@ -3059,10 +3063,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Go faster, fragile.\n+30% Attack Speed for 8 seconds, but you lose 6% defence and magic defence for the first 3.",
+      "description": "Go faster, fragile.\n+45% Attack Speed for 8 seconds, but you lose 6% defence and magic defence for the first 3.",
       "trademark": "Squall",
       "effects": [
-        "+**30%** attack speed for **8s**",
+        "+**45%** attack speed for **8s**",
         "−**6%** defense for **3s**",
         "−**6%** magic defense for **3s**"
       ]
@@ -3087,10 +3091,10 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Read the hit and punish it.\nFully negates the next incoming hit within 3 seconds.",
+      "description": "Read the hit and punish it.\nFully negates the next 2 incoming hits within 3 seconds.",
       "trademark": "",
       "effects": [
-        "Parries the next hit within **3s** — no damage taken"
+        "Parries the next **2** hits within **3s** — no damage taken"
       ]
     },
     {
@@ -3113,10 +3117,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When you deal damage",
-      "description": "Never let them recover.\nEvery hit cuts the target's HP regen by 3 a second for 5s, and the cuts stack.",
+      "description": "Never let them recover.\nEvery hit cuts the target's HP regen by 1.3 a second for 5s, and the cuts stack.",
       "trademark": "Headwind",
       "effects": [
-        "−3 HP regen per stack for **5s**"
+        "−1.3 HP regen per stack for **5s**"
       ]
     },
     {
@@ -3139,10 +3143,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Answer all of it at once.\nCashes the damage Held Breath banked: five strikes, each landing 100% Attack plus 250% of the banked total, and the debt is erased. With an empty bank it still casts, landing five plain attacks.",
+      "description": "Answer all of it at once.\nCashes the damage Held Breath banked: five strikes, each landing 138% Attack plus 250% of the banked total, and the debt is erased. With an empty bank it still casts, landing five plain attacks.",
       "trademark": "Returning Wind",
       "effects": [
-        "Deals **1×** physical damage, **5×** hits **+ 2.5 × banked total**"
+        "Deals **1.38×** physical damage, **5×** hits **+ 2.5 × banked total**"
       ]
     },
     {
@@ -3165,10 +3169,10 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "After casting Still Air",
-      "description": "Stand your ground.\nAfter casting Still Air, nothing stops you for 6s — no flinch, stun, freeze, silence, knockback or pull.",
+      "description": "Stand your ground.\nAfter casting Still Air, nothing stops you for 3s — no flinch, stun, freeze, silence, knockback or pull.",
       "trademark": "",
       "effects": [
-        "Nothing stops you for **6s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts"
+        "Nothing stops you for **3s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts"
       ]
     },
     {

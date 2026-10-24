@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.vael
   displayName: Vael, the Moonless Eye
+  versionOf: {fileID: 0}
   kind: 2
   size: 1
   flies: 0
@@ -47,16 +48,16 @@ MonoBehaviour:
   ringRankStats: 090000000500000001000000
   ringRankValues: 210000002100000021000000
   aggroRadius: 8
-  leashRadius: 14
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
   element: 7
   elementLevel: 3
+  elementCycleSeconds: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  material: {fileID: 0}
+  material: {fileID: 11400000, guid: 87721c9ce48086b479137b1c7fe75527, type: 2}
   itemDropNames: []
   itemDropChances: []

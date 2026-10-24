@@ -24,3 +24,4 @@
 - [Hover = dark strip, right-click = item card](../hover-strip-vs-item-card.md) — hover text uses ItemTooltip.ShowName (multi-line ok); the scrolling item card is right-click only.
 - [Enter presses the affirming button](../enter-presses-the-affirming-button.md) — STANDING LAW: Enter = the front window's primary button, via EnterKey; mark yes-buttons with MarkPrimary, no per-screen Enter handlers.
 - [AddComponent runs OnEnable before setup](../addcomponent-runs-onenable-before-setup.md) — every code-built input field had no caret/highlight; always finish a field with UiKit.StyleTyping.
+- [Check UI with the real filled state](../check-ui-with-real-filled-state.md) — a HUD look change is watched with skills/items in it, not only the test account's empty bar (hotbar plate dimmed every icon, rolled back 2026-10-25).

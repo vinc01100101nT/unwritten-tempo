@@ -140,7 +140,7 @@ def main():
     for path in sorted(glob.glob(os.path.join(REPO, RES, "Monsters", "*.asset"))):
         rel = os.path.relpath(path, REPO)
         text = read(rel)
-        # A shadow: it has gear and no material of its own, so its folds can move without a price to follow.
+        # A shadow: it has gear, and its own material like every creature.
         if line(text, "kind")[-1] == "2":
             geared = (rel, text)
             break
@@ -154,9 +154,8 @@ def main():
                 "  multiplierGone: 1", "has no multiplier")
     bad += case("a creature carrying a saved toughness again", geared[0], line(geared[1], "level"),
                 line(geared[1], "level") + "\n  toughnessPercent: 235", "still carries a saved toughness")
-    shadow_level = int(line(geared[1], "level").split(":")[1])
-    bad += case("a creature with no material given another level passes", geared[0], line(geared[1], "level"),
-                "  level: %d" % (shadow_level + 1), None, must_pass=True)
+    bad += case("a shadow with its material removed", geared[0], line(geared[1], "material"),
+                "  material: {fileID: 0}", "has no material of its own")
     gear_rel = None
     for path in sorted(glob.glob(os.path.join(REPO, RES, "Items", "*.asset"))):
         rel = os.path.relpath(path, REPO)
@@ -171,8 +170,10 @@ def main():
     bad += case("a material moved out of the Etc tab", ord_rel, line(ord_text, "category"), "  category: 2",
                 "is not in the Etc tab")
     bad += case("a material with another weight", ord_rel, line(ord_text, "weight"), "  weight: 1", "weighs 1")
-    bad += case("a Common material showing no box", ord_rel, line(ord_text, "icon"), "  icon: {fileID: 0}",
-                "its icon is not the Common box")
+    bad += case("a material with no icon", ord_rel, line(ord_text, "icon"), "  icon: {fileID: 0}", "has no icon")
+    rare_box = re.search(r"guid: (\w+)", read("unity/Assets/1_Authored/Art/Icons/Items/Box Rare.png.meta")).group(1)
+    bad += case("a Common material showing the Rare box", ord_rel, line(ord_text, "icon"),
+                "  icon: {fileID: 21300000, guid: %s, type: 3}" % rare_box, "its icon is another tier's box")
 
     code_after, out_after = run()
     if code_after != 0 or out_after != out:

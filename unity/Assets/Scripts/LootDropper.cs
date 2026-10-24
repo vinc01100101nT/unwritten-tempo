@@ -153,6 +153,15 @@ public class LootDropper : MonoBehaviour
 
             // THE MATERIAL ONLY THIS CREATURE DROPS.
             if (def != null) RollOwnMaterial(def.material, health.kind, health.multiplier);
+
+            // ITS INK CRATE — the crate of its material's rarity, at the chance that makes it worth a share of the kill.
+            if (def != null)
+            {
+                var crate = CrateMath.CrateFor(health.kind, health.multiplier);
+                float crateChance = CrateMath.DropChance(def.level, health.multiplier,
+                                                         CrateMath.PoolOf(CrateMath.TierOf(health.kind, health.multiplier)).average);
+                if (crate != null && crateChance > 0f && CombatRng.Chance(crateChance)) Won(crate, 1, null, crateChance);
+            }
         }
 
         // NOTHING AN ELITE DROPS IS AUTO-LOOTED: all of it falls, so an elite is hunted by hand and never farmed by

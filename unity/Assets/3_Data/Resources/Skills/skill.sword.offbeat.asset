@@ -24,7 +24,7 @@ MonoBehaviour:
   description: 'Break their rhythm.
 
     A strike for 100% Attack; their attack speed
-    drops 30% for 5s.'
+    drops 11% for 5s.'
   archetype: 4
   family: 0
   shape: 0
@@ -274,7 +274,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.3
+        value: 0.11
         useStacks: 0
         op: 0
         read: 0

@@ -110,12 +110,17 @@ public class GuideOverlay : MonoBehaviour
 
         if (!lit)
         {
-            // A SENTENCE ONLY, low in the middle of the screen, with nothing dark.
+            // A SENTENCE ONLY, low in the middle of the screen, with nothing dark — above the hotbar and the stamina
+            // bar, never on them, and out of the way while the map covers the screen.
             waitCover.enabled = false;
             Unhook();
-            PlaceTip(new Vector2(-TipWidth * 0.5f, -root.rect.height * 0.5f + 90f), 2);
+            bool tipWanted = !MapWindow.IsOpen;
+            if (tip.gameObject.activeSelf != tipWanted) tip.gameObject.SetActive(tipWanted);
+            PlaceLowTip();
             return;
         }
+
+        if (!tip.gameObject.activeSelf) tip.gameObject.SetActive(true);
 
         // The window holding the part comes to the front of the windows, so no other window can cover it.
         var window = WindowOf(target);
@@ -127,7 +132,7 @@ public class GuideOverlay : MonoBehaviour
             for (int i = 0; i < 4; i++) { dark[i].enabled = false; frame[i].enabled = false; }
             pointer.enabled = false;
             waitCover.enabled = false;
-            PlaceTip(new Vector2(-TipWidth * 0.5f, -root.rect.height * 0.5f + 90f), 2);
+            PlaceLowTip();
             return;
         }
         min -= new Vector2(FramePad, FramePad);
@@ -296,6 +301,34 @@ public class GuideOverlay : MonoBehaviour
         if (hookedButton != null) hookedButton.onClick.RemoveListener(QuestStore.PressedLitSpot);
         hookedButton = null;
     }
+
+    // THE SENTENCE ALONE sits at the right edge, under the clock: the guide is drawn over everything, so in the middle
+    // of the screen it covered whatever window was open, and low down it covered the hotbar.
+    void PlaceLowTip()
+    {
+        PlaceTip(Vector2.zero, 2);
+        var r = root.rect;
+        float right = r.xMax - SideTipMargin, top = r.yMax - SideTipFallbackTop;
+        if (!lookedForClock)
+        {
+            lookedForClock = true;
+            // perf-ok: once — the clock is part of the saved HUD, so it is there from the start or never.
+            foreach (var t in canvas.GetComponentsInChildren<RectTransform>(true))
+                if (t.name == "HUD_CalendarPanel") { clock = t; break; }
+        }
+        if (clock != null && clock.gameObject.activeInHierarchy)
+        {
+            clock.GetWorldCorners(corners);
+            Vector3 bottomRight = root.InverseTransformPoint(corners[3]);
+            right = bottomRight.x;
+            top = bottomRight.y - SideTipGap;
+        }
+        tip.anchoredPosition = new Vector2(right - TipWidth, top - tip.sizeDelta.y * 0.5f) - r.center;
+    }
+
+    const float SideTipMargin = 16f, SideTipGap = 8f, SideTipFallbackTop = 240f;
+    RectTransform clock;
+    bool lookedForClock;
 
     void PlaceTip(Vector2 leftMiddle, int lines)
     {

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-hornscale-scale
   displayName: Tainted Hornscale Scale
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 420138e589145414ca81d78a5d5d66ba, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

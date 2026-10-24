@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
+  m_Name: Purple Ink Crate
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.purple-ink-crate
+  displayName: Purple Ink Crate
+  icon: {fileID: 21300000, guid: ca4043df3eaf5c148b2df6b0b11dc8ef, type: 3}
+  slot: 0
+  weaponType: 0
+  attackRange: 0
+  equipModel: {fileID: 0}
+  element: 0
+  category: 1
+  weight: 2
+  value: 0
+  undroppable: 0
+  unsellable: 1
+  unstorable: 0
+  untradeable: 0
+  headgear:
+    str: 0
+    agi: 0
+    vit: 0
+    intel: 0
+    dex: 0
+    luk: 0
+    attackReach: 0
+    experiencePercent: 0
+  wornSkillId: 
+  madeOf: 0
+  materialKind: 0
+  materialStep: 0
+  mergesInto: {fileID: 0}
+  useSkillId: 
+  opensAsCrate: 1
+  crateRarity: 3
+  crateConsumables:
+  - {fileID: 11400000, guid: 3cf070363a2f48ceb22ea701238afb1c, type: 2}
+  - {fileID: 11400000, guid: 7353eed6194141b9b9bacae45db6ac14, type: 2}
+  - {fileID: 11400000, guid: d3cfe105ec505a620b404601723dcee9, type: 2}
+  - {fileID: 11400000, guid: be7dff7519e8fc499ced3387bd5576dc, type: 2}
+  - {fileID: 11400000, guid: 5ea1d48c1b8655f56afb8529577b3af7, type: 2}
+  - {fileID: 11400000, guid: f609e0654282fc893b6fb1ae5698cbbb, type: 2}
+  - {fileID: 11400000, guid: 9355e113c6d84c34af39133f5233b1c8, type: 2}
+  - {fileID: 11400000, guid: 8c7df5e0d355265b02325ad5b5519c15, type: 2}
+  attackSfx:
+    clips: []
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  hitSfx:
+    clips: []
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  description: 'A crate sealed with ink, dropped by creatures whose own material
+    is Epic. Double-click to open: one Epic creature or forging material, a potion,
+    or a food.'

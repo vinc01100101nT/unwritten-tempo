@@ -100,7 +100,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.8
+        value: 0.42
         useStacks: 0
         op: 0
         read: 0
@@ -149,7 +149,7 @@ MonoBehaviour:
       markKind: 0
       resetsLastCombination: 0
       damageMultPerMark:
-        value: 0.15
+        value: 0.1
         useStacks: 0
         op: 0
         read: 0

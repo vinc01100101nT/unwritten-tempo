@@ -542,6 +542,10 @@ public class SkillEffect
     // Every value of healAmountMax is a legal-looking number, so an effect saved before it existed would read as
     // "heals up to 0". This says whether anybody wrote it; unwritten = the heal is exactly `amount`.
     [HideInInspector] public bool healAmountMaxSet = false;
+    [Tooltip("Heal kind only: the amount (and its top) is a SHARE of the healed unit's max HP — 0.1 = 10% — instead of " +
+             "flat HP, so the heal keeps its worth at every level. Off = flat HP, which is what every heal saved before " +
+             "this existed means.")]
+    public bool healShareOfMaxHP = false;
 
     [Header("Status / duration / magnitude")]
     [Tooltip("Which ailment to inflict (Status kind).")]

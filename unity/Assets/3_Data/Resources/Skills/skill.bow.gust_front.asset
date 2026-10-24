@@ -26,7 +26,7 @@ MonoBehaviour:
   description: 'Move on with the wind.
 
     When you kill something: +15% movement
-    speed for 3s.'
+    speed for 15s.'
   archetype: 0
   family: 2
   shape: 0
@@ -146,7 +146,7 @@ MonoBehaviour:
       healAmountMaxSet: 0
       ailment: 2
       seconds:
-        value: 3
+        value: 15
         useStacks: 0
         op: 0
         read: 0

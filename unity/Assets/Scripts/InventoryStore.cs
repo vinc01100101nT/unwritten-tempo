@@ -134,6 +134,14 @@ public class InventoryStore : MonoBehaviour
         if (me != null) me.AskToMerge(Entries.IndexOf(e), e.def.id);
     }
 
+    /// <summary>Open one crate of this stack — the server rolls what is inside.</summary>
+    public void OpenCrate(BagEntry e)
+    {
+        if (e == null || e.def == null) return;
+        var me = GameNetwork.MyPlayer;
+        if (me != null) me.AskToOpenCrate(Entries.IndexOf(e), e.def.id);
+    }
+
     public void Unequip(EquipSlotType slot)
     {
         if (Character.Instance == null) return;

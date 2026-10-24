@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-snapper-lid
   displayName: Tainted Snapper Lid
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 7b554c5bf4b8ae448bcf71c15d1ece11, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

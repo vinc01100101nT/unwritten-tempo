@@ -22,11 +22,10 @@ public static class CreatureMaterials
     static readonly float[] TierFromMultiplier = { 1f, 3f, 10f, 30f, 90f };
 
     /// <summary>The tier a <paramref name="kind"/> of <paramref name="multiplier"/> drops its own material at: the highest
-    /// tier its multiplier opens. False for a shadow, which has no material of its own.</summary>
+    /// tier its multiplier opens — a shadow's ×90 and above opens Legendary.</summary>
     public static bool TierOfMultiplier(CreatureKind kind, float multiplier, out Rarity tier)
     {
         tier = Rarity.Common;
-        if (kind == CreatureKind.Shadow) return false;
         float m = CreaturePay.Clamp(multiplier);
         for (int t = TierFromMultiplier.Length - 1; t >= 0; t--)
             if (m >= TierFromMultiplier[t]) { tier = (Rarity)t; break; }
@@ -45,10 +44,9 @@ public static class CreatureMaterials
     /// <summary>How many pieces of its material of <paramref name="tier"/> one kill of a <paramref name="kind"/> of
     /// <paramref name="multiplier"/> gives up on average: the tier's ×1 chance times the multiplier — past 1, more than
     /// one piece. A ×1 chance × its tier's price is the same 10 × level at every tier, so a kill's material is worth
-    /// 10 × level × its multiplier. A shadow has no material of its own here.</summary>
+    /// 10 × level × its multiplier.</summary>
     public static float ExpectedPieces(CreatureKind kind, Rarity tier, float multiplier)
     {
-        if (kind == CreatureKind.Shadow) return 0f;
         return CreaturePay.ExpectedPieces(ChanceAtOne(tier), multiplier);
     }
 

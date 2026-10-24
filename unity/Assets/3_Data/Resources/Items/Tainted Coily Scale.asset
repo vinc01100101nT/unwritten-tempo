@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-coily-scale
   displayName: Tainted Coily Scale
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 9190bd88ce3eebc4bb0ceabac4aefa5c, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

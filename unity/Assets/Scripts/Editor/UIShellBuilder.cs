@@ -16,7 +16,6 @@ public static class UIShellBuilder
 {
     const string CanvasName = "GameUICanvas";
     const string UIRoot = "Assets/1_Authored/Art/Billboards/Ui";
-    const string METEO  = UIRoot + "/Skill Icon/Meteo";   // weather icons (Sun/Rain/Snow) for the calendar
     const string ResourcePrefabPath = "Assets/3_Data/Resources/GameUICanvas.prefab";
 
     [MenuItem("Tools/unwritten/UI/Build UI Shell (Systems scene)", priority = 110)]
@@ -71,12 +70,7 @@ public static class UIShellBuilder
 
         // The Inventory (B) and Character (C) windows. Builds itself into this canvas at runtime.
         var prog = canvasGO.AddComponent<ProgressionWindows>();   // also pulls in InventoryStore (RequireComponent)
-        var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: a month grid w/ per-day weather (+ click the clock plate)
-        // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the
-        // Sprite refs into the prefab now — same pattern as the skill-icon Sprites the hotbar reads).
-        calPanel.sunIcon  = AssetDatabase.LoadAssetAtPath<Sprite>(METEO + "/Sun.png");
-        calPanel.rainIcon = AssetDatabase.LoadAssetAtPath<Sprite>(METEO + "/Rain.png");
-        calPanel.snowIcon = AssetDatabase.LoadAssetAtPath<Sprite>(METEO + "/Snow.png");
+        canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: a month grid w/ per-day weather (+ click the clock plate)
 
         // UI click sounds (TomMusic latch foley): panel open/close + a generic button click.
         var ui = canvasGO.AddComponent<UISounds>();

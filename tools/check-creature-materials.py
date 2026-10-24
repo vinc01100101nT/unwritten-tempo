@@ -2,7 +2,7 @@
 """Every creature's own material is whole: each normal creature and elite has its multiplier written and names exactly
 ONE material, whose tier is the one its multiplier gives (CreatureMaterials.TierOfMultiplier: x1 Common, x3 Uncommon,
 x10 Rare, x30 Epic, x90 Legendary), no material belongs to two creatures, every material sells for exactly what the
-rule says for its creature's level and its tier, its icon is the box drawn in its tier's colour, every piece of gear is worth what a brand-new piece is
+rule says for its creature's level and its tier, its icon is its own picture or else the box drawn in its tier's colour, every piece of gear is worth what a brand-new piece is
 (CraftingMath.NewPieceWorth), and the NEWBIE MAPS hold only x1 normal creatures of a level that wears Raw (elites,
 which roam every map, excepted). The tier openings and the price multiples are read out of CreatureMaterials.cs, the
 level-to-grade ladder out of CreatureLoot.cs and the new-piece worth out of CraftingMath.cs, so the rule has one owner
@@ -154,10 +154,6 @@ def main():
             multiplier = 1.0
         grade = worn_grade(level, grade_count, ladder_top)
         creature_rows[field(text, "id")] = (name, kind, grade, multiplier)
-        if kind == "2":
-            if own:
-                faults.append("%s is a shadow and names a material of its own; shadows have none" % name)
-            continue
         creatures += 1
         want_tier = max([t for t, at in enumerate(openings) if max(1.0, multiplier) >= at] or [0])
         if not own:
@@ -185,8 +181,12 @@ def main():
         if field(item, "value") != str(want):
             faults.append("%s is worth %s but the rule says %d, to sell for %d (%d x level %d of %s)"
                           % (item_name, field(item, "value"), want, sells, per_level[step], level, name))
-        if guid_of(field(item, "icon")) != boxes[step]:
-            faults.append("%s is %s but its icon is not the %s box" % (item_name, TIER[step], TIER[step]))
+        icon = guid_of(field(item, "icon"))
+        # Its own painted picture, or -- when it has none -- the box of its own tier.
+        if not icon:
+            faults.append("%s has no icon" % item_name)
+        elif icon in boxes.values() and icon != boxes[step]:
+            faults.append("%s is %s but its icon is another tier's box" % (item_name, TIER[step]))
         if field(item, "category") != ETC_TAB:
             faults.append("%s is not in the Etc tab" % item_name)
         if field(item, "weight") != WEIGHT:

@@ -25,8 +25,8 @@ MonoBehaviour:
   maxLevel: 10
   description: 'One drop becomes three.
 
-    A shot for 100% Attack that splits to
-    2 more enemies within 4m, each for 100%.'
+    A shot for 78% Attack that splits to
+    2 more enemies within 4m, each for 78%.'
   archetype: 0
   family: 2
   shape: 0
@@ -96,7 +96,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 1
+        value: 0.78
         useStacks: 0
         op: 0
         read: 0

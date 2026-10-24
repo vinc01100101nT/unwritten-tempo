@@ -24,7 +24,7 @@ MonoBehaviour:
   published: 1
   maxLevel: 10
   description: "Celestia's rain, wherever she drifts.\nA rain cloud follows you for
-    6s, a volley each swing on everything within 3m for 40% Attack \u2014 each hit
+    6s, a volley each swing on everything within 3m for 60% Attack \u2014 each hit
     a basic attack. When it ends, every Gathering Clouds stack becomes one more volley."
   archetype: 0
   family: 2
@@ -71,9 +71,9 @@ MonoBehaviour:
   repeatBonusStateIdSet: 1
   repeatBonusInterval: 0.2
   hasReleaseStance: 1
-  releaseStance: 14
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
-  weaponSkillAnimation: 1
+  weaponSkillAnimation: 0
   bindings:
   - tickId: rain
     targetMode: 2
@@ -255,7 +255,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 1
       damageType: 0
       damageMult:
-        value: 0.4
+        value: 0.6
         useStacks: 0
         op: 0
         read: 0

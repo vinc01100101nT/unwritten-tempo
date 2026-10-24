@@ -71,9 +71,9 @@ MonoBehaviour:
   repeatBonusStateIdSet: 0
   repeatBonusInterval: 0.2
   hasReleaseStance: 1
-  releaseStance: 14
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
-  weaponSkillAnimation: 2
+  weaponSkillAnimation: 0
   bindings:
   - tickId: cast
     targetMode: 0

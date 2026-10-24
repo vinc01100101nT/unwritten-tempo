@@ -13,8 +13,10 @@ public static class SkillSymbol
     /// <summary>The two letters, falling back to the skill's whole name when nobody authored a symbol.</summary>
     public static string TextFor(SkillDef def) => def != null ? def.Symbol : "";
 
-    /// <summary>The skill's painted icon, or null when it has none — then the tile shows <see cref="TextFor(SkillDef)"/>.</summary>
-    public static Sprite IconFor(SkillDef def) => def != null ? def.icon : null;
+    /// <summary>The skill's painted icon, else the picture of the item that runs it (a potion, a food, a hat), or null
+    /// when it has neither — then the tile shows <see cref="TextFor(SkillDef)"/>.</summary>
+    public static Sprite IconFor(SkillDef def)
+        => def == null ? null : def.icon != null ? def.icon : ItemCatalog.IconOfSkill(def.id);
 
     public static Sprite IconFor(string skillId)
         => string.IsNullOrEmpty(skillId) ? null : IconFor(SkillCatalog.Get(skillId));
@@ -48,13 +50,31 @@ public static class StateFace
     /// <summary>The tile's colour: the granting skill's weapon colour, or <see cref="NoSkillBack"/>.</summary>
     public static Color Back(UnitStates.State s)
     {
-        if (string.IsNullOrEmpty(s.sourceSkillId)) return NoSkillBack;
-        var w = SkillSymbol.ColorFor(s.sourceSkillId);
+        string skill = SkillOf(s);
+        if (string.IsNullOrEmpty(skill)) return NoSkillBack;
+        var w = SkillSymbol.ColorFor(skill);
         return new Color(w.r, w.g, w.b, NoSkillBack.a);
     }
 
-    /// <summary>The granting skill's painted icon, or null — then the tile shows <see cref="Letters"/>.</summary>
-    public static Sprite Icon(UnitStates.State s) => SkillSymbol.IconFor(s.sourceSkillId);
+    /// <summary>The granting skill's painted icon, else the ailment's own picture (an ailment a creature's swing put
+    /// on comes from no skill), or null — then the tile shows <see cref="Letters"/>.</summary>
+    public static Sprite Icon(UnitStates.State s)
+    {
+        var own = SkillSymbol.IconFor(SkillOf(s));
+        return own != null ? own : AilmentIcon(s.id);
+    }
+
+    /// <summary>The skill whose face a state wears: the one that granted it, or for a held orb (granted by no skill
+    /// id) that orb's own skill.</summary>
+    static string SkillOf(UnitStates.State s)
+    {
+        if (!string.IsNullOrEmpty(s.sourceSkillId)) return s.sourceSkillId;
+        var orb = OrbMath.OrbOfPile(s.id);
+        return orb != OrbElement.None ? OrbMath.SkillIdOf(orb) : s.sourceSkillId;
+    }
+
+    /// <summary>The picture of an ailment (<see cref="UiIcons.Ailment"/>), or null for a state that is not one.</summary>
+    public static Sprite AilmentIcon(StateId id) => UiIcons.Ailment(id);
 
     /// <summary>The granting skill's two letters, else the state's name, else its id.</summary>
     public static string Letters(UnitStates.State s)

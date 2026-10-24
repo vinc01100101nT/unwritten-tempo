@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.frostcap-spore
   displayName: Frostcap Spore
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 31f66fdbd3a83e64f81c075d71b3592a, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

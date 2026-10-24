@@ -147,23 +147,35 @@ public class HotbarPanel : MonoBehaviour
     public void Rebuild()
     {
         if (holder != null)
-            for (int i = 0; i < holder.childCount; i++)
-            {
-                var cell = holder.GetChild(i);
-                for (int c = cell.childCount - 1; c >= 0; c--) Destroy(cell.GetChild(c).gameObject);
-                // THE BUTTON AND THE HOVER STAY, and are re-pointed when the cell is built again. Destroying them here
-                // and building in the same frame would hand the new cell the component already on its way out — a
-                // cell that can no longer be clicked until the next rebuild.
-                HoverRelay.Set(cell.gameObject, null, null);
-                var box = cell.GetComponent<ItemSlot>();
-                if (box != null) box.SetItem(null);
-                var skillCard = cell.GetComponent<SkillRightClick>();
-                if (skillCard != null) skillCard.def = null;
-            }
+            for (int i = 0; i < holder.childCount; i++) ClearCell(holder.GetChild(i));
         slots.Clear();
         SkillHoverCard.Hide();   // the hovered cell may be torn down — don't leave a stale tooltip floating
         ItemTooltip.HideTip();
         built = false;   // Update() will TryBuild() again next frame, reading the new bar
+    }
+
+    /// <summary>Rebuild ONE cell in place, this frame. Rebuilding the whole bar leaves it empty for a frame, which reads
+    /// as the bar blinking — wrong for a change that touches only one cell (the Release's combination).</summary>
+    void RebuildCell(Slot s)
+    {
+        int at = slots.IndexOf(s);
+        if (at < 0) return;
+        ClearCell(s.cell.transform);
+        SkillHoverCard.Hide();
+        slots[at] = BuildSlot(s.cell, s.index);
+    }
+
+    static void ClearCell(Transform cell)
+    {
+        for (int c = cell.childCount - 1; c >= 0; c--) Destroy(cell.GetChild(c).gameObject);
+        // THE BUTTON AND THE HOVER STAY, and are re-pointed when the cell is built again. Destroying them here
+        // and building in the same frame would hand the new cell the component already on its way out — a
+        // cell that can no longer be clicked until the next rebuild.
+        HoverRelay.Set(cell.gameObject, null, null);
+        var box = cell.GetComponent<ItemSlot>();
+        if (box != null) box.SetItem(null);
+        var skillCard = cell.GetComponent<SkillRightClick>();
+        if (skillCard != null) skillCard.def = null;
     }
 
     void TryBuild()
@@ -457,9 +469,9 @@ public class HotbarPanel : MonoBehaviour
     void RefreshSlot(Slot s, bool ringOn)
     {
         if (s == null || s.kind != Kind.Skill || s.skill == null || s.cooldown == null) return;
-        // THE STAFF'S RELEASE wears the combination the orbs make: a new set of orbs rebuilds the bar once.
+        // THE STAFF'S RELEASE wears the combination the orbs make: a new set of orbs rebuilds its own cell once.
         if (s.skill is SkillRunner release && release.def != null && release.def.isOrbRelease
-            && !ReferenceEquals(release.ShownDef, s.shownDef)) { Rebuild(); return; }
+            && !ReferenceEquals(release.ShownDef, s.shownDef)) { RebuildCell(s); return; }
 
         float frac = s.skill.CooldownFraction01;
         s.cooldown.fillAmount = frac;

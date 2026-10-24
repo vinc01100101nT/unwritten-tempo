@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-frostskull-crown
   displayName: Tainted Frostskull Crown
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 85b5901d1f5f88349a0806ad1dda87d2, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

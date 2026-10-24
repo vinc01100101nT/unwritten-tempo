@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-lovebite-heart
   displayName: Blighted Lovebite Heart
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: 8c4053b13b9f7ca41924c0486c6d9914, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

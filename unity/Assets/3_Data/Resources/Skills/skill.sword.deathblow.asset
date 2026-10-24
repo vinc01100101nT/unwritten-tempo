@@ -23,7 +23,7 @@ MonoBehaviour:
   maxLevel: 10
   description: 'Everything, in one swing.
 
-    One massive blow for 600% Attack,
+    One massive blow for 780% Attack,
     +40% per Rising Breeze stack, and spends them all.'
   archetype: 0
   family: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 6
+        value: 7.8
         useStacks: 1
         op: 0
         read: 0

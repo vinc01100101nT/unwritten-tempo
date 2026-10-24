@@ -19,11 +19,18 @@ MonoBehaviour:
   weaponType: 1
   masteryLevel: 5
   needsSkillId: 
+  companionOf: 
+  statesEndWhenHit: 0
   published: 1
   maxLevel: 5
+  freeFirstLevel: 0
+  orbCombo: 
+  isOrbRelease: 0
   description: 'Weather it.
 
-    +6% defence and magic defence for 6 seconds.'
+
+    Shrugs off poison, bleed and burn, heals 10% of your max HP, then +4%
+    defence and magic defence for 6 seconds.'
   archetype: 2
   family: 0
   shape: 3
@@ -53,15 +60,27 @@ MonoBehaviour:
   repeatCount: 1
   repeatInterval: 0
   repeatScaleWithAttackSpeed: 0
+  repeatScaleWithCastSpeed: 0
+  repeatMaxCount: 1
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
   showRepeatsTotalDamage: 0
+  repeatTotalPerBeat: 0
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
-  hasReleaseStance: 0
-  releaseStance: 14
+  repeatWhilePileHeld: 0
+  repeatPileStateId: 0
+  repeatPileStateIdSet: 0
+  repeatMaxSeconds: 0
+  repeatBonusSkillId: 
+  repeatBonusStateId: 0
+  repeatBonusStateIdSet: 0
+  repeatBonusInterval: 0.2
+  hasReleaseStance: 1
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
+  weaponSkillAnimation: 0
   bindings:
   - tickId: follow_hit
     targetMode: 0
@@ -78,6 +97,209 @@ MonoBehaviour:
     bounceReturns: 0
     bounceEffectId: 
     effects:
+    - kind: 6
+      useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      element: 0
+      converts: 3
+      amount:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
+      ailment: 2
+      seconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      magnitude:
+        value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      side: 0
+      subStat: 0
+      affinity: []
+      chanceAffinity: []
+      durationAffinity: []
+      hitCountAffinity: []
     - kind: 5
       useStacks: 0
       resolveAsBasicAttack: 0
@@ -96,6 +318,67 @@ MonoBehaviour:
         scaler: 1
       damageMultPerMetre:
         value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
         useStacks: 0
         op: 0
         read: 0
@@ -129,7 +412,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.06
+        value: 0.04
         useStacks: 0
         op: 0
         read: 0
@@ -244,6 +527,67 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -273,7 +617,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.06
+        value: 0.04
         useStacks: 0
         op: 0
         read: 0
@@ -360,6 +704,212 @@ MonoBehaviour:
         scaler: 1
       side: 0
       subStat: 12
+      affinity: []
+      chanceAffinity: []
+      durationAffinity:
+      - stat: 3
+        weight: 100
+      hitCountAffinity: []
+    - kind: 1
+      useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 0
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      element: 0
+      converts: 3
+      amount:
+        value: 0.1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMax:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      healAmountMaxSet: 0
+      healShareOfMaxHP: 1
+      ailment: 2
+      seconds:
+        value: 6
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      magnitude:
+        value: 17
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      side: 0
+      subStat: 4
       affinity: []
       chanceAffinity: []
       durationAffinity:

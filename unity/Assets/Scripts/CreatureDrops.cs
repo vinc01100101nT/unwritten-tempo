@@ -55,6 +55,10 @@ public static class CreatureDrops
         var finds = CreatureFinds.Of(def.element);
         float each = CreatureFinds.ChanceOfOne(def.kind, def.element);
         for (int i = 0; i < finds.Count; i++) into.Add(new Drop(finds[i], each, 1, 1));
+        // ITS INK CRATE, at the chance LootDropper rolls it.
+        var crate = CrateMath.CrateFor(def.kind, def.multiplier);
+        float crateChance = CrateMath.DropChanceOf(def);
+        if (crate != null && crateChance > 0f) into.Add(new Drop(crate, crateChance, 1, 1));
     }
 
     static readonly Dictionary<EquipSlotType, Item> wornScratch = new Dictionary<EquipSlotType, Item>();

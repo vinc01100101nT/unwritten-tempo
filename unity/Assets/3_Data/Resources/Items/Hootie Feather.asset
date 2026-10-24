@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.hootie-feather
   displayName: Hootie Feather
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 63ce9a3b3617b3a42ae52d25ced2a7d5, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

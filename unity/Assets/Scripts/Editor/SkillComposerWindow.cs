@@ -1938,11 +1938,17 @@ public class SkillComposerWindow : EditorWindow
                         "mult per point given up'. Always paid by the caster.", MessageType.None);
                     break;
                 case SkillEffectKind.Heal:
+                    ef.healShareOfMaxHP = EditorGUILayout.Toggle(new GUIContent("Share of max HP",
+                        "On: the numbers below are a share of the healed unit's max HP (0.1 = 10%), so the heal keeps its " +
+                        "worth at every level. Off: flat HP."), ef.healShareOfMaxHP);
+                    bool share = ef.healShareOfMaxHP;
                     // The base value of the one formula — always shown, whether or not a pile sizes it.
-                    NumberRow("HP", "Flat HP restored to the caster — the lowest a heal rolls.", ref ef.amount, ef.useStacks, whole: true);
+                    NumberRow(share ? "share of max HP" : "HP", share
+                        ? "Share of the healed unit's max HP restored (0.1 = 10%) — the lowest a heal rolls."
+                        : "Flat HP restored to the caster — the lowest a heal rolls.", ref ef.amount, ef.useStacks, whole: !share);
                     if (ef.healAmountMaxSet)
-                        NumberRow("HP up to", "The most HP one heal restores. Each heal rolls a whole number from HP up " +
-                                  "to this. Equal to HP = always exactly HP.", ref ef.healAmountMax, ef.useStacks, whole: true);
+                        NumberRow(share ? "share up to" : "HP up to", "The most one heal restores. Each heal rolls from the " +
+                                  "lowest up to this. Equal to it = always exactly that.", ref ef.healAmountMax, ef.useStacks, whole: !share);
                     else if (GUILayout.Button(new GUIContent("Heal a range", "Each heal rolls between HP and a top you set, like an RO potion.")))
                     {
                         ef.healAmountMax = ef.amount;

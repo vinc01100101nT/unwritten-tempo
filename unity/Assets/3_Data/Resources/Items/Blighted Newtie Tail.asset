@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-newtie-tail
   displayName: Blighted Newtie Tail
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: 972f60a3c8414f84b802a75aa13c272a, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

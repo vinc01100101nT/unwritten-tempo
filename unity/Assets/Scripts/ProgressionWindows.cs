@@ -230,13 +230,14 @@ public class ProgressionWindows : MonoBehaviour
     const float StatColumnW = 248f, ColumnGap = 14f, RingColumnW = 274f;
     const float StatRowHeight = 20f, DerivedTextSize = 11f;
 
-    // The derived block's labels. The attack lines and CRIT each take a whole line: with a buff running they carry
-    // bracketed extras that do not fit in half the column. Everything after them sits two to a line, so the
-    // two-to-a-line texts open with as many empty lines as there are whole ones above them.
-    const string DerivedFullLabels = "MELEE ATK\nRANGED ATK\nM.ATK\nCRIT";
-    const string DerivedSkip = "\n\n\n\n";
-    const string DerivedLeftLabels = DerivedSkip + "DEF\nHIT\nASPD\nMOVE\nGUARD\nLEECH\nREFLECT\nHP\nSTA";
-    const string DerivedRightLabels = DerivedSkip + "M.DEF\nFLEE\nCAST\nRUN\nBARRIER\nMP LEECH\nRANGE\nMP";
+    // The derived block's labels. The attack lines, CRIT and the two defences each take a whole line: with a buff
+    // running they carry bracketed extras, and a defence carries its cap, which do not fit in half the column.
+    // Everything after them sits two to a line, so the two-to-a-line texts open with as many empty lines as there are
+    // whole ones above them.
+    const string DerivedFullLabels = "MELEE ATK\nRANGED ATK\nM.ATK\nCRIT\nDEF\nM.DEF";
+    const string DerivedSkip = "\n\n\n\n\n\n";
+    const string DerivedLeftLabels = DerivedSkip + "HIT\nASPD\nMOVE\nGUARD\nLEECH\nREFLECT\nHP\nSTA";
+    const string DerivedRightLabels = DerivedSkip + "FLEE\nCAST\nRUN\nBARRIER\nMP LEECH\nRANGE\nMP";
 
     /// <summary>The Character window's right-hand column, where <see cref="SkillDraftPanel"/> draws the Ring of
     /// Progression. Null until the window is built.</summary>
@@ -250,7 +251,7 @@ public class ProgressionWindows : MonoBehaviour
         // Two columns: the stat sheet on the left, the Ring of Progression on the right (SkillDraftPanel builds
         // into RingColumn). The ring is drawn as a circle 274 wide, so the right column is sized for it; the window's
         // frame takes 32 of its width and 50 of its height.
-        var content = UiKit.Window(canvas, "Character", new Vector2(StatColumnW + ColumnGap + RingColumnW + 32, 400),
+        var content = UiKit.Window(canvas, "Character", new Vector2(StatColumnW + ColumnGap + RingColumnW + 32, 416),
                                    new Vector2(0, 0), out charRoot);
         CharacterRoot = charRoot;
 
@@ -401,9 +402,10 @@ public class ProgressionWindows : MonoBehaviour
             $"{b.meleeMin}-{b.meleeMax}{Delta(d.meleeMin - b.meleeMin, d.meleeMax - b.meleeMax)}\n" +
             $"{b.rangedMin}-{b.rangedMax}{Delta(d.rangedMin - b.rangedMin, d.rangedMax - b.rangedMax)}\n" +
             $"{b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
-            $"{Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}";
-        charDerived[1].text = DerivedSkip +
+            $"{Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}\n" +
             $"{Tenths(b.hardDef)}{DeltaTenths(d.hardDef - b.hardDef)} + {b.def}{Delta(d.def - b.def)} ({Tenths(Combat.MaxHardDefenseTenths)})\n" +
+            $"{Tenths(b.hardMdef)}{DeltaTenths(d.hardMdef - b.hardMdef)} + {b.mdef}{Delta(d.mdef - b.mdef)} ({Tenths(Combat.MaxHardDefenseTenths)})";
+        charDerived[1].text = DerivedSkip +
             $"{b.hit}{Delta(d.hit - b.hit)}\n" +
             $"{b.aspd}{Delta(d.aspd - b.aspd)} ({UnitStatMath.MaxAspd})\n" +
             $"{b.moveSpeed}{Delta(d.moveSpeed - b.moveSpeed)}\n" +
@@ -413,7 +415,6 @@ public class ProgressionWindows : MonoBehaviour
             $"{c.MaxHP}\n" +
             $"{Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}";
         charDerived[2].text = DerivedSkip +
-            $"{Tenths(b.hardMdef)}{DeltaTenths(d.hardMdef - b.hardMdef)} + {b.mdef}{Delta(d.mdef - b.mdef)} ({Tenths(Combat.MaxHardDefenseTenths)})\n" +
             $"{b.flee}{Delta(d.flee - b.flee)}\n" +
             $"×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
             $"{RunSpeed(pc)}\n" +
@@ -516,7 +517,7 @@ public class ProgressionWindows : MonoBehaviour
         var icon = ItemIcon.Make(picture.transform, 8f);
         var look = GradeGlow.MakeForSquare(picture.transform, icon.transform);
         // A skill has no picture: its badge — its colour, its letters — stands in the panel instead.
-        var badge = UiKit.Round(UiKit.Img("Badge", picture.transform, Color.white), 6);
+        var badge = UiKit.Round(UiKit.Img("Badge", picture.transform, Color.white), UiKit.WindowRadius);
         badge.raycastTarget = false;
         var badgeRt = badge.rectTransform;
         badgeRt.anchorMin = badgeRt.anchorMax = badgeRt.pivot = new Vector2(0.5f, 0.5f);

@@ -174,7 +174,7 @@ public class QuestsWindow : MonoBehaviour
         {
             var s = shown.steps[i];
             bool done = i < now, current = i == now;
-            string line = (done ? "✔  " : "     ") + s.text;
+            string line = (done ? "✔  " : current ? "»  " : "     ") + s.text;
             if (current && shownWire.need > 0) line += "   " + shownWire.have + " / " + shownWire.need;
             Text(detailContent, line, 12, done ? UiKit.Good : current ? UiKit.TextMain : UiKit.TextDim,
                  current ? FontStyle.Bold : FontStyle.Normal);
@@ -203,6 +203,7 @@ public class QuestsWindow : MonoBehaviour
     }
 
     // WHAT THIS TUTORIAL STILL NEEDS before Play starts it — each line the server's number and the server's yes or no.
+    // A tutorial that needs nothing says nothing here.
     void Requirements(string questId)
     {
         bool any = false;
@@ -212,7 +213,6 @@ public class QuestsWindow : MonoBehaviour
             if (!any) { Text(detailContent, "Requirements", 12, UiKit.TitleText, FontStyle.Bold); any = true; }
             Text(detailContent, (n.met ? "✔  " : "     ") + NeedText(n), 12, n.met ? UiKit.Good : UiKit.Bad);
         }
-        if (!any) Text(detailContent, "Requirements: none", 12, UiKit.TitleText, FontStyle.Bold);
     }
 
     static string NeedText(QuestNeedWire n)

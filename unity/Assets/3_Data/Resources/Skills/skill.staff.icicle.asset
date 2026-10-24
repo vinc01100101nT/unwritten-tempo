@@ -100,7 +100,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
-        value: 0.042857143
+        value: 0.068
         useStacks: 0
         op: 0
         read: 0

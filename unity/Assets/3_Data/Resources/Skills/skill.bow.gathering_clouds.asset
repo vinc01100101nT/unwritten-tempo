@@ -26,7 +26,7 @@ MonoBehaviour:
   description: 'The sky thickens with every shot.
 
     Each basic attack that lands
-    gives +1% accuracy for 6s, stacking up to 20. Cloudburst spends them for extra
+    gives +2% accuracy for 6s, stacking up to 20. Cloudburst spends them for extra
     volleys.'
   archetype: 0
   family: 2
@@ -159,7 +159,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 0.01
+        value: 0.02
         useStacks: 0
         op: 0
         read: 0

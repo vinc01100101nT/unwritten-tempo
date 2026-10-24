@@ -55,7 +55,9 @@ public class SpeechBubble : MonoBehaviour
         // Above a worn hat as well as the head: the body's height no longer counts what is worn on it.
         var socket = c.GetComponentInChildren<HeadSocket>();
         float crown = Mathf.Max(pose.VisualWorldHeight, socket != null ? socket.TopAbove(c.transform) : 0f);
-        Show(c.transform, crown + HeadClearance, label, life);
+        // ABOVE THE NAME, not on it: the name plate starts just over the same crown (measured 2026-10-24 on the
+        // townsfolk: crown 0.33, plate bottom 0.38), so the bubble clears the plate's full height as well.
+        Show(c.transform, crown + HeadClearance + UnitPlate.NamedStackHeight, label, life);
     }
 
     /// <summary>Show a bark line in a white bubble that RIDES <paramref name="owner"/> at

@@ -95,6 +95,9 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 - [ ] `MT-58` **`[E]` Give flat maps' ground its own collision** — 46 scenes (counted 2026-10-06) are walked on through a separate invisible box, `Ground_Floor`, under the drawn ground; re-lay only their ground, props and doors stay. — see [Biomes](../../3-world/biomes.md)
   *Done when:* no scene has a `Ground_Floor`, and walking and creature routes on those maps behave as before.
 
+- [ ] `MT-61` **`[E]` Skill balancing system — step 3, the full version** — a checker that fails any skill off budget, and a live readout and Derive in the Skill Composer. Waits on `MT-60`'s play-test calibration; never built before it. — **unestimated** — see [Skill Balancing System — Plan](../../2-systems/active-skill-system-v3/skill-balancing-system-plan.md)
+  *Done when:* the checker names every off-budget weapon skill and its prover passes, and Derive balances a skill in the Composer without saving it.
+
 ---
 
 ## Not scheduled at all

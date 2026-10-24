@@ -56,8 +56,8 @@ MonoBehaviour:
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
-  hasReleaseStance: 0
-  releaseStance: 16
+  hasReleaseStance: 1
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: meteor_ball

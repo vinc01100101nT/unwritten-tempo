@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.capling-spore
   displayName: Capling Spore
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: bc28a0d14c46c224fb2e1e8fbb008fc2, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

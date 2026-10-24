@@ -25,7 +25,7 @@ MonoBehaviour:
   maxLevel: 5
   description: 'Nothing between you and the mark.
 
-    +30% accuracy for 7s.'
+    +30% accuracy for 30s.'
   archetype: 0
   family: 2
   shape: 0
@@ -42,7 +42,7 @@ MonoBehaviour:
     consumeAllStacks: 0
     consumeStacks: 0
   manaCost: 12
-  cooldown: 12
+  cooldown: 45
   castTime: 0
   fixedCastTime: 0
   releaseEarly: 0
@@ -71,9 +71,9 @@ MonoBehaviour:
   repeatBonusStateIdSet: 0
   repeatBonusInterval: 0.2
   hasReleaseStance: 1
-  releaseStance: 14
+  releaseStance: 17
   releaseStanceReplayPerRepeat: 0
-  weaponSkillAnimation: 2
+  weaponSkillAnimation: 0
   bindings:
   - tickId: cast
     targetMode: 0
@@ -147,7 +147,7 @@ MonoBehaviour:
       healAmountMaxSet: 0
       ailment: 2
       seconds:
-        value: 7
+        value: 30
         useStacks: 0
         op: 0
         read: 0

@@ -109,7 +109,8 @@ public class BuffBarPanel : MonoBehaviour
         var ch = Character.Instance;
         if (ch == null) return;
         var list = ch.States.Active;
-        for (int i = 0; i < list.Count; i++) cells.Add(BuildCell(list[i]));
+        for (int i = 0; i < list.Count; i++)
+            if (ch.States.IsShown(list[i])) cells.Add(BuildCell(list[i]));
     }
 
     Cell BuildCell(UnitStates.State buff)

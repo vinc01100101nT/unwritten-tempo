@@ -23,7 +23,7 @@ MonoBehaviour:
   maxLevel: 10
   description: 'Wind up and commit.
 
-    A slow, telegraphed heavy blow for 200%
+    A slow, telegraphed heavy blow for 275%
     Attack.'
   archetype: 0
   family: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 2
+        value: 2.75
         useStacks: 0
         op: 0
         read: 0

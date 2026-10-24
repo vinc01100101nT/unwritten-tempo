@@ -66,6 +66,6 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  material: {fileID: 0}
+  material: {fileID: 11400000, guid: 49c93b059014e434fad4b8bc31035440, type: 2}
   itemDropNames: []
   itemDropChances: []

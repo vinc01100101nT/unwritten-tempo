@@ -219,6 +219,18 @@ public class Item : ScriptableObject
     /// <summary>True when using this item does something — the one test every consume path asks.</summary>
     public bool IsUsable => !string.IsNullOrEmpty(useSkillId);
 
+    [Header("Crate")]
+    // A CRATE IS OPENED, NOT USED: opening it puts an item in the bag, which no skill can do, so it has its own
+    // request (NetPlayer.CmdOpenCrate) the way a material's merge does, and "use" keeps its one meaning.
+    [Tooltip("This item is a crate: double-clicking it in the bag opens it into one random item (CrateMath). Off for " +
+             "every other item.")]
+    public bool opensAsCrate;
+    [Tooltip("Crate only: its rarity. Every creature drops the crate of its own material's rarity, and the crate holds " +
+             "creature and forging materials of this rarity. Ignored when Opens As Crate is off.")]
+    public Rarity crateRarity;
+    [Tooltip("Crate only: the potions and foods it can hold besides materials, each equally likely.")]
+    public Item[] crateConsumables = System.Array.Empty<Item>();
+
     [Header("Combat audio (weapon — overrides the player defaults while equipped)")]
     [Tooltip("Weapon: the swing sound.")]
     public SfxSet attackSfx;

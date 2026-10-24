@@ -25,20 +25,20 @@ MonoBehaviour:
   maxLevel: 1
   description: 'The smell after rain.
 
-    A kill made by Cloudburst makes its rain
-    last 1s longer (at most 11s in all).'
+    Every hit that lands while Cloudburst rains makes
+    the rain last 0.35s longer (at most 11s in all).'
   archetype: 0
   family: 2
   shape: 0
   complexity: 0
   acquisitionTier: 0
   triggers:
-  - trigger: 3
-    triggerSkillId: skill.bow.cloudburst
-    requiresState: 0
-    requireSkillId: 
-    requireStateId: 0
-    requireStateIdSet: 0
+  - trigger: 2
+    triggerSkillId: 
+    requiresState: 1
+    requireSkillId: skill.bow.cloudburst
+    requireStateId: 40
+    requireStateIdSet: 1
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
@@ -220,7 +220,7 @@ MonoBehaviour:
       modifierStateId: 40
       modifierStateIdSet: 1
       modifierSeconds:
-        value: 1
+        value: 0.35
         useStacks: 0
         op: 0
         read: 0

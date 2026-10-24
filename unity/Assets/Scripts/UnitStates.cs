@@ -268,7 +268,7 @@ public class UnitStates : MonoBehaviour
 
     bool WornChanged()
     {
-        if (!wornLooked && this != null) { wornGear = GetComponent<UnitEquipment>(); wornLooked = true; }   // perf-ok: once per store
+        LookUpWorn();
         if (wornGear == null) return false;
         int v = wornGear.Version;
         if (v == wornVersion) return false;
@@ -280,9 +280,42 @@ public class UnitStates : MonoBehaviour
     /// <summary>Is a Staff the weapon this unit holds? Held orbs give their stat only then.</summary>
     bool StaffInHand()
     {
-        if (!wornLooked && this != null) { wornGear = GetComponent<UnitEquipment>(); wornLooked = true; }   // perf-ok: once per store
+        LookUpWorn();
         return wornGear != null && wornGear.WeaponType == WeaponType.Staff;
     }
+
+    void LookUpWorn()
+    {
+        if (wornLooked || this == null) return;
+        wornGear = GetComponent<UnitEquipment>();   // perf-ok: once per store
+        wornLooked = true;
+        if (wornGear == null) return;
+        staffShown = StaffInHand();
+        wornGear.OnChanged += OnWornChanged;
+    }
+
+    // Held orbs are SHOWN only while a Staff is in hand, so a swap onto or off a Staff redraws everything listing this
+    // store (the buff tray, a nameplate) — once per swap, never polled.
+    bool staffShown;
+    void OnWornChanged()
+    {
+        bool now = StaffInHand();
+        if (now == staffShown) return;
+        staffShown = now;
+        if (HoldsAnyOrb()) OnChanged?.Invoke();
+    }
+
+    bool HoldsAnyOrb()
+    {
+        for (int i = 0; i < active.Count; i++) if (OrbMath.OrbOfPile(active[i].id) != OrbElement.None) return true;
+        return false;
+    }
+
+    void OnDestroy() { if (wornGear != null) wornGear.OnChanged -= OnWornChanged; }
+
+    /// <summary>Is <paramref name="s"/> drawn in a list of what is on this unit? A held orb waits in its slot unseen
+    /// while any weapon but a Staff is in hand — it gives nothing then — and shows again when a Staff is.</summary>
+    public bool IsShown(State s) => s != null && (OrbMath.OrbOfPile(s.id) == OrbElement.None || StaffInHand());
 
     /// <summary>Worn crit shield, as the LUK it is worth to the crit roll (Ironblood).</summary>
     public int WornCritShieldLuk { get { EnsureFresh(); return UnitStatMath.CritShieldAsLuk(worn.wordCritShieldPercent); } }

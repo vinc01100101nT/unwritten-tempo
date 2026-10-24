@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-glowcoil-glowing-eye
   displayName: Tainted Glowcoil Glowing Eye
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 8279256c3d6c2bc45b223165a3b0762c, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

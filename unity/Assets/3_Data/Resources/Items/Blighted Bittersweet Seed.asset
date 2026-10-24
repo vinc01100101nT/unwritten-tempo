@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-bittersweet-seed
   displayName: Blighted Bittersweet Seed
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: d7febea378b1f1944a9e9cf34f7f3789, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

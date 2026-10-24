@@ -255,6 +255,7 @@ public class InventoryList : IItemBoxOwner
 
         if (entry.IsEquip) store.Equip(entry);
         else if (entry.def.IsUsable) store.Consume(entry);
+        else if (entry.def.opensAsCrate) store.OpenCrate(entry);
         else if (CraftingMath.Merges(entry.def.materialKind) && entry.def.mergesInto != null
                  && entry.count >= CraftingMath.MergeCount(entry.def.materialKind, entry.def.materialStep)
                  && CraftingMath.MergeCount(entry.def.materialKind, entry.def.materialStep) > 0) store.Merge(entry);

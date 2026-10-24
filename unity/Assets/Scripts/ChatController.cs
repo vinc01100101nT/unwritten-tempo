@@ -144,7 +144,8 @@ public class ChatController : MonoBehaviour
         // the crown of its sprite — the same clearance every bubble keeps.
         if (pose != null) SpeechBubble.ShowOverHead(pose, skillName, BubbleLife);
         else if (body != null)
-            SpeechBubble.Show(body, UnitAnchor.Lift(body) + 2f * UnitAnchor.HalfHeight(body) + SpeechBubble.HeadClearance,
+            SpeechBubble.Show(body, UnitAnchor.Lift(body) + 2f * UnitAnchor.HalfHeight(body) + SpeechBubble.HeadClearance
+                                    + UnitPlate.NamedStackHeight,
                               skillName, BubbleLife);
     }
 
@@ -296,6 +297,8 @@ public class ChatController : MonoBehaviour
         allTab = UiKit.Btn("All", row, () => Show(null));
         pmTab = UiKit.Btn("PM", row, () => Show(LineKind.Pm));
         combatTab = UiKit.Btn("Combat Log", row, () => Show(LineKind.CombatLog));
+        UiKit.ButtonIcon(pmTab, UiIcons.Get("PrivateMessage"), keepWords: true);
+        UiKit.ButtonIcon(combatTab, UiIcons.Get("CombatLog"), keepWords: true);
         MarkTabs();
     }
 

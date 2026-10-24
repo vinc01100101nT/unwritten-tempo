@@ -754,7 +754,7 @@ public static class SkillEffectApplier
                     int hpBefore = healed != null ? healed.CurrentHP : 0;
                     int hpMax = healed != null ? healed.MaxHP : 0;
                     int anyBefore = unit.CurrentHP;
-                    unit.Heal(RolledHeal(e, caster, vars));
+                    unit.Heal(RolledHeal(e, caster, vars, unit.MaxHP));
                     var healer = healed != null ? KillLedger.PersonBehind(caster) : null;
                     if (healer != null && !ReferenceEquals(healer, healed))
                         healed.Hurts.Credit(healer, healed.CurrentHP - hpBefore, hpMax - hpBefore);
@@ -1489,8 +1489,16 @@ public static class SkillEffectApplier
         PassiveEvents.Fire(caster, SkillTrigger.OnHealDealt, null, healed.Body);
     }
 
-    static int RolledHeal(SkillEffect e, ICombatUnit caster, in StackVars vars)
+    static int RolledHeal(SkillEffect e, ICombatUnit caster, in StackVars vars, int healedMaxHP)
     {
+        if (e.healShareOfMaxHP)
+        {
+            // A share of the healed unit's own max HP, grown by the skill's level like every other output.
+            float mult = OutputMult(e, caster);
+            int lowShare = ShareOfMaxHP(e.amount.Resolve(vars, mult), healedMaxHP);
+            if (!e.healAmountMaxSet) return lowShare;
+            return HealInRange(lowShare, ShareOfMaxHP(e.healAmountMax.Resolve(vars, mult), healedMaxHP), CombatRng.Value01());
+        }
         int low = ScaledAmount(e, caster, vars);
         if (!e.healAmountMaxSet) return low;
         int high = e.healAmountMax.ResolveInt(vars, OutputMult(e, caster));
@@ -1500,6 +1508,8 @@ public static class SkillEffectApplier
     /// in [0, 1). A top below the bottom heals the bottom.</summary>
     public static int HealInRange(int low, int high, float roll01) =>
         high <= low ? low : low + Mathf.Min(high - low, Mathf.FloorToInt((high - low + 1) * roll01));
+    /// <summary>HP that <paramref name="share"/> of <paramref name="maxHP"/> is (0.1 of 500 = 50), rounded, never negative.</summary>
+    public static int ShareOfMaxHP(float share, int maxHP) => Mathf.Max(0, Mathf.RoundToInt(share * Mathf.Max(0, maxHP)));
     /// <summary>Feed ANOTHER skill's pile. What one of its charges is worth is read from THAT skill's own authored
     /// effect — the single definition of its charge — so a pile that is running and one that is not both end up with
     /// identical stacks, and a modifier never has to invent a number. A skill that grants nothing of that kind (or was

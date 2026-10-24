@@ -25,7 +25,7 @@ MonoBehaviour:
   maxLevel: 10
   description: 'Draw, hold, release.
 
-    A heavy shot for 220% Attack with +25%
+    A heavy shot for 285% Attack with +25%
     crit chance, and +25% more against a slowed target.'
   archetype: 0
   family: 2
@@ -96,7 +96,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 2.2
+        value: 2.85
         useStacks: 0
         op: 0
         read: 0

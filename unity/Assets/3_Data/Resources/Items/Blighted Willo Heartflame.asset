@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.blighted-willo-heartflame
   displayName: Blighted Willo Heartflame
-  icon: {fileID: 21300000, guid: cf1950a05cafc6344827031b27284496, type: 3}
+  icon: {fileID: 21300000, guid: d188057be792d3d4c92562e94a12d0de, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

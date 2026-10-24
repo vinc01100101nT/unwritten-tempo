@@ -126,12 +126,34 @@ public static class ItemCatalog
         return r;
     }
 
+    /// <summary>The picture of the item that runs <paramref name="skillId"/> — the consumable that uses it, or the hat
+    /// that runs it while worn — or null when no item does. A potion's or a hat's skill has no painted icon of its own,
+    /// so its tiles wear the item's picture; the item stays the one owner of that picture. Built once and kept.</summary>
+    public static Sprite IconOfSkill(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return null;
+        if (iconsBySkill == null)
+        {
+            iconsBySkill = new Dictionary<string, Sprite>();
+            foreach (var it in All)
+            {
+                if (it == null || it.icon == null) continue;
+                if (!string.IsNullOrEmpty(it.useSkillId)) iconsBySkill[it.useSkillId] = it.icon;
+                if (!string.IsNullOrEmpty(it.wornSkillId)) iconsBySkill[it.wornSkillId] = it.icon;
+            }
+        }
+        return iconsBySkill.TryGetValue(skillId, out var s) ? s : null;
+    }
+    static Dictionary<string, Sprite> iconsBySkill;
+
     /// <summary>Forget every cached list, so a newly authored or changed item is picked up. The editor calls this before
     /// writing the wiki's tables; the game never needs to.</summary>
     public static void Reload()
     {
         itemsById = null; cardsByName = null; wornBySlot = null; convertersByElement = null; all = null;
         restoresBySkill.Clear();
+        iconsBySkill = null;
+        CrateMath.Reload();
         CreatureFinds.Reload();
     }
 

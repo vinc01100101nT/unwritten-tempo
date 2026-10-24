@@ -79,11 +79,16 @@ public class MapWindow : MonoBehaviour
     WorldAtlas data;
     Canvas canvas;
     GameObject panel;
+    static MapWindow shown;
+
+    /// <summary>True while the map covers the screen — the tutorial's sentence steps aside for it.</summary>
+    public static bool IsOpen => shown != null && shown.panel != null && shown.panel.activeSelf;
     RectTransform panelRect;
     readonly View world = new View(), zone = new View();
     View active;
     RawImage atlasImage, zoneImage;
     TMP_Text title, whereLabel, zoneMissing, switchLabel;
+    Image switchIcon;   // a globe while the button leads to the world map, the folded map while it leads back
     GameObject locateButton;
     Transform player;
 
@@ -102,6 +107,7 @@ public class MapWindow : MonoBehaviour
 
     // The doors of the map the zone view shows: a mark in the colour of the map each leads to, its name beside it.
     // Laid when the map or the picture's size changed, resized only when the zoom did. A click on one opens that map.
+    // A mark on the zone picture with its name under it — a door out (leadsTo: where it goes) or a person (no leadsTo).
     sealed class DoorMark { public Image mark; public TMP_Text label; public string leadsTo; }
     RectTransform doorRoot;
     readonly List<DoorMark> doorMarks = new List<DoorMark>();
@@ -150,10 +156,23 @@ public class MapWindow : MonoBehaviour
 
     // Sizes on the main screen layer, which is laid out as if every screen were 1280 wide.
     const float MarkerSize = 11f, RouteMarkSize = 14f, DoorMarkSize = 12f, DoorLabelSize = 11f, GuidePinSize = 22f;
+    // A townsperson's dot, and the zoom from which their names show — at the whole-map view sixteen names would bury
+    // the town under text, so the dots stand alone until the player zooms in to read them.
+    const float MarkLabelHeight = 20f;
+    const float PersonMarkSize = 8f, PersonIconSize = 16f, PersonLabelSize = 10f, PersonNamesFromZoom = 1.8f;
+
+    RectTransform peopleRoot;
+    readonly List<DoorMark> personMarks = new List<DoorMark>();
+    readonly List<WorldTownsfolk.Row> peopleOnMap = new List<WorldTownsfolk.Row>();
+    int peopleShown;
+    string peopleDrawnMap;
+    Vector2 peopleDrawnSize;
+    float peopleDrawnZoom = -1f;
 
     void Start()
     {
         data = Resources.Load<WorldAtlas>("WorldAtlas");
+        shown = this;
         canvas = UiKit.HudCanvas;
         // A server draws nothing.
         if (data == null || data.atlas == null || canvas == null || (GameServer.IsServer && !GameNetwork.TheWorldIsElsewhere))
@@ -211,6 +230,7 @@ public class MapWindow : MonoBehaviour
         Activate(world);
         title.text = "WORLD MAP";
         switchLabel.text = "Zone map";
+        if (switchIcon != null) switchIcon.sprite = UiIcons.Get("Map");
         UpdateWorldMarker();
     }
 
@@ -219,7 +239,8 @@ public class MapWindow : MonoBehaviour
     {
         Activate(zone);
         switchLabel.text = "World map";
-        title.text = map ?? "";
+        if (switchIcon != null) switchIcon.sprite = UiIcons.Get("WorldMap");
+        title.text = map != null ? data.NameOf(map) : "";
         if (map != zoneMap || zonePictureMap == null)
         {
             ResetView(zone);
@@ -265,7 +286,7 @@ public class MapWindow : MonoBehaviour
     void UpdateWorldMarker()
     {
         string scene = SceneManager.GetActiveScene().name;
-        if (whereLabel) whereLabel.text = scene;
+        if (whereLabel && scene != whereShownFor) { whereShownFor = scene; whereLabel.text = YouAreIn(scene); }
         var e = data.Find(scene);
         if (e == null) { world.marker.gameObject.SetActive(false); return; }
         world.marker.gameObject.SetActive(true);
@@ -415,11 +436,16 @@ public class MapWindow : MonoBehaviour
     }
 
     // ── zone view: you, and the route, on the map you stand in ────────────────────────────────────────────────────
+    string whereShownFor = "";
+    string YouAreIn(string map) => "You are in " + data.NameOf(map);
+
     bool ShowingOwnMap => zoneMap == MapManager.CurrentMap && zoneEntry != null;
 
     void UpdateZone()
     {
-        if (whereLabel) whereLabel.text = MapManager.CurrentMap;
+        // Where YOU are, said only while the map shown is another one: on your own map the title already says it.
+        string where = ShowingOwnMap ? null : MapManager.CurrentMap;
+        if (whereLabel && where != whereShownFor) { whereShownFor = where; whereLabel.text = where == null ? "" : YouAreIn(where); }
         bool own = ShowingOwnMap && player != null;
         zone.marker.gameObject.SetActive(own);
         if (own)
@@ -429,6 +455,7 @@ public class MapWindow : MonoBehaviour
         }
         DrawRoute();
         DrawDoors();
+        DrawPeople();
         DrawGuidePin();
         // The counts beside the names come from the server, asked again every few seconds while the map is shown; the
         // list is laid out again only when an answer arrives.
@@ -519,30 +546,98 @@ public class MapWindow : MonoBehaviour
 
     DoorMark Door(int i)
     {
-        while (doorMarks.Count <= i)
-        {
-            var mark = NewImage("Door", doorRoot, Color.white);
-            var mrt = mark.rectTransform;
-            mrt.anchorMin = mrt.anchorMax = mrt.pivot = new Vector2(0.5f, 0.5f);
-            mrt.sizeDelta = new Vector2(DoorMarkSize, DoorMarkSize);
-            mark.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-            var label = NewText("DoorName", doorRoot, "", (int)DoorLabelSize, TextAnchor.UpperCenter);
-            label.fontStyle = FontStyles.Bold;
-            label.textWrappingMode = TextWrappingModes.NoWrap;
-            var lrt = label.rectTransform;
-            lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0.5f);
-            // The name hangs just under its mark, centred on it: the pivot sits above the text by most of a mark, so
-            // the gap shrinks with the zoom exactly as the mark does.
-            const float labelHeight = 20f;
-            lrt.pivot = new Vector2(0.5f, 1f + DoorMarkSize * 0.75f / labelHeight);
-            lrt.sizeDelta = new Vector2(220f, labelHeight);
-            doorMarks.Add(new DoorMark { mark = mark, label = label });
-            doorsDrawnZoom = -1f;
-        }
+        while (doorMarks.Count <= i) { doorMarks.Add(NewMark(doorRoot, "Door", 45f, DoorMarkSize, DoorLabelSize, true)); doorsDrawnZoom = -1f; }
         var d = doorMarks[i];
         if (!d.mark.gameObject.activeSelf) d.mark.gameObject.SetActive(true);
         if (!d.label.gameObject.activeSelf) d.label.gameObject.SetActive(true);
         return d;
+    }
+
+    // One mark and the name hanging under it — a door's diamond or a person's dot, built the same way.
+    DoorMark NewMark(RectTransform root, string kind, float turn, float markSize, float labelSize, bool square)
+    {
+        var mark = NewImage(kind, root, Color.white);
+        if (!square) UiKit.Round(mark, UiKit.WindowRadius);
+        var mrt = mark.rectTransform;
+        mrt.anchorMin = mrt.anchorMax = mrt.pivot = new Vector2(0.5f, 0.5f);
+        mrt.sizeDelta = new Vector2(markSize, markSize);
+        mark.transform.localRotation = Quaternion.Euler(0f, 0f, turn);
+        var label = NewText(kind + "Name", root, "", (int)labelSize, TextAnchor.UpperCenter);
+        label.fontStyle = FontStyles.Bold;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        var lrt = label.rectTransform;
+        lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0.5f);
+        // The name hangs just under its mark, centred on it: the pivot sits above the text by most of a mark, so
+        // the gap shrinks with the zoom exactly as the mark does.
+        lrt.pivot = new Vector2(0.5f, 1f + markSize * 0.75f / MarkLabelHeight);
+        lrt.sizeDelta = new Vector2(220f, MarkLabelHeight);
+        return new DoorMark { mark = mark, label = label };
+    }
+
+    // ── zone view: the townsfolk of the map it shows ──────────────────────────────────────────────────────────────
+    void DrawPeople()
+    {
+        Vector2 size = zone.picture.rect.size;
+        if (peopleDrawnMap != zoneMap || peopleDrawnSize != size)
+        {
+            peopleDrawnMap = zoneMap;
+            peopleDrawnSize = size;
+            peopleDrawnZoom = -1f;
+            int used = 0;
+            if (zoneEntry != null && zoneImage.enabled)
+            {
+                WorldTownsfolk.PeopleIn(zoneMap, peopleOnMap);
+                foreach (var person in peopleOnMap)
+                {
+                    while (personMarks.Count <= used) personMarks.Add(NewMark(peopleRoot, "Person", 0f, PersonMarkSize, PersonLabelSize, false));
+                    var m = personMarks[used++];
+                    // Somebody who offers something wears its picture; everybody else a plain dot.
+                    var service = UiIcons.ServiceOf(person);
+                    if (service != null)
+                    {
+                        m.mark.sprite = service;
+                        m.mark.type = Image.Type.Simple;
+                        m.mark.preserveAspect = true;
+                        UiKit.Paint(m.mark, Color.white);
+                        m.mark.rectTransform.sizeDelta = new Vector2(PersonIconSize, PersonIconSize);
+                    }
+                    else
+                    {
+                        UiKit.Round(m.mark, UiKit.WindowRadius);
+                        UiKit.Paint(m.mark, UiKit.Accent);
+                        m.mark.rectTransform.sizeDelta = new Vector2(PersonMarkSize, PersonMarkSize);
+                    }
+                    // The name hangs under whichever mark it is, as under a door's.
+                    float markSize = m.mark.rectTransform.sizeDelta.y;
+                    m.label.rectTransform.pivot = new Vector2(0.5f, 1f + markSize * 0.75f / MarkLabelHeight);
+                    UiKit.Paint(m.label, UiKit.Accent);
+                    m.label.text = string.IsNullOrEmpty(person.description) ? person.name : person.name + " · " + person.description;
+                    // A person's home is in the map's own coordinates: x east, z north (y is height).
+                    Vector2 p = MapToPicture(new Vector2(person.home.x, person.home.z), zoneEntry.worldMin, zoneEntry.worldSize, size);
+                    m.mark.rectTransform.anchoredPosition = p;
+                    m.label.rectTransform.anchoredPosition = p;
+                    if (!m.mark.gameObject.activeSelf) m.mark.gameObject.SetActive(true);
+                }
+            }
+            for (int i = used; i < personMarks.Count; i++)
+            {
+                if (personMarks[i].mark.gameObject.activeSelf) personMarks[i].mark.gameObject.SetActive(false);
+                if (personMarks[i].label.gameObject.activeSelf) personMarks[i].label.gameObject.SetActive(false);
+            }
+            peopleShown = used;
+        }
+        if (!Mathf.Approximately(peopleDrawnZoom, zone.zoom))
+        {
+            peopleDrawnZoom = zone.zoom;
+            var sc = new Vector3(1f / zone.zoom, 1f / zone.zoom, 1f);
+            bool named = zone.zoom >= PersonNamesFromZoom;
+            for (int i = 0; i < peopleShown; i++)
+            {
+                personMarks[i].mark.rectTransform.localScale = sc;
+                personMarks[i].label.rectTransform.localScale = sc;
+                if (personMarks[i].label.gameObject.activeSelf != named) personMarks[i].label.gameObject.SetActive(named);
+            }
+        }
     }
 
     // The door whose mark or name is under the pointer; null over anything else.
@@ -776,6 +871,7 @@ public class MapWindow : MonoBehaviour
         atlasImage = BuildView(world, "World", data.atlas, (float)data.atlas.width / Mathf.Max(1, data.atlas.height));
         zoneImage = BuildView(zone, "Zone", null, 1f);
         BuildDoors();
+        BuildKindIcons();
 
         routeSprite = Resources.Load<Sprite>("Guide/GroundArrow");
         routeRoot = new GameObject("Route", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -785,6 +881,10 @@ public class MapWindow : MonoBehaviour
         doorRoot = new GameObject("Doors", typeof(RectTransform)).GetComponent<RectTransform>();
         doorRoot.SetParent(zone.picture, false);
         doorRoot.anchorMin = doorRoot.anchorMax = doorRoot.pivot = new Vector2(0.5f, 0.5f);
+
+        peopleRoot = new GameObject("People", typeof(RectTransform)).GetComponent<RectTransform>();
+        peopleRoot.SetParent(zone.picture, false);
+        peopleRoot.anchorMin = peopleRoot.anchorMax = peopleRoot.pivot = new Vector2(0.5f, 0.5f);
 
         pinSprite = GuidePin.Sprite;
         guidePin = NewImage("GuidePin", zone.picture, UiKit.Accent);
@@ -815,6 +915,7 @@ public class MapWindow : MonoBehaviour
         srt.sizeDelta = new Vector2(110f, 28f);
         srt.anchoredPosition = new Vector2(24f, -24f);
         switchLabel = switchButton.GetComponentInChildren<TMP_Text>();
+        switchIcon = UiKit.ButtonIcon(switchButton, UiIcons.Get("WorldMap"), keepWords: true);
 
         // back to where you are (see Update for when it shows)
         var locate = UiKit.Btn("", panel.transform, Locate);
@@ -935,7 +1036,8 @@ public class MapWindow : MonoBehaviour
             {
                 if (lines.Count > 0) Add("", false);
                 Add("NPCs", true);
-                foreach (var p in people) Add(UnitLabel.WithLevel(p.name, p.level), false);
+                foreach (var p in people)
+                    Add(UnitLabel.WithLevel(p.name, p.level) + (string.IsNullOrEmpty(p.description) ? "" : "  · " + p.description), false);
             }
 
             bool titled = !string.IsNullOrEmpty(heading);
@@ -1023,6 +1125,36 @@ public class MapWindow : MonoBehaviour
 
         static void Corner(RectTransform rt) => rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
     }
+
+    // WHAT KIND OF MAP EACH SQUARE IS — a town's gate, a field's tree, a dungeon's cave — in its top-left corner. Laid by
+    // the picture's own proportions, so it stays on its square at every size and zoom with nothing to redo. Built once.
+    void BuildKindIcons()
+    {
+        if (data.maps == null) return;
+        var root = new GameObject("MapKinds", typeof(RectTransform)).GetComponent<RectTransform>();
+        root.SetParent(world.picture, false);
+        UiKit.Fill(root, Vector2.zero, Vector2.zero);
+        float w = Mathf.Max(1f, data.worldW), h = Mathf.Max(1f, data.worldH);
+        foreach (var e in data.maps)
+        {
+            if (e == null) continue;
+            var picture = UiIcons.KindOf(e.type);
+            if (picture == null) continue;
+            float left = (e.x - data.minX) / w, top = 1f - (e.y - data.minY) / h;
+            float sw = e.w / w, sh = e.h / h;
+            var icon = NewImage("Kind_" + e.scene, root, Color.white);
+            icon.sprite = picture;
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            var rt = icon.rectTransform;
+            rt.anchorMin = new Vector2(left + KindInset * sw, top - (KindInset + KindShare) * sh);
+            rt.anchorMax = new Vector2(left + (KindInset + KindShare) * sw, top - KindInset * sh);
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+        }
+    }
+
+    // How big a kind's picture is, and how far in from its square's corner, as shares of the square.
+    const float KindShare = 0.32f, KindInset = 0.05f;
 
     // Every door of the world on the world picture, from the atlas's copy of the world layout's doors: the dashed
     // lines first and the squares over them, each as few meshes as hold them, on a canvas of their own so nothing

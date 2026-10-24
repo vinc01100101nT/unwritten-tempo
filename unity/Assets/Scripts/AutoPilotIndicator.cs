@@ -41,7 +41,31 @@ public class AutoPilotIndicator : MonoBehaviour
         rt.sizeDelta = new Vector2(280, 23);
         label.color = new Color(1f, 0.5f, 0.4f);
         label.raycastTarget = false;
+
+        // Its picture at the left of the words, so it is read at a glance.
+        var picture = UiIcons.Get("AutoCombat");
+        if (picture != null)
+        {
+            label.alignment = TMPro.TextAlignmentOptions.MidlineLeft;
+            label.margin = new Vector4(IconSize + 4f, 0f, 0f, 0f);
+            icon = new GameObject("Icon", typeof(RectTransform), typeof(UnityEngine.UI.Image)).GetComponent<UnityEngine.UI.Image>();
+            icon.transform.SetParent(label.transform, false);
+            icon.sprite = picture;
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            var irt = icon.rectTransform;
+            irt.anchorMin = irt.anchorMax = irt.pivot = new Vector2(0f, 0.5f);
+            irt.sizeDelta = new Vector2(IconSize, IconSize);
+            irt.anchoredPosition = Vector2.zero;
+        }
     }
 
-    public void Show(bool on) { if (label != null && label.enabled != on) label.enabled = on; }
+    const float IconSize = 22f;
+    UnityEngine.UI.Image icon;
+
+    public void Show(bool on)
+    {
+        if (label != null && label.enabled != on) label.enabled = on;
+        if (icon != null && icon.enabled != on) icon.enabled = on;
+    }
 }

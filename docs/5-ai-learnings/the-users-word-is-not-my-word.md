@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-10-21
+last-updated: 2026-10-24
 tags:
   - ai-learnings
 ---
@@ -32,6 +32,12 @@ total per volley." To me a volley was one drop of rain; to the user it was the w
    total for the whole cast) plus a reset on the next cast was the whole fix.
 
 Every round was spent building correctly on a wrong meaning.
+
+2026-10-24, the same failure on a whole subject. The user found a hole in the skill-balancing formula and wrote
+"make a general fix, should we spawn the planner and the red team". They meant the balancing SYSTEM; I read "fix" as
+the HTML calculator I had just built, declined the planner and red team as overkill for a browser tool, and patched
+the tool. A round spent, and the question of how the formula becomes part of the project went unanswered. The tell
+was in their own sentence: nobody asks for a planner and a red team for a one-file tool.
 
 ## How to apply
 

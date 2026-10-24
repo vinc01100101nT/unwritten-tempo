@@ -2308,6 +2308,38 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveSoon();
     }
 
+    /// <summary>Open ONE crate of the stack at <paramref name="index"/>: the server rolls what is inside
+    /// (<see cref="CrateMath"/>) and puts it in the bag. Room is asked for EVERYTHING the crate could hold before
+    /// anything is rolled, so a full tab refuses the crate whatever it would have given — nothing to reroll for.</summary>
+    [Command]
+    void CmdOpenCrate(int index, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var e = c.Bag[index];
+        if (e == null || e.def == null || !e.def.opensAsCrate) return;
+        var pool = CrateMath.PoolOf(e.def.crateRarity);
+        if (pool == null || pool.Empty) { Refused(e.def.displayName + " is empty.", "Empty crate"); return; }
+
+        foreach (var could in pool.All())
+        {
+            int freedSlots = e.count == 1 && could.category == e.def.category ? -1 : 0;
+            var noRoom = c.RoomFor(could, 1, freedSlots, -e.def.weight);
+            if (noRoom != BagRefusal.None)
+            { Refused(c.RefusalLine(could, noRoom, "open the crate: no room for"), "No room to open it"); return; }
+        }
+
+        var got = CrateMath.Roll(pool, CombatRng.Value01(), CombatRng.Value01());
+        if (got == null) return;
+        e.count -= 1;
+        if (e.count <= 0) c.Bag.RemoveAt(index);
+        c.TakeIntoBag(got, 1);
+        PushBagToOwner();
+        Done("Opened " + e.def.displayName + ": " + got.displayName + ".", "Opened: " + got.displayName);
+        SaveSoon();
+    }
+
     // ---- what the player is told about every craft, success and refusal alike --------------------------
     //
     // EVERY OUTCOME IS SAID IN ONE SENTENCE, to the chat and to the station window, because from the player's
@@ -3929,6 +3961,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToDrop(int index, string itemId, int howMany) => CmdDropFromBag(index, itemId, howMany);
     public void AskToPickUp(uint dropNetId) => CmdPickUpDrop(dropNetId);
     public void AskToMerge(int index, string itemId) => CmdMergeMaterial(index, itemId);
+    public void AskToOpenCrate(int index, string itemId) => CmdOpenCrate(index, itemId);
 
     [Command]
     void CmdReportMap(string map)

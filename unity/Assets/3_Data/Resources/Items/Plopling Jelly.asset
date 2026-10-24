@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.plopling-jelly
   displayName: Plopling Jelly
-  icon: {fileID: 21300000, guid: a1ff5d2253d5bfc4084e7258fceee161, type: 3}
+  icon: {fileID: 21300000, guid: 1e346c9f527bb7647b824bc2e91a2a14, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0

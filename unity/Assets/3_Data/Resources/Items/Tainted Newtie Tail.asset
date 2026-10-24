@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.tainted-newtie-tail
   displayName: Tainted Newtie Tail
-  icon: {fileID: 21300000, guid: 710472610e16dc2459725655caddebe9, type: 3}
+  icon: {fileID: 21300000, guid: 972f60a3c8414f84b802a75aa13c272a, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
