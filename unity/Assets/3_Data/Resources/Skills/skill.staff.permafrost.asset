@@ -28,7 +28,10 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'The ground freezes through.
 
-    The aimed ground freezes: every enemy on it gains 1 Chill every second. It deals no damage while it lasts, so a freeze it makes holds. When it ends, the ground cracks and hits everything on it.'
+    The aimed ground freezes: every
+    enemy on it gains a Chill every second. It deals no damage while it lasts, so
+    a freeze it makes holds. When it ends, the ground cracks and hits everything
+    on it.'
   archetype: 4
   family: 1
   shape: 1
@@ -193,6 +196,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 4
@@ -411,6 +415,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0

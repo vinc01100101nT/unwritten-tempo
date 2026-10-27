@@ -17,7 +17,7 @@ MonoBehaviour:
   symbol: Sa
   icon: {fileID: 21300000, guid: 31b6cc65d27dec641a5fd1dc62d0ab35, type: 3}
   weaponType: 1
-  masteryLevel: 5
+  masteryLevel: 19
   needsSkillId: 
   companionOf: 
   statesEndWhenHit: 0
@@ -29,8 +29,8 @@ MonoBehaviour:
   description: 'Weather it.
 
 
-    Shrugs off poison, bleed and burn, heals 10% of your max HP, then +4%
-    defence and magic defence for 6 seconds.'
+    Shrugs off poison, bleed and burn, heals part of
+    your max HP, then raises your defence and magic defence for a while.'
   archetype: 2
   family: 0
   shape: 3
@@ -195,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -398,6 +399,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 6
@@ -603,6 +605,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 6

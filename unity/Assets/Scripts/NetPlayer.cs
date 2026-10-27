@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -789,6 +790,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // …and the mastery, held for the same reason — a server resends it only when it changes, so one parked and
         // never handed over would leave the Skills window empty until the next kill.
         GiveWaitingMasteryToTheCharacter();
+        // …and the skill card's numbers, for the same reason.
+        GiveWaitingCardsToTheCharacter();
 
         // …and the character sheet, held for the same reason.
         if (sheetWaiting && Character.Instance != null)
@@ -1126,6 +1129,54 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     float nextSheetPush;
     bool sheetSent;
     DerivedSnapshot sentCurrent, sentBaseline, sentWithStates;
+
+    // ---- the skill card's finished numbers (SkillCardNumbers): worked out at the sheet's pace, sent only on a change --
+    readonly List<string> cardIds = new List<string>(32), sentCardIds = new List<string>(32);
+    readonly List<float> cardCast = new List<float>(160), sentCardCast = new List<float>(160);
+    readonly List<int> cardCounts = new List<int>(32), sentCardCounts = new List<int>(32);
+    readonly List<int> cardLines = new List<int>(512), sentCardLines = new List<int>(512);
+    bool cardsSent;
+
+    void PushMySkillCards(Character person, in DerivedSnapshot withStates, in DerivedSnapshot baseline)
+    {
+        cardIds.Clear(); cardCast.Clear(); cardCounts.Clear(); cardLines.Clear();
+        SkillCardNumbers.Capture(person, withStates, baseline, cardIds, cardCast, cardCounts, cardLines);
+        if (cardsSent && Same(cardIds, sentCardIds) && Same(cardCast, sentCardCast) && Same(cardCounts, sentCardCounts)
+            && Same(cardLines, sentCardLines)) return;
+        cardsSent = true;
+        Copy(cardIds, sentCardIds); Copy(cardCast, sentCardCast); Copy(cardCounts, sentCardCounts); Copy(cardLines, sentCardLines);
+        // Copied only on a change, which is when a new set is worth a send at all.
+        TargetSkillCards(connectionToClient, cardIds.ToArray(), cardCast.ToArray(), cardCounts.ToArray(), cardLines.ToArray());
+    }
+
+    static bool Same<T>(List<T> a, List<T> b)
+    {
+        if (a.Count != b.Count) return false;
+        var eq = EqualityComparer<T>.Default;
+        for (int i = 0; i < a.Count; i++) if (!eq.Equals(a[i], b[i])) return false;
+        return true;
+    }
+
+    static void Copy<T>(List<T> from, List<T> to) { to.Clear(); to.AddRange(from); }
+
+    [TargetRpc]
+    void TargetSkillCards(NetworkConnectionToClient target, string[] ids, float[] cast, int[] counts, int[] lines)
+    {
+        // THE NEWEST SET IS THE ONLY ONE THAT COUNTS; one that arrives before this machine has built its character waits.
+        cardsWaitingForACharacter = new object[] { ids, cast, counts, lines };
+        GiveWaitingCardsToTheCharacter();
+    }
+
+    object[] cardsWaitingForACharacter;
+
+    void GiveWaitingCardsToTheCharacter()
+    {
+        if (cardsWaitingForACharacter == null || Character.Instance == null) return;
+        var p = cardsWaitingForACharacter;
+        cardsWaitingForACharacter = null;
+        Character.Instance.Mastery.TakeSkillCards((string[])p[0], (float[])p[1], (int[])p[2], (int[])p[3]);
+    }
+
     readonly int[] sentRaiseCost = new int[6];
     readonly int[] sentGearStat = new int[6];
 
@@ -1140,6 +1191,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         var current = person.CurrentDerived;
         var baseline = person.BaseDerived;
         var withStates = person.DerivedWithStates;
+        // The skill card's numbers ride the same pace and the same two snapshots, but answer to their own change test:
+        // a level bought or a converter worn moves them without moving the sheet, and a shield soaking hits moves the
+        // sheet without moving them.
+        PushMySkillCards(person, withStates, baseline);
         bool changed = !sheetSent
                        || !DerivedSnapshot.Same(current, sentCurrent)
                        || !DerivedSnapshot.Same(baseline, sentBaseline)
@@ -4366,6 +4421,18 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// machine still has to load: the wait starts when it says it has.</summary>
     void ExpectArrival(Vector3 atInMap, bool mapAlreadyLoaded)
     {
+        // A FAR TRIP IN A SEAMLESS WORLD IS WAITED FOR LIKE A NEW MAP. Their machine holds them behind the loading
+        // screen until the ground where they land has loaded (SeamlessWorld.PlaceWhenReady), which can take longer than
+        // ArrivalWait; standing them there in the meantime would only nudge a body that is not down yet. Their report
+        // from the spot still ends the wait the moment it comes.
+        var world = mapAlreadyLoaded ? SeamlessWorld.ForMap(mapName) : null;
+        if (world != null)
+        {
+            Vector3 jump = atInMap - netPosition;
+            jump.y = 0f;
+            float ring = world.LoadRing;
+            if (jump.sqrMagnitude > ring * ring) mapAlreadyLoaded = false;
+        }
         arrivalExpected = true;
         expectedArrival = atInMap;
         arrivalConfirmed = mapAlreadyLoaded;

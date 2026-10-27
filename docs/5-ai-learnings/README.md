@@ -31,6 +31,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 
 | You are seeing this | Open this |
 | --- | --- |
+| A generated mesh still looks like an earlier build in the editor, though its own data reads right | [The Editor Draws the Mesh You Overwrote](the-editor-draws-the-mesh-you-overwrote.md) |
 | You are making new behaviour wait on an existing "is it happening" flag — or a feature works once, then never again until a restart | [A Flag You Gate On Must Actually Clear](a-flag-you-gate-on-must-clear.md) |
 | One asset a script authored differs from its siblings (a colour, a flag, a leftover) — or you are writing a load-or-create builder | [Rebuilding Onto an Existing Asset Keeps Its Old Values](rebuilding-onto-an-existing-asset-keeps-its-old-values.md) |
 | The user's instruction uses a word you also use for something specific ("volley", "set", "wave", "fix"), or a fix matching your reading of it is still wrong | [The User's Word Is Not My Word](the-users-word-is-not-my-word.md) |
@@ -143,6 +144,8 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | Two things go through the same code and only one misbehaves (one creature animates, its sibling stands frozen) | [Same Code, Different Result — Diff the Data](same-code-different-result-diff-the-data.md) |
 | An editor script wrote assets and `git status` shows files you never touched (a font, a prefab) | [Save Only the Assets You Changed](save-only-the-assets-you-changed.md) |
 | About to show that changing a rule fixes a lopsided fight, and both fighters use that rule | [A Shared Rule Change Moves Both Sides of the Fight](a-shared-rule-change-moves-both-sides.md) |
+| A look or effect reported "off everywhere" still shows on one screen | [Turning a Look Off Leaves It On Somewhere Else](turning-a-look-off-misses-a-second-reader.md) |
+| About to tell the user why one picture looks better than another | [A Measured Difference May Not Show On Screen](a-measured-difference-may-not-show-on-screen.md) |
 
 ## Related
 

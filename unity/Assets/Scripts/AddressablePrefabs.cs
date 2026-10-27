@@ -126,6 +126,33 @@ public static class AddressablePrefabs
         return true;
     }
 
+    /// <summary>Let go of <paramref name="address"/> NOW when nothing alive is using it — for a prefab whose one user has
+    /// just been destroyed by its owner (a chunk of a seamless world going out of range), on any machine, server
+    /// included. A prefab still in use, still loading, or never loaded is left exactly as it is.</summary>
+    public static void LetGoIfUnused(string address)
+    {
+        if (string.IsNullOrEmpty(address) || !loaded.TryGetValue(address, out var held)) return;
+        if (!held.handle.IsValid() || held.handle.Status != AsyncOperationStatus.Succeeded) return;
+        // The user's Destroy is only finished at the end of this frame, so the check waits a frame.
+        LetGoNextFrame(address, held);
+    }
+
+    static async void LetGoNextFrame(string address, Held held)
+    {
+        await Awaitable.NextFrameAsync();
+        if (!loaded.TryGetValue(address, out var still) || still != held) return;
+        held.users.RemoveAll(IsGone);
+        foreach (var u in held.users)
+            if (!parked.Contains(u)) return;
+        loaded.Remove(address);
+        foreach (var u in held.users)
+        {
+            parked.Remove(u);
+            if (u is GameObject go) UnityEngine.Object.Destroy(go);
+        }
+        Addressables.Release(held.handle);
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Hook()
     {

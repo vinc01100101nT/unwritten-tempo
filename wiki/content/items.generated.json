@@ -27590,13 +27590,13 @@
             "chance": "33.333%",
             "slotOrder": 0,
             "byGrade": [
-                "Critical hits against you: −0.9%",
-                "Critical hits against you: −1.8%",
-                "Critical hits against you: −2.7%",
-                "Critical hits against you: −3.6%",
-                "Critical hits against you: −4.5%",
-                "Critical hits against you: −6%",
-                "Critical hits against you: −7.5%"
+                "−0.9% critical hits against you",
+                "−1.8% critical hits against you",
+                "−2.7% critical hits against you",
+                "−3.6% critical hits against you",
+                "−4.5% critical hits against you",
+                "−6% critical hits against you",
+                "−7.5% critical hits against you"
             ]
         },
         {
@@ -27605,13 +27605,13 @@
             "chance": "33.333%",
             "slotOrder": 0,
             "byGrade": [
-                "Stuns, freezes, silences and ailments on you: 5% shorter",
-                "Stuns, freezes, silences and ailments on you: 8% shorter",
-                "Stuns, freezes, silences and ailments on you: 11% shorter",
-                "Stuns, freezes, silences and ailments on you: 14% shorter",
-                "Stuns, freezes, silences and ailments on you: 17% shorter",
-                "Stuns, freezes, silences and ailments on you: 21% shorter",
-                "Stuns, freezes, silences and ailments on you: 25% shorter"
+                "5% shorter stuns, freezes, silences and ailments on you",
+                "8% shorter stuns, freezes, silences and ailments on you",
+                "11% shorter stuns, freezes, silences and ailments on you",
+                "14% shorter stuns, freezes, silences and ailments on you",
+                "17% shorter stuns, freezes, silences and ailments on you",
+                "21% shorter stuns, freezes, silences and ailments on you",
+                "25% shorter stuns, freezes, silences and ailments on you"
             ]
         },
         {
@@ -27620,13 +27620,13 @@
             "chance": "33.333%",
             "slotOrder": 0,
             "byGrade": [
-                "MP regeneration: +0.5 per second",
-                "MP regeneration: +0.75 per second",
-                "MP regeneration: +1 per second",
-                "MP regeneration: +1.25 per second",
-                "MP regeneration: +1.5 per second",
-                "MP regeneration: +2 per second",
-                "MP regeneration: +2.5 per second"
+                "+0.5 MP regeneration per second",
+                "+0.75 MP regeneration per second",
+                "+1 MP regeneration per second",
+                "+1.25 MP regeneration per second",
+                "+1.5 MP regeneration per second",
+                "+2 MP regeneration per second",
+                "+2.5 MP regeneration per second"
             ]
         },
         {
@@ -27635,13 +27635,13 @@
             "chance": "33.333%",
             "slotOrder": 1,
             "byGrade": [
-                "Damage taken: −1%",
-                "Damage taken: −1.5%",
-                "Damage taken: −2%",
-                "Damage taken: −3%",
-                "Damage taken: −4%",
-                "Damage taken: −5%",
-                "Damage taken: −6%"
+                "+1% DEF · +1% M.DEF",
+                "+1.5% DEF · +1.5% M.DEF",
+                "+2% DEF · +2% M.DEF",
+                "+3% DEF · +3% M.DEF",
+                "+4% DEF · +4% M.DEF",
+                "+5% DEF · +5% M.DEF",
+                "+6% DEF · +6% M.DEF"
             ]
         },
         {
@@ -27650,13 +27650,13 @@
             "chance": "33.333%",
             "slotOrder": 1,
             "byGrade": [
-                "Damage dealt heals you: 1%",
-                "Damage dealt heals you: 1.5%",
-                "Damage dealt heals you: 2%",
-                "Damage dealt heals you: 2.5%",
-                "Damage dealt heals you: 3%",
-                "Damage dealt heals you: 4%",
-                "Damage dealt heals you: 5%"
+                "1% of damage dealt heals you",
+                "1.5% of damage dealt heals you",
+                "2% of damage dealt heals you",
+                "2.5% of damage dealt heals you",
+                "3% of damage dealt heals you",
+                "4% of damage dealt heals you",
+                "5% of damage dealt heals you"
             ]
         },
         {
@@ -27665,13 +27665,13 @@
             "chance": "33.333%",
             "slotOrder": 1,
             "byGrade": [
-                "Damage dealt: +1%",
-                "Damage dealt: +2%",
-                "Damage dealt: +3%",
-                "Damage dealt: +4%",
-                "Damage dealt: +5%",
-                "Damage dealt: +6.5%",
-                "Damage dealt: +8%"
+                "+1% damage dealt",
+                "+2% damage dealt",
+                "+3% damage dealt",
+                "+4% damage dealt",
+                "+5% damage dealt",
+                "+6.5% damage dealt",
+                "+8% damage dealt"
             ]
         },
         {
@@ -27680,13 +27680,13 @@
             "chance": "33.333%",
             "slotOrder": 4,
             "byGrade": [
-                "Sprint drains stamina: 5% slower",
-                "Sprint drains stamina: 8% slower",
-                "Sprint drains stamina: 11% slower",
-                "Sprint drains stamina: 14% slower",
-                "Sprint drains stamina: 17% slower",
-                "Sprint drains stamina: 21% slower",
-                "Sprint drains stamina: 25% slower"
+                "5% slower stamina drain while sprinting",
+                "8% slower stamina drain while sprinting",
+                "11% slower stamina drain while sprinting",
+                "14% slower stamina drain while sprinting",
+                "17% slower stamina drain while sprinting",
+                "21% slower stamina drain while sprinting",
+                "25% slower stamina drain while sprinting"
             ]
         },
         {
@@ -27695,13 +27695,13 @@
             "chance": "33.333%",
             "slotOrder": 4,
             "byGrade": [
-                "Knockbacks and pulls move you: 5% less far",
-                "Knockbacks and pulls move you: 8% less far",
-                "Knockbacks and pulls move you: 11% less far",
-                "Knockbacks and pulls move you: 14% less far",
-                "Knockbacks and pulls move you: 17% less far",
-                "Knockbacks and pulls move you: 21% less far",
-                "Knockbacks and pulls move you: 25% less far"
+                "5% shorter knockbacks and pulls on you",
+                "8% shorter knockbacks and pulls on you",
+                "11% shorter knockbacks and pulls on you",
+                "14% shorter knockbacks and pulls on you",
+                "17% shorter knockbacks and pulls on you",
+                "21% shorter knockbacks and pulls on you",
+                "25% shorter knockbacks and pulls on you"
             ]
         },
         {
@@ -27710,13 +27710,13 @@
             "chance": "33.333%",
             "slotOrder": 4,
             "byGrade": [
-                "HP regeneration: +1 per second",
-                "HP regeneration: +1.5 per second",
-                "HP regeneration: +2 per second",
-                "HP regeneration: +2.5 per second",
-                "HP regeneration: +3 per second",
-                "HP regeneration: +4 per second",
-                "HP regeneration: +5 per second"
+                "+1 HP regeneration per second",
+                "+1.5 HP regeneration per second",
+                "+2 HP regeneration per second",
+                "+2.5 HP regeneration per second",
+                "+3 HP regeneration per second",
+                "+4 HP regeneration per second",
+                "+5 HP regeneration per second"
             ]
         },
         {
@@ -27725,13 +27725,13 @@
             "chance": "25%",
             "slotOrder": 3,
             "byGrade": [
-                "Fire damage taken: −3%",
-                "Fire damage taken: −5%",
-                "Fire damage taken: −7%",
-                "Fire damage taken: −9%",
-                "Fire damage taken: −11%",
-                "Fire damage taken: −13%",
-                "Fire damage taken: −15%"
+                "−3% Fire damage taken",
+                "−5% Fire damage taken",
+                "−7% Fire damage taken",
+                "−9% Fire damage taken",
+                "−11% Fire damage taken",
+                "−13% Fire damage taken",
+                "−15% Fire damage taken"
             ]
         },
         {
@@ -27740,13 +27740,13 @@
             "chance": "25%",
             "slotOrder": 3,
             "byGrade": [
-                "Water damage taken: −3%",
-                "Water damage taken: −5%",
-                "Water damage taken: −7%",
-                "Water damage taken: −9%",
-                "Water damage taken: −11%",
-                "Water damage taken: −13%",
-                "Water damage taken: −15%"
+                "−3% Water damage taken",
+                "−5% Water damage taken",
+                "−7% Water damage taken",
+                "−9% Water damage taken",
+                "−11% Water damage taken",
+                "−13% Water damage taken",
+                "−15% Water damage taken"
             ]
         },
         {
@@ -27755,13 +27755,13 @@
             "chance": "25%",
             "slotOrder": 3,
             "byGrade": [
-                "Earth damage taken: −3%",
-                "Earth damage taken: −5%",
-                "Earth damage taken: −7%",
-                "Earth damage taken: −9%",
-                "Earth damage taken: −11%",
-                "Earth damage taken: −13%",
-                "Earth damage taken: −15%"
+                "−3% Earth damage taken",
+                "−5% Earth damage taken",
+                "−7% Earth damage taken",
+                "−9% Earth damage taken",
+                "−11% Earth damage taken",
+                "−13% Earth damage taken",
+                "−15% Earth damage taken"
             ]
         },
         {
@@ -27770,13 +27770,13 @@
             "chance": "25%",
             "slotOrder": 3,
             "byGrade": [
-                "Wind damage taken: −3%",
-                "Wind damage taken: −5%",
-                "Wind damage taken: −7%",
-                "Wind damage taken: −9%",
-                "Wind damage taken: −11%",
-                "Wind damage taken: −13%",
-                "Wind damage taken: −15%"
+                "−3% Wind damage taken",
+                "−5% Wind damage taken",
+                "−7% Wind damage taken",
+                "−9% Wind damage taken",
+                "−11% Wind damage taken",
+                "−13% Wind damage taken",
+                "−15% Wind damage taken"
             ]
         }
     ]

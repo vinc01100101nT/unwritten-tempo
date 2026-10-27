@@ -17,16 +17,19 @@ MonoBehaviour:
   symbol: Gf
   icon: {fileID: 21300000, guid: e446793335ffb3b4093b7d256b856618, type: 3}
   weaponType: 9
-  masteryLevel: 40
+  masteryLevel: 43
   needsSkillId: 
   companionOf: 
   statesEndWhenHit: 0
   published: 1
   maxLevel: 5
+  freeFirstLevel: 0
+  orbCombo: 
+  isOrbRelease: 0
   description: 'Move on with the wind.
 
-    When you kill something: +15% movement
-    speed for 15s.'
+    When you kill something, you move faster
+    for a while.'
   archetype: 0
   family: 2
   shape: 0
@@ -56,9 +59,12 @@ MonoBehaviour:
   repeatCount: 1
   repeatInterval: 0
   repeatScaleWithAttackSpeed: 0
+  repeatScaleWithCastSpeed: 0
+  repeatMaxCount: 1
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
   showRepeatsTotalDamage: 0
+  repeatTotalPerBeat: 0
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
@@ -73,6 +79,7 @@ MonoBehaviour:
   hasReleaseStance: 0
   releaseStance: 14
   releaseStanceReplayPerRepeat: 0
+  weaponSkillAnimation: 0
   bindings:
   - tickId: follow_hit
     targetMode: 0
@@ -129,6 +136,49 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -144,6 +194,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 15

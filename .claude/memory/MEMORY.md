@@ -17,6 +17,7 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 - [Never start servers](never-start-servers.md) — the user starts every server themselves; after a rebuild, say what needs starting and stop.
 - [Self-audit designs before presenting](self-audit-designs-before-presenting.md) — every skill pool/design list: check redundant pairs, dead parts, and whether its own build can trigger it, BEFORE showing it.
 - [Don't agree reflexively](dont-agree-reflexively.md) — critique on merits even when user says "I like this"; reflexive agreement kills the value of a second opinion.
+- [Answer the literal question first](answer-the-literal-question-first.md) — "is it there / does it have X" = yes/no + where it is, first sentence; no vendor-demo survey, counts or proposals.
 - [No number walls in decisions](no-number-walls-in-decisions.md) — relaying a design result: two or three plain sentences, make the calls myself, at most one question; never several tables of figures.
 - [Just DO it, don't instruct](just-do-it-dont-instruct.md) — if a command can do it, RUN it; never hand over menu paths, keyboard shortcuts, or key symbols. "Where is X" means SHOW me.
 - [Edit big docs by SLICE, never a whole read](edit-big-docs-by-slice-never-whole-read.md) — any doc over ~300 lines: grep the heading, read ~40 lines, edit that slice (or sed from the shell); a full read only for a full sweep.

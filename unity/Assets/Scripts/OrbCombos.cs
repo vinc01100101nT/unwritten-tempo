@@ -45,14 +45,28 @@ public static class OrbCombos
     public static OrbElement PureOrb(SkillDef combo) =>
         combo != null && OrbMath.IsPure(combo.orbCombo) ? OrbMath.FromLetter(combo.orbCombo[0]) : OrbElement.None;
 
-    /// <summary>True when <paramref name="unit"/> has opened <paramref name="combo"/>: every mixed combination is open
-    /// from the start; a pure one opens at its orb's level 20.</summary>
+    /// <summary>True when <paramref name="unit"/> has opened <paramref name="combo"/>: it has reached the combination's
+    /// Staff Mastery (Weathering's 45; 1 for the rest), and a pure one's orb is at level 20.</summary>
     public static bool Opened(ICombatUnit unit, SkillDef combo)
     {
-        if (combo == null || !combo.IsOrbCombo) return false;
+        if (combo == null || !combo.IsOrbCombo || !MasteryReached(unit, combo)) return false;
         var pure = PureOrb(combo);
         return pure == OrbElement.None || SkillEffectApplier.OrbLevel(unit, pure) >= OrbMath.UltimateOrbLevel;
     }
+
+    /// <summary>Has <paramref name="unit"/> reached the weapon mastery level <paramref name="combo"/> opens at?</summary>
+    public static bool MasteryReached(ICombatUnit unit, SkillDef combo)
+    {
+        int opensAt = System.Math.Max(1, combo.masteryLevel);
+        if (opensAt <= 1) return true;
+        var mastery = SkillEffectApplier.MasteryOf(unit);
+        return mastery != null && mastery.KnownLevel(combo.weaponType) >= opensAt;
+    }
+
+    /// <summary>"Weathering opens at Staff Mastery 45." — short enough for the stacking notice.</summary>
+    public static string OpensAtLine(SkillDef combo) =>
+        (string.IsNullOrEmpty(combo.displayName) ? combo.id : combo.displayName) + " opens at "
+        + WeaponTypes.Label(combo.weaponType) + " Mastery " + System.Math.Max(1, combo.masteryLevel) + ".";
 
     /// <summary>May <paramref name="unit"/>, holding <paramref name="held"/>, cast <paramref name="combo"/> right now?</summary>
     public static bool MayCast(ICombatUnit unit, SkillDef combo, WeaponType held) =>
@@ -66,6 +80,7 @@ public static class OrbCombos
         string name = string.IsNullOrEmpty(combo.displayName) ? combo.id : combo.displayName;
         if (held != WeaponType.Staff) return name + " needs a Staff in hand.";
         if (!ReferenceEquals(ComboFor(unit), combo)) return "Your orbs do not make " + name + ".";
+        if (!MasteryReached(unit, combo)) return OpensAtLine(combo);
         if (!Opened(unit, combo))
         {
             var orb = SkillCatalog.Get(OrbMath.SkillIdOf(PureOrb(combo)));

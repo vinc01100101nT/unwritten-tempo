@@ -208,11 +208,7 @@ public class PlayerInteractor : MonoBehaviour
     {
         var gameHud = UiKit.HudCanvas;
         if (gameHud != null) gameHud.enabled = !hide;
-        // PerfHud compiles out of non-development builds entirely, so the call must go with it — the same
-        // condition the class itself carries. Without this the game does not build for release OR for a server.
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         PerfHud.SetHidden(hide);
-#endif
     }
 
     // Side-on two-shot: camera perpendicular to the player↔NPC line, on whichever side the camera is already on (so

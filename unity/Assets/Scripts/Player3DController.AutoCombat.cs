@@ -73,8 +73,9 @@ public partial class Player3DController
     // Every auto-skill still running a run of beats here, with the charges it sees: " | runs: skill.x (3 charges)".
     string AutoSkillRuns()
     {
-        var slots = AutoCombatClient.Settings.slots;
-        if (slots == null) return "";
+        var me = Character.Instance;
+        if (me == null) return "";
+        var slots = AutoCombatClient.Settings.SlotsFor(me.HeldWeapon);
         string runs = "";
         for (int i = 0; i < slots.Length; i++)
         {
@@ -287,8 +288,10 @@ public partial class Player3DController
     {
         if (Time.time < nextAutoSkillLook || attackTarget == null) return;
         nextAutoSkillLook = Time.time + AutoCombatMath.SecondsBetweenSkillLooks;
-        var slots = AutoCombatClient.Settings.slots;
-        if (slots == null) return;
+        var me = Character.Instance;
+        if (me == null) return;
+        // Only the slots of the weapon in hand: each weapon keeps its own four.
+        var slots = AutoCombatClient.Settings.SlotsFor(me.HeldWeapon);
         for (int i = 0; i < slots.Length; i++)
         {
             if (string.IsNullOrEmpty(slots[i]) || AutoCombatClient.Refused(slots[i])) continue;

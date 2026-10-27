@@ -11,8 +11,9 @@ using UnityEngine.UI;
 /// character-select screens show the pictures one after another, each fading over the last; the loading curtain
 /// shows one picked at random each time it goes up.</para>
 ///
-/// <para><b>Over the pictures</b>, one full-screen image draws the world's own paper grain and a soft dark edge about
-/// a centimetre wide (<c>Unwritten/FrontScreenPaper</c>).</para>
+/// <para><b>Over the pictures</b>, one full-screen image draws the world's own paper grain (as strong as it shows in the
+/// world — none while the hand-drawn look is off) and a soft dark edge about a centimetre wide
+/// (<c>Unwritten/FrontScreenPaper</c>).</para>
 /// </summary>
 public sealed class FrontBackdrop : MonoBehaviour
 {
@@ -103,7 +104,7 @@ public sealed class FrontBackdrop : MonoBehaviour
             paper = new Material(saved);
             var world = HandDrawnFX.Instance;
             paper.SetColor(InkColorID, world != null ? world.inkColor : HandDrawnFX.DefaultInkColor);
-            paper.SetFloat(PaperStrengthID, world != null ? world.paperGrain : HandDrawnFX.DefaultPaperGrain);
+            paper.SetFloat(PaperStrengthID, HandDrawnFX.PaperOnScreen);
             paper.SetFloat(EdgeDarknessID, EdgeDarkness);
             paperImage.material = paper;
         }

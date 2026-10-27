@@ -113,6 +113,8 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public string skillId;
 
     GameObject ghost;
+    // The window the drag started in, see-through until the drag ends so the hotbar under it shows and takes the drop.
+    GameObject window;
 
     /// <summary>True while any skill is being dragged out of the Skills window — that window holds its redraws
     /// until the drag ends, because a redraw destroys the very row the drag started from.</summary>
@@ -123,7 +125,14 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         if (ghost == null) return;
         DragPicture.End(ref ghost, (RectTransform)transform);
+        EndSeeThrough();
         AnyDragging = false;
+    }
+
+    void EndSeeThrough()
+    {
+        UiAnim.SeeThrough(window, false);
+        window = null;
     }
 
     public void OnBeginDrag(PointerEventData e)
@@ -134,6 +143,9 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         // The one drag picture every drag in the game shows (DragPicture): this skill, see-through.
         ghost = DragPicture.Begin((RectTransform)transform, canvas, e.position);
+        var anim = GetComponentInParent<UiAnim>();
+        window = anim != null ? anim.gameObject : null;
+        UiAnim.SeeThrough(window, true);
         AnyDragging = true;
     }
 
@@ -142,6 +154,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnEndDrag(PointerEventData e)
     {
         DragPicture.End(ref ghost, (RectTransform)transform);
+        EndSeeThrough();
         AnyDragging = false;
         if (string.IsNullOrEmpty(skillId) || Character.Instance == null) return;
         HotbarSlotTarget.DropOnto(e, skillId);

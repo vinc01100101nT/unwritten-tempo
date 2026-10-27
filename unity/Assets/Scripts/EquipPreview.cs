@@ -31,13 +31,92 @@ public static class EquipPreview
         AppendDelta(sb, "MELEE ATK", before.meleeMax, after.meleeMax);
         AppendDelta(sb, "RANGED ATK", before.rangedMax, after.rangedMax);
         AppendDelta(sb, "M.ATK", before.matkMax, after.matkMax);
-        AppendDelta(sb, "DEF", before.def, after.def);
-        AppendDelta(sb, "M.DEF", before.mdef, after.mdef);
+        AppendDefense(sb, "DEF", before.hardDef, before.def, after.hardDef, after.def);
+        AppendDefense(sb, "M.DEF", before.hardMdef, before.mdef, after.hardMdef, after.mdef);
         AppendDelta(sb, "HIT", before.hit, after.hit);
         AppendDelta(sb, "FLEE", before.flee, after.flee);
         AppendDelta(sb, "Max HP", before.maxHP, after.maxHP);
+        AppendDelta(sb, "Max MP", before.maxMP, after.maxMP);
         AppendDeltaPct(sb, "CRIT", before.critChance, after.critChance);
+        AppendDeltaPct(sb, "CRIT DMG", before.critMult, after.critMult);
+        AppendDelta(sb, "ASPD", before.aspd, after.aspd);
+        AppendCast(sb, before.castTimeMult, after.castTimeMult);
+        AppendDeltaPct(sb, "LEECH", before.lifeStealPct, after.lifeStealPct);
+        AppendRange(sb, before.basicAttackRange, after.basicAttackRange);
+
+        // What the worn set gives that no line of the sheet shows — worded as the piece's own card words it.
+        var now = c.Gear.Bonuses;
+        var with = c.Gear.BonusesWith(slot, inst);
+        AppendWorn(sb, "Damage dealt", "+", now.wordDamagePercent, with.wordDamagePercent, "%");
+        AppendWorn(sb, "HP regeneration", "+", now.wordHPRegen, with.wordHPRegen, " per second");
+        AppendWorn(sb, "MP regeneration", "+", now.wordMPRegen, with.wordMPRegen, " per second");
+        AppendWorn(sb, "Critical hits against you", "−", now.wordCritShieldPercent, with.wordCritShieldPercent, "%");
+        AppendWorn(sb, "Fire damage taken", "−", now.wardFirePercent, with.wardFirePercent, "%");
+        AppendWorn(sb, "Water damage taken", "−", now.wardWaterPercent, with.wardWaterPercent, "%");
+        AppendWorn(sb, "Earth damage taken", "−", now.wardEarthPercent, with.wardEarthPercent, "%");
+        AppendWorn(sb, "Wind damage taken", "−", now.wardWindPercent, with.wardWindPercent, "%");
+        AppendWorn(sb, "Stuns, freezes, silences and ailments on you", "", now.wordDisableCutPercent, with.wordDisableCutPercent, "% shorter");
+        AppendWorn(sb, "Sprint drains stamina", "", now.wordStaminaCutPercent, with.wordStaminaCutPercent, "% slower");
+        AppendWorn(sb, "Knockbacks and pulls move you", "", now.wordShoveCutPercent, with.wordShoveCutPercent, "% less far");
+        AppendWorn(sb, "Experience", "+", now.experiencePercent, with.experiencePercent, "%");
         return sb.ToString();
+    }
+
+    // "DEF  12.0% + 30 → 15.0% + 32  +3.0% +2" — hard defence and soft defence together, as the stat sheet shows them.
+    static void AppendDefense(StringBuilder sb, string label, int hardB, int softB, int hardA, int softA)
+    {
+        if (hardB == hardA && softB == softA) return;
+        sb.Append("\n" + ItemTooltip.DimTag).Append(label).Append("</color>  ")
+          .Append(Tenths(hardB)).Append(" + ").Append(softB).Append(" → ")
+          .Append(Tenths(hardA)).Append(" + ").Append(softA);
+        int dh = hardA - hardB, ds = softA - softB;
+        if (dh != 0) sb.Append(" <color=").Append(dh > 0 ? ItemTooltip.GoodHex : ItemTooltip.BadHex).Append('>')
+                       .Append(dh > 0 ? "+" : "−").Append(Tenths(Mathf.Abs(dh))).Append("</color>");
+        if (ds != 0) sb.Append(" <color=").Append(ds > 0 ? ItemTooltip.GoodHex : ItemTooltip.BadHex).Append('>')
+                       .Append(ds > 0 ? "+" : "").Append(ds).Append("</color>");
+    }
+
+    static string Tenths(int tenths) =>
+        (tenths / 10f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "%";
+
+    // The cast multiplier, as the sheet writes it (×0.90). LOWER is faster, so a drop is the green one.
+    static void AppendCast(StringBuilder sb, float before, float after)
+    {
+        int b = Mathf.RoundToInt(before * 100f), a = Mathf.RoundToInt(after * 100f);
+        if (b == a) return;
+        int d = a - b;
+        sb.Append("\n" + ItemTooltip.DimTag + "CAST</color>  ×").Append(Hundredths(b)).Append(" → ×").Append(Hundredths(a))
+          .Append(" <color=").Append(d < 0 ? ItemTooltip.GoodHex : ItemTooltip.BadHex).Append('>')
+          .Append(d > 0 ? "+" : "−").Append(Hundredths(Mathf.Abs(d))).Append("</color>");
+    }
+
+    static string Hundredths(int hundredths) =>
+        (hundredths / 100f).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+    // Basic attack reach in world units, as the sheet's RANGE line writes it.
+    static void AppendRange(StringBuilder sb, float before, float after)
+    {
+        int b = Mathf.RoundToInt(before * 100f), a = Mathf.RoundToInt(after * 100f);
+        if (b == a) return;
+        int d = a - b;
+        sb.Append("\n" + ItemTooltip.DimTag + "RANGE</color>  ").Append(Units(b)).Append(" → ").Append(Units(a))
+          .Append(" <color=").Append(d > 0 ? ItemTooltip.GoodHex : ItemTooltip.BadHex).Append('>')
+          .Append(d > 0 ? "+" : "−").Append(Units(Mathf.Abs(d))).Append("</color>");
+    }
+
+    static string Units(int hundredths) =>
+        (hundredths / 100f).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    // A worn total no sheet line shows: "Fire damage taken  −0% → −8% +8%". More of every one of these is better.
+    static void AppendWorn(StringBuilder sb, string label, string sign, float before, float after, string unit)
+    {
+        int b = Mathf.RoundToInt(before * 100f), a = Mathf.RoundToInt(after * 100f);
+        if (b == a) return;
+        int d = a - b;
+        sb.Append("\n" + ItemTooltip.DimTag).Append(label).Append("</color>  ")
+          .Append(sign).Append(Units(b)).Append(unit).Append(" → ").Append(sign).Append(Units(a)).Append(unit)
+          .Append(" <color=").Append(d > 0 ? ItemTooltip.GoodHex : ItemTooltip.BadHex).Append('>')
+          .Append(d > 0 ? "+" : "−").Append(Units(Mathf.Abs(d))).Append("</color>");
     }
 
     // Green/red "LABEL  before → after (+delta)" rows. Unchanged rows are skipped.

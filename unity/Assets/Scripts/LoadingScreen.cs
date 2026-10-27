@@ -109,6 +109,10 @@ public static class LoadingScreen
     /// <see cref="FadeInSeconds"/>; anything else takes the curtain away at once.</summary>
     public static void Hide()
     {
+        // NOT WHILE THE GROUND IS STILL COMING IN. A seamless world holds the player back until the ground where they
+        // land has loaded, and lowers the curtain itself the moment it has (SeamlessWorld.PlaceWhenReady); lowered
+        // earlier — by the map arriving, or a trip within the map — it would show them standing over nothing.
+        if (SeamlessWorld.PlacementPending) return;
         // A TELEPORT'S CURTAIN STANDS ON BLACK (TeleportLook.CoverWithCurtain): it goes at once and the black fades
         // away, the same fade a wing's trip ends with. Also when the curtain never got up — the answer came back
         // before the screen was black — so the black waiting to raise it is called off.

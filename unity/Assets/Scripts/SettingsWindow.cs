@@ -28,6 +28,8 @@ public class SettingsWindow : MonoBehaviour
         // Alt+Enter and the window's own frame change the screen without this window, so it re-reads it on every open.
         resolutionLabel.text = SizeName(Screen.width, Screen.height);
         fullscreenToggle.SetIsOnWithoutNotify(GameSettings.Fullscreen);
+        // F10 switches the performance panel without this window, so it is re-read on every open too.
+        performanceToggle.SetIsOnWithoutNotify(GameSettings.ShowPerformance);
         UiAnim.Open(root);
         UISounds.PlayOpen();
     }
@@ -38,7 +40,7 @@ public class SettingsWindow : MonoBehaviour
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) { enabled = false; return; }
 
-        var content = UiKit.Window(canvas.transform, "Settings", new Vector2(460, 340), Vector2.zero, out root);
+        var content = UiKit.Window(canvas.transform, "Settings", new Vector2(460, 420), Vector2.zero, out root);
 
         var tabRow = UiKit.TabRow(content);
 
@@ -90,6 +92,28 @@ public class SettingsWindow : MonoBehaviour
         fullscreenToggle = UiKit.Checkbox(Row(graphics, "Fullscreen", 0.85f), GameSettings.Fullscreen);
         fullscreenToggle.onValueChanged.AddListener(v => GameSettings.Fullscreen = v);
 
+        var shadowBtn = ChoiceButton(Row(graphics, "Shadow quality", 0.6f),
+                                     GameSettings.ShadowQualityNames[GameSettings.ShadowQuality], OpenShadowPicker);
+        shadowLabel = shadowBtn.GetComponentInChildren<TMPro.TMP_Text>();
+
+        var plantDistance = UiKit.MakeSlider(Row(graphics, "Grass & flower distance"), 0f);
+        plantDistance.minValue = GameSettings.PlantDistanceMin;
+        plantDistance.maxValue = GameSettings.PlantDistanceMax;
+        plantDistance.value = GameSettings.PlantDistance;
+        plantDistance.onValueChanged.AddListener(v => GameSettings.PlantDistance = v);
+
+        var plantDensity = UiKit.MakeSlider(Row(graphics, "Grass & flower density"), 0f);
+        plantDensity.minValue = GameSettings.PlantDensityMin;
+        plantDensity.maxValue = 1f;
+        plantDensity.value = GameSettings.PlantDensity;
+        plantDensity.onValueChanged.AddListener(v => GameSettings.PlantDensity = v);
+
+        var plantShadows = UiKit.Checkbox(Row(graphics, "Plant shadows", 0.85f), GameSettings.PlantShadows);
+        plantShadows.onValueChanged.AddListener(v => GameSettings.PlantShadows = v);
+
+        performanceToggle = UiKit.Checkbox(Row(graphics, "Show performance", 0.85f), GameSettings.ShowPerformance);
+        performanceToggle.onValueChanged.AddListener(v => GameSettings.ShowPerformance = v);
+
         BuildKeysPage(keys);
         BuildPicker(body.transform);
 
@@ -116,6 +140,25 @@ public class SettingsWindow : MonoBehaviour
                 GameSettings.SetResolution(size.x, size.y);
                 // Screen.width still reads the old size until the next frame, so the label shows the pick itself.
                 resolutionLabel.text = SizeName(size.x, size.y);
+            });
+        }
+    }
+
+    // ---- shadow quality and the performance panel ---------------------------------------------------------------
+
+    TMPro.TMP_Text shadowLabel;
+    Toggle performanceToggle;
+
+    void OpenShadowPicker()
+    {
+        OpenPicker(110f);
+        for (int i = 0; i < GameSettings.ShadowQualityNames.Length; i++)
+        {
+            int step = i;
+            PickerChoice(GameSettings.ShadowQualityNames[step], () =>
+            {
+                GameSettings.ShadowQuality = step;
+                shadowLabel.text = GameSettings.ShadowQualityNames[step];
             });
         }
     }

@@ -69,4 +69,32 @@ public static class WorldBuildUtil
         { new EditorBuildSettingsScene(scenePath, true) };
         EditorBuildSettings.scenes = list.ToArray();
     }
+
+    /// <summary>Saves <paramref name="mesh"/> at <paramref name="path"/>. A mesh already saved there is overwritten in
+    /// place, keeping its identity, so every prefab pointing at it keeps pointing at it. Returns the saved mesh.</summary>
+    public static Mesh SaveMeshInPlace(Mesh mesh, string path)
+    {
+        var old = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+        if (old == null) { AssetDatabase.CreateAsset(mesh, path); return mesh; }
+        // Every channel written afresh through the mesh's own setters. MEASURED 2026-10-26: copied over wholesale
+        // (CopySerialized, even with a re-import or MarkModified after it), the editor kept DRAWING the old vertex
+        // colours — a soil band an earlier build painted — while the mesh itself held the new ones; setting a
+        // channel again is what hands the new data to the graphics card.
+        old.Clear();
+        old.name = mesh.name;
+        old.indexFormat = mesh.indexFormat;
+        int count = mesh.vertexCount;
+        old.SetVertices(mesh.vertices);
+        if (mesh.normals.Length == count) old.SetNormals(mesh.normals);
+        if (mesh.tangents.Length == count) old.SetTangents(mesh.tangents);
+        if (mesh.colors.Length == count) old.SetColors(mesh.colors);
+        var uv = new List<Vector2>();
+        for (int ch = 0; ch < 2; ch++) { uv.Clear(); mesh.GetUVs(ch, uv); if (uv.Count == count) old.SetUVs(ch, uv); }
+        old.subMeshCount = mesh.subMeshCount;
+        for (int sm = 0; sm < mesh.subMeshCount; sm++) old.SetTriangles(mesh.GetTriangles(sm), sm);
+        old.RecalculateBounds();
+        EditorUtility.SetDirty(old);
+        AssetDatabase.SaveAssetIfDirty(old);
+        return old;
+    }
 }

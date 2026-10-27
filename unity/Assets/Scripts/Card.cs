@@ -29,4 +29,19 @@ public class Card : ScriptableObject
     public int bonusCritPercent;
     [Tooltip("Added to attack SPEED, in whole percent (e.g. 6 = +6%). May be negative.")]
     public int bonusAspdPercent;
+
+    /// <summary>Fold this card's bonuses into a running total — the one place a card becomes numbers, read by the worn
+    /// total (<see cref="EquipmentInstance.AccumulateInto"/>) and by the item card alike. Allocation-free.</summary>
+    public void AddInto(ref EquipBonuses eb)
+    {
+        eb.str  += bonusStr;
+        eb.agi  += bonusAgi;
+        eb.vit  += bonusVit;
+        eb.intel+= bonusInt;
+        eb.dex  += bonusDex;
+        eb.luk  += bonusLuk;
+        eb.atk  += bonusAttack;
+        eb.critPercent += bonusCritPercent;
+        eb.aspdPercent += bonusAspdPercent;
+    }
 }

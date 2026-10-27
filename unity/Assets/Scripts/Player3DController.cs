@@ -1045,7 +1045,7 @@ public partial class Player3DController : MonoBehaviour
         var from = new Vector2(transform.position.x, transform.position.z);
         var to = new Vector2(goal.x, goal.z);
         // Fills `path` in place (allocation-free); player uses the full default expansion budget.
-        if (!Pathfinder3D.FindPath(from, to, agentRadius, path))
+        if (!Pathfinder3D.FindPath(from, to, agentRadius, path, 0, transform.position.y))
         {
             // NO ROUTE. The fallback below walks straight at the goal regardless, which is right — but it means a
             // failed search and a good one look identical from outside, so a character shuffling into a wall reads

@@ -287,6 +287,32 @@ def parse_asset(path):
     return out
 
 
+def description_of(path):
+    """A skill's description as the game reads it. The general reader above keeps only the first line of a
+    multi-line text, so this reads the field itself: plain, single-quoted or double-quoted, folded the way YAML folds
+    it (a line break inside the text is a space, a blank line is a line break), escapes decoded."""
+    text = read(path)
+    m = re.search(r"^  description:[ ]?(.*?)(?=^  [A-Za-z_]+:)", text, re.S | re.M)
+    if not m:
+        return ""
+    raw = m.group(1).rstrip("\n")
+    lines = [ln.strip() for ln in raw.split("\n")]
+    folded, blank = "", False
+    for ln in lines:
+        if not ln:
+            blank = True
+            continue
+        folded += ("\n" if blank else (" " if folded else "")) + ln
+        blank = False
+    if folded.startswith('"') and folded.endswith('"'):
+        body = folded[1:-1]
+        body = re.sub(r"\\u([0-9a-fA-F]{4})", lambda u: chr(int(u.group(1), 16)), body)
+        return body.replace("\\n", "\n").replace('\\"', '"').replace("\\\\", "\\")
+    if folded.startswith("'") and folded.endswith("'"):
+        return folded[1:-1].replace("''", "'")
+    return folded
+
+
 def as_int(v, default=0):
     try:
         return int(str(v).strip())
@@ -565,6 +591,16 @@ def main():
             problem(s, "shares its id with another skill — only one of them can ever load.")
         elif sid != s["_file"]:
             warn(s, "is saved under a different name than its id, so it is easy to lose track of.")
+        # ---- the description says WHAT HAPPENS, never HOW MUCH --------------------------
+        # A weapon skill's card prints every amount from the skill's own numbers. Its first line is flavour; anything
+        # after it is the plain account of what happens, and a number typed there is a second copy that drifts (Last
+        # Petal's said "+40% per stack" while the game added a flat 0.4).
+        if as_int(s.get("weaponType")) != weapons.get("None", 0):
+            desc = description_of(os.path.join(SKILLS_DIR, s["_file"] + ".asset"))
+            how = desc.split("\n", 1)[1] if "\n" in desc else desc
+            if re.search(r"\d", how):
+                problem(s, "has a number in its description (\"%s\"). The card prints every amount from the skill's "
+                           "own numbers; the description says only what happens." % how.strip()[:80])
         if as_int(s.get("published")) == 1 and as_int(s.get("weaponType")) == weapons.get("None", 0):
             warn(s, "is published for loot but belongs to no weapon, so no weapon can ever roll it.")
 

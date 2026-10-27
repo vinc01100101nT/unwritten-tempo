@@ -28,7 +28,9 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'The sky turns to ash.
 
-    Burning stones fall around the aimed spot in several strikes, each hitting harder for every Stone on its target. Leaves no mark. Opens at Fire Orb level 20.'
+    Burning stones fall around the aimed spot
+    in several strikes, each hitting harder for every Stone on its target. Leaves
+    no mark. Opens with a high Fire Orb level.'
   archetype: 0
   family: 1
   shape: 1
@@ -193,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -413,6 +416,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0

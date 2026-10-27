@@ -28,7 +28,8 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'Wind feeds the fire.
 
-    The aimed ground burns. Every second, a gust of hot wind hits everything standing in it and adds 1 Burn.'
+    The aimed ground burns. Every second, a
+    gust of hot wind hits everything standing in it and adds a Burn.'
   archetype: 4
   family: 1
   shape: 1
@@ -143,6 +144,11 @@ MonoBehaviour:
         scaler: 1
       orb: 3
       cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
       damageMultPerMark:
         value: 0
         useStacks: 0
@@ -188,6 +194,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -343,6 +350,11 @@ MonoBehaviour:
         scaler: 1
       orb: 1
       cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
       damageMultPerMark:
         value: 0
         useStacks: 0
@@ -388,6 +400,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10

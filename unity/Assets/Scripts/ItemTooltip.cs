@@ -363,8 +363,8 @@ public class ItemTooltip : MonoBehaviour
     {
         var sb = new StringBuilder();
         AppendHeader(sb, item);
-        AppendRarity(sb, Rarities.Of(item));
         AppendAttackKind(sb, item);
+        AppendRarity(sb, Rarities.Of(item));
         AppendHeadgear(sb, item);
         AppendUseEffect(sb, item);
         AppendFooter(sb, item, item.value);
@@ -426,20 +426,12 @@ public class ItemTooltip : MonoBehaviour
         var def = inst.def;
         AppendHeader(sb, def);
         AppendAttackKind(sb, def);
+        AppendBase(sb, inst);
         AppendCopyStats(sb, inst);
         AppendHeadgear(sb, def);
         AppendTrademark(sb, inst);
         AppendWord(sb, inst);
-
-        int slots = inst.cardSlots;
-        if (slots > 0)
-        {
-            sb.Append("\n\n" + DimTag + "Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
-            if (inst.cards != null)
-                foreach (var card in inst.cards)
-                    if (card != null)
-                        sb.Append("\n  " + CardTag + "◇ ").Append(card.displayName).Append("</color>");
-        }
+        AppendCards(sb, inst);
         sb.Append('\n');
         AppendFooter(sb, def, inst.worth);
         return sb.ToString();
@@ -471,7 +463,6 @@ public class ItemTooltip : MonoBehaviour
     internal static string MainTag => UiKit.Tag(UiKit.TextMain);
     static string UseTag => UiKit.Tag(UiKit.Accent);
     static string CardTag => UiKit.Tag(UiKit.Accent);
-    static string GoodTag => UiKit.Tag(UiKit.Good);
     static string BadTag => UiKit.Tag(UiKit.Bad);
 
     /// <summary>How a copy is named on screen — <see cref="Title"/> with the copy's own parts.</summary>
@@ -508,7 +499,7 @@ public class ItemTooltip : MonoBehaviour
     {
         var skill = Trademarks.SkillOf(inst);
         if (skill == null) return;
-        sb.Append("\n\n" + DimTag + "Trademark Skill: </color>").Append(skill.displayName);
+        sb.Append("\n\n").Append(Heading("Trademark"));
         TrademarkLines(skill, inst.trademarkLift, trademarkScratch, true);
         foreach (var line in trademarkScratch) sb.Append('\n').Append(line);
         trademarkScratch.Clear();
@@ -518,16 +509,18 @@ public class ItemTooltip : MonoBehaviour
 
     /// <summary>What a trademark of <paramref name="skill"/> at <paramref name="lift"/> raises, one line per effect with a
     /// main number — "+12% damage". The one wording of it: this card and the wiki's trademark table both print it.
-    /// <paramref name="nameTheSkill"/> says whose number it is — "+12% to Petal Storm's damage" — for the card, where a
-    /// line stands alone; the wiki's table already names the skill on the row.</summary>
+    /// <paramref name="nameTheSkill"/> is the CARD's form: it says whose number it is — "+12% to Petal Storm's damage" —
+    /// because a line on the card stands alone, and dresses it the way every stat line on the card is dressed (the
+    /// number and the skill's name bold, the rest grey). The wiki's table names the skill on the row and wants plain text.</summary>
     public static void TrademarkLines(SkillDef skill, float lift, System.Collections.Generic.List<string> into,
                                       bool nameTheSkill = false)
     {
         into.Clear();
         if (skill == null) return;
-        string owner = !nameTheSkill ? ""
-                     : "to " + skill.displayName + (skill.displayName.EndsWith("s") ? "' " : "'s ");
-        string pct = "+" + Mathf.RoundToInt(lift * 100f) + "% " + owner;
+        string number = "+" + Mathf.RoundToInt(lift * 100f) + "%";
+        string pct = !nameTheSkill ? number + " "
+                   : "<b>" + number + "</b> " + DimTag + "to </color><b>" + skill.displayName + "</b>" + DimTag
+                     + (skill.displayName.EndsWith("s") ? "' " : "'s ");
         for (int b = 0; b < skill.bindings.Count; b++)
         {
             var fx = skill.bindings[b]?.effects;
@@ -535,7 +528,7 @@ public class ItemTooltip : MonoBehaviour
             for (int i = 0; i < fx.Count; i++)
             {
                 string word = SkillTooltip.MainNumberWord(fx[i]);
-                if (word != null) into.Add(pct + word);
+                if (word != null) into.Add(nameTheSkill ? pct + word + "</color>" : pct + word);
             }
         }
     }
@@ -549,13 +542,13 @@ public class ItemTooltip : MonoBehaviour
         var eb = default(EquipBonuses);
         Headgear.AddInto(item, ref eb);
         int before = sb.Length;
-        sb.Append("\n<b><size=115%>");
+        sb.Append("\n<size=115%>");
         int opened = sb.Length;
         AppendStatList(sb, eb);
         AppendStat(sb, "attack reach", eb.attackReach);
         AppendStat(sb, "experience", eb.experiencePercent, "%");
         if (sb.Length == opened) sb.Length = before;
-        else sb.Append("</size></b>");
+        else sb.Append("</size>");
 
         var skill = string.IsNullOrEmpty(item.wornSkillId) ? null : SkillCatalog.Get(item.wornSkillId);
         if (skill == null) return;
@@ -569,19 +562,46 @@ public class ItemTooltip : MonoBehaviour
     static void AppendWord(StringBuilder sb, EquipmentInstance inst)
     {
         if (inst == null || inst.word == ArmourWord.None) return;
-        sb.Append("\n\n" + DimTag).Append(inst.word).Append(": </color>")
-          .Append(ArmourWords.Describe(inst.word, inst.wordAmount));
+        sb.Append("\n\n").Append(Heading("Word"))
+          .Append("\n<b>").Append(inst.word).Append("</b> " + DimTag)
+          .Append(ArmourWords.Describe(inst.word, inst.wordAmount)).Append("</color>");
     }
+
+    // THIS COPY's cards: how many it holds of how many, then each card by name with what it adds under it — the same
+    // sums the worn total reads (Card.AddInto), in the same lines every stat on the card uses.
+    static void AppendCards(StringBuilder sb, EquipmentInstance inst)
+    {
+        int slots = inst.cardSlots;
+        if (slots <= 0) return;
+        sb.Append("\n\n").Append(Heading("Cards " + inst.FilledSockets + "/" + slots));
+        if (inst.cards == null) return;
+        foreach (var card in inst.cards)
+        {
+            if (card == null) continue;
+            sb.Append("\n" + CardTag + "◇ ").Append(card.displayName).Append("</color>");
+            var eb = default(EquipBonuses);
+            card.AddInto(ref eb);
+            sb.Append("<indent=1em>");
+            AppendStatList(sb, eb);
+            sb.Append("</indent>");
+        }
+    }
+
+    // A group's name, written ABOVE its lines: small, bold and grey, so a reader knows what a block is before reading it.
+    static string Heading(string text) => "<size=80%><b>" + DimTag + text + "</color></b></size>";
 
     // A weapon says what its ordinary attack is — melee, ranged, or a ranged magic shot; nothing else about it is spelled out.
     static void AppendAttackKind(StringBuilder sb, Item item)
     {
         if (item.slot != EquipSlotType.Weapon || item.weaponType == WeaponType.None) return;
+        // On the slot line, after the slot, in its grey: a fact about the piece, not a stat.
+        sb.Append(DimTag + " · ");
         if (WeaponTypes.RangedByStat(item.weaponType))
-            sb.Append('\n').Append("MELEE or RANGED attack — whichever of STR or DEX is higher");
+            sb.Append("MELEE or RANGED attack — whichever of STR or DEX is higher");
         else
-            sb.Append('\n').Append(WeaponTypes.ShootsMagic(item.weaponType) ? "RANGED MAGIC attack"
-                                   : WeaponTypes.SwingsRanged(item.weaponType, 0, 0) ? "RANGED attack" : "MELEE attack");
+            sb.Append(WeaponTypes.ShootsMagic(item.weaponType) ? "RANGED MAGIC attack"
+                      : WeaponTypes.SwingsRanged(item.weaponType, 0, 0) ? "RANGED attack" : "MELEE attack");
+        sb.Append("</color>");
     }
 
     // THIS COPY's numbers, in two groups a blank line apart: first what the piece itself gives (the folds' numbers,
@@ -593,28 +613,29 @@ public class ItemTooltip : MonoBehaviour
         var own = default(EquipBonuses);
         CraftingMath.AddPiece(inst.piece, null, null, ref own);
         int before = sb.Length;
-        sb.Append("\n<b><size=115%>");
+        sb.Append("\n<size=115%>");
         int opened = sb.Length;
         AppendStatList(sb, own);
         if (sb.Length == opened) sb.Length = before;
-        else sb.Append("</size></b>");
-        AppendBase(sb, inst);
+        else sb.Append("</size>");
 
         var ink = default(EquipBonuses);
         int n = inst.inkStats != null && inst.inkValues != null ? Mathf.Min(inst.inkStats.Count, inst.inkValues.Count) : 0;
         for (int i = 0; i < n; i++) CraftingMath.AddInk(inst.inkStats[i], inst.inkValues[i], ref ink);
         before = sb.Length;
-        sb.Append('\n');
+        // A blank line, then the heading on its own line; with no heading the first stat line brings its own break.
+        sb.Append(inst.InkSlots > 0 ? "\n\n" : "\n");
         opened = sb.Length;
-        AppendStatList(sb, ink);
         AppendInkSlots(sb, inst);
+        AppendStatList(sb, ink);
         if (sb.Length == opened) sb.Length = before;
     }
 
-    // The piece's base roll as the server wrote it: "Quality: 108%". A piece that never rolled counts as 100%.
+    // The piece's base roll as the server wrote it, on the slot line in its grey: " · Quality 108%". A piece that never
+    // rolled counts as 100%.
     static void AppendBase(StringBuilder sb, EquipmentInstance inst)
     {
-        sb.Append('\n').Append("Quality: ").Append(inst.basePercent > 0 ? inst.basePercent : 100).Append('%');
+        sb.Append(DimTag + " · Quality ").Append(inst.basePercent > 0 ? inst.basePercent : 100).Append("%</color>");
     }
 
     static void AppendStatList(StringBuilder sb, in EquipBonuses eb)
@@ -683,7 +704,7 @@ public class ItemTooltip : MonoBehaviour
         int slots = inst.InkSlots;
         if (slots <= 0) return;
         int used = inst.inkStats != null ? inst.inkStats.Count : 0;
-        sb.Append("\n" + DimTag + "Written ").Append(used).Append('/').Append(slots).Append("</color>");
+        sb.Append(Heading("Ink " + used + "/" + slots));
     }
 
     // A piece of gear is worth its own copy's worth (server-written, what a shop prices it at), never its item's
@@ -702,21 +723,23 @@ public class ItemTooltip : MonoBehaviour
         if (!item.CanBeStored)  sb.Append("\n" + DimTag).Append(Item.CannotBeStoredText).Append("</color>");
         if (!item.CanBeTraded)  sb.Append("\n" + DimTag).Append(Item.CannotBeTradedText).Append("</color>");
         if (!string.IsNullOrWhiteSpace(item.description))
-            sb.Append("\n\n" + MainTag + "<i>").Append(item.description).Append("</i></color>");
+            sb.Append("\n\n" + DimTag + "<i>").Append(item.description).Append("</i></color>");
     }
 
+    // ONE stat line: the number bold — in the main text colour, or red when it takes something away — then the stat's
+    // name in grey, so the eye can run down the numbers.
     static void AppendStat(StringBuilder sb, string label, int v, string suffix = "")
     {
         if (v == 0) return;
-        sb.Append(v > 0 ? "\n" + GoodTag + "+" : "\n" + BadTag)
-          .Append(v).Append(suffix).Append(' ').Append(label).Append("</color>");
+        sb.Append(v > 0 ? "\n" + MainTag + "<b>+" : "\n" + BadTag + "<b>")
+          .Append(v).Append(suffix).Append("</b></color> " + DimTag).Append(label).Append("</color>");
     }
 
     static void AppendStat(StringBuilder sb, string label, float v, string suffix = "")
     {
         if (Mathf.Approximately(v, 0f)) return;
-        sb.Append(v > 0f ? "\n" + GoodTag + "+" : "\n" + BadTag)
-          .Append(v.ToString("0.##")).Append(suffix).Append(' ').Append(label).Append("</color>");
+        sb.Append(v > 0f ? "\n" + MainTag + "<b>+" : "\n" + BadTag + "<b>")
+          .Append(v.ToString("0.##")).Append(suffix).Append("</b></color> " + DimTag).Append(label).Append("</color>");
     }
 
 }

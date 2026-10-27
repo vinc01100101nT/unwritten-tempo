@@ -15,6 +15,14 @@ public static class WorldSpawner
     // takes its areas with it, and its handle is forgotten, so loading it again populates it again.
     static readonly HashSet<int> populated = new HashSet<int>();
 
+    // Every spawn area built into each map, by scene handle — what a seamless world tends, waking and putting to sleep.
+    static readonly Dictionary<int, List<FieldMobSpawner>> built = new Dictionary<int, List<FieldMobSpawner>>();
+    static readonly List<FieldMobSpawner> None = new List<FieldMobSpawner>();
+
+    /// <summary>The spawn areas built into <paramref name="map"/> (empty off the server, or before it was populated).
+    /// The list is the store itself: read it, never change it.</summary>
+    public static List<FieldMobSpawner> AreasIn(Scene map) => built.TryGetValue(map.handle, out var list) ? list : None;
+
     /// <summary>Build every spawn area <paramref name="map"/> has in the list. Does nothing off the server, for the
     /// persistent scene, or for a map already done.</summary>
     public static void Populate(Scene map)
@@ -34,11 +42,12 @@ public static class WorldSpawner
         }
 
         int areas = 0, creatures = 0;
+        bool seamless = SeamlessWorld.InScene(map) != null;
         for (int i = 0; i < list.rows.Count; i++)
         {
             var row = list.rows[i];
             if (row == null || row.population <= 0 || row.map != map.name) continue;
-            Build(row, map, i);
+            Build(row, map, i, seamless);
             areas++;
             creatures += row.population;
         }
@@ -47,11 +56,16 @@ public static class WorldSpawner
     }
 
     /// <summary>Forget a map that has gone, so it is populated again if it comes back.</summary>
-    public static void Forget(Scene map) => populated.Remove(map.handle);
+    public static void Forget(Scene map)
+    {
+        populated.Remove(map.handle);
+        built.Remove(map.handle);
+    }
 
     static bool warnedNoList;
 
-    static void Build(WorldSpawns.Row row, Scene map, int index)
+
+    static void Build(WorldSpawns.Row row, Scene map, int index, bool seamless)
     {
         var go = new GameObject("Spawn area " + index + (string.IsNullOrEmpty(row.creature) ? "" : " (" + row.creature + ")"));
         // Built while the game runs, so it must never be baked into a scene an editor might save.
@@ -71,6 +85,10 @@ public static class WorldSpawner
         s.maxLevel          = row.maxLevel;
         s.includeCommons    = row.includeCommons;
         s.playerClearRadius = row.playerClearRadius;
-        go.SetActive(true);
+        if (!built.TryGetValue(map.handle, out var list)) built[map.handle] = list = new List<FieldMobSpawner>();
+        list.Add(s);
+        // A SEAMLESS WORLD WAKES ITS AREAS ITSELF, once somebody is near and the ground under the area has loaded —
+        // switched on now, an area would look for its floor before any of it exists (SeamlessWorld).
+        if (!seamless) go.SetActive(true);
     }
 }

@@ -28,7 +28,8 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'Steam.
 
-    Puts out the burns on every enemy around you. Each burn put out becomes a scalding hit, then 1 Chill.'
+    Puts out the burns on every enemy around you. Each burn
+    put out becomes a scalding hit, then a Chill.'
   archetype: 2
   family: 1
   shape: 0
@@ -193,6 +194,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -398,6 +400,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 4

@@ -85,9 +85,9 @@ public partial class NetPlayer
 
         // CLAMPED AND TRIMMED HERE, whatever was sent: every number inside its range, every slot a skill this character
         // may press (never an item, never gear), no skill twice.
-        var s = AutoCombatMath.Clamped(AutoCombatSettings.FromJson(json));
-        c.KeepOnlyAutoSkills(s.slots);
-        bool slotsMoved = !SameSlots(c.AutoCombat.slots, s.slots);
+        var s = AutoCombatMath.Clamped(AutoCombatSettings.FromJson(json), Character.WeaponOfSkillFn);
+        c.KeepOnlyAutoSkills(s);
+        bool slotsMoved = !AutoCombatSettings.SameSlots(c.AutoCombat, s);
         c.AutoCombat = s;
         // A skill only auto-combat presses still needs a runner here to be cast with — the same rebuild the bar asks for.
         if (slotsMoved) c.RefreshUsableSkills();
@@ -97,14 +97,6 @@ public partial class NetPlayer
         string why = autoCombatOn ? AutoCombatMath.WhyItMayNotStart(MapKindHere(), s.Hunt, c.IsDead) : null;
         if (why != null) SetAutoCombat(false, why);
         else PushAutoCombatToOwner("");
-    }
-
-    static bool SameSlots(string[] a, string[] b)
-    {
-        if (a == null || b == null) return a == b;
-        if (a.Length != b.Length) return false;
-        for (int i = 0; i < a.Length; i++) if (a[i] != b[i]) return false;
-        return true;
     }
 
     // ---- what the owner is told -------------------------------------------------------------------------------

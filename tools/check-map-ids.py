@@ -37,6 +37,7 @@ again here. This check also fails on:
 USAGE:  tools/check-map-ids.py [--root <repo>]
 EXIT:    0 = every copy agrees with the layout, 1 = something disagrees (each named).
 """
+import glob
 import json
 import os
 import re
@@ -337,6 +338,23 @@ def main():
     for s in re.findall(r"^\s*- sceneName: (.+)$", read(BGM), re.M):
         if s.strip() not in scene_files:
             faults.append("music table: '%s' has no scene" % s.strip())
+
+    # 7. A SEAMLESS WORLD (a scene holding a SeamlessWorld) owns its own map id: its scene must be in Build Settings and
+    # every chunk it names must be an address in the Addressables World group, or the game asks for ground that is not
+    # there.
+    world_group = os.path.join(REPO, "unity", "Assets", "AddressableAssetsData", "AssetGroups", "World.asset")
+    addresses = set(re.findall(r"m_Address: (.+)", read(world_group))) if os.path.exists(world_group) else set()
+    build_list = read(BUILD)
+    for scene_path in sorted(glob.glob(os.path.join(SCENES, "*.unity"))):
+        text = read(scene_path)
+        if "  chunks:" + chr(10) + "  - address:" not in text:
+            continue
+        name = os.path.splitext(os.path.basename(scene_path))[0]
+        if "Assets/Scenes/%s.unity" % name not in build_list:
+            faults.append("seamless world '%s': its scene is not in Build Settings" % name)
+        for address in re.findall(r"^  - address: (.+)$", text, re.M):
+            if address.strip() not in addresses:
+                faults.append("seamless world '%s': chunk '%s' is not an address in the World group" % (name, address.strip()))
 
     if faults:
         print(RED + "map ids disagree with the world layout (%d):" % len(faults) + OFF)

@@ -81,5 +81,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a38aa802f0232e4f9c169e8a01453c7, type: 3}
   m_Name: OccludedSilhouetteFeature
   m_EditorClassIdentifier: Assembly-CSharp::OccludedSilhouetteFeature
-  m_Active: 1
+  m_Active: 0
   silhouetteColor: {r: 0.55, g: 0.8, b: 1, a: 1}

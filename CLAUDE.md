@@ -90,6 +90,23 @@ forever, until the file is written once without it.
 Letting them meet that prompt with no warning is indistinguishable from the bug the rule above exists to kill,
 and it costs a whole round re-diagnosing something I already knew the answer to.
 
+## ⛔⛔ RULE WORLDSCALE — EVERYTHING PUT IN THE WORLD IS AT THE WORLD'S SCALE: ITS SIZE AGAINST A PERSON (ULTRA-HARD RULE — added 2026-10-26 at the user's instruction)
+
+**The measuring stick is our person: `CharacterSpec.Active.bodyHeight` (0.327 world units).** A tree, a blade of grass, a
+rock, a floating leaf, a butterfly, an effect: each one stands against our person exactly as it stands against a person
+where it came from. Nothing is placed at "its own size" and nothing is stretched to fill a spot.
+
+- **A pack gets ONE factor: our person ÷ its person.** Read its person from the pack itself (its demo's walking body,
+  its character, its stated scale) — never typed, never guessed. Every piece from that pack uses that one factor.
+- **Banned:** placing a piece at scale 1 because "that is the pack's own size"; fitting each kind to the prop it
+  replaces; sizing a piece by eye; a particle effect that ignores its object's scale (set it to follow the hierarchy).
+- **Before showing anything placed, check it against a person** — in the picture, a person-tall figure beside it.
+- **The exception is a piece fitted to a shape on purpose** (a bridge across a crossing), and the report says so.
+
+*(Scar, 2026-10-26: the nature pack's grass, effects and cliffs went in at the pack's own size and its trees fitted to
+the old trees — floating leaves the size of people and grass over the character's head. The user: "always put things in
+the world with correct size".)*
+
 ## ⛔ RULE ONEGROUND — A MAP'S GROUND IS ONE SOLID BODY. EVERY GROUND SHAPE IS MADE BY RESHAPING IT, NEVER BY ATTACHING SOMETHING TO IT (HARD RULE — added 2026-09-30 at the user's instruction)
 
 **Everything that is ground — flat land, hills, roads, cliff faces, cliff tops, river beds, banks — is ONE set of
@@ -100,7 +117,9 @@ to it, and painting it (a rock look on a cliff face is paint on the same ground)
 - A separate piece laid over, under or beside the ground to act as ground: a cap, a strip, a skirt, a sheet, a lid,
   an "invisible floor".
 - Leaving triangles out of the ground — a hole — and covering it with anything.
-- Collision on any decoration: grass, a painted layer, an overlay, a trim.
+- Collision on any decoration: grass, a painted layer, an overlay, a trim. **One exception, the user's call on
+  2026-10-27 ("make it solid"):** the rocks lining a cliff wall keep their own colliders — they stand out in front of
+  the wall in the ground, so a body must stop at the rock it sees.
 - Building the ground first and bolting a feature on afterwards, then patching the seam where they meet.
 
 **If the ground cannot make a shape where it is needed, add points to the ground there.** The points can go
@@ -442,6 +461,7 @@ that costs a round.
 
 ## Standing rules
 
+- **⛔ NO TRAP — every design holds for 0, 1 and MANY (hard rule, added 2026-10-26 at the user's instruction: "no specific fixes. always general, always scalable. no trap").** The full rule is RULE SCALABLE in the global file. In this game the "many" is concrete: every skill, stat, stat source (piece, ink, card, word, trademark), weapon, element, orb, mark and player that will exist, not the ones built today. A card line, a message, a save field or a fix that only works for the example on screen is a trap: test it with a second and a fourth of the thing before showing it, and grow a shape by adding entries, never by lengthening one. *(Scar, 2026-10-25: a skill card's single "next:" line and an item card's "58 from ink" both broke the moment the user asked about a second number and a second source.)*
 - **Say the contract back BEFORE building anything bigger than a one-liner.** First reply with three bullets — what I'm about to build, and the exact in-game check that will prove it works — then WAIT for a go. No code until then. Most wasted rounds here were not bad code; they were the wrong thing built well, or extra things nobody asked for. Three bullets cost one line and buy the acceptance test for free (see the play-test rule below, which reuses them).
   **A GO GIVEN IN ADVANCE REMOVES THE WAIT, NEVER THE BULLETS.** "just do it", "fix it all", "go" — all of those mean start now without a round-trip. None of them means the user has seen what I am about to build. So the bullets still go in the FIRST reply of that turn, and the work starts in the same reply. **This matters most on a long build**, where the user sees only my final message: everything between is invisible to them, so a build that says nothing until it is finished is one they cannot steer, correct, or stop. (Scar, 2026-09-07: told "fix it all, go", I built for several turns in silence and the user had to interrupt to ask whether I was writing a general fix or one patch per case. I was — but they had no way to know, and finding out cost a round.)
 - **Hand back a numbered play-test checklist — never "go test it" — and ONLY when nothing is left open (HARD-PINNED, added 2026-09-13 at the user's instruction).** A checklist is handed over only when there are **no known bugs left and no further tasks queued** — every reviewer finding fixed or explicitly waved off by the user, every pending decision answered, every agreed piece built. While ANY of those is still open, there is NO checklist: say plainly what is still open, and keep working. **Why:** anything changed after a play-test can break what that play-test just proved working, so a mid-way session is wasted and the user has to test the same things again; one session at the very end covers everything at once. When the time comes, the checklist is a numbered list: what to press, what should happen, and what would count as a FAILURE for each, covering the WHOLE batch, not just the last change. A step the user can't act on without already knowing the answer is not a checklist item — see the concrete-UI-steps rule in the global file. *(Scar, 2026-09-13: a checklist was handed over while four reviewer findings, four pending decisions and an unbuilt feature were still open. The user: "only ask for playtest when you have no bugs left or no further tasks needed. so i will playtest everything at once".)*

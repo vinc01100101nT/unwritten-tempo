@@ -28,7 +28,8 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'Stone that water made.
 
-    Three drips fall on one enemy over 3 seconds. Each drip hits and adds 1 Stone.'
+    Drips fall on one enemy, one after another.
+    Each drip hits and adds a Stone.'
   archetype: 4
   family: 1
   shape: 0
@@ -193,6 +194,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -398,6 +400,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10

@@ -142,12 +142,14 @@ public static class PlayerFighter
 
         // THEIR AUTO-COMBAT SETTINGS, from their own row — after the save for the same reason as the bar: a slot may
         // keep only a skill they may press. Whether it is ON is never stored, so every arrival starts with it off.
-        var settings = AutoCombatMath.Clamped(autoCombat);
+        // A v1 row (one set of four slots for every weapon) is carried here to each skill's own weapon, and written back.
+        bool carriedForward = autoCombat != null && autoCombat.v < AutoCombatSettings.Version;
+        var settings = AutoCombatMath.Clamped(autoCombat, Character.WeaponOfSkillFn);
         string storedAs = settings.ToJson();
-        character.KeepOnlyAutoSkills(settings.slots);
+        character.KeepOnlyAutoSkills(settings);
         character.AutoCombat = settings;
-        // Stored exactly as it now stands only if nothing had to be emptied; otherwise the trimmed slots are written.
-        if (settings.ToJson() == storedAs) shell.AutoCombatAlreadyStored();
+        // Stored exactly as it now stands only if nothing had to be emptied or carried forward; otherwise it is written.
+        if (!carriedForward && settings.ToJson() == storedAs) shell.AutoCombatAlreadyStored();
         else shell.SaveAutoCombatSoon();
 
         // THEIR CAPE EMBLEM, from its own row: worn at once, so everyone who can see them is told its id.

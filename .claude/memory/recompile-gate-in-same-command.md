@@ -19,3 +19,10 @@ is not checking it.
 `unity cmd ... editor_status | grep -q '"playMode":"stopped"' || { echo "user is playing - not recompiling"; exit 1; }`
 then the recompile. Same gate before any editor action that reloads or saves (eval that imports, Sync(true)).
 Related: [[assume-compiled-never-blame-recompile]].
+
+**Second time, 2026-10-26:** I sent `editor_status` and the `recompile` MCP tool side by side in one reply; status
+came back `playing` (Play had been started through the editor link at 08:04) and the recompile ran anyway — two
+parallel tool calls are the same failure as a chained command. The `recompile` tool has no gate of its own, so with
+MCP tools recompile through an eval that checks first:
+`if (EditorApplication.isPlayingOrWillChangePlaymode) return "PLAYING"; AssetDatabase.Refresh(); CompilationPipeline.RequestScriptCompilation();`
+and run any follow-up eval (a build, a bake) behind `if (isPlayingOrWillChangePlaymode || isCompiling) return`.

@@ -79,6 +79,10 @@ public sealed class MasteryProgress
     /// <summary>The weapon mastery level the server last sent for <paramref name="weapon"/> — 0 before any arrives.</summary>
     public int SentLevel(WeaponType weapon) => sentLevels.TryGetValue(weapon, out int l) ? l : 0;
 
+    /// <summary>The weapon mastery level as this machine knows it: earned, on the server; as the server sent it, on a
+    /// player's machine.</summary>
+    public int KnownLevel(WeaponType weapon) => GameNetwork.TheWorldIsElsewhere ? SentLevel(weapon) : EarnedLevel(weapon);
+
     // ---- the practice toward the next level, as the server sent it ---------------------------------------
     readonly Dictionary<WeaponType, (double into, double size, bool capped)> sentProgress =
         new Dictionary<WeaponType, (double, double, bool)>();
@@ -304,17 +308,7 @@ public sealed class MasteryProgress
             int boughtNext = Mathf.Min(bought + 1, def.maxLevel);
             float trademark = inHand && owner != null ? owner.TrademarkLift(def.id) : 0f;
             int before = viewNow.Count;
-            float[] orbs = null;
-            if (def.IsOrbCombo)
-            {
-                orbs = comboOrbLifts;
-                for (int o = 1; o <= 4; o++)
-                {
-                    string orbId = OrbMath.SkillIdOf((OrbElement)o);
-                    orbs[o] = MasteryMath.LevelLift(SkillCatalog.Get(orbId), LevelOf(orbId))
-                            + (inHand && owner != null ? owner.TrademarkLift(orbId) : 0f);
-                }
-            }
+            float[] orbs = def.IsOrbCombo ? OrbLifts(owner, inHand, comboOrbLifts) : null;
             SkillLevelNumbers.Collect(def, owner, MasteryMath.LevelLift(def, bought) + trademark, viewNow, orbs);
             SkillLevelNumbers.Collect(def, owner, MasteryMath.LevelLift(def, boughtNext) + trademark, viewNext, orbs);
             viewIds.Add(def.id);
@@ -325,6 +319,20 @@ public sealed class MasteryProgress
         now = viewNow.ToArray();
         next = viewNext.ToArray();
     }
+    /// <summary>SERVER: what each orb's level (and, with a Staff in hand, its trademark) lifts the parts of a Staff
+    /// combination by — one per <see cref="OrbElement"/>, written into <paramref name="into"/> and returned. A
+    /// combination's part grows with its own orb, exactly as the fight lifts it.</summary>
+    public float[] OrbLifts(Character owner, bool inHand, float[] into)
+    {
+        for (int o = 1; o <= 4 && o < into.Length; o++)
+        {
+            string orbId = OrbMath.SkillIdOf((OrbElement)o);
+            into[o] = MasteryMath.LevelLift(SkillCatalog.Get(orbId), LevelOf(orbId))
+                    + (inHand && owner != null ? owner.TrademarkLift(orbId) : 0f);
+        }
+        return into;
+    }
+
     readonly List<string> viewIds = new List<string>(32);
     readonly List<int> viewCounts = new List<int>(32);
     readonly List<float> viewNow = new List<float>(48), viewNext = new List<float>(48);
@@ -354,6 +362,40 @@ public sealed class MasteryProgress
     /// <summary>What the server last sent about <paramref name="skillId"/>; false before any arrives.</summary>
     public bool SentView(string skillId, out SkillLevelView view)
         => sentViews.TryGetValue(skillId ?? "", out view);
+
+    // ---- the skill card's finished numbers, as the server sent them -----------------------------------------
+    // For the skills of the weapon in hand: the cast time and every damage line as this character lands it right now.
+    // Game numbers, so the server works them out (SkillCardNumbers) and this machine only keeps and draws them.
+    readonly Dictionary<string, SkillCardView> sentCards = new Dictionary<string, SkillCardView>(32);
+
+    /// <summary>PLAYER'S MACHINE: keep the card numbers the server sent, replacing the last set — flattened with a line
+    /// count per skill, <see cref="SkillCardNumbers.CastFloats"/> cast numbers and <see cref="SkillCardNumbers.LineInts"/>
+    /// numbers per line.</summary>
+    public void TakeSkillCards(string[] ids, float[] cast, int[] counts, int[] lines)
+    {
+        sentCards.Clear();
+        if (ids != null && cast != null && counts != null && lines != null)
+        {
+            int at = 0;
+            for (int i = 0; i < ids.Length && i < counts.Length; i++)
+            {
+                int c = counts[i];
+                int from = at * SkillCardNumbers.LineInts, n = c * SkillCardNumbers.LineInts;
+                if (c < 0 || from + n > lines.Length || (i + 1) * SkillCardNumbers.CastFloats > cast.Length) break;
+                var v = new SkillCardView { cast = new float[SkillCardNumbers.CastFloats], lines = new int[n] };
+                System.Array.Copy(cast, i * SkillCardNumbers.CastFloats, v.cast, 0, SkillCardNumbers.CastFloats);
+                System.Array.Copy(lines, from, v.lines, 0, n);
+                sentCards[ids[i]] = v;
+                at += c;
+            }
+        }
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>The card numbers the server last sent for <paramref name="skillId"/>; false for a skill of a weapon not
+    /// in hand, and before any arrive.</summary>
+    public bool SentCard(string skillId, out SkillCardView view)
+        => sentCards.TryGetValue(skillId ?? "", out view);
 
     // ---- save / load --------------------------------------------------------------------------------------
 
@@ -406,4 +448,15 @@ public struct SkillLevelView
 {
     public float[] now;
     public float[] next;
+}
+
+/// <summary>What the server told this machine about one skill's card, finished: <see cref="cast"/> in the order
+/// <see cref="SkillCardNumbers"/> writes it, and <see cref="lines"/> holding <see cref="SkillCardNumbers.LineInts"/>
+/// numbers per line, one line per growing number in <see cref="SkillLevelNumbers"/>' order.</summary>
+public struct SkillCardView
+{
+    public float[] cast;
+    public int[] lines;
+    public int LineCount => lines != null ? lines.Length / SkillCardNumbers.LineInts : 0;
+    public int At(int line, int field) => lines[line * SkillCardNumbers.LineInts + field];
 }

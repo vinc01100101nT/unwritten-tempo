@@ -4,8 +4,10 @@ using UnityEngine;
 /// <summary>
 /// Builds the rich-text body of a skill's hover card from its <see cref="SkillDef"/> — title, tag/category/tier chips,
 /// cost line, description, and a human-readable line per effect with its VARIABLE NUMBERS highlighted. Pure function
-/// (no UI dependency), so the hotbar, the Skills window, or any hover can share one description. A Damage effect shows its
-/// authored multiplier and no damage estimate.
+/// (no UI dependency), so the hotbar, the Skills window, or any hover can share one description. The card
+/// (<see cref="Build(SkillDef, Dialect)"/>) shows, for a skill of the weapon in hand, the damage each strike lands and the
+/// cast time as the server finished them (<see cref="SkillCardNumbers"/>); every effect line elsewhere states its
+/// authored multiplier.
 /// </summary>
 public static class SkillTooltip
 {
@@ -194,8 +196,21 @@ public static class SkillTooltip
         try
         {
             sb.Length = 0;
+            var ch = Character.Instance;
+            var mastery = ch != null ? ch.Mastery : null;
+            bool hasCard = false, hasView = false;
+            SkillCardView card = default;
+            SkillLevelView view = default;
+            if (mastery != null)
+            {
+                hasCard = mastery.SentCard(def.id, out card);
+                hasView = mastery.SentView(def.id, out view);
+            }
+            int level = mastery != null ? mastery.LevelOf(def.id) : 0;
+            int top = Mathf.Max(1, def.maxLevel);
+            bool grows = !def.IsOrbCombo && def.weaponType != WeaponType.None && mastery != null && level < top;
 
-            // Title + tier.
+            // NAME, then what kind of skill it is.
             if (d == Dialect.RichText)
             {
                 sb.Append("<size=120%><b>").Append(def.displayName).Append("</b></size>");
@@ -208,47 +223,253 @@ public static class SkillTooltip
                 if (def.IsUltimate) sb.Append("  ").Append(Hl("ULTIMATE"));
                 else if (KindTag(def) != null) sb.Append("  ").Append(KindTag(def));
             }
+
+            // THE FACTS: every element its strikes land as, where it is aimed, and how far.
+            string facts = ElementsLine(def, hasCard, card);
+            string aim = def.Reticle == CastReticle.Ground ? "Ground" : def.Reticle == CastReticle.Unit ? "Enemy" : null;
+            if (aim != null)
+                facts += (facts.Length > 0 ? Chipped(" · ") : "") + Chipped(aim + " · " + def.castRange.ToString("0.#") + " m");
+            if (facts.Length > 0) sb.Append('\n').Append(facts);
+
+            // WHAT IT COSTS — or, for a passive, the moment it answers.
+            if (def.IsPassive)
+            {
+                string when = TriggerLine(def);
+                if (when.Length > 0) sb.Append('\n').Append(Hl(when));
+            }
+            else sb.Append('\n').Append(CostRow(def, hasCard, card));
+
+            // WHAT HAPPENS, in order, with no numbers — every amount is on a line below.
+            SplitDescription(def.description, out string flavour, out string how);
+            if (how.Length > 0) sb.Append('\n').Append(how);
+
+            // ONE LINE PER THING IT DOES, the number first.
             sb.Append('\n');
-
-            // Which form of its weapon's style this is — only for a weapon whose style is in the game.
-            string form = SkillForms.Line(def);
-            if (form.Length > 0)
+            int channel = 0;
+            for (int b = 0; def.bindings != null && b < def.bindings.Count; b++)
             {
-                if (d == Dialect.RichText) sb.Append("<color=").Append(Desc).Append('>').Append(form).Append("</color>\n");
-                else sb.Append(form).Append('\n');
+                var fx = def.bindings[b]?.effects;
+                if (fx == null) continue;
+                for (int k = 0; k < fx.Count; k++)
+                {
+                    var e = fx[k];
+                    bool main = SkillLevelNumbers.MainNumber(e, out var number, out bool whole);
+                    int c = main ? channel++ : -1;
+                    string line = CardLine(def, e, number, whole, c, hasCard, card, hasView, view, level, grows);
+                    if (!string.IsNullOrEmpty(line)) sb.Append('\n').Append(line);
+                }
             }
 
-            // Tag (archetype) + category chips.
-            if (d == Dialect.RichText)
-                sb.Append("<color=").Append(Hex(UiKit.Readable(ArchetypeColor(def.archetype)))).Append("><b>")
-                  .Append(ArchetypeName(def.archetype)).Append("</b></color>");
-            else
-                sb.Append(ArchetypeName(def.archetype));
-            sb.Append("  ").Append(Chipped(def.family.ToString())).Append('\n');
-
-            // Cost / cadence line.
-            sb.Append(CostLine(def)).Append('\n');
-
-            // Description.
-            if (!string.IsNullOrEmpty(def.description))
-            {
-                if (d == Dialect.RichText) sb.Append("<color=").Append(Desc).Append("><i>").Append(def.description).Append("</i></color>\n");
-                else if (d == Dialect.Markdown) sb.Append('*').Append(def.description).Append("*\n");
-                else sb.Append(def.description).Append('\n');
-            }
-
-            // Effects — one line each, numbers highlighted.
-            var lines = EffectLines(def);
-            for (int i = 0; i < lines.Count; i++) sb.Append("\n• ").Append(lines[i]);
-
-            // What it takes to learn it and what its levels move — only a skill that belongs to a weapon has either.
+            // WHAT IT TAKES, and how far it has come. (The orbs' own section opens with its blank line.)
             if (def.IsOrbCombo) OrbSection(def, d);
-            else if (def.weaponType != WeaponType.None) LevelSection(def, d);
+            else if (def.weaponType != WeaponType.None) { sb.Append('\n'); LevelFooter(def, d, mastery, level, top); }
+
+            // FLAVOUR LAST, small and grey, with the form it is.
+            string form = SkillForms.Line(def);
+            if (flavour.Length > 0 || form.Length > 0) sb.Append('\n');
+            if (flavour.Length > 0)
+                sb.Append('\n').Append(d == Dialect.RichText ? "<size=90%><color=" + Chip + "><i>" + flavour + "</i></color></size>"
+                                                             : d == Dialect.Markdown ? "*" + flavour + "*" : flavour);
+            if (form.Length > 0) sb.Append('\n').Append(Chipped(form));
+
+            // WHERE EACH CHANGED NUMBER COMES FROM — only the numbers something on you is changing right now.
+            if (hasCard) SourcesSection(def, card);
 
             return sb.ToString();
         }
         finally { dialect = prev; }
     }
+
+    // A description is its flavour line first, then what the skill does; a text with no line break is all "what it does".
+    static void SplitDescription(string text, out string flavour, out string how)
+    {
+        text = text ?? "";
+        int nl = text.IndexOf('\n');
+        if (nl < 0) { flavour = ""; how = text.Trim(); return; }
+        flavour = text.Substring(0, nl).Trim();
+        how = text.Substring(nl + 1).Trim();
+    }
+
+    // Each element the skill's strikes land as, once, in that element's colour. A strike that is a basic attack lands as
+    // the weapon's element, which only the server's numbers know; the rest is the skill's own.
+    static string ElementsLine(SkillDef def, bool hasCard, SkillCardView card)
+    {
+        string line = "";
+        int seen = 0, channel = 0;
+        for (int b = 0; def.bindings != null && b < def.bindings.Count; b++)
+        {
+            var fx = def.bindings[b]?.effects;
+            if (fx == null) continue;
+            for (int k = 0; k < fx.Count; k++)
+            {
+                var e = fx[k];
+                bool main = SkillLevelNumbers.MainNumber(e, out _, out _);
+                int c = main ? channel++ : -1;
+                if (e.kind != SkillEffectKind.Damage) continue;
+                // A burn put out lands what the burn had left, as it is — no element of its own to name.
+                if (e.cashMark == MarkKind.Burn && e.damageMult.value <= 0f && e.damageMultPerMark.value <= 0f) continue;
+                Element el;
+                if (hasCard && c >= 0 && c < card.LineCount && card.At(c, SkillCardNumbers.Field.Shape) != (int)SkillCardShape.Level)
+                    el = (Element)card.At(c, SkillCardNumbers.Field.Element);
+                else if (e.resolveAsBasicAttack) continue;
+                else el = e.element;
+                int bit = 1 << (int)el;
+                if ((seen & bit) != 0) continue;
+                seen |= bit;
+                if (line.Length > 0) line += Chipped(" · ");
+                line += ElementWord(el);
+            }
+        }
+        return line;
+    }
+
+    static string ElementWord(Element el) => dialect == Dialect.RichText
+        ? "<color=" + Hex(UiKit.Readable(Elements.Tint(el))) + "><b>" + Elements.Name(el) + "</b></color>"
+        : Hl(Elements.Name(el));
+
+    // MP · CD · the cast time this character waits right now. When something timed on them is changing it, the time
+    // without it is struck through before it, coloured by whether the change helps.
+    static string CostRow(SkillDef def, bool hasCard, SkillCardView card)
+    {
+        var t = new StringBuilder(96);
+        t.Append(Chipped("MP ")).Append(Hl(def.manaCost.ToString()));
+        t.Append("  ").Append(Chipped("CD ")).Append(Hl(def.cooldown.ToString("0.#") + "s"));
+        if (!def.HasWindup) { t.Append("  ").Append(Chipped("Instant")); return t.ToString(); }
+        t.Append("  ").Append(Chipped("Cast "));
+        float fixedT = Mathf.Max(0f, def.fixedCastTime);
+        if (hasCard && card.cast != null && card.cast.Length >= SkillCardNumbers.CastFloats)
+        {
+            float now = card.cast[0], plain = card.cast[1];
+            t.Append(Changed(Seconds(plain), Seconds(now), now < plain));
+        }
+        else t.Append(Hl(Seconds(Mathf.Max(0f, def.castTime) + fixedT)));
+        if (fixedT > 0f) t.Append(Chipped(" (" + Seconds(fixedT) + " fixed)"));
+        return t.ToString();
+    }
+
+    static string Seconds(float s) => s.ToString("0.##") + "s";
+
+    // A number something timed is changing: the value without it struck through, then the value now, green when the
+    // change helps and red when it hurts. Unchanged, it is just the number.
+    static string Changed(string plain, string now, bool helps)
+    {
+        if (plain == now) return Hl(now);
+        switch (dialect)
+        {
+            case Dialect.Markdown: return "~~" + plain + "~~ **" + now + "**";
+            case Dialect.Plain:    return plain + " → " + now;
+            default:
+                return "<color=" + Chip + "><s>" + plain + "</s></color> <color=" + UiKit.Hex(helps ? UiKit.Good : UiKit.Bad)
+                       + "><b>" + now + "</b></color>";
+        }
+    }
+
+    static string Band(int min, int max) => min == max ? min.ToString() : min + "–" + max;
+
+    // ONE EFFECT'S LINE. A strike with the server's numbers: the damage it lands, then its element and type, then what
+    // it grows by from the target; its crit; its value at the next level. Any other effect with a growing number: the
+    // sentence it always reads, then its value now and at the next level. The rest: its sentence.
+    static string CardLine(SkillDef def, SkillEffect e, ScaledNumber number, bool whole, int channel, bool hasCard,
+                           SkillCardView card, bool hasView, SkillLevelView view, int level, bool grows)
+    {
+        string sentence = DescribeEffect(e);
+        if (string.IsNullOrEmpty(sentence)) return null;
+        if (channel >= 0 && hasCard && channel < card.LineCount)
+        {
+            var shape = (SkillCardShape)card.At(channel, SkillCardNumbers.Field.Shape);
+            if (shape == SkillCardShape.Band || shape == SkillCardShape.BandPerMark || shape == SkillCardShape.CritOnly)
+            {
+                int min = card.At(channel, SkillCardNumbers.Field.Min), max = card.At(channel, SkillCardNumbers.Field.Max);
+                int pMin = card.At(channel, SkillCardNumbers.Field.PlainMin), pMax = card.At(channel, SkillCardNumbers.Field.PlainMax);
+                int crit = card.At(channel, SkillCardNumbers.Field.Crit);
+                var el = (Element)card.At(channel, SkillCardNumbers.Field.Element);
+                string num = shape == SkillCardShape.CritOnly ? Changed(crit.ToString(), crit.ToString(), true)
+                           : Changed(Band(pMin, pMax), Band(min, max), max >= pMax);
+                bool basic = e.resolveAsBasicAttack;
+                string what = (basic ? "" : ElementWord(el) + " ") + (shape == SkillCardShape.CritOnly ? "crit" : DmgWord(e.damageType))
+                            + " damage";
+                if (basic) what = ElementWord(el) + " damage, as a basic attack";
+                if (shape == SkillCardShape.BandPerMark) what += " per " + MarkName(e.cashMark) + " on the target";
+                int hits = SkillEffectApplier.EffectiveHits(e, Character.Instance);
+                if (hits > 1) what += " in " + Hl(hits.ToString()) + " hits";
+                what += GrowthNotes(e, false);
+                if (shape != SkillCardShape.BandPerMark) what += MarkClause(e, what);
+                if (shape == SkillCardShape.Band && crit > 0) what += Chipped(" · crit ") + Hl(crit.ToString());
+                if (grows && shape != SkillCardShape.CritOnly)
+                    what += Chipped("  → " + Band(card.At(channel, SkillCardNumbers.Field.NextMin),
+                                                  card.At(channel, SkillCardNumbers.Field.NextMax)));
+                return num + " " + what;
+            }
+        }
+        if (channel >= 0 && hasView && channel < view.now.Length && channel < view.next.Length && level >= 1)
+        {
+            string now = LevelNumber(e, number, whole, view.now[channel]);
+            string line = sentence + Chipped("  · now ") + Hl(now);
+            if (grows) line += Chipped("  → " + LevelNumber(e, number, whole, view.next[channel]));
+            return line;
+        }
+        return sentence;
+    }
+
+    // What it takes to learn it — said only while it is not yet met — and how far it has come. Without a character
+    // (an editor tool, the docs) the fixed facts, and what each level adds.
+    static void LevelFooter(SkillDef def, Dialect d, MasteryProgress mastery, int level, int top)
+    {
+        int opensAt = Mathf.Max(1, def.masteryLevel);
+        string weapon = WeaponTypes.Label(def.weaponType);
+        if (mastery == null)
+        {
+            sb.Append("\nOpens at ").Append(Hl(weapon + " Mastery " + opensAt));
+            if (!string.IsNullOrEmpty(def.needsSkillId)) sb.Append("\nNeeds ").Append(Hl(NameOf(def.needsSkillId)));
+            sb.Append("\nMax level ").Append(Hl(top.ToString())).Append(Chipped(" · each level +"
+                      + Mathf.RoundToInt(MasteryMath.SkillLevelPercent * 100f) + "% to every growing number"));
+            return;
+        }
+        int have = mastery.SentLevel(def.weaponType);
+        if (have < opensAt)
+            sb.Append('\n').Append(Met("Needs " + weapon + " Mastery " + opensAt, false, d)).Append(Chipped("  you: " + have));
+        if (!string.IsNullOrEmpty(def.needsSkillId) && !mastery.HasLearned(def.needsSkillId))
+            sb.Append('\n').Append(Met("Needs " + NameOf(def.needsSkillId), false, d)).Append(Chipped("  not learned"));
+        sb.Append('\n').Append(Chipped("Level ")).Append(Hl(level + " / " + top));
+    }
+
+    // THE BREAKDOWN, for the numbers something is changing: one line per source under each, every amount the server's.
+    static void SourcesSection(SkillDef def, SkillCardView card)
+    {
+        int start = sb.Length;
+        sb.Append("\n\n").Append(Chipped("Where each number comes from"));
+        int opened = sb.Length;
+        if (card.cast != null && card.cast.Length >= SkillCardNumbers.CastFloats && def.HasWindup && def.castTime > 0f)
+        {
+            float dex = card.cast[2], ring = card.cast[3], timed = card.cast[4];
+            if (Mathf.Abs(dex) > 0.005f || Mathf.Abs(ring) > 0.005f || Mathf.Abs(timed) > 0.005f)
+            {
+                sb.Append('\n').Append(Hl("Cast " + Seconds(card.cast[0])));
+                SourceLine(Seconds(def.castTime), "the skill");
+                if (Mathf.Abs(dex) > 0.005f) SourceLine(Signed(dex, "s"), "DEX");
+                if (Mathf.Abs(ring) > 0.005f) SourceLine(Signed(ring, "s"), "cast speed from the ring and weapon mastery");
+                if (Mathf.Abs(timed) > 0.005f) SourceLine(Signed(timed, "s"), "timed effects on you");
+                if (def.fixedCastTime > 0f) SourceLine("+" + Seconds(def.fixedCastTime), "fixed, nothing shortens it");
+            }
+        }
+        for (int c = 0; c < card.LineCount; c++)
+        {
+            var shape = (SkillCardShape)card.At(c, SkillCardNumbers.Field.Shape);
+            if (shape != SkillCardShape.Band && shape != SkillCardShape.BandPerMark) continue;
+            int tMin = card.At(c, SkillCardNumbers.Field.TimedMin), tMax = card.At(c, SkillCardNumbers.Field.TimedMax);
+            if (tMin == 0 && tMax == 0) continue;
+            sb.Append('\n').Append(Hl(Band(card.At(c, SkillCardNumbers.Field.Min), card.At(c, SkillCardNumbers.Field.Max))
+                                      + (shape == SkillCardShape.BandPerMark ? " damage per mark" : " damage")));
+            SourceLine(Band(card.At(c, SkillCardNumbers.Field.PlainMin), card.At(c, SkillCardNumbers.Field.PlainMax)), "the skill, with your attack");
+            SourceLine((tMax >= 0 ? "+" : "") + Band(tMin, tMax), "timed effects on you");
+        }
+        if (sb.Length == opened) sb.Length = start;
+    }
+
+    static void SourceLine(string amount, string source) =>
+        sb.Append("\n   ").Append(Hl(amount)).Append(' ').Append(Chipped(source));
+
+    static string Signed(float v, string unit) => (v > 0f ? "+" : v < 0f ? "−" : "") + Mathf.Abs(v).ToString("0.##") + unit;
 
     // Reused across calls so listing a skill's effects allocates nothing per call on the game's side.
     static readonly System.Collections.Generic.List<string> effectLines = new System.Collections.Generic.List<string>(8);
@@ -362,47 +583,8 @@ public static class SkillTooltip
                 if (hits > 1) s += ", " + Hl(hits + "×") + " hits";
                 // Any number may answer to the pile now, so the note belongs to the NUMBER, said the same way
                 // wherever it appears rather than spelled out per kind.
-                s += StackNote(e.damageMult);
-                if (e.damageMultPerPointGivenUp.value > 0f)
-                    s += ", +" + Hl(e.damageMultPerPointGivenUp.value.ToString("0.###") + "×") + " per point of MP or HP given up";
-                if (e.damageMultPerMetre.value > 0f)
-                    s += ", +" + Hl(e.damageMultPerMetre.value.ToString("0.###") + "×") + " per metre to the target";
-                if (e.damageMultPerAccuracyOver.value > 0f)
-                    s += ", +" + Hl(e.damageMultPerAccuracyOver.value.ToString("0.###") + "×") + " per point of hit chance above 100% (up to " + StrikeMath.MaxAccuracyOverPoints + ")";
-                if (e.critChanceBonus.value > 0f)
-                    s += ", +" + Pct(e.critChanceBonus.value) + " crit chance";
-                if (e.critChanceBonusVsSlowed.value > 0f)
-                    s += ", +" + Pct(e.critChanceBonusVsSlowed.value) + " more crit chance against a slowed target";
-                if (e.damageMultPerSpeedBonus.value > 0f)
-                    s += ", +" + Hl(e.damageMultPerSpeedBonus.value.ToString("0.###") + "×") + " per 1% movement speed bonus";
-                if (e.damageMultPerBurnSecond.value > 0f)
-                    s += ", +" + Hl(e.damageMultPerBurnSecond.value.ToString("0.###") + "×") + " per second the target has been burning (up to "
-                         + MarkMath.BurnAgeCap.ToString("0") + "s)";
-                if (e.damageMultPerMaxMana.value > 0f)
-                    s += ", +" + Hl(e.damageMultPerMaxMana.value.ToString("0.####") + "×") + " per point of your max MP (up to +"
-                         + MarkMath.MaxManaGrowthCap.ToString("0") + "×)";
-                string per = Hl("+" + e.damageMultPerMark.value.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
-                if (e.keepsMark && e.cashMark != MarkKind.None)
-                    s += ", " + per + " for every " + MarkName(e.cashMark) + " on the target (left in place)";
-                else switch (e.cashMark)
-                {
-                    case MarkKind.Burn:
-                        s += Joined(s, "Puts out the target's burn");
-                        if (e.damageMultPerMark.value > 0f) s += ": " + per + " per burn stack";
-                        if (e.burnPayoff.value > 0f) s += ", and the burn damage it had left lands at once, ×" + Hl(e.burnPayoff.value.ToString("0.##"));
-                        break;
-                    case MarkKind.Chill:
-                        s += Joined(s, "Scatters the target's Chill") + ": " + per + " per stack, a frozen target shatters as "
-                             + Hl(MarkMath.FrozenCountsAs.ToString());
-                        break;
-                    case MarkKind.Static:
-                        s += Joined(s, "Grounds the target's Static") + ": " + per + " per stack";
-                        break;
-                    case MarkKind.Stone:
-                        s += Joined(s, "Melts the target's Stone") + ": " + per + " per charge";
-                        break;
-                }
-                return s;
+                s += GrowthNotes(e, true);
+                return s + MarkClause(e, s);
             }
             case SkillEffectKind.Status:
             {
@@ -633,6 +815,63 @@ public static class SkillTooltip
 
     // PASSIVE or ACTIVE beside the name (an ultimate already says ULTIMATE). Nothing for what an item runs: it is
     // neither pressed from the bar nor fired by a moment of the fight.
+    /// <summary>What a strike's damage GROWS by, as the rules they are — ", +0.05× per metre to the target" and the
+    /// rest — each said once, here, for the effect line and the skill card alike. <paramref name="withMaxMana"/> is
+    /// false where the card has already folded the caster's max MP into the number it shows.</summary>
+    static string GrowthNotes(SkillEffect e, bool withMaxMana)
+    {
+        string s = "";
+        s += StackNote(e.damageMult);
+        if (e.damageMultPerPointGivenUp.value > 0f)
+            s += ", +" + Hl(e.damageMultPerPointGivenUp.value.ToString("0.###") + "×") + " per point of MP or HP given up";
+        if (e.damageMultPerMetre.value > 0f)
+            s += ", +" + Hl(e.damageMultPerMetre.value.ToString("0.###") + "×") + " per metre to the target";
+        if (e.damageMultPerAccuracyOver.value > 0f)
+            s += ", +" + Hl(e.damageMultPerAccuracyOver.value.ToString("0.###") + "×") + " per point of hit chance above 100% (up to " + StrikeMath.MaxAccuracyOverPoints + ")";
+        if (e.critChanceBonus.value > 0f)
+            s += ", +" + Pct(e.critChanceBonus.value) + " crit chance";
+        if (e.critChanceBonusVsSlowed.value > 0f)
+            s += ", +" + Pct(e.critChanceBonusVsSlowed.value) + " more crit chance against a slowed target";
+        if (e.damageMultPerSpeedBonus.value > 0f)
+            s += ", +" + Hl(e.damageMultPerSpeedBonus.value.ToString("0.###") + "×") + " per 1% movement speed bonus";
+        if (e.damageMultPerBurnSecond.value > 0f)
+            s += ", +" + Hl(e.damageMultPerBurnSecond.value.ToString("0.###") + "×") + " per second the target has been burning (up to "
+                 + MarkMath.BurnAgeCap.ToString("0") + "s)";
+        if (withMaxMana && e.damageMultPerMaxMana.value > 0f)
+            s += ", +" + Hl(e.damageMultPerMaxMana.value.ToString("0.####") + "×") + " per point of your max MP (up to +"
+                 + MarkMath.MaxManaGrowthCap.ToString("0") + "×)";
+        return s;
+    }
+
+    /// <summary>What a strike does with a mark on its target — puts out a burn, scatters Chill, grounds Static, melts
+    /// Stone, or counts one left in place — joined onto <paramref name="sofar"/>, the line it ends.</summary>
+    static string MarkClause(SkillEffect e, string sofar)
+    {
+        string s = "";
+        string per = Hl("+" + e.damageMultPerMark.value.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
+        if (e.keepsMark && e.cashMark != MarkKind.None)
+            s += ", " + per + " for every " + MarkName(e.cashMark) + " on the target (left in place)";
+        else switch (e.cashMark)
+        {
+            case MarkKind.Burn:
+                s += Joined(sofar + s, "Puts out the target's burn");
+                if (e.damageMultPerMark.value > 0f) s += ": " + per + " per burn stack";
+                if (e.burnPayoff.value > 0f) s += ", and the burn damage it had left lands at once, ×" + Hl(e.burnPayoff.value.ToString("0.##"));
+                break;
+            case MarkKind.Chill:
+                s += Joined(sofar + s, "Scatters the target's Chill") + ": " + per + " per stack, a frozen target shatters as "
+                     + Hl(MarkMath.FrozenCountsAs.ToString());
+                break;
+            case MarkKind.Static:
+                s += Joined(sofar + s, "Grounds the target's Static") + ": " + per + " per stack";
+                break;
+            case MarkKind.Stone:
+                s += Joined(sofar + s, "Melts the target's Stone") + ": " + per + " per charge";
+                break;
+        }
+        return s;
+    }
+
     static string KindTag(SkillDef def)
         => def.ItemUseEntry != null ? null : def.IsPassive ? "PASSIVE" : "ACTIVE";
 
@@ -650,6 +889,10 @@ public static class SkillTooltip
         SkillLevelView view = default;
         bool hasView = mastery != null && mastery.SentView(def.id, out view);
         sb.Append('\n');
+        int opensAt = Mathf.Max(1, def.masteryLevel);
+        if (opensAt > 1)
+            sb.Append("\nRequires ").Append(Met(WeaponTypes.Label(def.weaponType) + " Mastery " + opensAt,
+                                                mastery != null ? mastery.SentLevel(def.weaponType) >= opensAt : (bool?)null, d));
         for (int o = 1; o <= 4; o++)
         {
             var orb = (OrbElement)o;
@@ -720,65 +963,6 @@ public static class SkillTooltip
     }
 
     // ---- learning and levels ----------------------------------------------------------------------------------
-
-    // What it takes to learn a weapon skill, how far it can go, and every number its level moves. In the game the
-    // numbers are the server's finished values (MasteryProgress.SentView) and the "met" colours compare what the
-    // server sent; with no character (the wiki, an editor tool) only the fixed facts are written.
-    static void LevelSection(SkillDef def, Dialect d)
-    {
-        var ch = Character.Instance;
-        var mastery = ch != null ? ch.Mastery : null;
-        int opensAt = Mathf.Max(1, def.masteryLevel);
-        sb.Append('\n');
-        sb.Append("\nRequires ").Append(Met(WeaponTypes.Label(def.weaponType) + " Mastery " + opensAt,
-                                            mastery != null ? mastery.SentLevel(def.weaponType) >= opensAt : (bool?)null, d));
-        if (!string.IsNullOrEmpty(def.needsSkillId))
-            sb.Append("\nRequires ").Append(Met(NameOf(def.needsSkillId),
-                                                mastery != null ? mastery.HasLearned(def.needsSkillId) : (bool?)null, d));
-
-        int top = Mathf.Max(1, def.maxLevel);
-        int level = mastery != null ? mastery.LevelOf(def.id) : 0;
-        bool hasView = false;
-        SkillLevelView view = default;
-        if (mastery == null) sb.Append("\nMax level ").Append(Hl(top.ToString()));
-        else
-        {
-            hasView = mastery.SentView(def.id, out view);
-            sb.Append("\nSkill level ").Append(Hl(level.ToString())).Append(" / ").Append(top);
-        }
-
-        bool any = false;
-        int channel = 0;
-        for (int b = 0; def.bindings != null && b < def.bindings.Count; b++)
-        {
-            var binding = def.bindings[b];
-            if (binding == null || binding.effects == null) continue;
-            for (int k = 0; k < binding.effects.Count; k++)
-            {
-                var e = binding.effects[k];
-                if (!SkillLevelNumbers.MainNumber(e, out var number, out bool whole)) continue;
-                if (!any)
-                {
-                    sb.Append("\nEach level: ").Append(Hl("+" + Mathf.RoundToInt(MasteryMath.SkillLevelPercent * 100f) + "%"))
-                      .Append(" to");
-                    any = true;
-                }
-                string word = MainNumberWord(e) ?? "";
-                if (word.Length > 0) word = char.ToUpper(word[0]) + word.Substring(1);
-                bool perStack = e.stacking && (e.kind == SkillEffectKind.SubStatBuff || e.kind == SkillEffectKind.SubStatDebuff);
-                sb.Append("\n   ").Append(word).Append(perStack ? " per stack" : "");
-                if (hasView && channel < view.now.Length && channel < view.next.Length)
-                {
-                    string now = level >= 1 ? Hl(LevelNumber(e, number, whole, view.now[channel])) : Chipped("—");
-                    sb.Append(": ").Append(now);
-                    if (level < top) sb.Append(" → ").Append(Hl(LevelNumber(e, number, whole, view.next[channel])));
-                    else sb.Append("  ").Append(Chipped("max"));
-                }
-                channel++;
-            }
-        }
-        if (!any) sb.Append('\n').Append(Chipped("No number on this skill grows with its level."));
-    }
 
     // A requirement, coloured met or not when there is a character to judge it against.
     static string Met(string what, bool? met, Dialect d)

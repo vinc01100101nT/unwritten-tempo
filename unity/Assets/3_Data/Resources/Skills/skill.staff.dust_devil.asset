@@ -28,7 +28,9 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'The wind stands up and walks.
 
-    A whirlwind follows you, striking everything near you, more strikes the faster you cast. Each strike hits harder for every Chill on its target. Leaves no mark. Opens at Wind Orb level 20.'
+    A whirlwind follows you, striking
+    everything near you, more strikes the faster you cast. Each strike hits harder
+    for every Chill on its target. Leaves no mark. Opens with a high Wind Orb level.'
   archetype: 0
   family: 1
   shape: 1
@@ -193,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0

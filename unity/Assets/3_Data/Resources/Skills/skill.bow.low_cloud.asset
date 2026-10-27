@@ -17,16 +17,18 @@ MonoBehaviour:
   symbol: Lc
   icon: {fileID: 21300000, guid: a86f5cdc60d053549952ac4d0dee0d16, type: 3}
   weaponType: 9
-  masteryLevel: 1
+  masteryLevel: 16
   needsSkillId: 
   companionOf: 
   statesEndWhenHit: 0
   published: 1
   maxLevel: 5
+  freeFirstLevel: 0
+  orbCombo: 
+  isOrbRelease: 0
   description: 'Weigh their steps down.
 
-    A shot for 205% Attack that slows the
-    target 25% for 4s.'
+    A shot that slows the target.'
   archetype: 0
   family: 2
   shape: 0
@@ -56,6 +58,8 @@ MonoBehaviour:
   repeatCount: 1
   repeatInterval: 0
   repeatScaleWithAttackSpeed: 0
+  repeatScaleWithCastSpeed: 0
+  repeatMaxCount: 1
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
   showRepeatsTotalDamage: 0
@@ -131,6 +135,49 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -146,6 +193,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -293,6 +341,49 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -308,6 +399,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 4

@@ -29,21 +29,17 @@ public class FogOverlay : MonoBehaviour
     public float coverage = 1f;
     [Range(0f, 1f)] [Tooltip("Minimum veil in fogged areas even where the noise is thin, so distance reads as solid mist.")]
     public float floor = 0.8f;
-    [Tooltip("Fog tint + max opacity (alpha).")]
-    public Color color = new Color(0.80f, 0.82f, 0.85f, 1f);
-    [Tooltip("Colour the fog fades toward at MIDNIGHT so it doesn't glow over a dark world. White (no change) by day.")]
-    public Color nightTint = new Color(0.34f, 0.37f, 0.46f, 1f);
 
     /// <summary>Most-recently-awoken fog overlay (mirrors <see cref="RainOverlay.Instance"/>).</summary>
     public static FogOverlay Instance { get; private set; }
 
     Material mat;
+    DayNightLight dayNight;
     Transform quad;
     Mesh mesh;
     float phase;
 
     static readonly int ColorID     = Shader.PropertyToID("_Color");
-    static readonly int LightTintID = Shader.PropertyToID("_LightTint");
     static readonly int IntensityID = Shader.PropertyToID("_Intensity");
     static readonly int PhaseID     = Shader.PropertyToID("_Phase");
     static readonly int ScaleID     = Shader.PropertyToID("_Scale");
@@ -123,9 +119,12 @@ public class FogOverlay : MonoBehaviour
         if (cam != null && quad != null) quad.position = cam.transform.position;   // park on camera so it never culls
 
         phase += Time.deltaTime * driftSpeed;
-        mat.SetColor(ColorID, color);
-        var tod = TimeOfDay.Instance;
-        mat.SetColor(LightTintID, tod != null ? tod.WeatherTint(nightTint) : Color.white);
+        // The haze is the sky's own colour at the horizon — the one the sky itself is drawn with — so far ground fades
+        // into the sky at every hour, dark at night and warm at dusk, with no colour of its own to drift from it.
+        if (dayNight == null) dayNight = FindAnyObjectByType<DayNightLight>();
+        var sky = dayNight != null ? dayNight.SkyColorNow : DayNightLight.StartSkyColor;
+        sky.a = 1f;
+        mat.SetColor(ColorID, sky);
         mat.SetFloat(IntensityID, 1f);
         mat.SetFloat(PhaseID, phase);
         mat.SetFloat(ScaleID, 1f / Mathf.Max(0.01f, patchSize));

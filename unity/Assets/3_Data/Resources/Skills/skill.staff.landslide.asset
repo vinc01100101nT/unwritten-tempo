@@ -28,7 +28,9 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'The mountain shakes.
 
-    The aimed ground quakes 8 times over 4 seconds, each quake hitting harder for every Static on each enemy. Leaves no mark. Opens at Earth Orb level 20.'
+    The aimed ground quakes again and again,
+    each quake hitting harder for every Static on each enemy. Leaves no mark. Opens
+    with a high Earth Orb level.'
   archetype: 0
   family: 1
   shape: 1
@@ -193,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0

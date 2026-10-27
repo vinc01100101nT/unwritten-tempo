@@ -607,6 +607,18 @@ public static class UnitStatMath
     public static float CastTimeMult(in UnitStatInputs u, float ringPct, float buffMult) =>
         Mathf.Clamp01(1f - u.dex / (float)InstantCastDex) / Mathf.Max(0.01f, (1f + ringPct) * buffMult);
 
+    /// <summary>The same wind-up as <see cref="CastTimeMult"/> applies, taken one source at a time, so a card can say
+    /// what each one cut: the skill's variable seconds after DEX, after the ring and weapon mastery, and after the timed
+    /// effects on the caster. The last is exactly <c>castTime × CastTimeMult(…)</c>.</summary>
+    public static void CastSteps(float castTime, int dex, float ringPct, float buffMult,
+                                 out float afterDex, out float afterRing, out float afterTimed)
+    {
+        float t = Mathf.Max(0f, castTime);
+        afterDex = t * Mathf.Clamp01(1f - dex / (float)InstantCastDex);
+        afterRing = afterDex / Mathf.Max(0.01f, 1f + ringPct);
+        afterTimed = t * (Mathf.Clamp01(1f - dex / (float)InstantCastDex) / Mathf.Max(0.01f, (1f + ringPct) * buffMult));
+    }
+
     /// <summary>How long a skill winds up, in seconds: its variable cast time shortened by <paramref name="castTimeMult"/>
     /// (DEX, the cast-speed ring, buffs — <see cref="CastTimeMult"/>), plus its fixed cast time, which nothing shortens.</summary>
     public static float CastWindupSeconds(float castTime, float castTimeMult, float fixedCastTime) =>

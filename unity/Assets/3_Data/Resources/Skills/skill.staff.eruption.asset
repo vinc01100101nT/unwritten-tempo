@@ -29,9 +29,8 @@ MonoBehaviour:
   description: 'The mountain wakes.
 
 
-    The ground erupts for 190% Attack, and
-    an ash cloud over the aimed area makes every mark on the enemies in it last 10
-    seconds longer, and stronger.'
+    The ground erupts, and an ash cloud over
+    the aimed area makes every mark on the enemies in it last longer, and stronger.'
   archetype: 1
   family: 1
   shape: 1
@@ -196,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -401,6 +401,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10
@@ -604,6 +605,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10
@@ -807,6 +809,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10
@@ -1010,6 +1013,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10

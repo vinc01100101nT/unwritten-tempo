@@ -17,16 +17,20 @@ MonoBehaviour:
   symbol: Tp
   icon: {fileID: 21300000, guid: 496aa5975e4c25047ae086f2f4baa058, type: 3}
   weaponType: 1
-  masteryLevel: 60
+  masteryLevel: 61
   needsSkillId: 
+  companionOf: 
+  statesEndWhenHit: 0
   published: 1
   maxLevel: 10
+  freeFirstLevel: 0
+  orbCombo: 
+  isOrbRelease: 0
   description: 'Become the storm.
 
-    Arms dance charges and half as many parries
-    for 8s, both sized by how fast you swing. Each beat spends a charge to flash
-    to a new angle and strike for 60% Attack, hunting a new target within 3 units.
-    Every charge still held is +1% damage.'
+    Arms dance charges and half as many parries,
+    both sized by how fast you swing. Each beat spends a charge to flash to a new
+    angle and strike, hunting a new target nearby. Every charge still held adds damage.'
   archetype: 1
   family: 2
   shape: 0
@@ -56,15 +60,27 @@ MonoBehaviour:
   repeatCount: 1
   repeatInterval: 0
   repeatScaleWithAttackSpeed: 1
+  repeatScaleWithCastSpeed: 0
+  repeatMaxCount: 1
   repeatBeatsPerSwing: 3
   repeatCostsCharge: 1
   showRepeatsTotalDamage: 1
+  repeatTotalPerBeat: 0
   repeatReaim: 1
   repeatReaimRange: 3
   holdCasterForRun: 1
+  repeatWhilePileHeld: 0
+  repeatPileStateId: 0
+  repeatPileStateIdSet: 0
+  repeatMaxSeconds: 0
+  repeatBonusSkillId: 
+  repeatBonusStateId: 0
+  repeatBonusStateIdSet: 0
+  repeatBonusInterval: 0.2
   hasReleaseStance: 1
   releaseStance: 20
   releaseStanceReplayPerRepeat: 1
+  weaponSkillAnimation: 0
   bindings:
   - tickId: dash_tick
     targetMode: 1
@@ -103,6 +119,67 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -118,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -251,6 +329,67 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -266,6 +405,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 8
@@ -393,6 +533,67 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -408,6 +609,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 8
@@ -535,6 +737,67 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerAccuracyOver:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerSpeedBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonus:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      critChanceBonusVsSlowed:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      orb: 0
+      cashMark: 0
+      keepsMark: 0
+      onlyIfMarked: 0
+      stackPerMark: 0
+      markKind: 0
+      resetsLastCombination: 0
+      damageMultPerMark:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      burnPayoff:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerBurnSecond:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMaxMana:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      copyRadius:
+        value: 2.5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
       converts: 3
       amount:
@@ -550,6 +813,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0

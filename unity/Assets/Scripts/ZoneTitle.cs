@@ -54,6 +54,9 @@ public class ZoneTitle : MonoBehaviour
     Image lineLeft, lineRight;
     // The map change last flashed; none yet, so the map you are already standing in when this starts is flashed too.
     int shownVersion = -1;
+    // The named area of a seamless world last flashed — a world is one map, so crossing into a field is told this way.
+    int shownAreaVersion = -1;
+    string shownAreaName;
     float startedAt = -1f;
 
     void Start()
@@ -73,7 +76,18 @@ public class ZoneTitle : MonoBehaviour
         if (shownVersion != MapManager.MapVersion && !string.IsNullOrEmpty(MapManager.CurrentMap))
         {
             shownVersion = MapManager.MapVersion;
-            Begin(MapManager.CurrentMap);
+            shownAreaName = null;
+            // A SEAMLESS WORLD IS NAMED BY ITS AREAS, flashed below as the player reaches one — never by the world itself.
+            if (SeamlessWorld.ForMap(MapManager.CurrentMap) == null) Begin(MapManager.CurrentMap);
+        }
+        if (shownAreaVersion != SeamlessWorld.AreaVersion)
+        {
+            shownAreaVersion = SeamlessWorld.AreaVersion;
+            var area = SeamlessWorld.CurrentArea;
+            // A NEW NAME ONLY: two neighbouring areas sharing one name (a hall inside its field) are one place to a
+            // player, so crossing between them flashes nothing.
+            if (area != null && area.name != shownAreaName) BeginArea(area);
+            shownAreaName = area != null ? area.name : null;
         }
         if (startedAt >= 0f) Step(Time.unscaledTime - startedAt);
     }
@@ -83,7 +97,19 @@ public class ZoneTitle : MonoBehaviour
         if (root == null && !Build()) return;
         var entry = atlas != null ? atlas.Find(map) : null;
         Color c = MapKinds.ColorOfType(entry != null ? entry.type : null);
-        title.text = atlas != null ? atlas.NameOf(map) : map;
+        Show(atlas != null ? atlas.NameOf(map) : map, c);
+    }
+
+    void BeginArea(SeamlessWorld.Area area)
+    {
+        if (root == null && !Build()) return;
+        Color c = MapKinds.ColorOf(area.kind == SeamlessAreaKind.Town ? MapKind.Town : MapKind.Field);
+        Show(area.name, c);
+    }
+
+    void Show(string text, Color c)
+    {
+        title.text = text;
         title.color = c;
         lineLeft.color = c;
         lineRight.color = c;

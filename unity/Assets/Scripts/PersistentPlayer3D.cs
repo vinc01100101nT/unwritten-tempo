@@ -30,6 +30,7 @@ public class PersistentPlayer3D : MonoBehaviour
         !string.IsNullOrEmpty(MapManager.CurrentMap)
         && MapManager.ArrivingAt == null
         && !SceneTravel.HasResume
+        && !SeamlessWorld.PlacementPending
         && (SaveManager.Instance == null || SaveManager.Instance.Initialized);
 
     void Awake()
@@ -71,23 +72,44 @@ public class PersistentPlayer3D : MonoBehaviour
         // character, a death with no save point) falls through to an arrival point.
         if (SceneTravel.HasResume && SceneTravel.ResumeScene == MapManager.CurrentMap)
         {
-            MoveTo(SceneTravel.ResumePosition);
+            var resumeAt = SceneTravel.ResumePosition;
             SceneTravel.ForgetResume();
-            AimCamera();
+            Land(resumeAt, null, false);
             return;
         }
 
         var spawn = ResolveSpawn();
-        if (spawn != null) MoveTo(spawn.transform.position);
+        if (spawn != null) { Land(spawn.transform.position, spawn, true); return; }
+        SayWherePlaced(null);
+        AimCamera();
+    }
 
-        // WHERE THEY WERE PUT, said once per arrival. "The player cannot move after a teleport" was investigated
-        // twice by hand before this line existed; the answer was that they had been put at the WRONG map's spot.
+    // EVERY ARRIVAL LANDS THROUGH HERE. In a seamless world the ground at the spot may not have loaded yet — a respawn, a
+    // wing or a sign-in can be hundreds of metres from where this machine was — so the body is held back behind the
+    // loading screen until it has (SeamlessWorld.PlaceWhenReady), instead of being put down over nothing and falling.
+    void Land(Vector3 at, SpawnPoint spawn, bool say)
+    {
+        var world = SeamlessWorld.ForMap(MapManager.CurrentMap);
+        // A server's own idle body is nobody's to hold back: no one sees it and no ground is loaded for it.
+        if (world == null || GameServer.IsServer) { LandNow(at, spawn, say); return; }
+        world.PlaceWhenReady(MapManager.InMap(at, MapManager.CurrentMap), () => LandNow(at, spawn, say));
+    }
+
+    void LandNow(Vector3 at, SpawnPoint spawn, bool say)
+    {
+        MoveTo(at);
+        if (say) SayWherePlaced(spawn);
+        AimCamera();
+    }
+
+    // WHERE THEY WERE PUT, said once per arrival. "The player cannot move after a teleport" was investigated
+    // twice by hand before this line existed; the answer was that they had been put at the WRONG map's spot.
+    void SayWherePlaced(SpawnPoint spawn)
+    {
         if (GameLog.On(LogCat.Client))
             GameLog.Info(LogCat.Client, "placed in '" + MapManager.CurrentMap + "' at "
                              + (spawn != null ? "spawn '" + spawn.id + "' " : "no spawn point — left ")
                              + Coords.Text(transform.position, "0.00"));   // perf-ok: once per map arrival
-
-        AimCamera();
     }
 
     void MoveTo(Vector3 pos)

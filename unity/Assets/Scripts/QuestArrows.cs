@@ -48,6 +48,13 @@ public class QuestArrows : MonoBehaviour
     /// <summary>True when the place is on another map, so the route here ends at the door on the way.</summary>
     public static bool ThroughADoor { get; private set; }
 
+    /// <summary>The place being led to, in <see cref="DestinationMap"/>'s own coordinates: x east, y north.</summary>
+    public static Vector2 DestinationSpot { get; private set; }
+
+    /// <summary>The map the door this route ends at leads into — the first step on the way when the place is on another
+    /// map; <see cref="DestinationMap"/> itself when it is on this one.</summary>
+    public static string NextMapOnTheWay { get; private set; }
+
     /// <summary>THE ROUTE AS MAP ARROWS — one every <see cref="MapMarkSpacing"/> metres along the whole of it, for a
     /// map seen from straight above with north up: x and y are the ground's X and Z, z is the turn (degrees) that
     /// points an upward arrow along the route. Worked out once per route, never per frame. Empty when nothing is shown.</summary>
@@ -167,6 +174,7 @@ public class QuestArrows : MonoBehaviour
         if (!routeShown) return;
         routeShown = false;
         DestinationMap = null;
+        NextMapOnTheWay = null;
         route.Clear();
         RouteVersion++;
     }
@@ -184,6 +192,8 @@ public class QuestArrows : MonoBehaviour
         if (MapGuide.Active)
         {
             DestinationMap = MapGuide.Map;
+            DestinationSpot = MapGuide.Spot;
+            NextMapOnTheWay = MapGuide.Map;
             ThroughADoor = MapGuide.Map != here;
             if (MapGuide.Map == here)
             {
@@ -197,12 +207,15 @@ public class QuestArrows : MonoBehaviour
                 return false;
             }
             string next = WorldRoutes.NextMap(here, MapGuide.Map, out _);
+            NextMapOnTheWay = next;
             return !string.IsNullOrEmpty(next) && DoorInto(next, out goal);
         }
 
         var t = QuestStore.Target;
         if (!t.any || string.IsNullOrEmpty(t.map)) return false;
         DestinationMap = t.map;
+        DestinationSpot = new Vector2(t.at.x, t.at.z);
+        NextMapOnTheWay = t.map != here ? t.nextMap : t.map;
         ThroughADoor = t.map != here;
         if (t.map == here) { goal = MapManager.InWorld(t.at, here); return true; }
         if (string.IsNullOrEmpty(t.nextMap)) return false;
@@ -231,7 +244,7 @@ public class QuestArrows : MonoBehaviour
         // reached, and the next re-route, a few steps on, finds more of it; only when no step of a route is found at all
         // does it point straight at the goal, so the arrows still face the right way.
         route.Clear();
-        if (!Pathfinder3D.FindPath(new Vector2(from.x, from.z), new Vector2(goal.x, goal.z), RouteRadius, route)
+        if (!Pathfinder3D.FindPath(new Vector2(from.x, from.z), new Vector2(goal.x, goal.z), RouteRadius, route, 0, from.y)
             || route.Count == 0)
             route.Add(new Vector2(goal.x, goal.z));
         RouteStart = new Vector2(from.x, from.z);

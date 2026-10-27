@@ -614,7 +614,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -848,8 +848,6 @@ MonoBehaviour:
   patchSize: 10
   coverage: 1
   floor: 0.8
-  color: {r: 0.8, g: 0.82, b: 0.85, a: 1}
-  nightTint: {r: 0.34, g: 0.37, b: 0.46, a: 1}
 --- !u!114 &953628451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -890,12 +888,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SnowOverlay
   intensity: 0
   rampTime: 3
-  parallax: 1
-  fallSpeed: 5.55
-  drift: 1
-  density: 16.52
-  flakeSize: 0.71
-  color: {r: 0.96, g: 0.98, b: 1, a: 0.9}
   nightTint: {r: 0.3, g: 0.34, b: 0.48, a: 1}
 --- !u!114 &953628453
 MonoBehaviour:
@@ -911,11 +903,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RainOverlay
   intensity: 1
   rampTime: 4
-  fallSpeed: 20
   slant: 0.2
   windSlant: 0.7
-  density: 160
-  color: {r: 0.85, g: 0.9, b: 1, a: 0.85}
 --- !u!114 &953628454
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1003,7 +992,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DayNightLight
   dayColor: {r: 1, g: 0.96, b: 0.9, a: 1}
   nightColor: {r: 0.5, g: 0.6, b: 0.95, a: 1}
-  dayIntensity: 2.28
+  dayIntensity: 1
   nightIntensity: 0
   horizonColor: {r: 0.99, g: 0.64, b: 0.1, a: 1}
   sunriseColor: {r: 0.77, g: 0.62, b: 1, a: 1}
@@ -1011,7 +1000,7 @@ MonoBehaviour:
   horizonBand: 0.5
   tintAmbient: 1
   driveAmbient: 1
-  dayAmbient: {r: 0.55, g: 0.56, b: 0.6, a: 1}
+  dayAmbient: {r: 1, g: 0.97, b: 0.92, a: 1}
   nightAmbient: {r: 0.1, g: 0.12, b: 0.22, a: 1}
   driveSky: 1
   daySky: {r: 0.55, g: 0.7, b: 0.85, a: 1}
@@ -1021,7 +1010,7 @@ MonoBehaviour:
   nightSpriteTint: {r: 0.34, g: 0.42, b: 0.6, a: 1}
   spriteHorizonWarmth: 0.25
   rotateSun: 1
-  noonPitch: 85
+  noonPitch: 45
   horizonPitch: 12
   yaw: -47.33
   yawSwing: 180

@@ -206,11 +206,13 @@ public static class SkillEffectApplier
     /// <summary>The level <paramref name="unit"/> has in an orb — every character knows each at level 1.</summary>
     public static int OrbLevel(ICombatUnit unit, OrbElement orb)
     {
-        string id = OrbMath.SkillIdOf(orb);
-        if (unit is Character person) return person.Mastery.LevelOf(id);
-        if (unit is Health creature) return creature.Mastery.LevelOf(id);
-        return 1;
+        var mastery = MasteryOf(unit);
+        return mastery != null ? mastery.LevelOf(OrbMath.SkillIdOf(orb)) : 1;
     }
+
+    /// <summary>The masteries and skill levels of a person or a creature; null for anything else.</summary>
+    public static MasteryProgress MasteryOf(ICombatUnit unit) =>
+        unit is Character person ? person.Mastery : unit is Health creature ? creature.Mastery : null;
 
     // Is any skill of this unit mid-run? An orb press waits for it to end.
     static bool RunGoing(ICombatUnit unit)

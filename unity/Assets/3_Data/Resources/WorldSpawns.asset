@@ -3753,3 +3753,83 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: -62, y: -0.07203519, z: -14}
+    radius: 12
+    playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: -12, y: -0.050709393, z: 60}
+    radius: 10
+    playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: 38, y: 0.0844663, z: -16}
+    radius: 9
+    playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: -12, y: 0.04042207, z: -60}
+    radius: 10
+    playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: -58, y: 0, z: 64}
+    radius: 10
+    playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: 38, y: -0.009564987, z: 62}
+    radius: 9
+    playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: 38, y: 0.08094467, z: -62}
+    radius: 9
+    playerClearRadius: 6
+  - map: seamless_test
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 10
+    includeCommons: 1
+    population: 6
+    center: {x: -76, y: -0.01690212, z: -42}
+    radius: 8
+    playerClearRadius: 6

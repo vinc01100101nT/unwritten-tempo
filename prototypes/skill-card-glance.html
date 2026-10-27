@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Skill Card — read at a glance</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  :root {
+    --ground: #0D0E10;   /* the page backdrop, outside every window */
+    /* The card's ULTIMATE tag: the game's pink (1, 0.549, 0.878) darkened by its own readable-on-panel rule —
+       the same value the Skills prototype uses. */
+    --ultimate: #A3598F;
+    /* Each element's tile, read from the game's element tints (Fire 1, 0.5, 0.25 · Water 0.4, 0.7, 1 ·
+       Earth 0.7, 0.55, 0.35 · Wind 0.55, 0.95, 0.7 · Neutral 0.62, 0.62, 0.66). */
+    --el-fire: #FF8040;
+    --el-water: #66B2FF;
+    --el-earth: #B28C59;
+    --el-wind: #8CF2B2;
+    --el-neutral: #9E9EA8;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); font-family: var(--font-ui);
+    display: flex; flex-direction: column; align-items: center; padding: 32px 16px 48px; gap: 24px;
+  }
+  .cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: flex-start; max-width: 1240px; }
+
+  /* ---- the skill's hover card, framed as the game frames it: a window-edge rim round the panel colour ---- */
+  .card {
+    width: 288px; padding: 8px 10px; border: 1px solid var(--window-edge); border-radius: 5px;
+    background: var(--panel-fill); color: var(--text-main); font-size: 12px; line-height: 1.35;
+  }
+  .head { display: flex; align-items: baseline; gap: 8px; }
+  .head .name { font-size: 14px; font-weight: bold; flex: 1; }
+  .head .kind { font-size: 11px; font-weight: bold; color: var(--text-dim); }
+  .head .kind.ult { color: var(--ultimate); }
+
+  .facts { display: flex; align-items: center; gap: 6px; margin-top: 4px; color: var(--text-dim); font-weight: bold; font-size: 11px; }
+  .el { display: inline-grid; place-items: center; min-width: 22px; height: 16px; padding: 0 3px; border-radius: 3px;
+        color: var(--text-main); font-size: 10px; font-weight: bold; }
+  .el.fire { background: var(--el-fire); } .el.water { background: var(--el-water); }
+  .el.earth { background: var(--el-earth); } .el.wind { background: var(--el-wind); }
+  .el.neutral { background: var(--el-neutral); }
+  .facts .elname { color: var(--text-main); }
+
+  .cost { display: flex; gap: 12px; margin-top: 3px; font-weight: bold; }
+  .cost .k { color: var(--text-dim); font-size: 11px; margin-right: 3px; }
+  .cost .split { color: var(--text-dim); font-size: 11px; font-weight: normal; margin-left: 2px; }
+
+  .sep { height: 1px; background: var(--rule); margin: 7px 0; }
+
+  /* one line per thing the skill does: the number first, in a column the eye can run down */
+  .fx { display: grid; grid-template-columns: 74px 1fr auto; column-gap: 8px; row-gap: 3px; align-items: baseline; }
+  .fx .num { text-align: right; font-weight: bold; font-size: 14px; white-space: nowrap; }
+  .fx .what { font-size: 12px; }
+  .fx .what b { font-weight: bold; }
+  /* the value at the next level, on the line it belongs to; a number with none does not grow with level */
+  .fx .next { color: var(--text-dim); font-size: 11px; white-space: nowrap; text-align: right; }
+  /* what happens, in order, with no numbers: every amount is on a line below */
+  .how { margin-top: 5px; }
+
+  /* a bonus: the old value crossed out and dim, the new one coloured by whether it helps you */
+  s.was { color: var(--text-dim); font-weight: normal; font-size: 11px; margin-right: 3px; }
+  .up { color: var(--good); }
+  .down { color: var(--bad); }
+  .bonus-off s.was { display: none; }
+  .bonus-off .up, .bonus-off .down { display: none; }
+  .bonus-on .plain { display: none; }
+
+  .when { color: var(--text-main); font-weight: bold; margin-top: 4px; }
+
+  .foot { display: grid; grid-template-columns: 1fr auto; row-gap: 2px; font-size: 11px; }
+  .foot .lbl { color: var(--text-dim); }
+  .foot .val { text-align: right; font-weight: bold; }
+  .lock { color: var(--bad); font-weight: bold; }
+  .lock .you { color: var(--text-dim); font-weight: normal; }
+  .flavor { margin-top: 6px; color: var(--text-dim); font-size: 11px; display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; }
+  .flavor span { white-space: nowrap; margin-left: auto; }
+  .flavor i { font-style: italic; }
+
+  /* ---- the item card as the game draws it today — 264 wide, a 2px window-edge rim, title 18, body 15 — in its own
+     order (slot, the piece's stats, ink, trademark, word, cards, weight and value, lore), with the suggested
+     weights and colours ---- */
+  .item { width: 264px; border: 2px solid var(--window-edge); border-radius: 5px; background: var(--panel-fill);
+          padding: 8px 12px 10px; color: var(--text-main); font-size: 15px; line-height: 19px; }
+  .item .t { font-size: 18px; line-height: 23px; }
+  .item .dim { color: var(--text-dim); }
+  .item .slot { color: var(--text-dim); font-size: 13px; }
+  .item .gap { height: 10px; }
+  /* a group's heading comes FIRST, small, bold and grey */
+  .item .gh { color: var(--text-dim); font-size: 12px; font-weight: bold; line-height: 16px; }
+  /* every stat line: the number bold in the main colour, the stat's name in plain grey */
+  .item .st b { color: var(--text-main); }
+  .item .st span { color: var(--text-dim); }
+  /* the piece's own stats stay a size larger, as today, so they still lead */
+  .item .own { font-size: 115%; line-height: 22px; }
+  .item .slotted { color: var(--accent); }
+  .item .sub { padding-left: 14px; }
+  .item .lore { color: var(--text-dim); font-style: italic; font-size: 14px; }
+  .row-label { color: #C9CDD6; font-size: 13px; }
+
+  /* the right-click window's breakdown: a clickable row, then one line PER SOURCE under each number */
+  .srctoggle { margin-top: 6px; color: var(--accent); font-size: 11px; font-weight: bold; cursor: pointer; user-select: none; }
+  .detail { display: none; margin-top: 4px; font-size: 11px; }
+  .open .detail { display: block; }
+  .detail .dt { display: flex; justify-content: space-between; font-weight: bold; margin-top: 4px; }
+  .detail .dl { display: grid; grid-template-columns: 52px 1fr; column-gap: 6px; color: var(--text-dim); padding-left: 10px; }
+  .detail .dl .v { text-align: right; color: var(--text-main); }
+  .card .srctoggle { display: none; }
+  .pinned .card.haspin .srctoggle { display: block; }
+  .card .detail { display: none; }
+  .pinned .card.open .detail { display: block; }
+
+  /* ---- for the reader, clear of every card ---- */
+  .controls { color: #C9CDD6; font-size: 13px; display: flex; align-items: center; gap: 12px; }
+  .controls button { font: inherit; padding: 3px 10px; cursor: pointer; }
+</style>
+</head>
+<body class="bonus-on">
+
+<div class="controls">
+  <button id="toggle">Hide bonuses</button>
+  <span id="state">Showing a character with cast speed and a damage buff up</span>
+  <button id="pin">Show the right-click window</button>
+</div>
+
+<div class="cards">
+
+  <!-- Meteor: a Staff combination. Cast time cut, damage raised. -->
+  <div class="card haspin open" data-mocks="Skill Tooltip">
+    <div class="head"><span class="name">Meteor</span><span class="kind">ACTIVE</span></div>
+    <div class="facts"><span class="el fire">Fr</span><span class="elname">Fire</span><span>· Ground · 11 m</span></div>
+    <div class="cost">
+      <span><span class="k">MP</span>16</span>
+      <span><span class="k">CD</span>8s</span>
+      <span><span class="k">Cast</span><s class="was">1s</s><span class="up">0.6s</span><span class="plain">1s</span></span>
+    </div>
+    <div class="how">A flaming stone lands on the aimed spot and melts the Stone on its target.</div>
+    <div class="sep"></div>
+    <div class="fx">
+      <span class="num"><s class="was">380</s><span class="up">412</span><span class="plain">380</span></span>
+      <span class="what"><b>Fire</b> magic damage</span><span class="next"></span>
+      <span class="num"><s class="was">+95</s><span class="up">+103</span><span class="plain">+95</span></span>
+      <span class="what">per Stone on the target</span><span class="next"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="foot">
+      <span class="lbl">Orbs</span><span class="val">Fire · Fire · Earth</span>
+      <span class="lbl">Fire Orb raises</span><span class="val">the damage</span>
+      <span class="lbl">Earth Orb raises</span><span class="val">the bonus per Stone</span>
+    </div>
+    <div class="flavor"><i>"Fire melts the stone."</i><span>Frozen Ashes · 10th Form</span></div>
+    <div class="srctoggle">Where each number comes from ▸</div>
+    <div class="detail">
+      <div class="dt"><span>Cast</span><span>0.6s</span></div>
+      <div class="dl"><span class="v">1s</span><span>the skill</span><span class="v">−0.2s</span><span>DEX</span><span class="v">−0.1s</span><span>cast speed from the ring</span><span class="v">−0.1s</span><span>cast speed buff</span></div>
+      <div class="dt"><span>Fire magic damage</span><span>412</span></div>
+      <div class="dl"><span class="v">380</span><span>the skill, with your magic attack</span><span class="v">+32</span><span>damage buff</span></div>
+      <div class="dt"><span>Per Stone</span><span>+103</span></div>
+      <div class="dl"><span class="v">+95</span><span>the skill</span><span class="v">+8</span><span>damage buff</span></div>
+    </div>
+  </div>
+
+  <!-- Last Petal: an ultimate, still locked. Neutral physical, grows with a pile. -->
+  <div class="card haspin" data-mocks="Skill Tooltip">
+    <div class="head"><span class="name">Last Petal</span><span class="kind ult">ULTIMATE</span></div>
+    <div class="facts"><span class="el neutral">Ne</span><span class="elname">Neutral</span><span>· Enemy · 5 m</span></div>
+    <div class="cost">
+      <span><span class="k">MP</span>40</span>
+      <span><span class="k">CD</span>60s</span>
+      <span><span class="k">Cast</span><s class="was">1s</s><span class="up">0.6s</span><span class="plain">1s</span></span>
+    </div>
+    <div class="how">One massive blow that spends every Rising Breeze stack you hold.</div>
+    <div class="sep"></div>
+    <div class="fx">
+      <span class="num"><s class="was">413</s><span class="up">447</span><span class="plain">413</span></span>
+      <span class="what">physical damage</span><span class="next"></span>
+      <span class="num">+21</span>
+      <span class="what">per <b>Rising Breeze</b> stack</span><span class="next"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="foot">
+      <span class="lock">Needs Sword Mastery 53</span><span class="lock you">you: 40</span>
+      <span class="lock">Needs Rising Breeze</span><span class="lock you">not learned</span>
+      <span class="lbl">Levels</span><span class="val">0 / 10</span>
+    </div>
+    <div class="flavor"><i>"Everything, in one swing."</i><span>Blossom Wind · 20th Form</span></div>
+    <div class="srctoggle">Where each number comes from ▸</div>
+    <div class="detail">
+      <div class="dt"><span>Cast</span><span>0.6s</span></div>
+      <div class="dl"><span class="v">1s</span><span>the skill</span><span class="v">−0.2s</span><span>DEX</span><span class="v">−0.1s</span><span>cast speed from the ring</span><span class="v">−0.1s</span><span>cast speed buff</span></div>
+      <div class="dt"><span>Physical damage</span><span>447</span></div>
+      <div class="dl"><span class="v">413</span><span>the skill, with your attack</span><span class="v">+34</span><span>damage buff</span></div>
+    </div>
+  </div>
+
+  <!-- Hailstone: a curse is slowing the cast, so the cast time went UP and reads red. -->
+  <div class="card haspin" data-mocks="Skill Tooltip">
+    <div class="head"><span class="name">Hailstone</span><span class="kind">ACTIVE</span></div>
+    <div class="facts"><span class="el neutral">Ne</span><span class="elname">Neutral</span><span>· Enemy · 13 m</span></div>
+    <div class="cost">
+      <span><span class="k">MP</span>16</span>
+      <span><span class="k">CD</span>8s</span>
+      <span><span class="k">Cast</span><s class="was">1s</s><span class="down">1.3s</span><span class="plain">1s</span></span>
+    </div>
+    <div class="how">A heavy shot that crits more often, and more often still against a slowed target.</div>
+    <div class="sep"></div>
+    <div class="fx">
+      <span class="num">151</span>
+      <span class="what">physical damage</span><span class="next">→ 158</span>
+      <span class="num">+25%</span>
+      <span class="what">crit chance</span><span class="next"></span>
+      <span class="num">+25%</span>
+      <span class="what">more crit chance if the target is slowed</span><span class="next"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="foot">
+      <span class="lbl">Level</span><span class="val">3 / 10</span>
+    </div>
+    <div class="flavor"><i>"Draw, hold, release."</i><span>Passing Cloud · 10th Form</span></div>
+    <div class="srctoggle">Where each number comes from ▸</div>
+    <div class="detail">
+      <div class="dt"><span>Cast</span><span>1.3s</span></div>
+      <div class="dl"><span class="v">1s</span><span>the skill</span><span class="v">+0.3s</span><span>a curse slowing your casting</span></div>
+    </div>
+  </div>
+
+  <!-- Jet Stream: every second of its cast is fixed, so cast speed changes nothing and nothing is crossed out. -->
+  <div class="card" data-mocks="Skill Tooltip">
+    <div class="head"><span class="name">Jet Stream</span><span class="kind">ACTIVE</span></div>
+    <div class="facts"><span class="el neutral">Ne</span><span class="elname">Neutral</span><span>· Ground · 12 m</span></div>
+    <div class="cost">
+      <span><span class="k">MP</span>12</span>
+      <span><span class="k">CD</span>7s</span>
+      <span><span class="k">Cast</span>2s<span class="split">fixed</span></span>
+    </div>
+    <div class="how">A shot that pierces in a straight line, hitting every enemy it passes.</div>
+    <div class="sep"></div>
+    <div class="fx">
+      <span class="num">69</span>
+      <span class="what">physical damage to each enemy</span><span class="next">→ 72</span>
+    </div>
+    <div class="sep"></div>
+    <div class="foot">
+      <span class="lbl">Level</span><span class="val">1 / 10</span>
+    </div>
+    <div class="flavor"><i>"A narrow wind at the top of the sky."</i><span>Passing Cloud · 11th Form</span></div>
+  </div>
+
+  <!-- Rising Breeze: a passive. No cost row; its moment leads. -->
+  <div class="card" data-mocks="Skill Tooltip">
+    <div class="head"><span class="name">Rising Breeze</span><span class="kind">PASSIVE</span></div>
+    <div class="when">When a basic attack lands</div>
+    <div class="how">Adds a stack of extra damage. Stacks pile up while you keep hitting.</div>
+    <div class="sep"></div>
+    <div class="fx">
+      <span class="num">+3.15%</span>
+      <span class="what">damage, per stack</span><span class="next">→ +3.3%</span>
+      <span class="num">5s</span>
+      <span class="what">each stack lasts</span><span class="next"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="foot">
+      <span class="lbl">Level</span><span class="val">2 / 10</span>
+    </div>
+    <div class="flavor"><i>"Every hit adds up."</i><span>Blossom Wind · 8th Form</span></div>
+  </div>
+
+  <!-- Thousand Petals: TWO numbers grow with each level, each with its own arrow; the durations do not grow. -->
+  <div class="card" data-mocks="Skill Tooltip">
+    <div class="head"><span class="name">Thousand Petals</span><span class="kind ult">ULTIMATE</span></div>
+    <div class="facts"><span class="el neutral">Ne</span><span class="elname">Neutral</span><span>· Enemy · 11 m</span></div>
+    <div class="cost">
+      <span><span class="k">MP</span>40</span>
+      <span><span class="k">CD</span>45s</span>
+      <span><span class="k">Instant</span></span>
+    </div>
+    <div class="how">Arms dance charges and half as many parries, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike, hunting a new target nearby. Every charge still held adds damage.</div>
+    <div class="sep"></div>
+    <div class="fx">
+      <span class="num">32</span>
+      <span class="what">physical damage each beat</span><span class="next">→ 33</span>
+      <span class="num">+1.1%</span>
+      <span class="what">damage per charge still held</span><span class="next">→ +1.15%</span>
+      <span class="num">8s</span>
+      <span class="what">the charges and parries last</span><span class="next"></span>
+      <span class="num">3 m</span>
+      <span class="what">how far it hunts a new target</span><span class="next"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="foot">
+      <span class="lbl">Level</span><span class="val">3 / 10</span>
+    </div>
+    <div class="flavor"><i>"Become the storm."</i><span>Blossom Wind · 21st Form</span></div>
+  </div>
+
+</div>
+
+<div class="row-label">Equipment</div>
+<div class="cards">
+
+  <!-- A grade-B sword folded 7 times with a Petal Storm trademark: every number is the game's own card for that copy. -->
+  <div class="item" data-mocks="Item Tooltip">
+    <div class="t">+7 Petal Storm [B]</div>
+    <div class="slot">Weapon · MELEE attack · Quality 100%</div>
+    <div class="gap"></div>
+    <div class="st own"><b>+2200</b> <span>ATK</span></div>
+    <div class="gap"></div>
+    <div class="gh">Ink 5/5</div>
+    <div class="st"><b>+7</b> <span>ATK</span></div>
+    <div class="st"><b>+4.3%</b> <span>DEF</span></div>
+    <div class="st"><b>+11</b> <span>DEX</span></div>
+    <div class="st"><b>+7</b> <span>EVA</span></div>
+    <div class="st"><b>+3.6%</b> <span>CAST SPEED</span></div>
+    <div class="gap"></div>
+    <div class="gh">Trademark</div>
+    <div class="st"><b>+18%</b> <span>to <b>Petal Storm</b>'s damage buff</span></div>
+    <div class="st"><b>+18%</b> <span>to <b>Petal Storm</b>'s damage</span></div>
+    <div class="gap"></div>
+    <div class="dim">Weight 90</div>
+    <div class="dim">Value 70,175u</div>
+    <div class="gap"></div>
+    <div class="lore">Veyra dashed past him into the very heart of it and cut it a thousand times in a few heartbeats. The heart died, and as it died Chaos fled into the one who had killed it. Veyra fell before the petals settled.</div>
+  </div>
+
+  <!-- The same grade and folds on a body piece with the Fierce word and one card slot. No card exists in the game
+       yet, so the card and its numbers are placeholders: the point is that a card's numbers are shown at all. -->
+  <div class="item" data-mocks="Item Tooltip">
+    <div class="t">+7 Fierce Chainmail [B] [1]</div>
+    <div class="slot">Body · Quality 100%</div>
+    <div class="gap"></div>
+    <div class="st own"><b>+4.3%</b> <span>DEF</span></div>
+    <div class="st own"><b>+1173</b> <span>Max HP</span></div>
+    <div class="gap"></div>
+    <div class="gh">Ink 5/5</div>
+    <div class="st"><b>+4.3%</b> <span>DEF</span></div>
+    <div class="st"><b>+58</b> <span>Max HP</span></div>
+    <div class="st"><b>+7</b> <span>EVA</span></div>
+    <div class="st"><b>+2.2%</b> <span>CRIT DMG</span></div>
+    <div class="st"><b>+3.6%</b> <span>CAST SPEED</span></div>
+    <div class="gap"></div>
+    <div class="gh">Word</div>
+    <div class="st"><b>Fierce</b> <span>+6.5% damage dealt</span></div>
+    <div class="gap"></div>
+    <div class="gh">Cards 1/1</div>
+    <div class="slotted">◇ Card name</div>
+    <div class="st sub"><b>+2</b> <span>STR</span></div>
+    <div class="st sub"><b>+1%</b> <span>CRIT</span></div>
+    <div class="gap"></div>
+    <div class="dim">Weight 100</div>
+    <div class="dim">Value 70,175u</div>
+    <div class="gap"></div>
+    <div class="lore">Because getting stabbed is bad, but getting stabbed stylishly is worse.</div>
+  </div>
+
+  <!-- Bulwark at grade B (its real amount, 5): written as what it adds — hard Defence and hard Magic Defence — instead
+       of "Damage taken: -5%", which hid that a critical hit skips both. -->
+  <div class="item" data-mocks="Item Tooltip">
+    <div class="t">+7 Bulwark Iron Sabatons [B]</div>
+    <div class="slot">Shoes · Quality 100%</div>
+    <div class="gap"></div>
+    <div class="st own"><b>+4.3%</b> <span>DEF</span></div>
+    <div class="st own"><b>+587</b> <span>Max HP</span></div>
+    <div class="gap"></div>
+    <div class="gh">Ink 0/5</div>
+    <div class="gap"></div>
+    <div class="gh">Word</div>
+    <div class="st"><b>Bulwark</b> <span>+5% DEF · +5% M.DEF</span></div>
+    <div class="gap"></div>
+    <div class="dim">Weight 30</div>
+    <div class="dim">Value 38,175u</div>
+    <div class="gap"></div>
+    <div class="lore">Sturdy boots for kicking doors and regretting it later.</div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var btn = document.getElementById("toggle"), state = document.getElementById("state");
+  btn.addEventListener("click", function () {
+    var on = document.body.classList.toggle("bonus-on");
+    document.body.classList.toggle("bonus-off", !on);
+    btn.textContent = on ? "Hide bonuses" : "Show bonuses";
+    state.textContent = on ? "Showing a character with cast speed and a damage buff up"
+                           : "Showing the same character with nothing changing any number";
+  });
+  var pin = document.getElementById("pin");
+  pin.addEventListener("click", function () {
+    var on = document.body.classList.toggle("pinned");
+    pin.textContent = on ? "Show the hover card" : "Show the right-click window";
+  });
+  document.querySelectorAll(".srctoggle").forEach(function (t) {
+    if (t.parentElement.classList.contains("open")) t.textContent = "Where each number comes from ▾";
+    t.addEventListener("click", function () {
+      var open = t.parentElement.classList.toggle("open");
+      t.textContent = "Where each number comes from " + (open ? "▾" : "▸");
+    });
+  });
+})();
+</script>
+</body>
+</html>

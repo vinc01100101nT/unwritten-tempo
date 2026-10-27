@@ -27,7 +27,7 @@ public class GameNetwork : NetworkManager
     public const string PortEnvVar = "GAME_SERVER_PORT";
 
     /// <summary>How far away a player is still told about a thing, in world units. See where it is used for why 60.</summary>
-    const int VisibleRange = 60;
+    public const int VisibleRange = 60;
 
     /// <summary>The body spawned for each connected player, found in Resources by this name.</summary>
     public const string PlayerPrefabName = "NetPlayer";
@@ -276,7 +276,10 @@ public class GameNetwork : NetworkManager
             //
             // It is also the shape the world has to be in before maps can ever live in separate processes: a
             // watcher list built per map is one that does not silently depend on the other maps being here.
-            var interest = go.AddComponent<SceneDistanceInterestManagement>();
+            // SQUARES A FULL RANGE WIDE, THEN THE REAL DISTANCE (SceneGridInterestManagement): the same map-then-distance
+            // answer, without re-checking a whole map each time anybody in it moves — which a seamless world, everybody
+            // in one map, would turn into the whole server's work.
+            var interest = go.AddComponent<SceneGridInterestManagement>();
             interest.visRange = VisibleRange;
 
             if (kcp.port == 0)
@@ -3050,17 +3053,14 @@ public class GameNetwork : NetworkManager
         if (caster == null) return "there is no character";
         bool onBar = caster.Hotbar != null && caster.Hotbar.IsBound(skillId);
         bool inAuto = InAutoSlots(caster.AutoCombat, skillId);
-        string auto = caster.AutoCombat != null && caster.AutoCombat.slots != null
-            ? string.Join(",", caster.AutoCombat.slots) : "(none)";
+        string auto = caster.AutoCombat != null ? string.Join(",", caster.AutoCombat.SlotsFor(caster.HeldWeapon)) : "(none)";
         return "on the hotbar " + onBar + ", in the auto-skill slots " + inAuto + " (they hold: " + auto + "), "
                + (caster.WhyNotUsable(skillId) ?? "learned and its weapon in hand");
     }
 
     static bool InAutoSlots(AutoCombatSettings s, string skillId)
     {
-        if (s == null || s.slots == null) return false;
-        for (int i = 0; i < s.slots.Length; i++) if (s.slots[i] == skillId) return true;
-        return false;
+        return s != null && s.Holds(skillId);
     }
 
     // ---- commands a player asks the world to carry out ---------------------------------------------------

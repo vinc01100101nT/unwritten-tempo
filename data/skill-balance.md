@@ -75,7 +75,7 @@ A passive is worth one firing × how often its moment comes, and must match its 
 | A kill (guess) | 0.1 |
 | Dropping to low HP (guess) | 0.0333 |
 
-**70 weapon skills:** 30 balanced · 32 balanced provisionally · 0 off budget · 0 partly priced · 8 not priced.
+**70 weapon skills:** 30 balanced · 31 balanced provisionally · 1 off budget · 0 partly priced · 8 not priced.
 
 ## Balanced (30)
 
@@ -112,7 +112,7 @@ A passive is worth one firing × how often its moment comes, and must match its 
 | Sword | Scattered Petals | +0% | 1.55 | 1.55 | — |
 | Sword | Bending Reed | +0% | 2.00 | 2.00 | — |
 
-## Balanced, provisional (32)
+## Balanced, provisional (31)
 
 | Weapon | Skill | Off budget | Value | Budget | Extra on top (an investment, not priced) |
 | --- | --- | --- | --- | --- | --- |
@@ -125,7 +125,6 @@ A passive is worth one firing × how often its moment comes, and must match its 
 | Staff | Scald | -11% | 2.50 | 2.80 | — |
 | Bow | Slipstream (passive, per second) | +9% | 0.11 | 0.10 | — |
 | Staff | Brushfire | +8% | 3.64 | 3.38 | — |
-| Staff | Weathering | +8% | 10.14 | 9.42 | — |
 | Sword | Second Bloom (passive, per second) | -6% | 0.09 | 0.10 | — |
 | Staff | Whiteout (ultimate) | +5% | 8.88 | 8.46 | extra from max MP |
 | Bow | Nimbus (passive, per second) | +5% | 0.11 | 0.10 | — |
@@ -149,11 +148,13 @@ A passive is worth one firing × how often its moment comes, and must match its 
 | Sword | Piercing Gust | +0% | 1.00 | 1.00 | — |
 | Sword | Parting Clouds (passive, per second) | +0% | 0.10 | 0.10 | — |
 
-## Off budget (0)
+## Off budget (1)
 
 More than 15% off — fixable with one number.
 
-None.
+| Weapon | Skill | Off budget | Value | Budget | Extra on top (an investment, not priced) |
+| --- | --- | --- | --- | --- | --- |
+| Staff | Weathering (ultimate) | +26% | 10.13 | 8.04 | — |
 
 ## Partly priced (0)
 

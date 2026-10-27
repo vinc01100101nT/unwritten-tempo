@@ -38,7 +38,7 @@
       "symbol": "Cy",
       "icon": "assets/skill-icons/skill.bow.clear_sky.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 5th Form",
+      "form": "Passing Cloud — 12th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -52,7 +52,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Nothing between you and the mark.\n+30% accuracy for 30s.",
+      "description": "Nothing between you and the mark.\nRaises your accuracy for a long while.",
       "trademark": "Clear Sky",
       "effects": [
         "+**30%** accuracy for **30s**"
@@ -64,7 +64,7 @@
       "symbol": "Cc",
       "icon": "assets/skill-icons/skill.bow.cloud_cover.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 6th Form",
+      "form": "Passing Cloud — 3rd Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -78,7 +78,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "After casting Updraft",
-      "description": "Hard to see, harder to hit.\nAfter casting Updraft: +12% evasion for 4s.",
+      "description": "Hard to see, harder to hit.\nAfter casting Updraft, your evasion rises for a moment.",
       "trademark": "Cloud Cover",
       "effects": [
         "+**12%** evasion for **4s**"
@@ -90,7 +90,7 @@
       "symbol": "Cl",
       "icon": "assets/skill-icons/skill.bow.cloudburst.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 22nd Form",
+      "form": "Passing Cloud — 21st Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": true,
@@ -104,7 +104,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Celestia's rain, wherever she drifts.\nA rain cloud follows you for 6s, a volley each swing on everything within 3m for 60% Attack — each hit a basic attack. When it ends, every Gathering Clouds stack becomes one more volley.",
+      "description": "Celestia's rain, wherever she drifts.\nA rain cloud follows you, firing a volley each swing on everything close to you — each hit a basic attack. When it ends, every Gathering Clouds stack becomes one more volley.",
       "trademark": "Cloudburst",
       "effects": [
         "Gives **1** charge for **6s**",
@@ -116,6 +116,33 @@
       "name": "Fair Weather",
       "symbol": "Fw",
       "icon": "assets/skill-icons/skill.bow.fair_weather.png",
+      "weapon": "Bow",
+      "form": "Passing Cloud — 14th Form",
+      "archetype": "Burst",
+      "family": "Finesse",
+      "ultimate": false,
+      "passive": true,
+      "published": true,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "fixedCastTime": 0,
+      "releaseEarly": false,
+      "castRange": 0,
+      "trigger": "When your HP drops low",
+      "description": "A clear sky opens when you need it.\nWhen your HP drops low, Updraft is ready again at once and your evasion rises.",
+      "trademark": "Fair Weather",
+      "effects": [
+        "**Updraft** is ready again at once",
+        "+**20%** evasion for **10s**"
+      ]
+    },
+    {
+      "id": "skill.bow.gathering_clouds",
+      "name": "Gathering Clouds",
+      "symbol": "Gc",
+      "icon": "assets/skill-icons/skill.bow.gathering_clouds.png",
       "weapon": "Bow",
       "form": "Passing Cloud — 13th Form",
       "archetype": "Burst",
@@ -130,35 +157,8 @@
       "fixedCastTime": 0,
       "releaseEarly": false,
       "castRange": 0,
-      "trigger": "When your HP drops low",
-      "description": "A clear sky opens when you need it.\nWhen your HP drops low, Updraft is ready again at once and you gain +20% evasion for 10s.",
-      "trademark": "Fair Weather",
-      "effects": [
-        "**Updraft** is ready again at once",
-        "+**20%** evasion for **10s**"
-      ]
-    },
-    {
-      "id": "skill.bow.gathering_clouds",
-      "name": "Gathering Clouds",
-      "symbol": "Gc",
-      "icon": "assets/skill-icons/skill.bow.gathering_clouds.png",
-      "weapon": "Bow",
-      "form": "Passing Cloud — 4th Form",
-      "archetype": "Burst",
-      "family": "Finesse",
-      "ultimate": false,
-      "passive": true,
-      "published": true,
-      "cost": "MP **0**  CD **0s**  Instant",
-      "manaCost": 0,
-      "cooldown": 0,
-      "castTime": 0,
-      "fixedCastTime": 0,
-      "releaseEarly": false,
-      "castRange": 0,
       "trigger": "When a basic attack lands",
-      "description": "The sky thickens with every shot.\nEach basic attack that lands gives +2% accuracy for 6s, stacking up to 20. Cloudburst spends them for extra volleys.",
+      "description": "The sky thickens with every shot.\nEach basic attack that lands adds a stack of accuracy, up to a limit. Cloudburst spends them for extra volleys.",
       "trademark": "Gathering Clouds",
       "effects": [
         "+**2%** accuracy per stack for **6s**"
@@ -170,7 +170,7 @@
       "symbol": "Gf",
       "icon": "assets/skill-icons/skill.bow.gust_front.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 19th Form",
+      "form": "Passing Cloud — 18th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -184,7 +184,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When you kill a mob",
-      "description": "Move on with the wind.\nWhen you kill something: +15% movement speed for 15s.",
+      "description": "Move on with the wind.\nWhen you kill something, you move faster for a while.",
       "trademark": "Gust Front",
       "effects": [
         "+**15%** movement speed for **15s**"
@@ -196,7 +196,7 @@
       "symbol": "Hs",
       "icon": "assets/skill-icons/skill.bow.hailstone.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 16th Form",
+      "form": "Passing Cloud — 10th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -210,7 +210,7 @@
       "releaseEarly": false,
       "castRange": 13,
       "trigger": "",
-      "description": "Draw, hold, release.\nA heavy shot for 285% Attack with +25% crit chance, and +25% more against a slowed target.",
+      "description": "Draw, hold, release.\nA heavy shot with extra crit chance, and more still against a slowed target.",
       "trademark": "Hailstone",
       "effects": [
         "Deals **2.85×** physical damage, +**25%** crit chance, +**25%** more crit chance against a slowed target"
@@ -236,7 +236,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Thin, fast and far above.\n+50% movement speed and +20% attack speed for 7s.",
+      "description": "Thin, fast and far above.\nYou move and attack faster for a short while.",
       "trademark": "High Cirrus",
       "effects": [
         "+**50%** movement speed for **7s**",
@@ -249,7 +249,7 @@
       "symbol": "Js",
       "icon": "assets/skill-icons/skill.bow.jet_stream.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 14th Form",
+      "form": "Passing Cloud — 11th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -263,7 +263,7 @@
       "releaseEarly": true,
       "castRange": 12,
       "trigger": "",
-      "description": "A narrow wind at the top of the sky.\nA shot that pierces in a straight line, 130% Attack to every enemy it passes.",
+      "description": "A narrow wind at the top of the sky.\nA shot that pierces in a straight line, hitting every enemy it passes.",
       "trademark": "Jet Stream",
       "effects": [
         "Deals **1.3×** physical damage"
@@ -275,7 +275,7 @@
       "symbol": "Lc",
       "icon": "assets/skill-icons/skill.bow.low_cloud.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 1st Form",
+      "form": "Passing Cloud — 6th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -289,7 +289,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Weigh their steps down.\nA shot for 205% Attack that slows the target 25% for 4s.",
+      "description": "Weigh their steps down.\nA shot that slows the target.",
       "trademark": "Low Cloud",
       "effects": [
         "Deals **2.05×** physical damage",
@@ -302,7 +302,7 @@
       "symbol": "Nb",
       "icon": "assets/skill-icons/skill.bow.nimbus.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 10th Form",
+      "form": "Passing Cloud — 17th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -316,7 +316,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When you take damage",
-      "description": "Wrap yourself in cloud.\nWhen you take damage: +3.5% evasion for 3s.",
+      "description": "Wrap yourself in cloud.\nWhen you take damage, your evasion rises for a moment.",
       "trademark": "Nimbus",
       "effects": [
         "+**4%** evasion for **3s**"
@@ -328,7 +328,7 @@
       "symbol": "Oc",
       "icon": "assets/skill-icons/skill.bow.overcast.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 11th Form",
+      "form": "Passing Cloud — 7th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -342,7 +342,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Darken their sky.\nThe target's accuracy is cut by 40% for 6s.",
+      "description": "Darken their sky.\nCuts the target's accuracy for a while.",
       "trademark": "Overcast",
       "effects": [
         "−**40%** accuracy for **6s**"
@@ -354,7 +354,7 @@
       "symbol": "Pt",
       "icon": "assets/skill-icons/skill.bow.petrichor.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 23rd Form",
+      "form": "Passing Cloud — 22nd Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -368,7 +368,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When a basic attack lands",
-      "description": "The smell after rain.\nEvery hit that lands while Cloudburst rains makes the rain last 0.35s longer (at most 11s in all).",
+      "description": "The smell after rain.\nEvery hit that lands while Cloudburst rains makes the rain last a little longer, up to a limit.",
       "trademark": "",
       "effects": [
         "Extends **Cloudburst** by **0.4s**"
@@ -380,7 +380,7 @@
       "symbol": "Rs",
       "icon": "assets/skill-icons/skill.bow.rain_shadow.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 8th Form",
+      "form": "Passing Cloud — 16th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -394,7 +394,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "After casting Updraft",
-      "description": "Strike from where they are not looking.\nAfter casting Updraft: your next 3 basic attacks deal +17% within 5s.",
+      "description": "Strike from where they are not looking.\nAfter casting Updraft, your next few basic attacks hit harder.",
       "trademark": "Rain Shadow",
       "effects": [
         "Your next **3** basic attacks deal +**17%** damage within **5s**"
@@ -406,7 +406,7 @@
       "symbol": "Ra",
       "icon": "assets/skill-icons/skill.bow.rainbow.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 18th Form",
+      "form": "Passing Cloud — 5th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -420,7 +420,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "An arc that lands where they will be.\nAn arrow lobbed onto a spot; it lands a moment later for 96% Attack to everything within 2.5m, +5% Attack for every metre between you and each enemy hit.",
+      "description": "An arc that lands where they will be.\nAn arrow lobbed onto a spot lands a moment later on everything around it, harder the farther each enemy is from you.",
       "trademark": "Rainbow",
       "effects": [
         "Deals **0.08×** physical damage, **12×** hits, +**0.004×** per metre to the target"
@@ -432,7 +432,7 @@
       "symbol": "Sr",
       "icon": "assets/skill-icons/skill.bow.scattered_rain.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 7th Form",
+      "form": "Passing Cloud — 4th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -446,7 +446,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "One drop becomes three.\nA shot for 78% Attack that splits to 2 more enemies within 4m, each for 78%.",
+      "description": "One drop becomes three.\nA shot that splits to more enemies nearby.",
       "trademark": "Scattered Rain",
       "effects": [
         "Deals **0.78×** physical damage"
@@ -472,7 +472,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When you dodge an attack",
-      "description": "Ride the air they missed.\nWhen you dodge an attack: your next 3 basic attacks can't miss within 3s.",
+      "description": "Ride the air they missed.\nWhen you dodge an attack, your next few basic attacks can't miss.",
       "trademark": "",
       "effects": [
         "Your next **3** basic attacks can't miss within **3s**"
@@ -484,7 +484,7 @@
       "symbol": "Ss",
       "icon": "assets/skill-icons/skill.bow.sun_shower.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 12th Form",
+      "form": "Passing Cloud — 8th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -498,7 +498,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Rain in the sunlight.\n5 quick shots in 1s, each 58% Attack and each a basic attack.",
+      "description": "Rain in the sunlight.\nA burst of quick shots, each a basic attack.",
       "trademark": "Sun Shower",
       "effects": [
         "Deals **0.58×** physical damage"
@@ -510,7 +510,7 @@
       "symbol": "Sk",
       "icon": "assets/skill-icons/skill.bow.sunbreak.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 2nd Form",
+      "form": "Passing Cloud — 1st Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -524,7 +524,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Light through a moving cloud.\nA shot that hits twice, each for 59% Attack, +0.5% Attack each for every 1% movement speed bonus you have.",
+      "description": "Light through a moving cloud.\nA shot that hits twice, harder the more movement speed bonus you have.",
       "trademark": "Silver Lining",
       "effects": [
         "Deals **0.59×** physical damage, **2×** hits, +**0.005×** per 1% movement speed bonus"
@@ -536,7 +536,7 @@
       "symbol": "Th",
       "icon": "assets/skill-icons/skill.bow.thunderhead.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 17th Form",
+      "form": "Passing Cloud — 23rd Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": true,
@@ -550,7 +550,7 @@
       "releaseEarly": false,
       "castRange": 13,
       "trigger": "",
-      "description": "The storm gathers into one strike.\nA heavy shot for 930% Attack, +7.5% for every point of hit chance above 100% against the target (up to 100 points).",
+      "description": "The storm gathers into one strike.\nA heavy shot, harder the further your hit chance goes past a sure hit, up to a limit.",
       "trademark": "Thunderhead",
       "effects": [
         "Deals **9.3×** physical damage, +**0.075×** per point of hit chance above 100% (up to 100)"
@@ -562,7 +562,7 @@
       "symbol": "Ud",
       "icon": "assets/skill-icons/skill.bow.updraft.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 3rd Form",
+      "form": "Passing Cloud — 2nd Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -576,7 +576,7 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Rise and drift away.\nDash to a spot up to 5m away, in any direction.",
+      "description": "Rise and drift away.\nDash to a nearby spot, in any direction.",
       "trademark": "",
       "effects": [
         "Dashes to the target location"
@@ -588,7 +588,7 @@
       "symbol": "Ws",
       "icon": "assets/skill-icons/skill.bow.wandering_sky.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 20th Form",
+      "form": "Passing Cloud — 19th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": true,
@@ -602,7 +602,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "The cloud nobody could catch.\n+12% evasion and +45% movement speed for 20s — ending the moment a hit costs you health. Every attack you dodge meanwhile is answered with an arrow.",
+      "description": "The cloud nobody could catch.\nYour evasion and movement speed rise until a hit costs you health. Every attack you dodge meanwhile is answered with an arrow.",
       "trademark": "Wandering Sky",
       "effects": [
         "+**12%** evasion for **20s**",
@@ -615,7 +615,7 @@
       "symbol": "Ws",
       "icon": "assets/skill-icons/skill.bow.wandering_sky_counter.png",
       "weapon": "Bow",
-      "form": "Passing Cloud — 21st Form",
+      "form": "Passing Cloud — 20th Form",
       "archetype": "Burst",
       "family": "Finesse",
       "ultimate": false,
@@ -629,7 +629,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "When you dodge an attack",
-      "description": "While Wandering Sky runs, every attack you dodge is answered with an arrow for 150% Attack.",
+      "description": "While Wandering Sky runs, every attack you dodge is answered with an arrow.",
       "trademark": "",
       "effects": [
         "Deals **1.5×** physical damage"
@@ -1909,7 +1909,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "The sky turns to ash.\nBurning stones fall around the aimed spot in several strikes, each hitting harder for every Stone on its target. Leaves no mark. Opens at Fire Orb level 20.",
+      "description": "The sky turns to ash.\nBurning stones fall around the aimed spot in several strikes, each hitting harder for every Stone on its target. Leaves no mark. Opens with a high Fire Orb level.",
       "trademark": "",
       "effects": [
         "Deals **0.23×** magic damage, **+0.11×** magic damage for every Stone on the target (left in place)",
@@ -1936,7 +1936,7 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "Wind feeds the fire.\nThe aimed ground burns. Every second, a gust of hot wind hits everything standing in it and adds 1 Burn.",
+      "description": "Wind feeds the fire.\nThe aimed ground burns. Every second, a gust of hot wind hits everything standing in it and adds a Burn.",
       "trademark": "",
       "effects": [
         "Deals **0.21×** magic damage",
@@ -1990,7 +1990,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Earth swallows the spark.\nGrounds the Static on every enemy around you. Each Static discharges as a hit, then becomes 1 Stone.",
+      "description": "Earth swallows the spark.\nGrounds the Static on every enemy around you. Each Static discharges as a hit, then becomes a Stone.",
       "trademark": "",
       "effects": [
         "Grounds the target's Static: **+0.4×** magic damage per stack",
@@ -2017,7 +2017,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "The wind stands up and walks.\nA whirlwind follows you, striking everything near you, more strikes the faster you cast. Each strike hits harder for every Chill on its target. Leaves no mark. Opens at Wind Orb level 20.",
+      "description": "The wind stands up and walks.\nA whirlwind follows you, striking everything near you, more strikes the faster you cast. Each strike hits harder for every Chill on its target. Leaves no mark. Opens with a high Wind Orb level.",
       "trademark": "",
       "effects": [
         "Deals **0.45×** magic damage, **+0.08×** magic damage for every Chill on the target (left in place)"
@@ -2043,7 +2043,7 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "The mountain wakes.\n\nThe ground erupts for 190% Attack, and an ash cloud over the aimed area makes every mark on the enemies in it last 10 seconds longer, and stronger.",
+      "description": "The mountain wakes.\n\nThe ground erupts, and an ash cloud over the aimed area makes every mark on the enemies in it last longer, and stronger.",
       "trademark": "",
       "effects": [
         "Deals **1.9×** magic damage",
@@ -2132,7 +2132,7 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "The mountain shakes.\nThe aimed ground quakes 8 times over 4 seconds, each quake hitting harder for every Static on each enemy. Leaves no mark. Opens at Earth Orb level 20.",
+      "description": "The mountain shakes.\nThe aimed ground quakes again and again, each quake hitting harder for every Static on each enemy. Leaves no mark. Opens with a high Earth Orb level.",
       "trademark": "",
       "effects": [
         "Deals **0.49×** magic damage, **+0.05×** magic damage for every Static on the target (left in place)"
@@ -2185,7 +2185,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Molten stone hardens again.\nMelts the Stone on every enemy around you into lava, a hit for each Stone melted. The lava then hardens on them as 3 Stone.",
+      "description": "Molten stone hardens again.\nMelts the Stone on every enemy around you into lava, a hit for each Stone melted. The lava then hardens on them as Stone.",
       "trademark": "",
       "effects": [
         "Melts the target's Stone: **+0.4×** magic damage per charge",
@@ -2316,7 +2316,7 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "The ground freezes through.\nThe aimed ground freezes: every enemy on it gains 1 Chill every second. It deals no damage while it lasts, so a freeze it makes holds. When it ends, the ground cracks and hits everything on it.",
+      "description": "The ground freezes through.\nThe aimed ground freezes: every enemy on it gains a Chill every second. It deals no damage while it lasts, so a freeze it makes holds. When it ends, the ground cracks and hits everything on it.",
       "trademark": "",
       "effects": [
         "Adds **1** Chill for **4s** — each slows **15%**, **3** freeze for **10s**. Not on a burning target",
@@ -2422,7 +2422,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Steam.\nPuts out the burns on every enemy around you. Each burn put out becomes a scalding hit, then 1 Chill.",
+      "description": "Steam.\nPuts out the burns on every enemy around you. Each burn put out becomes a scalding hit, then a Chill.",
       "trademark": "",
       "effects": [
         "Puts out the target's burn: **+0.4×** magic damage per burn stack",
@@ -2449,7 +2449,7 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "A storm on a hot wind.\nA thundercloud hangs over the aimed area: every second its heat lightning strikes everything under it and adds 2 Static.",
+      "description": "A storm on a hot wind.\nA thundercloud hangs over the aimed area: every second its heat lightning strikes everything under it and adds Static.",
       "trademark": "",
       "effects": [
         "Deals **0.25×** magic damage",
@@ -2476,7 +2476,7 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "Stone that water made.\nThree drips fall on one enemy over 3 seconds. Each drip hits and adds 1 Stone.",
+      "description": "Stone that water made.\nDrips fall on one enemy, one after another. Each drip hits and adds a Stone.",
       "trademark": "",
       "effects": [
         "Deals **0.88×** magic damage",
@@ -2489,10 +2489,10 @@
       "symbol": "We",
       "icon": "assets/skill-icons/skill.staff.weathering.png",
       "weapon": "Staff",
-      "form": "Frozen Ashes — 23rd Form",
+      "form": "Frozen Ashes — 25th Form",
       "archetype": "Tempo",
       "family": "Arcane",
-      "ultimate": false,
+      "ultimate": true,
       "passive": false,
       "published": false,
       "cost": "MP **40**  CD **55s**  Cast **0.5s**  Range **10**",
@@ -2518,7 +2518,7 @@
       "symbol": "Wh",
       "icon": "assets/skill-icons/skill.staff.whiteout.png",
       "weapon": "Staff",
-      "form": "Frozen Ashes — 24th Form",
+      "form": "Frozen Ashes — 23rd Form",
       "archetype": "Burst",
       "family": "Arcane",
       "ultimate": true,
@@ -2532,7 +2532,7 @@
       "releaseEarly": false,
       "castRange": 10,
       "trigger": "",
-      "description": "The world goes white.\nA blizzard beats on the aimed area, growing with your max MP and hitting harder for every Burn on each enemy. Leaves no mark. Opens at Water Orb level 20.",
+      "description": "The world goes white.\nA blizzard beats on the aimed area, growing with your max MP and hitting harder for every Burn on each enemy. Leaves no mark. Opens with a high Water Orb level.",
       "trademark": "",
       "effects": [
         "Deals **0.42×** magic damage, +**0.0008×** per point of your max MP (up to +2×), **+0.1×** magic damage for every Burn on the target (left in place)"
@@ -2544,7 +2544,7 @@
       "symbol": "Wi",
       "icon": "assets/skill-icons/skill.staff.windshear.png",
       "weapon": "Staff",
-      "form": "Frozen Ashes — 25th Form",
+      "form": "Frozen Ashes — 24th Form",
       "archetype": "Burst",
       "family": "Arcane",
       "ultimate": false,
@@ -2611,7 +2611,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Become the storm.\nArms dance charges and half as many parries for 8s, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike for 60% Attack, hunting a new target within 3 units. Every charge still held is +1% damage.",
+      "description": "Become the storm.\nArms dance charges and half as many parries, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike, hunting a new target nearby. Every charge still held adds damage.",
       "trademark": "Thousand Petals",
       "effects": [
         "Deals **0.6×** physical damage",
@@ -2626,7 +2626,7 @@
       "symbol": "Hb",
       "icon": "assets/skill-icons/skill.sword.brace.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 6th Form",
+      "form": "Blossom Wind — 7th Form",
       "archetype": "Burst",
       "family": "Might",
       "ultimate": false,
@@ -2640,7 +2640,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Take it now, pay it later.\nArms 5 charges for 4s. Each holds back one incoming hit and banks the damage instead of paying it in health; the whole bill lands at once when the window ends.",
+      "description": "Take it now, pay it later.\nArms charges for a short window. Each holds back one incoming hit and banks the damage instead of paying it in health; the whole bill lands at once when the window ends.",
       "trademark": "",
       "effects": [
         "Delays the next **5** hits within **4s** — the delayed damage all lands at once when the window ends"
@@ -2652,7 +2652,7 @@
       "symbol": "Hw",
       "icon": "assets/skill-icons/skill.sword.challenge.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 8th Form",
+      "form": "Blossom Wind — 4th Form",
       "archetype": "Curse",
       "family": "Might",
       "ultimate": false,
@@ -2666,7 +2666,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Force one enemy to fight you.\nTaunted for 5s: locked onto you, no skills, no pause between swings.",
+      "description": "Force one enemy to fight you.\nTaunts one enemy for a while: locked onto you, no skills, no pause between swings.",
       "trademark": "",
       "effects": [
         "Taunts nearby enemies for **5s**"
@@ -2678,7 +2678,7 @@
       "symbol": "Sp",
       "icon": "assets/skill-icons/skill.sword.committed_strike.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 15th Form",
+      "form": "Blossom Wind — 14th Form",
       "archetype": "Burst",
       "family": "Might",
       "ultimate": false,
@@ -2692,7 +2692,7 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Wind up and commit.\nA slow, telegraphed heavy blow for 275% Attack.",
+      "description": "Wind up and commit.\nA slow, telegraphed heavy blow.",
       "trademark": "Single Petal",
       "effects": [
         "Deals **2.75×** physical damage"
@@ -2704,7 +2704,7 @@
       "symbol": "Es",
       "icon": "assets/skill-icons/skill.sword.composure.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 7th Form",
+      "form": "Blossom Wind — 9th Form",
       "archetype": "Buff",
       "family": "Might",
       "ultimate": false,
@@ -2718,7 +2718,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When you parry",
-      "description": "A read pays for the next one.\nAfter a parry, MP returns at 2 per second for 4s.",
+      "description": "A read pays for the next one.\nAfter a parry, your MP returns faster for a moment.",
       "trademark": "Eye of the Storm",
       "effects": [
         "+2 MP regen for **4s**"
@@ -2730,7 +2730,7 @@
       "symbol": "Lp",
       "icon": "assets/skill-icons/skill.sword.deathblow.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 16th Form",
+      "form": "Blossom Wind — 20th Form",
       "archetype": "Burst",
       "family": "Might",
       "ultimate": true,
@@ -2744,7 +2744,7 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Everything, in one swing.\nOne massive blow for 780% Attack, +40% per Rising Breeze stack, and spends them all.",
+      "description": "Everything, in one swing.\nOne massive blow that spends every Rising Breeze stack you hold, hitting harder for each.",
       "trademark": "Last Petal",
       "effects": [
         "Deals **7.8×** physical damage **+ 0.4 × stacks**"
@@ -2756,7 +2756,7 @@
       "symbol": "St",
       "icon": "assets/skill-icons/skill.sword.disarm.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 11th Form",
+      "form": "Blossom Wind — 5th Form",
       "archetype": "Curse",
       "family": "Might",
       "ultimate": false,
@@ -2770,7 +2770,7 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Blunt their swing.\nA strike for 125% Attack; their next attack lands 40% weaker, within 6s.",
+      "description": "Blunt their swing.\nA strike that makes their next attack land weaker.",
       "trademark": "Stripped Bough",
       "effects": [
         "Deals **1.25×** physical damage",
@@ -2797,7 +2797,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When you kill a mob",
-      "description": "The dance goes on.\nA kill during Thousand Petals adds 4 more dance charges.",
+      "description": "The dance goes on.\nA kill during Thousand Petals adds more dance charges.",
       "trademark": "Second Bloom",
       "effects": [
         "Adds **4** to **Thousand Petals**"
@@ -2809,7 +2809,7 @@
       "symbol": "Tw",
       "icon": "assets/skill-icons/skill.sword.flow.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 10th Form",
+      "form": "Blossom Wind — 11th Form",
       "archetype": "Tempo",
       "family": "Finesse",
       "ultimate": false,
@@ -2835,7 +2835,7 @@
       "symbol": "Sa",
       "icon": "assets/skill-icons/skill.sword.guard_stance.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 4th Form",
+      "form": "Blossom Wind — 12th Form",
       "archetype": "Fortress",
       "family": "Might",
       "ultimate": false,
@@ -2849,7 +2849,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Weather it.\n\nShrugs off poison, bleed and burn, heals 10% of your max HP, then +4% defence and magic defence for 6 seconds.",
+      "description": "Weather it.\n\nShrugs off poison, bleed and burn, heals part of your max HP, then raises your defence and magic defence for a while.",
       "trademark": "Still Air",
       "effects": [
         "Removes **8** debuff(s)",
@@ -2864,7 +2864,7 @@
       "symbol": "Bb",
       "icon": "assets/skill-icons/skill.sword.last_stand.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 19th Form",
+      "form": "Blossom Wind — 15th Form",
       "archetype": "Fortress",
       "family": "Might",
       "ultimate": false,
@@ -2878,7 +2878,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When your HP drops low",
-      "description": "Cornered, you hold the line.\nDropping to low HP arms 5 more Held Breath charges.",
+      "description": "Cornered, you hold the line.\nDropping to low HP arms more Held Breath charges.",
       "trademark": "Bare Branch",
       "effects": [
         "Adds **5** to **Held Breath**"
@@ -2890,7 +2890,7 @@
       "symbol": "Cb",
       "icon": "assets/skill-icons/skill.sword.lock_blades.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 5th Form",
+      "form": "Blossom Wind — 3rd Form",
       "archetype": "Burst",
       "family": "Might",
       "ultimate": false,
@@ -2904,7 +2904,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "After casting Piercing Gust",
-      "description": "No escape.\nCasting Piercing Gust gives 1 charge for 0.6s. The next basic attack you start on a target within Piercing Gust's range spends it to lunge at it again.",
+      "description": "No escape.\nCasting Piercing Gust gives a charge for a moment. The next basic attack you start on a target within Piercing Gust's range spends it to lunge at it again.",
       "trademark": "",
       "effects": [
         "Gives **1** charge for **0.6s**"
@@ -2930,7 +2930,7 @@
       "releaseEarly": false,
       "castRange": 8,
       "trigger": "When you start a basic attack",
-      "description": "Close the distance.\nDashes to the target and strikes for 20% Attack. With Crossed Branches, casting it also arms 1 charge.",
+      "description": "Close the distance.\nDashes to the target and strikes. With Crossed Branches, casting it also arms a charge.",
       "trademark": "Piercing Gust",
       "effects": [
         "Dashes to the target location",
@@ -2943,7 +2943,7 @@
       "symbol": "Rb",
       "icon": "assets/skill-icons/skill.sword.momentum.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 3rd Form",
+      "form": "Blossom Wind — 8th Form",
       "archetype": "Buff",
       "family": "Might",
       "ultimate": false,
@@ -2957,7 +2957,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When a basic attack lands",
-      "description": "Every hit adds up.\nEach basic attack that lands grants a stack: +3% damage each, 5s apiece.",
+      "description": "Every hit adds up.\nEach basic attack that lands grants a stack of extra damage.",
       "trademark": "Rising Breeze",
       "effects": [
         "+**3%** damage per stack for **5s**"
@@ -2969,7 +2969,7 @@
       "symbol": "Sc",
       "icon": "assets/skill-icons/skill.sword.offbeat.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 9th Form",
+      "form": "Blossom Wind — 2nd Form",
       "archetype": "Curse",
       "family": "Might",
       "ultimate": false,
@@ -2983,7 +2983,7 @@
       "releaseEarly": false,
       "castRange": 5,
       "trigger": "",
-      "description": "Break their rhythm.\nA strike for 100% Attack; their attack speed drops 11% for 5s.",
+      "description": "Break their rhythm.\nA strike that slows their attack speed.",
       "trademark": "Scattered Petals",
       "effects": [
         "Deals **1×** physical damage",
@@ -2996,7 +2996,7 @@
       "symbol": "Ps",
       "icon": "assets/skill-icons/skill.sword.onslaught.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 13th Form",
+      "form": "Blossom Wind — 17th Form",
       "archetype": "Tempo",
       "family": "Finesse",
       "ultimate": false,
@@ -3010,7 +3010,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Don't let up.\nArms 5 stacks of +1% damage for 5s, then spends them as real basic attacks, two per swing — so every blow feeds Rising Breeze.",
+      "description": "Don't let up.\nArms stacks of extra damage, then spends them as real basic attacks, two per swing — so every blow feeds Rising Breeze.",
       "trademark": "Petal Storm",
       "effects": [
         "+**1%** damage per stack for **5s**",
@@ -3023,7 +3023,7 @@
       "symbol": "Pc",
       "icon": "assets/skill-icons/skill.sword.opening.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 14th Form",
+      "form": "Blossom Wind — 13th Form",
       "archetype": "Tempo",
       "family": "Finesse",
       "ultimate": false,
@@ -3037,7 +3037,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When you parry",
-      "description": "Find the weakness.\nA parry has a 50% chance to charge your next attack with +100% damage, within 5s — spent whether it hits or misses.",
+      "description": "Find the weakness.\nA parry has a chance to charge your next attack with extra damage — spent whether it hits or misses.",
       "trademark": "Parting Clouds",
       "effects": [
         "**50%** per hit: your next attack deals +**100%** damage within **5s**"
@@ -3049,7 +3049,7 @@
       "symbol": "Sq",
       "icon": "assets/skill-icons/skill.sword.overclock.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 18th Form",
+      "form": "Blossom Wind — 10th Form",
       "archetype": "Buff",
       "family": "Might",
       "ultimate": false,
@@ -3063,7 +3063,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Go faster, fragile.\n+45% Attack Speed for 8 seconds, but you lose 6% defence and magic defence for the first 3.",
+      "description": "Go faster, fragile.\nRaises your attack speed for a while, but you lose defence and magic defence at the start.",
       "trademark": "Squall",
       "effects": [
         "+**45%** attack speed for **8s**",
@@ -3077,7 +3077,7 @@
       "symbol": "Br",
       "icon": "assets/skill-icons/skill.sword.parry.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 2nd Form",
+      "form": "Blossom Wind — 6th Form",
       "archetype": "Fortress",
       "family": "Might",
       "ultimate": false,
@@ -3091,7 +3091,7 @@
       "releaseEarly": false,
       "castRange": 0,
       "trigger": "",
-      "description": "Read the hit and punish it.\nFully negates the next 2 incoming hits within 3 seconds.",
+      "description": "Read the hit and punish it.\nFully negates the next few incoming hits.",
       "trademark": "",
       "effects": [
         "Parries the next **2** hits within **3s** — no damage taken"
@@ -3103,7 +3103,7 @@
       "symbol": "Hd",
       "icon": "assets/skill-icons/skill.sword.pressure.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 17th Form",
+      "form": "Blossom Wind — 18th Form",
       "archetype": "Burst",
       "family": "Might",
       "ultimate": false,
@@ -3117,7 +3117,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "When you deal damage",
-      "description": "Never let them recover.\nEvery hit cuts the target's HP regen by 1.3 a second for 5s, and the cuts stack.",
+      "description": "Never let them recover.\nEvery hit cuts the target's HP regen for a while, and the cuts stack.",
       "trademark": "Headwind",
       "effects": [
         "−1.3 HP regen per stack for **5s**"
@@ -3129,7 +3129,7 @@
       "symbol": "Rw",
       "icon": "assets/skill-icons/skill.sword.retribution.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 20th Form",
+      "form": "Blossom Wind — 19th Form",
       "archetype": "Burst",
       "family": "Might",
       "ultimate": true,
@@ -3143,7 +3143,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "",
-      "description": "Answer all of it at once.\nCashes the damage Held Breath banked: five strikes, each landing 138% Attack plus 250% of the banked total, and the debt is erased. With an empty bank it still casts, landing five plain attacks.",
+      "description": "Answer all of it at once.\nCashes the damage Held Breath banked: several strikes, each landing your attack plus a share of the banked total, and the debt is erased. With an empty bank it still casts, landing plain attacks.",
       "trademark": "Returning Wind",
       "effects": [
         "Deals **1.38×** physical damage, **5×** hits **+ 2.5 × banked total**"
@@ -3155,7 +3155,7 @@
       "symbol": "Dr",
       "icon": "assets/skill-icons/skill.sword.unwavering.png",
       "weapon": "Sword",
-      "form": "Blossom Wind — 12th Form",
+      "form": "Blossom Wind — 16th Form",
       "archetype": "Fortress",
       "family": "Might",
       "ultimate": false,
@@ -3169,7 +3169,7 @@
       "releaseEarly": false,
       "castRange": 11,
       "trigger": "After casting Still Air",
-      "description": "Stand your ground.\nAfter casting Still Air, nothing stops you for 3s — no flinch, stun, freeze, silence, knockback or pull.",
+      "description": "Stand your ground.\nAfter casting Still Air, nothing stops you for a moment — no flinch, stun, freeze, silence, knockback or pull.",
       "trademark": "",
       "effects": [
         "Nothing stops you for **3s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts"

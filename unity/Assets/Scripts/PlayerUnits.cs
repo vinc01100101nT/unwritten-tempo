@@ -127,9 +127,28 @@ public static class PlayerUnits
     public static bool AnyoneWithin(Vector3 point, float radius, string map)
     {
         float rSqr = radius * radius;
-        for (int i = 0; i < present.Count; i++)
+        // An empty map still means "anybody", which is what one machine holding one map asks for.
+        if (string.IsNullOrEmpty(map)) return AnyIn(present, point, rSqr, map);
+        if (AnyIn(unfiled, point, rSqr, map)) return true;
+
+        // ONLY THE SQUARES THE CIRCLE TOUCHES. A seamless world is one map with everybody in it, and this is asked for
+        // every spawn area and every creature near it, so a walk over everyone in the map grows with players times
+        // things; the squares hold only the people who could possibly be close enough.
+        IndexCells();
+        if (!cellsByMap.TryGetValue(map, out var cells)) return false;
+        int x0 = Cell(point.x - radius), x1 = Cell(point.x + radius);
+        int z0 = Cell(point.z - radius), z1 = Cell(point.z + radius);
+        for (int x = x0; x <= x1; x++)
+            for (int z = z0; z <= z1; z++)
+                if (cells.TryGetValue(CellKey(x, z), out var here) && AnyIn(here, point, rSqr, map)) return true;
+        return false;
+    }
+
+    static bool AnyIn(List<ICombatUnit> people, Vector3 point, float rSqr, string map)
+    {
+        for (int i = 0; i < people.Count; i++)
         {
-            var unit = present[i];
+            var unit = people[i];
             if (Gone(unit)) continue;
             if (!string.IsNullOrEmpty(map) && unit.Map != map) continue;
 
@@ -141,6 +160,42 @@ public static class PlayerUnits
             if (d.sqrMagnitude < rSqr) return true;
         }
         return false;
+    }
+
+    // ---- the same people, filed by square within their map -----------------------------------------------------
+    //
+    // Refiled at most once a frame, on the first question asked in it: people move every frame, so a square filed
+    // when they last moved would be stale, and filing on demand costs one pass over the people — never over the
+    // things asking. The lists are kept and cleared, never rebuilt, so the filing allocates nothing once warm.
+
+    const float CellSize = 32f;
+    static int indexedFrame = -1;
+    static readonly Dictionary<string, Dictionary<long, List<ICombatUnit>>> cellsByMap =
+        new Dictionary<string, Dictionary<long, List<ICombatUnit>>>();
+
+    static int Cell(float v) => Mathf.FloorToInt(v / CellSize);
+    static long CellKey(int x, int z) => ((long)x << 32) | (uint)z;
+
+    static void IndexCells()
+    {
+        if (indexedFrame == Time.frameCount) return;
+        indexedFrame = Time.frameCount;
+        foreach (var cells in cellsByMap.Values)
+            foreach (var list in cells.Values) list.Clear();
+        foreach (var pair in byMap)
+        {
+            if (!cellsByMap.TryGetValue(pair.Key, out var cells)) cellsByMap[pair.Key] = cells = new Dictionary<long, List<ICombatUnit>>();
+            var people = pair.Value;
+            for (int i = 0; i < people.Count; i++)
+            {
+                var unit = people[i];
+                if (Gone(unit) || unit.Body == null) continue;
+                Vector3 at = unit.Body.position;
+                long key = CellKey(Cell(at.x), Cell(at.z));
+                if (!cells.TryGetValue(key, out var here)) cells[key] = here = new List<ICombatUnit>();
+                here.Add(unit);
+            }
+        }
     }
 
     /// <summary>The closest LIVING player to <paramref name="from"/> IN <paramref name="map"/> that still has a body

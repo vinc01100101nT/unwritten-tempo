@@ -28,7 +28,9 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'The world goes white.
 
-    A blizzard beats on the aimed area, growing with your max MP and hitting harder for every Burn on each enemy. Leaves no mark. Opens at Water Orb level 20.'
+    A blizzard beats on the aimed area, growing
+    with your max MP and hitting harder for every Burn on each enemy. Leaves no mark.
+    Opens with a high Water Orb level.'
   archetype: 0
   family: 1
   shape: 1
@@ -193,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0

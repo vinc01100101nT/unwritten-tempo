@@ -155,6 +155,7 @@ public class MapWindow : MonoBehaviour
     const float MobCardWidth = 380f, MobCardPad = 10f, MobCardFaceSize = 38f, MobCardFaceGap = 8f;
 
     // Sizes on the main screen layer, which is laid out as if every screen were 1280 wide.
+    static readonly Color YouAreHereColour = new Color(1f, 0.92f, 0.25f, 1f);
     const float MarkerSize = 11f, RouteMarkSize = 14f, DoorMarkSize = 12f, DoorLabelSize = 11f, GuidePinSize = 22f;
     // A townsperson's dot, and the zoom from which their names show — at the whole-map view sixteen names would bury
     // the town under text, so the dots stand alone until the player zooms in to read them.
@@ -197,7 +198,7 @@ public class MapWindow : MonoBehaviour
         if (Hotkeys.CancelDown()) { Close(); Hotkeys.MarkCancelHandled(); return; }
         if (player == null && PersistentPlayer3D.Instance != null) player = PersistentPlayer3D.Instance.transform;
 
-        if (active == world) { UpdateWorldMarker(); UpdateHover(); } else { UpdateZone(); UpdateMobCard(); }
+        if (active == world) { UpdateWorldMarker(); UpdateHover(); UpdateTrail(); } else { UpdateZone(); UpdateMobCard(); }
         StepGlide();
         locateButton.SetActive(active == zone ? LocateUsefulInZone() : Zoomed(world) && !CentredOnMarker(world));
     }
@@ -1174,12 +1175,145 @@ public class MapWindow : MonoBehaviour
             }
         if (ends.Count == 0) return;
 
+        // The maps on the route walked, lit under every door line.
+        trailMapsRoot = new GameObject("RouteMaps", typeof(RectTransform)).GetComponent<RectTransform>();
+        trailMapsRoot.SetParent(world.picture, false);
+        Stretch(trailMapsRoot);
+
         var holder = new GameObject("Doors", typeof(RectTransform), typeof(Canvas)).GetComponent<RectTransform>();
         holder.SetParent(world.picture, false);
         Stretch(holder);
         AddDoorMeshes(holder, WorldMapDoors.Part.Lines, ends);
         AddDoorMeshes(holder, WorldMapDoors.Part.Squares, ends);
+        trailLines = AddTrailMesh(holder, "RouteLines");
+        trailSquares = AddTrailMesh(holder, "RouteDoors");
         world.marker.SetAsLastSibling();
+    }
+
+    static WorldMapDoors AddTrailMesh(RectTransform holder, string name)
+    {
+        var mesh = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(WorldMapDoors))
+            .GetComponent<WorldMapDoors>();
+        mesh.transform.SetParent(holder, false);
+        Stretch(mesh.rectTransform);
+        return mesh;
+    }
+
+    // ── world view: the route walked, lit from where you stand to where it leads ──────────────────────────────────
+    // The same route the ground's arrows follow (QuestArrows): the maps it passes through, a line from you to each door
+    // on the way and on to the place, and each door between two of those maps. Laid only when that route or the map you
+    // are in changed — a handful of lines and squares in two meshes, nothing per frame.
+    RectTransform trailMapsRoot;
+    WorldMapDoors trailLines, trailSquares;
+    readonly List<Image> trailMaps = new List<Image>();
+    readonly List<string> trailChain = new List<string>();
+    readonly List<Vector4> trailSegments = new List<Vector4>(), trailDoors = new List<Vector4>();
+    int trailDrawnVersion = -1;
+    string trailDrawnMap;
+    // Below 1 the rim is drawn thicker: 0.4 is two and a half times its one-unit edge.
+    const float TrailRimThinness = 0.4f;
+
+    void UpdateTrail()
+    {
+        if (trailLines == null) return;
+        string here = MapManager.CurrentMap;
+        if (trailDrawnVersion == QuestArrows.RouteVersion && trailDrawnMap == here) return;
+        trailDrawnVersion = QuestArrows.RouteVersion;
+        trailDrawnMap = here;
+
+        trailChain.Clear();
+        trailSegments.Clear();
+        trailDoors.Clear();
+        if (!LayTrail(here)) { trailChain.Clear(); trailSegments.Clear(); trailDoors.Clear(); }
+
+        trailLines.Show(WorldMapDoors.Part.Lines, trailSegments, 0, trailSegments.Count, data.worldW, data.worldH, lit: true);
+        trailSquares.Show(WorldMapDoors.Part.Squares, trailDoors, 0, trailDoors.Count, data.worldW, data.worldH, lit: true);
+
+        int used = 0;
+        for (int i = 0; i < trailChain.Count; i++)
+        {
+            var e = data.Find(trailChain[i]);
+            if (e == null) continue;
+            var img = TrailMap(used++);
+            float w = Mathf.Max(1f, data.worldW), h = Mathf.Max(1f, data.worldH);
+            float left = (e.x - data.minX) / w, top = 1f - (e.y - data.minY) / h;
+            img.rectTransform.anchorMin = new Vector2(left, top - e.h / h);
+            img.rectTransform.anchorMax = new Vector2(left + e.w / w, top);
+            img.rectTransform.offsetMin = img.rectTransform.offsetMax = Vector2.zero;
+            if (!img.gameObject.activeSelf) img.gameObject.SetActive(true);
+        }
+        for (int i = used; i < trailMaps.Count; i++)
+            if (trailMaps[i].gameObject.activeSelf) trailMaps[i].gameObject.SetActive(false);
+    }
+
+    Image TrailMap(int i)
+    {
+        while (trailMaps.Count <= i)
+        {
+            // A rim, not a fill, so the map's own name and picture stay readable under it.
+            var img = NewImage("RouteMap", trailMapsRoot, YouAreHereColour);
+            img.sprite = UiKit.RimSprite(5);
+            img.type = Image.Type.Sliced;
+            img.pixelsPerUnitMultiplier = TrailRimThinness;
+            trailMaps.Add(img);
+        }
+        return trailMaps[i];
+    }
+
+    // The maps from `here` to the place, and the lines between: from you to the door into the next map, out of the door
+    // you arrive by to the next door, and on to the place. False when there is no route, or no way between two maps.
+    bool LayTrail(string here)
+    {
+        string dest = QuestArrows.DestinationMap;
+        if (QuestArrows.Route.Count == 0 || string.IsNullOrEmpty(dest) || data.Find(here) == null) return false;
+        var start = MapManager.InMap(new Vector3(QuestArrows.RouteStart.x, 0f, QuestArrows.RouteStart.y), here);
+        Vector2 at = new Vector2(start.x, start.z);
+        string map = here;
+        trailChain.Add(here);
+        while (map != dest)
+        {
+            if (trailChain.Count > data.maps.Count) return false;
+            string next = map == here ? QuestArrows.NextMapOnTheWay : WorldRoutes.NextMap(map, dest, out _);
+            if (string.IsNullOrEmpty(next) || !NearestDoor(map, next, at, out Vector2 exit, out Vector2 arrive)) return false;
+            var from = data.Find(map);
+            var to = data.Find(next);
+            if (from == null || to == null) return false;
+            Vector2 pAt = OnWorldPicture(from, at.x, at.y), pExit = OnWorldPicture(from, exit.x, exit.y);
+            Vector2 pArrive = OnWorldPicture(to, arrive.x, arrive.y);
+            trailSegments.Add(new Vector4(pAt.x, pAt.y, pExit.x, pExit.y));
+            var door = new Vector4(pExit.x, pExit.y, pArrive.x, pArrive.y);
+            trailSegments.Add(door);
+            trailDoors.Add(door);
+            trailChain.Add(next);
+            map = next;
+            at = arrive;
+        }
+        var last = data.Find(dest);
+        Vector2 a = OnWorldPicture(last, at.x, at.y), b = OnWorldPicture(last, QuestArrows.DestinationSpot.x, QuestArrows.DestinationSpot.y);
+        trailSegments.Add(new Vector4(a.x, a.y, b.x, b.y));
+        return true;
+    }
+
+    // Of the doors between `map` and `next`, the one standing nearest `at` in `map`: where it stands there, and where
+    // its other end stands in `next` — each in metres east and north of that map's centre.
+    bool NearestDoor(string map, string next, Vector2 at, out Vector2 exit, out Vector2 arrive)
+    {
+        exit = arrive = default;
+        float best = float.MaxValue;
+        bool any = false;
+        if (data.links == null) return false;
+        foreach (var l in data.links)
+        {
+            if (l == null) continue;
+            Vector2 here, there;
+            if (l.a == map && l.b == next) { here = new Vector2(l.ax, l.az); there = new Vector2(l.bx, l.bz); }
+            else if (l.b == map && l.a == next) { here = new Vector2(l.bx, l.bz); there = new Vector2(l.ax, l.az); }
+            else continue;
+            float d = (here - at).sqrMagnitude;
+            if (d >= best) continue;
+            best = d; exit = here; arrive = there; any = true;
+        }
+        return any;
     }
 
     // A spot in a map, in metres east and north of the map's centre, as a share of the world picture from its left
@@ -1226,7 +1360,7 @@ public class MapWindow : MonoBehaviour
         fit.aspectRatio = aspect;
         v.picture = image.rectTransform;
 
-        var mk = NewImage("YouAreHere", image.transform, new Color(1f, 0.92f, 0.25f, 1f));
+        var mk = NewImage("YouAreHere", image.transform, YouAreHereColour);
         v.marker = mk.rectTransform;
         v.marker.anchorMin = v.marker.anchorMax = v.marker.pivot = new Vector2(0.5f, 0.5f);
         v.marker.sizeDelta = new Vector2(MarkerSize, MarkerSize);

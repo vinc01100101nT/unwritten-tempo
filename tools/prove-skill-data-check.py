@@ -62,6 +62,9 @@ def patch_visual(filename, *replacements):
 
 # Each case: a plain-language name, the breakage, and a phrase the report MUST contain.
 CASES = [
+    ("a number typed into a description",
+     patch("skill.sword.deathblow.asset", ("hitting harder for each.", "hitting 40% harder for each.")),
+     "has a number in its description"),
     ("a gate that names no pile",
      patch("skill.sword.deathblow.asset", ("requireStateIdSet: 1", "requireStateIdSet: 0")),
      "nobody picked WHICH pile"),
@@ -84,8 +87,8 @@ CASES = [
     # A NUMBER is what pulls now, so the break has to be made on a number's own record, not on the effect.
     ("a number sized by stacks on a skill with no gate",
      patch("skill.sword.committed_strike.asset",
-           ("damageMult:\n        value: 2\n        useStacks: 0",
-            "damageMult:\n        value: 2\n        useStacks: 1")),
+           ("damageMult:\n        value: 2.75\n        useStacks: 0",
+            "damageMult:\n        value: 2.75\n        useStacks: 1")),
      "always comes out at nothing"),
     # Flip the asset's OWN answer rather than inserting a second one: the field now gets written into every saved
     # skill, and a duplicate key would simply be overruled by the real one further down — the break would silently

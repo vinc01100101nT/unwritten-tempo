@@ -44,6 +44,8 @@ public class FieldMobSpawner : MonoBehaviour
 
     // Per-type pools of hidden, reusable mob objects (keyed by MonsterDef asset name = the Addressable key tail).
     readonly Dictionary<string, Stack<GameObject>> pool = new Dictionary<string, Stack<GameObject>>();
+    // The creatures this area has out in the world right now — what it banks when it is put to sleep.
+    readonly List<(GameObject go, MonsterAI3D ai)> live = new List<(GameObject go, MonsterAI3D ai)>();
     int groundMask;
 
     void Start()
@@ -86,6 +88,7 @@ public class FieldMobSpawner : MonoBehaviour
                 // burst of "Step Offset must be ≤ …" the watching side used to throw for exactly this reason.
                 MobRespawn.Reactivate(reused, spot);
                 reused.GetComponent<MonsterAI3D>()?.SetHome(spot);   // wander around where it reappeared, not its first spawn
+                live.Add((reused, reused.GetComponent<MonsterAI3D>()));   // perf-ok: once per creature brought back
                 // A pooled mob coming back is a NEW creature as far as every watching player is concerned:
                 // its old shell died with it, so it needs a fresh one. Missing this is how a respawned mob
                 // becomes invisible to everyone but the server.
@@ -104,6 +107,7 @@ public class FieldMobSpawner : MonoBehaviour
             pm.typeKey = key;
             pm.kind = def.kind;
             go.GetComponent<MonsterAI3D>()?.SetHome(spot);   // perf-ok: once per mob created or pulled from the pool
+            live.Add((go, go.GetComponent<MonsterAI3D>()));   // perf-ok: once per mob created
             // Born on the server → every connected player gets to see it. No-op offline.
             GameNetwork.PublishMob(go, def.id);
         });
@@ -140,7 +144,15 @@ public class FieldMobSpawner : MonoBehaviour
     public void ReturnToPool(PooledMob mob)
     {
         if (mob == null) return;
+        Bank(mob);
+        if (isActiveAndEnabled) StartCoroutine(RespawnAfterDelay(mob.kind));
+    }
+
+    // Hide a creature and put it in its type's pool, ready to be used again.
+    void Bank(PooledMob mob)
+    {
         var go = mob.gameObject;
+        for (int i = live.Count - 1; i >= 0; i--) if (live[i].go == go) { live.RemoveAt(i); break; }
         // Disable the CharacterController BEFORE deactivating: mobs shrink at runtime, so the authored 0.3 step
         // exceeds the scaled capsule bound. If it's still enabled, SetActive(true) on reuse re-validates it and
         // Unity throws "Step Offset must be ≤ …". Reactivate() re-enables it AFTER clamping stepOffset.
@@ -150,8 +162,40 @@ public class FieldMobSpawner : MonoBehaviour
 
         if (!pool.TryGetValue(mob.typeKey, out var stack)) { stack = new Stack<GameObject>(); pool[mob.typeKey] = stack; }
         stack.Push(go);
+    }
 
-        if (isActiveAndEnabled) StartCoroutine(RespawnAfterDelay(mob.kind));
+    /// <summary>PUT TO SLEEP, nobody being near (SeamlessWorld). Every creature still out is banked and owed back the
+    /// moment the area wakes; every creature that died keeps the wait it already had, because those waits are moments on
+    /// the world's clock (below) and nothing here touches them. So an elite killed an hour ago stays gone until its own
+    /// time is up, however often the area sleeps and wakes. Then the area itself is switched off.</summary>
+    public void Sleep()
+    {
+        for (int i = live.Count - 1; i >= 0; i--)
+        {
+            var go = i < live.Count ? live[i].go : null;
+            if (go == null) { live.RemoveAt(i); continue; }
+            var mob = go.GetComponent<PooledMob>();   // perf-ok: once per creature, only as its area falls asleep
+            if (mob == null) { live.RemoveAt(i); continue; }
+            Bank(mob);
+            returnsOwed.Add(WorldClock.UtcNow);
+        }
+        live.Clear();
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>Is any creature of this area hunting somebody, or within <paramref name="reach"/> of a player in
+    /// <paramref name="map"/>? While one is, the area must stay awake: a creature that gave up a chase stays where it
+    /// stopped, so it can be far from the area's middle and still in front of somebody.</summary>
+    public bool AnyCreatureEngaged(string map, float reach)
+    {
+        for (int i = 0; i < live.Count; i++)
+        {
+            var (go, ai) = live[i];
+            if (go == null || !go.activeSelf) continue;
+            if (ai != null && ai.Prey != null) return true;
+            if (PlayerUnits.AnyoneWithin(go.transform.position, reach, map)) return true;
+        }
+        return false;
     }
 
     // WHEN EACH BANKED CREATURE IS DUE BACK, on the world's clock, one moment per return owed. The wait below

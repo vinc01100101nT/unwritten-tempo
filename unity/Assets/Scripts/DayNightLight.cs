@@ -13,7 +13,7 @@ public class DayNightLight : MonoBehaviour
     [Header("Sun color + brightness")]
     public Color dayColor = new Color(1f, 0.96f, 0.90f);     // warm midday
     public Color nightColor = new Color(0.50f, 0.60f, 0.95f); // cool moonlight
-    public float dayIntensity = 2.28f;
+    public float dayIntensity = 1f;   // the nature pack demo's sun, beside its bright fill
     [Tooltip("0 = fully dark night. Bump up if night is too black to play in.")]
     public float nightIntensity = 0f;
 
@@ -35,7 +35,10 @@ public class DayNightLight : MonoBehaviour
 
     [Header("Ambient fill (whole-scene)")]
     public bool driveAmbient = true;
-    public Color dayAmbient = new Color(0.55f, 0.56f, 0.60f);
+    // Warm white by day (2026-10-27, at the user's ask to look like the nature pack's demo): the pack's plant shader takes
+    // its brightness from this fill alone, never from the sun, so a dim fill drew every flower dark. At this fill the
+    // meadows show the demo's light pink and light green.
+    public Color dayAmbient = new Color(1f, 0.97f, 0.92f);
     public Color nightAmbient = new Color(0.10f, 0.12f, 0.22f);
 
     [Header("Sky (camera background)")]
@@ -81,7 +84,9 @@ public class DayNightLight : MonoBehaviour
     // Pitch is lerped horizonPitch→noonPitch by Daylight01, so it tracks the real sun: HIGH/overhead at noon
     // (short shadows tucked under the objects) and LOW at sunrise/sunset (long shadows raking across the
     // ground). A LOW pitch streaks the billboards' directional shadows out far; a HIGH one keeps them short.
-    [Tooltip("Sun pitch above the horizon at noon (high = overhead, short shadows under the objects).")] public float noonPitch = 85f;
+    // 45 (2026-10-27, at the user's go): a sun straight overhead lit every upward-facing flower and leaf the same, so
+    // the meadows read as flat colour; the nature pack's demo sun stands at about 45.
+    [Tooltip("Sun pitch above the horizon at noon (high = overhead, short shadows under the objects).")] public float noonPitch = 45f;
     [Tooltip("Sun pitch at sunrise/sunset (low = long raking shadows).")] public float horizonPitch = 12f;
     [Tooltip("Compass direction of the sun at NOON — the centre the daily swing pivots around.")] public float yaw = -47.33f;
     [Range(0f, 180f)]
@@ -94,7 +99,10 @@ public class DayNightLight : MonoBehaviour
 
     /// <summary>The current day/night sky colour (lerped day→night + dawn/dusk glow). <see cref="SkyboxSky"/> reads
     /// this as the horizon colour so the procedural sky tracks the same clock. Updated whenever the clock moves.</summary>
-    public Color SkyColorNow { get; private set; } = new Color(0.55f, 0.70f, 0.85f);
+    public Color SkyColorNow { get; private set; } = StartSkyColor;
+
+    /// <summary>The sky's colour before any clock has run — what anything reading the sky shows until one does.</summary>
+    public static readonly Color StartSkyColor = new Color(0.55f, 0.70f, 0.85f);
 
     [Header("Cloud shadows")]
     [Tooltip("Project drifting cloud-shadow patches on the ground (adds/uses a CloudShadows component).")]
@@ -120,6 +128,9 @@ public class DayNightLight : MonoBehaviour
         SkyboxSky.Ensure();
     }
 
+    // The sky's colour at this much daylight, warmed toward the horizon glow while the sun is low.
+    Color SkyAt(float day, Color glowColor, float glow) => Color.Lerp(Color.Lerp(nightSky, daySky, day), glowColor, glow * skyHorizonTint);
+
     /// <summary>Force the next <see cref="Update"/> to re-apply colour/intensity/angle even when the clock
     /// hasn't moved, so a changed sun setting shows instantly instead of waiting for the next time-of-day
     /// change.</summary>
@@ -130,6 +141,14 @@ public class DayNightLight : MonoBehaviour
         var tod = TimeOfDay.Instance;
         float t   = tod != null ? tod.time01 : 0.25f;   // 0 sunrise · 0.25 noon · 0.5 sunset · 0.75 midnight
         float day = tod != null ? tod.Daylight01 : 1f;
+
+        // Loading a map scene resets the global lighting to that scene's own (its saved ambient mode and colours), as
+        // SkyboxSky notes for the skybox: put the flat fill back, and re-apply its colour this frame.
+        if (driveAmbient && RenderSettings.ambientMode != AmbientMode.Flat)
+        {
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            lastTime = float.NaN;
+        }
 
         // Only re-apply when the clock actually moved. Guarding on time01 (not Daylight01) matters now that the
         // sun also SWINGS its compass direction: Daylight01 plateaus around noon/midnight while time keeps
@@ -163,8 +182,7 @@ public class DayNightLight : MonoBehaviour
         {
             // Always compute + store the sky colour (the SkyboxSky reads SkyColorNow as its horizon colour, even
             // when there's no camera yet or the camera clears with the skybox instead of this solid colour).
-            Color sky = Color.Lerp(nightSky, daySky, day);
-            sky = Color.Lerp(sky, hc, glow * skyHorizonTint);
+            Color sky = SkyAt(day, hc, glow);
             SkyColorNow = sky;
 
             var cam = CameraRig.Cam;   // cached; re-fetched after a scene swap

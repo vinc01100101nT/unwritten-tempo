@@ -37,6 +37,17 @@ public static class Pathfinder3D
     static readonly System.Collections.Generic.Dictionary<long, Vector2> groundCache
         = new System.Collections.Generic.Dictionary<long, Vector2>();
 
+    // GROUND ABOVE GROUND. Where one walkable surface passes over another — a bridge over the path along a river — the
+    // ground under a cell is the surface a body standing at a known height would walk on, not simply the highest one:
+    // looked for from this far above that height, downward. A body never steps up more than this between neighbouring
+    // cells, and anything walkable overhead is always further up than this (a bridge deck stands well over a body).
+    const float ReachUp = 1.5f;
+    // Heights near a known one, per cell and per level band, so the deck and the path under it are kept apart.
+    static readonly Dictionary<(long cell, int band), Vector2> nearCache = new Dictionary<(long cell, int band), Vector2>();
+    const float BandHeight = 1f;
+    // The height each cell of the current search was reached at — the level a route stands on there.
+    static readonly Dictionary<long, float> reachedAt = new Dictionary<long, float>();
+
     // Reset the elevation statics at every Play start so they can't leak between scenes when
     // "Enter Play Mode" domain reload is disabled — each scene's Pathfinder3DConfig (or its absence)
     // is then authoritative. Flat scenes (no config) get the default flat behaviour.
@@ -47,6 +58,7 @@ public static class Pathfinder3D
         GroundMask = 0;
         ObstacleMask = ~0;
         groundCache.Clear();
+        nearCache.Clear();
         areaGrids.Clear();
     }
 
@@ -65,6 +77,7 @@ public static class Pathfinder3D
     // Reused result-building scratch, so route reconstruction allocates nothing per query either.
     static readonly List<Vector2> cellsScratch = new List<Vector2>();
     static readonly List<Vector2> ptsScratch = new List<Vector2>();
+    static readonly List<float> heightsScratch = new List<float>();
 
     // Ground surface Y under a world XZ point (raycast straight down on the ground layers), or NaN if
     // there's no ground there (a hole/void — treated as unwalkable).
@@ -81,6 +94,32 @@ public static class Pathfinder3D
         }
         y = float.NaN; slopeTan = 0f;
         return false;
+    }
+
+    // The surface a body at height refY would stand on under a world XZ point: the first ground found looking down from
+    // ReachUp over refY. A NaN refY means "not known": the highest ground, as before.
+    static bool SampleGroundNear(Vector2 xz, float refY, out float y, out float slopeTan)
+    {
+        if (float.IsNaN(refY)) return SampleGround(xz, out y, out slopeTan);
+        float top = refY + ReachUp;
+        if (Physics.Raycast(new Vector3(xz.x, top, xz.y), Vector3.down, out var hit, top + RayTop, GroundMask, QueryTriggerInteraction.Ignore))
+        {
+            y = hit.point.y;
+            slopeTan = GroundElevation.SlopeTan(hit.normal);
+            return true;
+        }
+        y = float.NaN; slopeTan = 0f;
+        return false;
+    }
+
+    static Vector2 GroundCellNear(int x, int y, float refY)
+    {
+        if (float.IsNaN(refY)) return GroundCell(x, y);
+        var k = (Key(x, y), Mathf.FloorToInt(refY / BandHeight));
+        if (nearCache.TryGetValue(k, out var g)) return g;
+        g = SampleGroundNear(Center(x, y), refY, out float gy, out float slope) ? new Vector2(gy, slope) : new Vector2(float.NaN, 0f);
+        nearCache[k] = g;
+        return g;
     }
 
     static Vector2 GroundCell(int x, int y)
@@ -103,10 +142,12 @@ public static class Pathfinder3D
     // excluded by the query; the flat ground is excluded by sampling at ProbeY (above it).
     static bool IsWall(Collider c) => c != null && !(c is CharacterController);
 
-    static bool Blocked(Vector2 center, float radius)
+    static bool Blocked(Vector2 center, float radius) => Blocked(center, radius, float.NaN);
+
+    static bool Blocked(Vector2 center, float radius, float refY)
     {
         if (!HeightAware) return BlockedAt(center, radius, ProbeY);
-        float gy = SampleGroundYWorld(center);
+        float gy = SampleGroundNear(center, refY, out float near, out _) ? near : float.NaN;
         if (float.IsNaN(gy)) return true;   // no ground under this cell = void = unwalkable
         // A CLIFF FACE IS GROUND, so the obstacle probe below never sees it; a body this wide would press against it.
         if (AgainstLedge(center, radius)) return true;
@@ -140,8 +181,10 @@ public static class Pathfinder3D
     /// <summary>Is the straight segment a→b walkable in one shot? Dispatches by mode: a flat SphereCast when the
     /// world is flat, or a height-aware march (below) when elevation matters. Used by both the straight-line
     /// fast-path and the route smoother, so open ground takes a direct line in EITHER mode.</summary>
-    static bool LineClear(Vector2 a, Vector2 b, float radius)
-        => HeightAware ? HasClearWalkableLine(a, b, radius) : HasClearPath(a, b, radius);
+    static bool LineClear(Vector2 a, Vector2 b, float radius) => LineClear(a, b, radius, float.NaN);
+
+    static bool LineClear(Vector2 a, Vector2 b, float radius, float startY)
+        => HeightAware ? HasClearWalkableLine(a, b, radius, startY) : HasClearPath(a, b, radius);
 
     /// <summary>Height-aware straight-line test. A flat SphereCast can't see a cliff edge (there's no collider in
     /// the air over a drop), which is why height-aware mode used to refuse to straight-line or smooth at all —
@@ -150,26 +193,27 @@ public static class Pathfinder3D
     /// between samples that a body could not walk, see <see cref="GroundElevation.Walkable"/>) AND no obstacle blocks
     /// the swept body. Cliffs/steps
     /// still fail and fall back to the grid; flat open ground goes perfectly straight.</summary>
-    static bool HasClearWalkableLine(Vector2 a, Vector2 b, float radius)
+    static bool HasClearWalkableLine(Vector2 a, Vector2 b, float radius, float startY)
     {
         Vector2 d = b - a;
         float dist = d.magnitude;
-        if (dist < 1e-4f) return !Blocked(a, radius);
+        if (dist < 1e-4f) return !Blocked(a, radius, startY);
         Vector2 dir = d / dist;
 
         float stepLen = Mathf.Max(0.05f, CellSize * 0.5f);
         int steps = Mathf.CeilToInt(dist / stepLen);
 
-        if (!SampleGround(a, out float prevGy, out float prevSlope)) return false;   // start over a void
+        if (!SampleGroundNear(a, startY, out float prevGy, out float prevSlope)) return false;   // start over a void
 
         float prevAlong = 0f;
         for (int i = 1; i <= steps; i++)
         {
             float along = Mathf.Min(dist, i * stepLen);
             Vector2 p = a + dir * along;
-            if (!SampleGround(p, out float gy, out float slope)) return false;   // hole / off the edge
+            // Each step looks for the ground near the last one, so a line under a bridge stays under it.
+            if (!SampleGroundNear(p, prevGy, out float gy, out float slope)) return false;   // hole / off the edge
             if (!GroundElevation.Walkable(gy - prevGy, along - prevAlong, prevSlope, slope)) return false;   // cliff, ledge or too steep
-            if (Blocked(p, radius)) return false;           // prop / wall in the way
+            if (Blocked(p, radius, gy)) return false;           // prop / wall in the way
             prevGy = gy; prevSlope = slope; prevAlong = along;
         }
         return true;
@@ -193,7 +237,8 @@ public static class Pathfinder3D
     /// Allocation-free in the steady state: the result list and every internal working set / scratch list are
     /// reused, so a field of mobs can repath on a cadence without feeding the GC (the per-frame combat garbage
     /// the profiler pinned on MonsterAI3D.Update was these result Lists).</summary>
-    public static bool FindPath(Vector2 from, Vector2 to, float radius, List<Vector2> result, int maxExpansions = 0)
+    public static bool FindPath(Vector2 from, Vector2 to, float radius, List<Vector2> result, int maxExpansions = 0,
+                                float fromY = float.NaN)
     {
         result.Clear();
 
@@ -201,12 +246,12 @@ public static class Pathfinder3D
         // so a blocked goal can't burn the full 6000-cell budget on a tiny chase. <=0 → the global default.
         int cap = maxExpansions > 0 ? maxExpansions : MaxExpansions;
 
-        if (HeightAware) groundCache.Clear();   // heights are per-query (terrain may have changed)
+        if (HeightAware) { groundCache.Clear(); nearCache.Clear(); }   // heights are per-query (terrain may have changed)
 
         // Straight-line fast-path: if the direct segment is walkable (mode-aware — a flat spherecast when flat,
         // a ground-continuity march when height-aware), take it. This is what keeps a click on open ground a
         // single straight move instead of a grid staircase, in BOTH flat and height-aware scenes.
-        if (LineClear(from, to, radius))
+        if (LineClear(from, to, radius, fromY))
         {
             LastOutcome = "clear-LOS";
             result.Add(to);
@@ -233,11 +278,12 @@ public static class Pathfinder3D
             return true;
         }
 
-        came.Clear(); gScore.Clear(); closed.Clear(); open.Clear();
+        came.Clear(); gScore.Clear(); closed.Clear(); open.Clear(); reachedAt.Clear();
 
         long startKey = Key(sx, sy);
         long goalKey = Key(gx, gy);
         gScore[startKey] = 0f;
+        if (HeightAware) reachedAt[startKey] = GroundCellNear(sx, sy, fromY).x;
         HeapPush(open, (Heur(sx, sy, gx, gy), startKey, sx, sy));
 
         bool found = false;
@@ -264,17 +310,23 @@ public static class Pathfinder3D
 
                 // Elevation gate: only to a neighbour a body could walk to — the same rule its controller walks by.
                 // A void, a ledge or ground too steep is not a valid move.
+                // The neighbour's ground is looked for near the level this route stands on here, so a route along
+                // the path under a bridge stays under it and one over the deck stays on it.
+                float hereY = float.NaN, nextY = float.NaN;
                 if (HeightAware)
                 {
-                    Vector2 gn = GroundCell(nx, ny), gc = GroundCell(cur.x, cur.y);
+                    hereY = reachedAt.TryGetValue(cur.key, out float rh) ? rh : float.NaN;
+                    Vector2 gc = GroundCellNear(cur.x, cur.y, hereY);
+                    Vector2 gn = GroundCellNear(nx, ny, float.IsNaN(hereY) ? gc.x : hereY);
                     float run = (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize;
                     if (float.IsNaN(gn.x) || !GroundElevation.Walkable(gn.x - gc.x, run, gc.y, gn.y)) continue;
+                    nextY = gn.x;
                 }
 
                 bool isStart = nx == sx && ny == sy;
-                if (!isStart && Blocked(Center(nx, ny), radius)) continue;
+                if (!isStart && Blocked(Center(nx, ny), radius, nextY)) continue;
                 if (dx != 0 && dy != 0 &&
-                    (Blocked(Center(cur.x + dx, cur.y), radius) || Blocked(Center(cur.x, cur.y + dy), radius)))
+                    (Blocked(Center(cur.x + dx, cur.y), radius, hereY) || Blocked(Center(cur.x, cur.y + dy), radius, hereY)))
                     continue;
 
                 float ng = cg + ((dx != 0 && dy != 0) ? Sqrt2 : 1f);
@@ -282,6 +334,7 @@ public static class Pathfinder3D
 
                 gScore[nk] = ng;
                 came[nk] = cur.key;
+                if (HeightAware) reachedAt[nk] = nextY;
                 HeapPush(open, (ng + Heur(nx, ny, gx, gy), nk, nx, ny));
             }
         }
@@ -295,20 +348,25 @@ public static class Pathfinder3D
 
         // Reconstruct the cell chain into reused scratch (no per-call List alloc).
         cellsScratch.Clear();
+        heightsScratch.Clear();
         long k = endKey;
         while (true)
         {
             cellsScratch.Add(Center((int)(k >> 32), (int)(uint)k));
+            heightsScratch.Add(reachedAt.TryGetValue(k, out float kh) ? kh : float.NaN);
             if (k == startKey) break;
             k = came[k];
         }
         cellsScratch.Reverse();
+        heightsScratch.Reverse();
 
         Vector2 endPoint = found ? to : Center((int)(endKey >> 32), (int)(uint)endKey);
         ptsScratch.Clear();
         ptsScratch.Add(from);
         for (int i = 1; i < cellsScratch.Count - 1; i++) ptsScratch.Add(cellsScratch[i]);
         ptsScratch.Add(endPoint);
+        // The height each kept point stands at: the start's own, then each cell's level (its last cell's for the end).
+        heightsScratch[0] = HeightAware ? (reachedAt.TryGetValue(startKey, out float sh) ? sh : fromY) : float.NaN;
 
         // Pull the grid route taut. The smoother's line-of-sight test is mode-aware (LineClear), so it can
         // straighten runs over flat ground even in height-aware scenes while still keeping the waypoints needed
@@ -363,22 +421,36 @@ public static class Pathfinder3D
         var height = new float[n];
         var slope = new float[n];
         var open = new bool[n];
+        // A SECOND LEVEL where walkable ground passes over walkable ground (a bridge over a path): the surface found by
+        // looking on down from just under the top one. NaN where there is none — almost everywhere.
+        var under = new float[n];
+        var underSlope = new float[n];
+        var underOpen = new bool[n];
         for (int y = 0; y < g.ny; y++)
             for (int x = 0; x < g.nx; x++)
             {
                 int i = y * g.nx + x;
+                under[i] = float.NaN;
                 Vector2 c = Center(g.x0 + x, g.y0 + y);
                 float gy = 0f;
                 if (HeightAware && !SampleGround(c, out gy, out slope[i])) continue;
                 height[i] = gy;
                 open[i] = !BlockedAt(c, 0.01f, HeightAware ? gy + ProbeY : ProbeY);
+                if (HeightAware && Physics.Raycast(new Vector3(c.x, gy - 0.05f, c.y), Vector3.down, out var low, RayTop,
+                                                   GroundMask, QueryTriggerInteraction.Ignore))
+                {
+                    under[i] = low.point.y;
+                    underSlope[i] = GroundElevation.SlopeTan(low.normal);
+                    underOpen[i] = !BlockedAt(c, 0.01f, low.point.y + ProbeY);
+                }
             }
+        var levels = new Levels { height = height, slope = slope, open = open, under = under, underSlope = underSlope, underOpen = underOpen };
 
         var queue = new int[n];
         ushort next = 0;
         for (int start = 0; start < n; start++)
         {
-            if (!open[start] || g.label[start] != 0) continue;
+            if (!levels.AnyOpen(start) || g.label[start] != 0) continue;
             if (next == ushort.MaxValue) return null;
             next++;
             int head = 0, tail = 0;
@@ -393,18 +465,40 @@ public static class Pathfinder3D
                     int x = cx + dx, y = cy + dy;
                     if (x < 0 || y < 0 || x >= g.nx || y >= g.ny) continue;
                     int i = y * g.nx + x;
-                    if (!open[i] || g.label[i] != 0) continue;
-                    if (HeightAware && !GroundElevation.Walkable(height[i] - height[cur],
-                            (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize, slope[cur], slope[i])) continue;
+                    if (!levels.AnyOpen(i) || g.label[i] != 0) continue;
+                    if (HeightAware && !levels.Joined(cur, i, (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize)) continue;
                     g.label[i] = next;
                     queue[tail++] = i;
                 }
             }
         }
         g.byLabel = KeeperMath.GroupByLabel(g.label, next, out g.firstOf);
-        if (HeightAware) g.ledgeSteps = LedgeSteps(g, height, slope, open, queue);
+        if (HeightAware) g.ledgeSteps = LedgeSteps(g, levels, queue);
         areaGrids.Add(g);
         return g;
+    }
+
+    // The one or two walkable levels of every cell of a labelling, and the rule joining two cells: when ANY level of one
+    // can be walked to from any level of the other. Deliberately generous, like the rest of the labelling — "apart" is
+    // only ever said when it is certainly true.
+    sealed class Levels
+    {
+        public float[] height, slope, under, underSlope;
+        public bool[] open, underOpen;
+
+        public bool AnyOpen(int i) => open[i] || underOpen[i];
+
+        public bool Joined(int a, int b, float run)
+        {
+            if (open[a] && open[b] && GroundElevation.Walkable(height[b] - height[a], run, slope[a], slope[b])) return true;
+            bool aLow = underOpen[a] && !float.IsNaN(under[a]), bLow = underOpen[b] && !float.IsNaN(under[b]);
+            if (aLow && open[b] && GroundElevation.Walkable(height[b] - under[a], run, underSlope[a], slope[b])) return true;
+            if (open[a] && bLow && GroundElevation.Walkable(under[b] - height[a], run, slope[a], underSlope[b])) return true;
+            return aLow && bLow && GroundElevation.Walkable(under[b] - under[a], run, underSlope[a], underSlope[b]);
+        }
+
+        // Has b got ground at all, on either level?
+        public bool HasGround(int b) => open[b] || underOpen[b];
     }
 
     // Distances are kept only this far out: no body is wider than this many cells from its middle to its edge.
@@ -412,7 +506,7 @@ public static class Pathfinder3D
 
     // Every cell's distance, in whole cells, from the nearest ledge cell: an open cell with a neighbour that has ground
     // but cannot be stepped to (GroundElevation.Walkable says no). Worked out once with the labels, in one sweep.
-    static byte[] LedgeSteps(AreaGrid g, float[] height, float[] slope, bool[] open, int[] queue)
+    static byte[] LedgeSteps(AreaGrid g, Levels levels, int[] queue)
     {
         int n = g.nx * g.ny;
         var steps = new byte[n];
@@ -420,16 +514,15 @@ public static class Pathfinder3D
         for (int i = 0; i < n; i++)
         {
             steps[i] = MaxLedgeSteps;
-            if (!open[i]) continue;
+            if (!levels.AnyOpen(i)) continue;
             int cx = i % g.nx, cy = i / g.nx;
             foreach (var (dx, dy) in N8)
             {
                 int x = cx + dx, y = cy + dy;
                 if (x < 0 || y < 0 || x >= g.nx || y >= g.ny) continue;
                 int j = y * g.nx + x;
-                if (!open[j]) continue;
-                if (GroundElevation.Walkable(height[j] - height[i], (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize,
-                                             slope[i], slope[j])) continue;
+                if (!levels.HasGround(j)) continue;
+                if (levels.Joined(i, j, (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize)) continue;
                 steps[i] = 0;
                 queue[tail++] = i;
                 break;
@@ -599,7 +692,8 @@ public static class Pathfinder3D
         for (int i = 1; i < pts.Count; i++)
         {
             if (i == pts.Count - 1) { outp.Add(pts[i]); break; }
-            if (!LineClear(pts[anchor], pts[i + 1], radius)) { outp.Add(pts[i]); anchor = i; }
+            float anchorY = anchor < heightsScratch.Count ? heightsScratch[anchor] : float.NaN;
+            if (!LineClear(pts[anchor], pts[i + 1], radius, anchorY)) { outp.Add(pts[i]); anchor = i; }
         }
     }
 

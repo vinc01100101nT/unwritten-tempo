@@ -1013,8 +1013,10 @@ public static class RecipeGenerator
     //   • DECOR  (canopy = false): whole-plant decor (flowers/grass/ferns) — sway EVERY material, snappy default look.
     //   • CANOPY (canopy = true):  trees/bushes — sway ONLY the leaf material (the trunk/bark stays rigid), with
     //                              taller/gentler/slower params so the crown rustles instead of the whole tree whipping.
-    static void ApplySway(GameObject go, bool canopy)
+    internal static void ApplySway(GameObject go, bool canopy)
     {
+        // Found here too, for a caller that is not a map Generate (the seamless world builder).
+        if (_foliageWind == null) _foliageWind = Shader.Find("Unwritten/FoliageWind");
         if (_foliageWind == null) return;   // shader missing (already warned at Generate); leave props un-swayed
         foreach (var rend in go.GetComponentsInChildren<MeshRenderer>(true)) SwayRenderer(rend, canopy);
     }
@@ -1080,7 +1082,7 @@ public static class RecipeGenerator
     // Save a runtime sway material as a real .mat asset so it survives being assigned to a PREFAB asset (an
     // in-memory material written into a prefab serializes as a NULL slot → the prop turns pink). Deterministic
     // path under Prefabs/Props/Materials, so re-running REPLACES the same asset in place rather than piling up copies.
-    static Material PersistSwayMaterial(Material m)
+    internal static Material PersistSwayMaterial(Material m)
     {
         if (EditorUtility.IsPersistent(m)) return m;
         const string dir = "Assets/1_Authored/Prefabs/Props/Materials";

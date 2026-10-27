@@ -28,7 +28,9 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'Molten stone hardens again.
 
-    Melts the Stone on every enemy around you into lava, a hit for each Stone melted. The lava then hardens on them as 3 Stone.'
+    Melts the Stone on every enemy around
+    you into lava, a hit for each Stone melted. The lava then hardens on them as
+    Stone.'
   archetype: 2
   family: 1
   shape: 0
@@ -193,6 +195,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -398,6 +401,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10

@@ -104,9 +104,39 @@ def colours_in(src):
     return found
 
 
+def theme_rows(src, set_name):
+    """The palette as UiKit holds it: the names of its Row enum, paired in order with one set of colours.
+
+    Each entry is written as new Color(r, g, b[, a]) in 0..1 or new Color32(0xRR, 0xGG, 0xBB, 0xAA).
+    """
+    enum = re.search(r"public enum Row\s*\{([^}]*)\}", src)
+    body = re.search(r"static readonly Color\[\]\s*" + set_name + r"\s*=\s*\{(.*?)\};", src, re.S)
+    if not enum or not body:
+        return {}
+    names = [n.strip() for n in enum.group(1).split(",") if n.strip()]
+    values = []
+    for m in re.finditer(r"new Color(32)?\(([^)]*)\)", re.sub(r"//[^\n]*", "", body.group(1))):
+        parts = [p.strip().rstrip("f") for p in m.group(2).split(",")]
+        if m.group(1):
+            r, g, b = (int(p, 16) for p in parts[:3])
+            a = int(parts[3], 16) / 255.0 if len(parts) > 3 else 1.0
+        else:
+            r, g, b = (float(p) * 255 for p in parts[:3])
+            a = float(parts[3]) if len(parts) > 3 else 1.0
+        values.append({"hex": hexof(r, g, b), "alpha": round(a, 3)})
+    if len(names) != len(values):
+        sys.exit("ui-tokens: UiKit's Row enum has %d names but %s has %d colours — fix the parser or the palette"
+                 % (len(names), set_name, len(values)))
+    return dict(zip(names, values))
+
+
 def named_colours(src):
-    """The shared palette's colours WITH their names, so the CSS can carry the game's own words."""
-    out = {}
+    """The shared palette's colours WITH their names, so the CSS can carry the game's own words.
+
+    The palette is UiKit's LIGHT set (its Row enum paired with LightSet); the older one-field-per-colour
+    spelling is still read, so a palette written either way is found.
+    """
+    out = theme_rows(src, "LightSet")
     for m in re.finditer(
         r"public static (?:readonly )?Color (\w+)\s*=\s*new Color\(\s*([\d.]+)f?\s*,\s*([\d.]+)f?\s*,\s*([\d.]+)f?\s*(?:,\s*([\d.]+)f?\s*)?\)",
         src,
@@ -126,6 +156,9 @@ def main():
     shared_src = open(os.path.join(SCRIPTS, SHARED), encoding="utf-8").read()
 
     palette = named_colours(shared_src)
+    if not palette:
+        sys.exit("ui-tokens: found no palette in %s — the parser no longer matches how it is written, and an empty "
+                 "sheet would leave every mock page without its colours" % SHARED)
 
     # Every other screen's own colours, so a checker can say WHICH screen a borrowed colour came from.
     screens = {}

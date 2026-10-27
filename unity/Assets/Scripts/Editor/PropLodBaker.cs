@@ -15,7 +15,8 @@ using UnityEngine;
 /// from the same pivot and the prop is still solid exactly once. The meshes are written to
 /// <see cref="OutputDir"/> (tool output: safe to delete and bake again).</para>
 ///
-/// <para>Left alone: a prop that already switches; a family with its own hand-made <c>_LODn</c> copies (that is
+/// <para>A prop this tool gave levels before has them made again, over the same files. Left alone: a prop that
+/// switches by some other tool; a family with its own hand-made <c>_LODn</c> copies (that is
 /// <see cref="LodGroupWirer"/>'s); and a prop under <see cref="MinTriangles"/>, where a simpler copy saves nothing worth
 /// a switch. Run through the live editor link: <c>PropLodBaker.BakeCore(null)</c> for every prop, or with a list of
 /// prefab paths for some.</para>
@@ -33,12 +34,12 @@ public static class PropLodBaker
     /// 15% showed jagged roof edges and a broken chimney at a distance a house beside the player is seen from.</summary>
     public const float Level1Share = 0.4f, Level2Share = 0.25f;
 
-    // KEEPS THE OUTLINE, LETS THE TEXTURE SEAMS GO. Measured 2026-10-11 on House_A (72,945 triangles, 84,676 corners —
-    // almost every triangle its own patch of texture): with its seams kept it could only come down to 69,343, with
-    // them let go to 10,940. A seam that slips is a smear of colour too small to see at the distance these levels are
-    // drawn at; the full prop, untouched, is what is seen up close.
+    // KEEPS THE OUTLINE AND THE TEXTURE SEAMS. With the seams let go, the edges along them folded flat: every tree
+    // trunk came out as a pointed tent of flat panels (seen in play 2026-10-26), as the houses had before (2026-10-12).
+    // Measured 2026-10-26 with the seams kept: trunks stay round, and a tree comes down to 40–74% of its triangles
+    // (Deciduous_tree1 1,547 → 627, Willow_tree1 1,395 → 745, Oak_tree1 1,657 → 1,219) instead of 25%.
     static readonly MeshDecimation.Options FarOptions = new MeshDecimation.Options
-        { preserveBorders = true, preserveUvSeams = false, smartLink = true };
+        { preserveBorders = true, preserveUvSeams = true, smartLink = true };
 
     // A mesh made simpler once per run is reused by every prop that draws it.
     static readonly Dictionary<(Mesh, int), Mesh> made = new Dictionary<(Mesh, int), Mesh>();
@@ -68,7 +69,19 @@ public static class PropLodBaker
                     skipped++;
                     continue;
                 }
-                if (root.GetComponentInChildren<LODGroup>(true) != null) { skipped++; continue; }
+                var switching = root.GetComponentInChildren<LODGroup>(true);
+                if (switching != null)
+                {
+                    // A switch this tool made earlier (its output folder exists) gets its simpler meshes made again,
+                    // written over the same files, so the prop and everything placing it keep pointing at them.
+                    if (!AssetDatabase.IsValidFolder(OutputDir + "/" + name)) { skipped++; continue; }
+                    var (was, now) = Remake(switching, name);
+                    report.AppendLine(name + ": " + was + " → " + now + " triangles at its simplest (made again)");
+                    before += was;
+                    far += now;
+                    baked++;
+                    continue;
+                }
                 var originals = new List<Renderer>();
                 var filters = new List<MeshFilter>();
                 int tris = 0;
@@ -163,6 +176,43 @@ public static class PropLodBaker
         }
         made[(src, level)] = mesh;
         return mesh;
+    }
+
+    // Remakes each simpler level of a switch this tool made, from the full meshes at level 0, over the files the level
+    // already draws. Returns the full and the simplest triangle counts.
+    static (int full, int simplest) Remake(LODGroup group, string propName)
+    {
+        var lods = group.GetLODs();
+        var shares = new[] { 1f, Level1Share, Level2Share };
+        int full = 0, simplest = 0;
+        for (int level = 0; level < lods.Length && level < shares.Length; level++)
+        {
+            int tris = 0;
+            for (int i = 0; i < lods[0].renderers.Length; i++)
+            {
+                var srcFilter = lods[0].renderers[i] != null ? lods[0].renderers[i].GetComponent<MeshFilter>() : null;
+                var src = srcFilter != null ? srcFilter.sharedMesh : null;
+                if (src == null) continue;
+                var filter = level > 0 && i < lods[level].renderers.Length && lods[level].renderers[i] != null
+                    ? lods[level].renderers[i].GetComponent<MeshFilter>() : null;
+                string path = filter != null && filter.sharedMesh != null ? AssetDatabase.GetAssetPath(filter.sharedMesh) : "";
+                if (!path.StartsWith(OutputDir + "/", System.StringComparison.Ordinal)) { tris += MeshDecimation.Tris(level > 0 && filter != null ? filter.sharedMesh : src); continue; }
+                if (!made.TryGetValue((src, level), out var mesh))
+                {
+                    int target = Mathf.Max(12, Mathf.RoundToInt(MeshDecimation.Tris(src) * shares[level]));
+                    var simpler = MeshDecimation.Decimate(src, target, FarOptions) ?? Object.Instantiate(src);
+                    simpler.name = src.name + "_LOD" + level;
+                    // editor-write-ok: run by hand through the live editor link, at the user's request, never on its own.
+                    mesh = WorldBuildUtil.SaveMeshInPlace(simpler, path);
+                    if (mesh != simpler) Object.DestroyImmediate(simpler);
+                    made[(src, level)] = mesh;
+                }
+                tris += MeshDecimation.Tris(mesh != null ? mesh : filter.sharedMesh);
+            }
+            if (level == 0) full = tris;
+            simplest = tris;
+        }
+        return (full, simplest);
     }
 
     static MeshRenderer AddSibling(MeshRenderer original, Mesh mesh, int level)

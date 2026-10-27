@@ -149,7 +149,13 @@ public class AutoCombatWindow : MonoBehaviour
             draft = AutoCombatClient.Settings.Clone();
             DrawAll();
         }
+
+        // ANOTHER WEAPON TAKEN IN HAND shows that weapon's own four slots.
+        var me = Character.Instance;
+        if (me != null && me.HeldWeapon != slotsDrawnFor) DrawSlots();
     }
+
+    WeaponType slotsDrawnFor;
 
     // START CLOSES EVERY WINDOW once the server says yes — a refusal leaves them up, so its reason can be read.
     float closeWindowsIfOnBefore;
@@ -177,7 +183,7 @@ public class AutoCombatWindow : MonoBehaviour
     void DrawAll()
     {
         DrawHunt();
-        for (int i = 0; i < slotLabels.Length; i++) slotLabels[i].text = SkillName(Slot(i));
+        DrawSlots();
         lootRate.SetValueWithoutNotify(draft.lootRateAtMostPercent);
         PercentText(lootRateLabel, "Take drops of at most", draft.lootRateAtMostPercent);
         lootGears.SetIsOnWithoutNotify(draft.lootGears);
@@ -200,7 +206,14 @@ public class AutoCombatWindow : MonoBehaviour
         for (int m = 0; m < huntButtons.Length; m++) UiKit.MarkTab(huntButtons[m], m == mode);
     }
 
-    string Slot(int i) => draft.slots != null && i < draft.slots.Length ? draft.slots[i] : "";
+    // The weapon in hand's slots, as the draft holds them.
+    void DrawSlots()
+    {
+        var me = Character.Instance;
+        slotsDrawnFor = me != null ? me.HeldWeapon : WeaponType.None;
+        var slots = draft.SlotsFor(slotsDrawnFor);
+        for (int i = 0; i < slotLabels.Length; i++) slotLabels[i].text = SkillName(i < slots.Length ? slots[i] : "");
+    }
 
     static string SkillName(string id)
     {
@@ -221,29 +234,32 @@ public class AutoCombatWindow : MonoBehaviour
 
     // ---- the skill list -------------------------------------------------------------------------------------------
 
-    // Every learned weapon skill this character may press — never a skill of no weapon, a passive or an item's.
-    // The server holds each slot to the same test whatever is sent.
+    // Every learned skill of the weapon in hand this character may press — never another weapon's, a skill of no
+    // weapon, a passive or an item's. The server holds each slot to MayAutoPress whatever is sent, and a press still
+    // needs the skill's weapon in hand.
     void OpenSkillPicker(int slot)
     {
         var me = Character.Instance;
         if (me == null) return;
         OpenPicker(130f);
         PickerChoice("None", () => SetSlot(slot, ""));
+        var held = me.HeldWeapon;
         var all = SkillCatalog.All;
         for (int i = 0; i < all.Count; i++)
         {
             var def = all[i];
-            if (def == null || string.IsNullOrEmpty(def.id) || !me.MayAutoPress(def.id)) continue;
+            if (def == null || string.IsNullOrEmpty(def.id) || def.weaponType != held || !me.MayAutoPress(def.id)) continue;
             string id = def.id;
             PickerChoice(SkillName(id), () => SetSlot(slot, id));
         }
     }
 
+    // Into the slots of the weapon in hand — the only weapon whose skills the list offered.
     void SetSlot(int slot, string id)
     {
-        if (draft.slots == null || draft.slots.Length != AutoCombatSettings.SkillSlots)
-            draft = AutoCombatMath.Clamped(draft);
-        draft.slots[slot] = id ?? "";
+        var me = Character.Instance;
+        if (me == null || me.HeldWeapon == WeaponType.None) return;
+        draft.EditableSlotsFor(me.HeldWeapon)[slot] = id ?? "";
         slotLabels[slot].text = SkillName(id);
         Changed();
     }

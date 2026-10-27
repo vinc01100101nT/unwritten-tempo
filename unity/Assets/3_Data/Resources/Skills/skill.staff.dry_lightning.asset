@@ -28,7 +28,8 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'Earth swallows the spark.
 
-    Grounds the Static on every enemy around you. Each Static discharges as a hit, then becomes 1 Stone.'
+    Grounds the Static on every enemy
+    around you. Each Static discharges as a hit, then becomes a Stone.'
   archetype: 2
   family: 1
   shape: 0
@@ -193,6 +194,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0
@@ -398,6 +400,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 10

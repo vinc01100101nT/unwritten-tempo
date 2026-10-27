@@ -177,7 +177,7 @@ public class PathAgent3D : MonoBehaviour
         nextRepath = Time.time + repathInterval;
         var from = new Vector2(transform.position.x, transform.position.z);
         // Fills `path` in place (allocation-free); false = stuck → fall back to a straight line.
-        if (!Pathfinder3D.FindPath(from, goal, agentRadius, path, maxPathExpansions))
+        if (!Pathfinder3D.FindPath(from, goal, agentRadius, path, maxPathExpansions, transform.position.y))
             { path.Clear(); path.Add(goal); }
         wp = 0;
     }

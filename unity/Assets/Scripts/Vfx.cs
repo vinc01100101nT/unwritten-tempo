@@ -135,6 +135,15 @@ public static class Vfx
         {
             poolKey = key;
             systems = GetComponentsInChildren<ParticleSystem>(true);
+            // THE POOL OWNS AN EFFECT'S LIFE, never the effect itself. 48 systems in the vendor effect prefabs are set to
+            // destroy themselves when they finish (MEASURED 2026-10-26); in a pooled copy that deletes parts the copy
+            // still holds, and every later Stop on it throws, every frame — 40,798 errors in one play-test. Switched off
+            // on this copy only; the prefab assets are untouched.
+            for (int i = 0; i < systems.Length; i++)
+            {
+                var main = systems[i].main;
+                if (main.stopAction == ParticleSystemStopAction.Destroy) main.stopAction = ParticleSystemStopAction.None;
+            }
             audioSources = GetComponentsInChildren<AudioSource>(true);
             lights = GetComponentsInChildren<Light>(true);
             baseLightColor = new Color[lights.Length];

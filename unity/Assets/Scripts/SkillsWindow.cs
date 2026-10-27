@@ -369,7 +369,8 @@ public class SkillsWindow : MonoBehaviour
             OrbElement[] thirds = { pair, Beats(pair), Alongside(pair), BeatenBy(pair) };
             for (int c = 0; c < thirds.Length; c++)
                 if (combos.TryGetValue(KeyOf(pair, pair, thirds[c]), out var def))
-                    BuildNode(board, def, CellX(c, cellW), y, 1, null, weaponColor, level, pointsLeft, mastery, cellW);
+                    BuildNode(board, def, CellX(c, cellW), y, Mathf.Max(1, def.masteryLevel), null, weaponColor, level,
+                              pointsLeft, mastery, cellW);
         }
 
         float utilY = GridY + 4 * RowStep + 12f;
@@ -386,7 +387,8 @@ public class SkillsWindow : MonoBehaviour
                 if (a == OrbElement.None) a = e; else if (b == OrbElement.None) b = e; else d = e;
             }
             if (combos.TryGetValue(KeyOf(a, b, d), out var def))
-                BuildNode(board, def, CellX(c, cellW), utilY, 1, null, weaponColor, level, pointsLeft, mastery, cellW);
+                BuildNode(board, def, CellX(c, cellW), utilY, Mathf.Max(1, def.masteryLevel), null, weaponColor, level,
+                          pointsLeft, mastery, cellW);
         }
     }
 
@@ -507,7 +509,9 @@ public class SkillsWindow : MonoBehaviour
                 OrbDot((RectTransform)node.transform, OrbMath.FromLetter(def.orbCombo[i]), 4 + TileSize + 4 + i * 16, 27, 14);
         else
         {
-            string line = combo ? OrbMath.FromLetter(def.orbCombo[0]) + " Orb Lv " + OrbMath.UltimateOrbLevel : bought + "/" + top;
+            string line = !combo ? bought + "/" + top
+                        : !reached ? WeaponTypes.Label(def.weaponType) + " Mastery " + opensAt
+                        : OrbMath.FromLetter(def.orbCombo[0]) + " Orb Lv " + OrbMath.UltimateOrbLevel;
             var lvl = UiKit.Label("Level", node.transform, line, 11, FontStyle.Bold,
                                   combo ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight);
             UiKit.Paint(lvl, learned ? UiKit.TextMain : LockedText); lvl.raycastTarget = false;

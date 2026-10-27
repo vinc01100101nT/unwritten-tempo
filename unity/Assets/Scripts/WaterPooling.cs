@@ -453,6 +453,7 @@ public static class WaterPooling
     }
 
     // The square the steepest way down from square c ends on: step to the lowest lower neighbour until none is lower.
+    // A square with no ground is never stepped onto — it belongs to no hollow, so water cannot end there.
     static int Down(float[] grid, int nx, int nz, int c)
     {
         for (int guard = 0; guard < grid.Length; guard++)
@@ -464,6 +465,7 @@ public static class WaterPooling
                 int ni = ci + (d == 0 ? 1 : d == 1 ? -1 : 0), nj = cj + (d == 2 ? 1 : d == 3 ? -1 : 0);
                 if (ni < 0 || nj < 0 || ni >= nx || nj >= nz) continue;
                 int k = nj * nx + ni;
+                if (float.IsNegativeInfinity(grid[k])) continue;
                 if (grid[k] < lowest) { lowest = grid[k]; next = k; }
             }
             if (next < 0) return c;

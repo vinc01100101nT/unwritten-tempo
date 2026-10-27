@@ -503,19 +503,7 @@ public class EquipmentInstance
 
         if (cards == null) return;
         for (int i = 0; i < cards.Count; i++)
-        {
-            var c = cards[i];
-            if (c == null) continue;
-            eb.str  += c.bonusStr;
-            eb.agi  += c.bonusAgi;
-            eb.vit  += c.bonusVit;
-            eb.intel+= c.bonusInt;
-            eb.dex  += c.bonusDex;
-            eb.luk  += c.bonusLuk;
-            eb.atk  += c.bonusAttack;
-            eb.critPercent += c.bonusCritPercent;
-            eb.aspdPercent += c.bonusAspdPercent;
-        }
+            if (cards[i] != null) cards[i].AddInto(ref eb);
     }
 
     /// <summary>What THIS copy itself adds, before its cards — the one place a copy's own numbers are read, by the

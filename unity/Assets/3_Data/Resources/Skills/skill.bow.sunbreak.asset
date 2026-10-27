@@ -28,8 +28,8 @@ MonoBehaviour:
   isOrbRelease: 0
   description: 'Light through a moving cloud.
 
-    A shot that hits twice, each for
-    59% Attack, +0.5% Attack each for every 1% movement speed bonus you have.'
+    A shot that hits twice, harder
+    the more movement speed bonus you have.'
   archetype: 0
   family: 2
   shape: 0
@@ -194,6 +194,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       healAmountMaxSet: 0
+      healShareOfMaxHP: 0
       ailment: 2
       seconds:
         value: 0

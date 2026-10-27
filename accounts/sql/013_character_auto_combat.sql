@@ -3,7 +3,9 @@
 -- character when it is handed to a map server.
 --
 -- `settings` is the settings exactly as the game sends them, one JSON object:
---   { "v": 1, "slots": [4 skill ids or ""], "lootRateAtMostPercent": 0-100, "lootGears": bool, "lootConsumables": bool,
+--   { "v": 2, "weapons": [{ "weapon": weapon type name, "slots": [4 skill ids or ""] }, one per weapon with a skill set],
+--     "slots": [] (v1 kept one set of 4 for every weapon here; the game carries a v1 row forward on arrival),
+--     "lootRateAtMostPercent": 0-100, "lootGears": bool, "lootConsumables": bool,
 --     "lootMaterials": bool, "lootAll": bool, "hpPotionBelowPercent": 0-100, "mpPotionBelowPercent": 0-100,
 --     "huntMode": 0 Standing / 1 Radius / 2 Free Roam }
 -- A character that never changed a setting has NO row, and the game reads that as "never set": empty slots,

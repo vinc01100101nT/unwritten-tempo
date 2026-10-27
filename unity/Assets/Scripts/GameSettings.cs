@@ -25,6 +25,11 @@ public static class GameSettings
     const string MusicVolumeKey        = "set_volume_music";
     const string ScrollSensitivityKey  = "set_scroll_sensitivity";
     const string HideOtherCallsKey     = "set_hide_other_skill_calls";
+    const string ShadowQualityKey      = "set_shadow_quality";
+    const string PlantDistanceKey      = "set_plant_distance";
+    const string PlantDensityKey       = "set_plant_density";
+    const string PlantShadowsKey       = "set_plant_shadows";
+    const string ShowPerformanceKey    = "set_show_performance";
 
     public const float ScrollSensitivityMin = 0.25f;
     public const float ScrollSensitivityMax = 3f;
@@ -149,6 +154,102 @@ public static class GameSettings
     {
         get => Volume(ref music, MusicVolumeKey);
         set => SetVolume(ref music, MusicVolumeKey, value);
+    }
+
+    // ---- graphics: what each player's own screen draws ----------------------------------------------------------
+    // None of these reaches the server or changes a saved file: they only choose how much this machine draws.
+
+    /// <summary>The sun's shadow picture per <see cref="ShadowQuality"/> step: Low, Medium, High, Very high. A sharper
+    /// picture shows the edges of small things (a flower) instead of a blob, at the cost of graphics memory.</summary>
+    public static readonly int[] ShadowResolutions = { 1024, 2048, 4096, 8192 };
+    public static readonly string[] ShadowQualityNames = { "Low", "Medium", "High", "Very high" };
+    public const float PlantDistanceMin = 10f, PlantDistanceMax = 40f;
+    public const float PlantDensityMin = 0.25f;
+
+    static int? shadowQuality;
+    static float? plantDistance, plantDensity;
+    static bool? plantShadows, showPerformance;
+
+    /// <summary>Raised when the share of grass and flowers drawn changes, so every carpet lays its plants again.</summary>
+    public static event System.Action PlantDensityChanged;
+    /// <summary>Raised when the performance panel is switched on or off (here or by its key).</summary>
+    public static event System.Action ShowPerformanceChanged;
+
+    /// <summary>Index into <see cref="ShadowResolutions"/>. Very high (8192) by default.</summary>
+    public static int ShadowQuality
+    {
+        get
+        {
+            if (shadowQuality == null) shadowQuality = Mathf.Clamp(PlayerPrefs.GetInt(ShadowQualityKey, ShadowResolutions.Length - 1), 0, ShadowResolutions.Length - 1);
+            return shadowQuality.Value;
+        }
+        set
+        {
+            value = Mathf.Clamp(value, 0, ShadowResolutions.Length - 1);
+            if (shadowQuality == value) return;
+            shadowQuality = value;
+            PlayerPrefs.SetInt(ShadowQualityKey, value);
+            GraphicsQuality.Apply();
+        }
+    }
+
+    /// <summary>How far from the camera grass and flower carpets are drawn, in world units. 20 by default.</summary>
+    public static float PlantDistance
+    {
+        get
+        {
+            if (plantDistance == null) plantDistance = Mathf.Clamp(PlayerPrefs.GetFloat(PlantDistanceKey, 20f), PlantDistanceMin, PlantDistanceMax);
+            return plantDistance.Value;
+        }
+        set
+        {
+            value = Mathf.Clamp(value, PlantDistanceMin, PlantDistanceMax);
+            if (plantDistance != null && Mathf.Approximately(plantDistance.Value, value)) return;
+            plantDistance = value;
+            PlayerPrefs.SetFloat(PlantDistanceKey, value);
+        }
+    }
+
+    /// <summary>The share of the world's built grass and flowers drawn, <see cref="PlantDensityMin"/> to 1. The built
+    /// plants are the ceiling; a lower share leaves plants out at random, evenly. 1 by default.</summary>
+    public static float PlantDensity
+    {
+        get
+        {
+            if (plantDensity == null) plantDensity = Mathf.Clamp(PlayerPrefs.GetFloat(PlantDensityKey, 1f), PlantDensityMin, 1f);
+            return plantDensity.Value;
+        }
+        set
+        {
+            value = Mathf.Clamp(value, PlantDensityMin, 1f);
+            if (plantDensity != null && Mathf.Approximately(plantDensity.Value, value)) return;
+            plantDensity = value;
+            PlayerPrefs.SetFloat(PlantDensityKey, value);
+            PlantDensityChanged?.Invoke();
+        }
+    }
+
+    /// <summary>Do grass and flowers cast shadows. On by default.</summary>
+    public static bool PlantShadows
+    {
+        get
+        {
+            if (plantShadows == null) plantShadows = PlayerPrefs.GetInt(PlantShadowsKey, 1) != 0;
+            return plantShadows.Value;
+        }
+        set => SetFlag(ref plantShadows, PlantShadowsKey, value);
+    }
+
+    /// <summary>Show the performance panel. Off by default.</summary>
+    public static bool ShowPerformance
+    {
+        get => Flag(ref showPerformance, ShowPerformanceKey);
+        set
+        {
+            if (showPerformance != null && showPerformance.Value == value) return;
+            SetFlag(ref showPerformance, ShowPerformanceKey, value);
+            ShowPerformanceChanged?.Invoke();
+        }
     }
 
     // ---- the hotbar's third row: the player's own keys ----------------------------------------------------------

@@ -16,13 +16,16 @@ public class WorldMapDoors : MaskableGraphic
     public enum Part { Lines, Squares }
 
     // Sizes in picture units (one unit is one metre of the world layout), as the world creator draws them.
-    const float SquareHalf = 5f, SquareEdge = 2f, LineWidth = 2f, Dash = 7f, Gap = 6f;
+    const float SquareHalf = 5f, SquareEdge = 2f, LineWidth = 2f, LitLineWidth = 4f, Dash = 7f, Gap = 6f;
     static readonly Color32 Blue = new Color32(0x2b, 0x6c, 0xf2, 0xff), Edge = new Color32(0xcf, 0xe0, 0xff, 0xff);
+    // The route being walked, lit in the "you are here" marker's yellow, its squares rimmed in white.
+    static readonly Color32 Lit = new Color32(0xff, 0xeb, 0x40, 0xff), LitEdge = new Color32(0xff, 0xff, 0xff, 0xff);
 
     /// <summary>The most corners one of these may be asked to draw — under what one screen mesh can hold.</summary>
     public const int MostCorners = 60000;
 
     Part part;
+    bool lit;
     // Each door as its two ends on the picture: x,y is one end and z,w the other, as a share of the picture's width
     // from its left edge and of its height from its top edge.
     List<Vector4> doors;
@@ -31,9 +34,10 @@ public class WorldMapDoors : MaskableGraphic
 
     /// <summary>Draw <paramref name="part"/> of doors <paramref name="from"/> up to (not including) <paramref name="to"/>
     /// of <paramref name="doors"/>, on a picture <paramref name="unitsWide"/> by <paramref name="unitsHigh"/> units.</summary>
-    public void Show(Part part, List<Vector4> doors, int from, int to, float unitsWide, float unitsHigh)
+    public void Show(Part part, List<Vector4> doors, int from, int to, float unitsWide, float unitsHigh, bool lit = false)
     {
         this.part = part;
+        this.lit = lit;
         this.doors = doors;
         this.from = from;
         this.to = to;
@@ -63,30 +67,30 @@ public class WorldMapDoors : MaskableGraphic
             var d = doors[i];
             var a = new Vector2(r.xMin + d.x * r.width, r.yMax - d.y * r.height);
             var b = new Vector2(r.xMin + d.z * r.width, r.yMax - d.w * r.height);
-            if (part == Part.Lines) Dashes(vh, a, b, scale);
-            else { Square(vh, a, scale); Square(vh, b, scale); }
+            if (part == Part.Lines) Dashes(vh, a, b, scale, lit ? Lit : Blue, lit ? LitLineWidth : LineWidth);
+            else { Square(vh, a, scale, lit); Square(vh, b, scale, lit); }
         }
     }
 
-    static void Dashes(VertexHelper vh, Vector2 a, Vector2 b, float scale)
+    static void Dashes(VertexHelper vh, Vector2 a, Vector2 b, float scale, Color32 colour, float width)
     {
         Vector2 along = b - a;
         float length = along.magnitude;
         if (length < 0.0001f) return;
         along /= length;
-        Vector2 across = new Vector2(-along.y, along.x) * (LineWidth * scale * 0.5f);
+        Vector2 across = new Vector2(-along.y, along.x) * (width * scale * 0.5f);
         float dash = Dash * scale, step = (Dash + Gap) * scale;
         for (float at = 0f; at < length; at += step)
         {
             Vector2 p = a + along * at, q = a + along * Mathf.Min(at + dash, length);
-            Quad(vh, p - across, p + across, q + across, q - across, Blue);
+            Quad(vh, p - across, p + across, q + across, q - across, colour);
         }
     }
 
-    static void Square(VertexHelper vh, Vector2 c, float scale)
+    static void Square(VertexHelper vh, Vector2 c, float scale, bool lit)
     {
-        Box(vh, c, (SquareHalf + SquareEdge) * scale, Edge);
-        Box(vh, c, SquareHalf * scale, Blue);
+        Box(vh, c, (SquareHalf + SquareEdge) * scale, lit ? LitEdge : Edge);
+        Box(vh, c, SquareHalf * scale, lit ? Lit : Blue);
     }
 
     static void Box(VertexHelper vh, Vector2 c, float half, Color32 colour)

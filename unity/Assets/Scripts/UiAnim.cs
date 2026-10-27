@@ -18,6 +18,7 @@ public class UiAnim : MonoBehaviour
 {
     const float Duration = 0.12f;
     const float FromScale = 0.96f;
+    const float SeeThroughAlpha = 0.5f;
 
     CanvasGroup group;
     RectTransform rt;
@@ -25,6 +26,7 @@ public class UiAnim : MonoBehaviour
     // intended state — the source of truth a toggle reads, NOT activeSelf (which lags during a close anim)
     bool open;
     bool wired;
+    bool seeThrough;
 
     void Wire()
     {
@@ -53,6 +55,21 @@ public class UiAnim : MonoBehaviour
     }
 
     public static void SetOpen(GameObject go, bool value) { if (value) Open(go); else Close(go); }
+
+    /// <summary>Draw an open panel at half strength and let every click and drop pass through it to what is under it
+    /// — while a skill is dragged out of the Skills window, so the hotbar behind it can be seen and dropped on.
+    /// Off puts it back. Does nothing to a panel that never opened through here.</summary>
+    public static void SeeThrough(GameObject go, bool on)
+    {
+        if (go == null) return;
+        var a = go.GetComponent<UiAnim>();
+        if (a == null) return;
+        a.Wire();
+        a.seeThrough = on;
+        if (a.anim != null || !a.open) return;
+        a.group.alpha = on ? SeeThroughAlpha : 1f;
+        a.group.blocksRaycasts = !on;
+    }
 
     /// <summary>Intended open state — true from the moment Open starts until Close starts (survives the anim).</summary>
     public static bool IsOpen(GameObject go)
@@ -117,11 +134,11 @@ public class UiAnim : MonoBehaviour
             yield return null;
         }
 
-        group.alpha = a1;
+        group.alpha = opening && seeThrough ? SeeThroughAlpha : a1;
         rt.localScale = Vector3.one;
         anim = null;
         // now WindowFrame.OnDisable runs and saves the window position
         if (!opening) gameObject.SetActive(false);
-        else group.blocksRaycasts = true;
+        else group.blocksRaycasts = !seeThrough;
     }
 }

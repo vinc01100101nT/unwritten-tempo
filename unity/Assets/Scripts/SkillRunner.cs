@@ -1193,7 +1193,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         var combo = ReleaseCombo;
         if (combo == null) { if (Mine) OverheadNotice.Warn("Hold three orbs"); return false; }
-        if (!OrbCombos.Opened(Caster, combo)) { if (Mine) OverheadNotice.Warn("Not learned: " + combo.displayName); return false; }
+        if (!OrbCombos.Opened(Caster, combo))
+        {
+            if (Mine) OverheadNotice.Warn(OrbCombos.MasteryReached(Caster, combo) ? "Not learned: " + combo.displayName
+                                                                                  : OrbCombos.OpensAtLine(combo));
+            return false;
+        }
         var runner = ReleaseRunner;
         if (runner == null) { if (Mine) OverheadNotice.Warn("Not learned: " + combo.displayName); return false; }
         return at != null ? runner.ActivateAt(at) : runner.Activate();

@@ -143,6 +143,11 @@ def main():
                 "has no scene file '%s.unity'" % special["id"])
     bad += case("a world scene missing from Build Settings", BUILD, "path: Assets/Scenes/%s.unity" % scene,
                 "path: Assets/Scenes/%s_gone.unity" % scene, "'%s' is not in the scene list" % scene)
+    world_scene = os.path.join("unity", "Assets", "Scenes", "world.unity")
+    if os.path.exists(os.path.join(REPO, world_scene)):
+        chunk = re.search(r"^  - address: (.+)$", read(world_scene), re.M).group(1).strip()
+        bad += case("a seamless world naming a chunk the World group does not hold", world_scene,
+                    "  - address: %s\n" % chunk, "  - address: %s_gone\n" % chunk, "is not an address in the World group")
     bad += case("a door leading to a map that is not in the layout", os.path.join("unity", "Assets", "Scenes", scene + ".unity"),
                 "targetScene: %s\n" % target, "targetScene: %s_old\n" % target, "not a map in the layout")
     bad += case("a door arriving at a point its map does not have", os.path.join("unity", "Assets", "Scenes", scene + ".unity"),

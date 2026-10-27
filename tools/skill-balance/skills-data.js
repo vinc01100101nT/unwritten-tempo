@@ -1762,7 +1762,7 @@ var SKILL_DATA = [
   "extras": [],
   "passive": false,
   "fireRate": null,
-  "ult": false,
+  "ult": true,
   "cd": 55.0,
   "cast": 0.5,
   "mp": 40.0,

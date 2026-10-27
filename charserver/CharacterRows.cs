@@ -27,6 +27,8 @@ public static class CharacterRows
     const int MaxHotbarSlots = 64;
     const int MaxSlotLength = 160;
     const int AutoSkillSlots = 4;
+    // The game keeps at most one entry per weapon type (14 today); room for the roster to grow, never for a flood.
+    const int MaxAutoWeapons = 32, MaxWeaponNameLength = 32;
     const int MaxHuntMode = 2;
     // An emblem is a 24 x 24 PNG the map server re-encoded itself: 127 bytes for a simple picture, 2,396 for random
     // noise (measured 2026-10-16). The bound stops a malformed or hostile body.
@@ -141,14 +143,29 @@ public static class CharacterRows
     static string? CheckAutoCombat(JsonElement s)
     {
         if (s.ValueKind != JsonValueKind.Object) return "send { settings: { … } }";
-        if (!s.TryGetProperty("v", out var v) || v.ValueKind != JsonValueKind.Number || !v.TryGetInt32(out int version) || version != 1)
-            return "settings must say v: 1";
-        if (!s.TryGetProperty("slots", out var slots) || slots.ValueKind != JsonValueKind.Array
-            || slots.GetArrayLength() != AutoSkillSlots)
-            return $"settings carry exactly {AutoSkillSlots} auto-skill slots";
-        foreach (var slot in slots.EnumerateArray())
-            if (slot.ValueKind != JsonValueKind.String || (slot.GetString()?.Length ?? 0) > MaxSlotLength)
-                return $"every auto-skill slot is a string of at most {MaxSlotLength} characters";
+        if (!s.TryGetProperty("v", out var v) || v.ValueKind != JsonValueKind.Number || !v.TryGetInt32(out int version) || version != 2)
+            return "settings must say v: 2";
+        // v2 keeps each weapon's own slots under "weapons"; the v1 "slots" it replaced is only ever sent empty.
+        if (s.TryGetProperty("slots", out var legacy) && (legacy.ValueKind != JsonValueKind.Array || legacy.GetArrayLength() != 0))
+            return "settings carry their slots under weapons, and slots empty";
+        if (!s.TryGetProperty("weapons", out var weapons) || weapons.ValueKind != JsonValueKind.Array
+            || weapons.GetArrayLength() > MaxAutoWeapons)
+            return $"settings carry at most {MaxAutoWeapons} weapons' auto-skill slots";
+        var named = new HashSet<string>();
+        foreach (var w in weapons.EnumerateArray())
+        {
+            if (w.ValueKind != JsonValueKind.Object
+                || !w.TryGetProperty("weapon", out var name) || name.ValueKind != JsonValueKind.String
+                || string.IsNullOrEmpty(name.GetString()) || name.GetString()!.Length > MaxWeaponNameLength
+                || !named.Add(name.GetString()!))
+                return $"every weapon is named once, in at most {MaxWeaponNameLength} characters";
+            if (!w.TryGetProperty("slots", out var slots) || slots.ValueKind != JsonValueKind.Array
+                || slots.GetArrayLength() != AutoSkillSlots)
+                return $"every weapon carries exactly {AutoSkillSlots} auto-skill slots";
+            foreach (var slot in slots.EnumerateArray())
+                if (slot.ValueKind != JsonValueKind.String || (slot.GetString()?.Length ?? 0) > MaxSlotLength)
+                    return $"every auto-skill slot is a string of at most {MaxSlotLength} characters";
+        }
         foreach (var name in new[] { "lootRateAtMostPercent", "hpPotionBelowPercent", "mpPotionBelowPercent" })
             if (!s.TryGetProperty(name, out var n) || n.ValueKind != JsonValueKind.Number
                 || !n.TryGetDouble(out double d) || d < 0 || d > 100)

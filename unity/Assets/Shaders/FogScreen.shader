@@ -6,8 +6,9 @@
 // It draws LAST (Overlay queue, after the billboard characters) with ZTest Always, so it tints over EVERYTHING —
 // world meshes AND the sprite mobs/player. Sprites are transparent and usually aren't in the depth texture, so for
 // a sprite pixel we sample the opaque surface directly behind it (the ground it stands on), which is ~its own
-// distance — so characters fog by roughly their distance too. Sky / nothing-rendered pixels (depth at the far
-// plane) are treated as infinitely far → fully fogged, so the horizon washes out into the fog colour.
+// distance — so characters fog by roughly their distance too. Sky pixels (depth at the far plane) are left clear:
+// the fog is the sky's own colour at the horizon (FogOverlay sets it from the day's sky), so far ground fades into the
+// sky instead of the sky being painted over.
 //
 // The veil is textured with world-pinned value-noise FBM (sampled in world X/Z like CloudShadow), so the fog
 // billows are anchored to the world and you move THROUGH them — no screen-stuck smear. _Phase scrolls the noise and
@@ -18,7 +19,6 @@ Shader "Unwritten/FogScreen"
     Properties
     {
         _Color     ("Fog Color", Color) = (0.80, 0.82, 0.85, 1.0)
-        _LightTint ("Day/Night Light Tint", Color) = (1, 1, 1, 1)
         _Intensity ("Intensity", Range(0,1)) = 0
         _Phase     ("Phase (scroll)", Float) = 0
         _Scale     ("World Noise Scale (1/patchSize)", Float) = 0.05
@@ -48,7 +48,7 @@ Shader "Unwritten/FogScreen"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            float4 _Color, _LightTint;
+            float4 _Color;
             float _Intensity, _Phase, _Scale, _Coverage, _Floor, _FogStart, _FogEnd;
 
             struct Attributes { float4 positionOS : POSITION; };
@@ -96,21 +96,12 @@ Shader "Unwritten/FogScreen"
                 float2 uv = GetNormalizedScreenSpaceUV(IN.positionHCS);
                 float depth = SampleSceneDepth(uv);
 
-                float f;          // 0 = clear (near), 1 = fully fogged (far)
-                float2 nuv;       // noise coords (world X/Z where we have depth; screen proxy for the sky)
+                if (depth == UNITY_RAW_FAR_CLIP_VALUE) return half4(0, 0, 0, 0);   // the sky shows as it is
 
-                if (depth == UNITY_RAW_FAR_CLIP_VALUE)
-                {
-                    f = 1.0;                                  // sky / nothing = infinitely far = full fog
-                    nuv = uv * 12.0;                          // screen-space noise so the horizon isn't a flat wall
-                }
-                else
-                {
-                    float eye = LinearEyeDepth(depth, _ZBufferParams);          // distance from camera along view
-                    f = saturate((eye - _FogStart) / max(0.01, _FogEnd - _FogStart));
-                    float3 wp = ComputeWorldSpacePosition(uv, depth, UNITY_MATRIX_I_VP);
-                    nuv = wp.xz * _Scale;                                       // world-pinned billows
-                }
+                float eye = LinearEyeDepth(depth, _ZBufferParams);              // distance from camera along view
+                float f = saturate((eye - _FogStart) / max(0.01, _FogEnd - _FogStart));   // 0 = clear, 1 = fully fogged
+                float3 wp = ComputeWorldSpacePosition(uv, depth, UNITY_MATRIX_I_VP);
+                float2 nuv = wp.xz * _Scale;                                    // world-pinned billows
 
                 // Two FBM fields drifting in different directions so the fog rolls and breathes.
                 float n1 = fbm(nuv + float2( 0.020, 0.011) * _Phase);
@@ -121,8 +112,7 @@ Shader "Unwritten/FogScreen"
                 float veil = lerp(_Floor, 1.0, billow);
 
                 float a = saturate(f * veil) * _Coverage * _Intensity * _Color.a;
-                // Dim the fog at night to match the darkened world (white tint by day = no change).
-                return half4(_Color.rgb * _LightTint.rgb, a);
+                return half4(_Color.rgb, a);
             }
             ENDHLSL
         }

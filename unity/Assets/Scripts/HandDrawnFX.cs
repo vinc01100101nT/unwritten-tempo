@@ -35,7 +35,9 @@ public class HandDrawnFX : MonoBehaviour
     [Header("Master")]
     [Range(0f, 1f)] [Tooltip("Overall strength of the INK linework + paper. 0 = ink off (quad disabled). " +
              "Saturation below is independent of this.")]
-    public float intensity = 1f;
+    // OFF (2026-10-26), at the user's request: no ink and no paper anywhere. The filter still boots, for the death
+    // screen's grey (DeathGrey), which rides the same grade.
+    public float intensity = DefaultIntensity;
 
     [Header("Ink linework")]
     [Range(0f, 1f)] [Tooltip("Opacity of the ink outlines.")]
@@ -59,6 +61,12 @@ public class HandDrawnFX : MonoBehaviour
     /// the same paper in the same ink, read from here.</summary>
     public static readonly Color DefaultInkColor = new Color(0.08f, 0.07f, 0.06f, 1f);
     public const float DefaultPaperGrain = 0.30f;
+    public const float DefaultIntensity = 0f;
+
+    /// <summary>How strongly paper grain shows on screen: the grain times the master <see cref="intensity"/>, exactly as
+    /// the world's own ink quad draws it. Every other surface that prints the paper (the front screens) reads this, so
+    /// the one master switch turns the paper off everywhere.</summary>
+    public static float PaperOnScreen => Instance != null ? Instance.intensity * Instance.paperGrain : DefaultIntensity * DefaultPaperGrain;
 
     [Header("Character preview")]
     [Tooltip("Crease sensitivity for the character-creation preview only. Lower than the world's, so a body there " +

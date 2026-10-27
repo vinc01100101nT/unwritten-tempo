@@ -284,6 +284,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/hazemere.unity
     guid: 2885b310313ad4843b46f02a5f483079
+  - enabled: 1
+    path: Assets/Scenes/seamless_test.unity
+    guid: 00000000000000000000000000000000
+  - enabled: 1
+    path: Assets/Scenes/world.unity
+    guid: def54c4c04cabe34cab075a3b828eef6
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 7f75ef44d39a2644da8928259a43b221, type: 2}
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}

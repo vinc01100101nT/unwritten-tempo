@@ -239,6 +239,18 @@ public class Character : MonoBehaviour, ICombatUnit
     EquipBonuses? previewBonuses;
     WeaponType? previewWeaponType;
     Quality? previewQuality;
+    // The weapon DeriveWith is previewing (null = bare hands), read only while previewingWeapon — its weight sets the
+    // swing pace and its reach the basic attack's.
+    bool previewingWeapon;
+    Item previewWeapon;
+    Item WeaponForSheet => previewingWeapon ? previewWeapon : GetEquipped(EquipSlotType.Weapon);
+    // What the previewed set's worn words and headgear put in the sub-stat table, less what the worn set puts there now
+    // — added to every sub-stat read while DeriveWith runs, so a word on the hovered piece moves the preview. Server
+    // only, filled and read inside one synchronous DeriveWith, so one shared table serves every character.
+    bool previewingWorn;
+    static readonly float[] previewWornDelta = new float[SubStats.All.Length];
+    static readonly float[] wornNowScratch = new float[SubStats.All.Length];
+    float PreviewWorn(SubStat stat) => previewingWorn ? previewWornDelta[(int)stat] : 0f;
 
     /// <summary>Equipment's stat contribution. Cached inside <see cref="UnitEquipment"/> (recomputed only when gear
     /// changes), so the hot combat getters don't re-sum the worn set per hit.</summary>
@@ -435,7 +447,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>The live signed bonus a timed sub-stat buff or debuff is putting on <paramref name="stat"/>, 0 when
     /// none. Neutral while the baseline snapshot is being taken, so the "before" column of a level-up preview shows
     /// the character without their windows rather than a moment frozen mid-fight.</summary>
-    float SubBonus(SubStat stat) => ignoreStates ? 0f : States.SubStatBonus(stat);
+    float SubBonus(SubStat stat) => ignoreStates ? 0f : States.SubStatBonus(stat) + PreviewWorn(stat);
 
     /// <summary>The whole percentage lift on one stat: ring investment, weapon mastery, and any live sub-stat
     /// window. The single place the three are added, so no formula has to know they exist and none can be
@@ -471,16 +483,38 @@ public class Character : MonoBehaviour, ICombatUnit
     AutoCombatSettings autoCombat = new AutoCombatSettings();
 
     /// <summary>Blank, in place, every auto-skill slot holding something auto-combat may not press
-    /// (<see cref="MayAutoPress"/>) — nothing that is not a skill at all, no item, no gear.</summary>
-    public void KeepOnlyAutoSkills(string[] slots)
+    /// (<see cref="MayAutoPress"/>) — nothing that is not a skill at all, no item, no gear — and any skill of another
+    /// weapon than the slots belong to. Then a weapon left with every slot empty is taken out.</summary>
+    public void KeepOnlyAutoSkills(AutoCombatSettings settings)
     {
-        if (slots == null) return;
-        for (int i = 0; i < slots.Length; i++)
-            if (!string.IsNullOrEmpty(slots[i])
-                && (HotbarEntry.IsItem(slots[i], out _) || HotbarEntry.IsGear(slots[i], out _) || !MayAutoPress(slots[i])))
-                slots[i] = "";
-        AutoCombatMath.EmptyRepeats(slots);
+        if (settings?.weapons == null) return;
+        foreach (var w in settings.weapons)
+        {
+            var slots = w?.slots;
+            if (slots == null) continue;
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (string.IsNullOrEmpty(slots[i])) continue;
+                var def = SkillCatalog.Get(slots[i]);
+                if (HotbarEntry.IsItem(slots[i], out _) || HotbarEntry.IsGear(slots[i], out _) || !MayAutoPress(slots[i])
+                    || def == null || def.weaponType.ToString() != w.weapon)
+                    slots[i] = "";
+            }
+            AutoCombatMath.EmptyRepeats(slots);
+        }
+        AutoCombatMath.DropEmptyWeapons(settings.weapons);
     }
+
+    /// <summary>The weapon a skill belongs to, None when it is no skill — how a v1 document's shared slots are carried to
+    /// each skill's own weapon (<see cref="AutoCombatMath.Clamped"/>).</summary>
+    public static WeaponType WeaponOfSkill(string skillId)
+    {
+        var def = SkillCatalog.Get(skillId);
+        return def != null ? def.weaponType : WeaponType.None;
+    }
+
+    // Cached so a Clamped call never builds a delegate.
+    public static readonly Func<string, WeaponType> WeaponOfSkillFn = WeaponOfSkill;
 
     /// <summary>May auto-combat press this skill: one the hotbar may hold (<see cref="MayBind"/>) that belongs to a
     /// weapon — a skill of no weapon is pressed by hand only.</summary>
@@ -674,10 +708,10 @@ public class Character : MonoBehaviour, ICombatUnit
     /// shuriken is thrown or swung turns on the holder's total STR and DEX, and only the server decides that.</para>
     public float MeleeReachFullSize
         => Told ? toldCurrent.basicAttackRange
-                : Mathf.Max(0f, EquippedReachFullSize + States.SubStatBonus(SubStat.BasicAttackRange));
+                : Mathf.Max(0f, EquippedReachFullSize + States.SubStatBonus(SubStat.BasicAttackRange) + PreviewWorn(SubStat.BasicAttackRange));
 
     /// <summary>Gear alone, with nothing a skill is lending — see <see cref="ICombatUnit.EquippedReachFullSize"/>.</summary>
-    public float EquippedReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), CharacterSpec.Active.unarmedReach, SwingsRanged);
+    public float EquippedReachFullSize => WeaponReach.Of(WeaponForSheet, CharacterSpec.Active.unarmedReach, SwingsRanged);
 
     /// <summary>Whether this character's ordinary attack is ranged right now — the held weapon and, for a shuriken, the
     /// higher of their total STR and DEX. Decided where the numbers are worked out (the server), never on a player's
@@ -698,7 +732,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Seconds between swings with the weapon in hand at attack speed 1 — what ASPD is worked out from.</summary>
     public float BaseSwingTime => UnitOffense.SwingSeconds(HeldWeaponType, HeldWeaponWeight);
 
-    int HeldWeaponWeight { get { var w = GetEquipped(EquipSlotType.Weapon); return w != null ? w.weight : 0; } }
+    int HeldWeaponWeight { get { var w = WeaponForSheet; return w != null ? w.weight : 0; } }
 
     /// <summary>The player is built to the shared character body, so that is its size for melee-contact maths.</summary>
     public float MeleeScale => UnitScale.CharacterScale;
@@ -830,6 +864,12 @@ public class Character : MonoBehaviour, ICombatUnit
     /// cast-speed buff shorten it further. Lower is faster.</summary>
     public float CastTimeMult => Told ? toldCurrent.castTimeMult : UnitStatMath.CastTimeMult(Inputs, RingAndMastery(StatId.CastSpeed), CastBuffMult);
 
+    /// <summary>SERVER: <paramref name="castTime"/>'s variable seconds after each source that shortens it, in the order
+    /// <see cref="UnitStatMath.CastSteps"/> takes them — the skill card says what each one cut.</summary>
+    public void CastSteps(float castTime, out float afterDex, out float afterRing, out float afterTimed)
+        => UnitStatMath.CastSteps(castTime, P(PrimaryStat.DEX), RingAndMastery(StatId.CastSpeed), CastBuffMult,
+                                  out afterDex, out afterRing, out afterTimed);
+
     // ---- Derived-stat snapshots (the pure keystone for the HUD windows) -----------------------
     /// <summary>A readout of every derived stat for the CURRENT loadout (what the Character /
     /// Inventory windows display live).</summary>
@@ -926,15 +966,37 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         // Aggregate the hypothetical set = live gear with `slot` replaced by `hypothetical`. Pure — the worn set is
         // never touched; only this snapshot sees the swap.
-        previewBonuses = Gear.BonusesWith(slot, hypothetical);
+        var with = Gear.BonusesWith(slot, hypothetical);
+        previewBonuses = with;
         if (slot == EquipSlotType.Weapon)
         {
             previewWeaponType = hypothetical != null && hypothetical.def != null ? hypothetical.def.weaponType : WeaponType.None;
             previewQuality = hypothetical != null ? hypothetical.quality : Quality.Raw;
+            previewWeapon = hypothetical?.def;
+            previewingWeapon = true;
         }
+        WornSubStatDelta(with, Gear.Bonuses);
+        previewingWorn = true;
         computeHere = true;
         try { return SnapshotNow(); }
-        finally { previewBonuses = null; previewWeaponType = null; previewQuality = null; computeHere = false; }
+        finally
+        {
+            previewBonuses = null; previewWeaponType = null; previewQuality = null; computeHere = false;
+            previewingWeapon = false; previewWeapon = null; previewingWorn = false;
+        }
+    }
+
+    // previewWornDelta = what `with` folds into the sub-stat table minus what `now` folds — the same two folds the
+    // state store's recompute runs on the worn set.
+    static void WornSubStatDelta(in EquipBonuses with, in EquipBonuses now)
+    {
+        Array.Clear(previewWornDelta, 0, previewWornDelta.Length);
+        Array.Clear(wornNowScratch, 0, wornNowScratch.Length);
+        ArmourWords.FoldIntoSubStats(with, previewWornDelta);
+        Headgear.FoldIntoSubStats(with, previewWornDelta);
+        ArmourWords.FoldIntoSubStats(now, wornNowScratch);
+        Headgear.FoldIntoSubStats(now, wornNowScratch);
+        for (int i = 0; i < previewWornDelta.Length; i++) previewWornDelta[i] -= wornNowScratch[i];
     }
 
     /// <summary>Roll the player's outgoing hit: a random value in [<see cref="MinAttack"/>,
@@ -1397,10 +1459,16 @@ public class Character : MonoBehaviour, ICombatUnit
         }
 
         // THE AUTO-COMBAT SLOTS TOO: a skill pressed only by auto-combat still needs a runner to be pressed with.
-        var autoSlots = autoCombat.slots;
-        if (autoSlots != null)
-            for (int i = 0; i < autoSlots.Length; i++)
-                if (!string.IsNullOrEmpty(autoSlots[i]) && MayBind(autoSlots[i])) usableIds.Add(autoSlots[i]);
+        // Every weapon's slots, not only the one in hand: a swap of weapons then needs no rebuild to press them.
+        var autoWeapons = autoCombat.weapons;
+        if (autoWeapons != null)
+            for (int w = 0; w < autoWeapons.Count; w++)
+            {
+                var autoSlots = autoWeapons[w]?.slots;
+                if (autoSlots == null) continue;
+                for (int i = 0; i < autoSlots.Length; i++)
+                    if (!string.IsNullOrEmpty(autoSlots[i]) && MayBind(autoSlots[i])) usableIds.Add(autoSlots[i]);
+            }
 
         // EVERY LEARNED PASSIVE — a passive is live the moment it is learned (PassiveLoadout).
         PassiveSkills.CollectLearned(usableIds);
@@ -1442,12 +1510,17 @@ public class Character : MonoBehaviour, ICombatUnit
             var def = SkillCatalog.Get(Hotbar.SkillAt(i));
             if (def != null && def.isOrbRelease) return true;
         }
-        var slots = autoCombat.slots;
-        if (slots != null)
-            for (int i = 0; i < slots.Length; i++)
+        var weapons = autoCombat.weapons;
+        if (weapons != null)
+            for (int w = 0; w < weapons.Count; w++)
             {
-                var def = SkillCatalog.Get(slots[i]);
-                if (def != null && def.isOrbRelease) return true;
+                var slots = weapons[w]?.slots;
+                if (slots == null) continue;
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    var def = SkillCatalog.Get(slots[i]);
+                    if (def != null && def.isOrbRelease) return true;
+                }
             }
         return false;
     }

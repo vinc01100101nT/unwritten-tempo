@@ -48,7 +48,7 @@ public static class AutoCombatClient
         var me = Character.Instance;
         if (me == null) return;
         owedToCharacter = false;
-        bool slotsMoved = !SameSlots(me.AutoCombat.slots, Settings.slots);
+        bool slotsMoved = !AutoCombatSettings.SameSlots(me.AutoCombat, Settings);
         me.AutoCombat = Settings.Clone();
         if (slotsMoved) me.RefreshUsableSkills();
     }
@@ -63,8 +63,7 @@ public static class AutoCombatClient
     /// <summary>SERVER'S WORD: it refused a press of <paramref name="skillId"/>. Auto-combat leaves it alone a while.</summary>
     public static void ServerRefused(string skillId)
     {
-        var slots = Settings.slots;
-        if (string.IsNullOrEmpty(skillId) || slots == null || System.Array.IndexOf(slots, skillId) < 0) return;
+        if (!Settings.Holds(skillId)) return;
         refusedUntil[skillId] = UnityEngine.Time.time + SecondsToSkipARefusedSkill;
     }
 
@@ -96,12 +95,4 @@ public static class AutoCombatClient
 
     /// <summary>Ask the server to keep these settings. It answers with what it actually kept.</summary>
     public static void AskToKeep(AutoCombatSettings settings) => GameNetwork.MyPlayer?.AskAutoCombatSettings(settings);
-
-    static bool SameSlots(string[] a, string[] b)
-    {
-        if (a == null || b == null) return a == b;
-        if (a.Length != b.Length) return false;
-        for (int i = 0; i < a.Length; i++) if (!string.Equals(a[i], b[i], StringComparison.Ordinal)) return false;
-        return true;
-    }
 }

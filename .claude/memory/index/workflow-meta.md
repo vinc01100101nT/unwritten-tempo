@@ -72,3 +72,5 @@
 - [List it = keep in chat](../list-it-means-keep-in-chat.md) — mid-brainstorm "list that for now" means a running list in my replies to batch later, never a backlog task or file.
 - [Fix the scope, never remove the feature](../fix-the-scope-never-remove-the-feature.md) — "it should only X" = keep the feature, narrow it to X; switching it off is not a fix (Cloudburst yellow total).
 - [Deliver first, then work while waiting](../deliver-first-then-work-while-waiting.md) — "give me X, and while waiting do Y": X goes out in a reply BEFORE starting Y.
+- [Say where and how to reach it](say-where-and-how-to-reach-it.md) — every play-test hand-over names the map id and the exact /tp or route to get there.
+- [No script edits during the user's Play](no-script-edits-during-users-play.md) — saving a .cs while they play recompiles mid-play; check editor_status and stop Play before the first edit.

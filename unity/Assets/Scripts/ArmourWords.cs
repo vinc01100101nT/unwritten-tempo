@@ -138,22 +138,24 @@ public static class ArmourWords
     /// <summary>The line a piece's card shows for its word, in tooltip voice.</summary>
     public static string Describe(ArmourWord word, float amount)
     {
+        // NUMBER FIRST, the way every stat line on the card reads. Bulwark is named as what it adds — hard defence,
+        // physical and magic (AddWord) — because a critical hit skips both, which "damage taken" would hide.
         string pct = amount.ToString("0.#") + "%";
         switch (word)
         {
-            case ArmourWord.Ironblood:  return "Critical hits against you: −" + pct;
-            case ArmourWord.Steadfast:  return "Stuns, freezes, silences and ailments on you: " + pct + " shorter";
-            case ArmourWord.Wellspring: return "MP regeneration: +" + amount.ToString("0.##") + " per second";
-            case ArmourWord.Bulwark:    return "Damage taken: −" + pct;
-            case ArmourWord.Sanguine:   return "Damage dealt heals you: " + pct;
-            case ArmourWord.Fierce:     return "Damage dealt: +" + pct;
-            case ArmourWord.Emberward:  return "Fire damage taken: −" + pct;
-            case ArmourWord.Tideward:   return "Water damage taken: −" + pct;
-            case ArmourWord.Stoneward:  return "Earth damage taken: −" + pct;
-            case ArmourWord.Galeward:   return "Wind damage taken: −" + pct;
-            case ArmourWord.Tireless:   return "Sprint drains stamina: " + pct + " slower";
-            case ArmourWord.Anchored:   return "Knockbacks and pulls move you: " + pct + " less far";
-            case ArmourWord.Wayfarer:   return "HP regeneration: +" + amount.ToString("0.##") + " per second";
+            case ArmourWord.Ironblood:  return "−" + pct + " critical hits against you";
+            case ArmourWord.Steadfast:  return pct + " shorter stuns, freezes, silences and ailments on you";
+            case ArmourWord.Wellspring: return "+" + amount.ToString("0.##") + " MP regeneration per second";
+            case ArmourWord.Bulwark:    return "+" + pct + " DEF · +" + pct + " M.DEF";
+            case ArmourWord.Sanguine:   return pct + " of damage dealt heals you";
+            case ArmourWord.Fierce:     return "+" + pct + " damage dealt";
+            case ArmourWord.Emberward:  return "−" + pct + " Fire damage taken";
+            case ArmourWord.Tideward:   return "−" + pct + " Water damage taken";
+            case ArmourWord.Stoneward:  return "−" + pct + " Earth damage taken";
+            case ArmourWord.Galeward:   return "−" + pct + " Wind damage taken";
+            case ArmourWord.Tireless:   return pct + " slower stamina drain while sprinting";
+            case ArmourWord.Anchored:   return pct + " shorter knockbacks and pulls on you";
+            case ArmourWord.Wayfarer:   return "+" + amount.ToString("0.##") + " HP regeneration per second";
             default:                    return "";
         }
     }
