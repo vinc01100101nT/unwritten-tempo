@@ -55,8 +55,8 @@ BGM = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "MapBgmTable.
 SIDECARS = os.path.join(REPO, "tools", "map-painter", "exports")
 FIRST_MAP_SOURCES = [
     (os.path.join(REPO, "unity", "Assets", "Scenes", "Systems.unity"), r"^\s*firstMap: (.+)$"),
-    (os.path.join(REPO, "unity", "Assets", "Scripts", "GameRoot.cs"), r'public string firstMap = "([^"]+)";'),
-    (os.path.join(REPO, "unity", "Assets", "Scripts", "Editor", "SystemsSceneBuilder.cs"), r'const string FirstMap = "([^"]+)";'),
+    # The one constant the code's start map reads (GameRoot's default and the Systems scene builder both use it).
+    (os.path.join(REPO, "unity", "Assets", "Scripts", "SavePoint.cs"), r'public const string DefaultMap = "([^"]+)";'),
 ]
 LAYOUT_FILE_CODE = os.path.join(REPO, "unity", "Assets", "Scripts", "Editor", "WorldLayoutFile.cs")
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
@@ -167,14 +167,12 @@ def main():
 
     # 2. Scene files and Build Settings.
     scene_files = {f[:-6] for f in os.listdir(SCENES) if f.endswith(".unity")}
-    built = set(re.findall(r"path: Assets/Scenes/(.+)\.unity", read(BUILD)))
     world_scenes = [m["id"] for m in maps if m["id"] in scene_files]
     for m in maps:
         if m["type"] != "special" and m["id"] not in scene_files:
             faults.append("scene: map '%s' has no scene file '%s.unity'" % (m["id"], m["id"]))
-    for s in world_scenes:
-        if s not in built:
-            faults.append("build settings: '%s' is not in the scene list" % s)
+    # The zone maps no longer ship (the user's call, 2026-10-27: the game is the seamless world now), so a zone map is
+    # NOT required to be in Build Settings; the seamless world is (rule 7).
 
     # 3. Every door in a world scene leads to a map of the layout, at an arrival point that exists there.
     arrivals, doors = {}, {}

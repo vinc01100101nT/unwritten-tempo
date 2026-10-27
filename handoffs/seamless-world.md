@@ -1,105 +1,92 @@
-# Handoff — the seamless world (`world`): the 7×7 block around Lastline, filled like the nature pack's demo
+# Handoff — the seamless world (`world`): the block around Lastline, its look, and the old world gone
 
-**Task:** replace zone maps with one seamless world (32-unit squares streamed around each player), laid out by the
-world layout tool and built square by square with the Idyllic Fantasy Nature pack. The first block — squares 17..23 ×
-17..23 around Lastline — is built. This session: real layout (15 towns, levels, cliffs, rivers, ponds, caves), the
-block build, Lastline joined to it, cliff rocks, the fields' dense fill, and the player graphics settings. No Tempo
-issue/doc id.
+**Task:** one seamless world (32-unit squares streamed around each player), laid out by the world layout tool and built
+square by square with the Idyllic Fantasy Nature pack. The first block — squares 17..23 × 17..23 around Lastline — is
+built and is now the whole game: the old zone maps are deleted. No Tempo issue/doc id.
 
 ## Status
 
-**IN PROGRESS — the fields' fill was built at the very end and NOT measured in play.** The world was rebuilt with
-19,854 props (was ~2,100) and ~10.1 million carpet plants built in; building one square from its prefab rose from
-11 ms to 81 ms worst in the editor (a possible hitch each time a square loads). Frame time with every square dense is
-UNMEASURED. **Don't trust prior "it works" claims** for frame rate.
+**IN PROGRESS.** The world plays (start map, townsfolk, creatures, quest, minimap, map window), but three pieces were
+built after the game server was last rebuilt and have **not been seen with a rebuilt server**: townsfolk waiting for
+their ground, the deleted old-world data, the start map. **Don't trust prior "it works" claims** for townsfolk or
+creatures until the game server is rebuilt and they are seen in Play.
 
-**Measuring trap:** with the editor NOT the focused window, Unity throttles it — the profiler, the stats tool and the
-performance panel all lag or freeze, and two rounds of numbers this session were wrong because of it. Measure only
-while the user has the editor focused, standing still, frame cap lifted (`Application.targetFrameRate = -1`, put back
-to 60 after). Average the profiler's main-thread frames (`ProfilerDriver.GetHierarchyFrameDataView`) over 90+ frames;
-single-frame `get_performance_stats` readings jump 2–22 ms.
+## What's done (2026-10-27 / 28)
 
-The game server must be rebuilt + restarted for the user to play the current world (`/tp world`, GM).
+**Measuring** — the built game has no stutter: editor frame spikes (11–13% of frames over 25 ms, 100 ms on a square
+load) do not happen in the build (0–2 per 600 frames; 25 square loads, none over 36 ms). Built game 1920×1080:
+12–14 ms a frame in the fields, 19 ms at (70, 60). Control-link command `perf [nocap|cap]` (`AgentLink.cs`,
+`FrameStats`); skill `.claude/skills/measure-built-game/`.
 
-## What's done (this session)
+**Old world deleted** — 15 test maps, `seamless_test`, then all 77 zone maps, their ground, minimaps, painter files;
+`WorldAtlas.asset` and `tools/world-creator/worlds/world-regions.json` emptied; build list = Systems + world. Lastline's
+source moved to `1_Authored/Prefabs/Towns/Lastline.prefab` (+ its meshes/materials); `SeamlessWorldBuilder` reads it.
+The builder keeps the world scene's own settings blocks (no template map). Kept: 18 Summoners (parked on old map names),
+all 230 creatures. Deleted: 15 other-town Keepers, 315 old spawn areas. Music row `lastline` → `world`.
+Checkers adjusted: `check-map-ids` (seamless world, start map, music), `check-quest-data` (towns inside a world, shipped
+town maps only), `check-biome-table` (no test maps) — every prover passes.
 
-**Layout** — `tools/world-layout/build_world_layout.py` → `data/world-layout.json` + map `~/Downloads/world-layout.html`
-- 15 towns, one weapon each; levels 2.5 units with cliffs; rivers in valleys; ponds (Lastline, Pluvenne, Pennaryl,
-  Hazemere oasis); 4 caves; Halcyra high ground; Tide Temple low-tide path; trap pits get ramp cuts.
-- **Each town's ground is flat out to 47.6 units from its middle, easing over 24 more** (`TOWN_REACH 39.6` =
-  Lastline's half-diagonal, `TOWN_CLEAR 8`, `TOWN_EASE 24`). Moved the Gemmara cave and two bridges; passes 11→15.
+**Migrated into the world** — Lastline's 16 townsfolk (same coordinates); 42 creature spawn areas of Lastline's fields
+and dungeons as 7 hunting grounds (fild01 (-62,18) W, fild02 (-18,74) N, fild05 (14,-78) S, fild04 (58,-74) SE,
+fild03 (94,-98), dun01 (82,-38), dun02 (86,6)); the Plopling quest; new characters start in `world`
+(`SavePoint.DefaultMap`, the one constant). Townsfolk wait for their ground (`SeamlessWorld.HoldGround`,
+`WorldTownsfolk.Build`).
 
-**World builder** — `unity/Assets/Scripts/Editor/SeamlessWorldBuilder.cs` (`SeamlessWorldBuilder.BuildCore()`, run
-through the editor link; ~25–66 s)
-- `Blocks = { (17,23,17,23) }`, map id `world`, output `Assets/2_Generated/World/` (square prefabs + Lastline piece).
-- **Lastline joined:** rim heights read from its mesh; its copied ground uses the world's grass/road
-  (`SameGrassAsTheWorld`, `world_lastline_ground.mat`); **roads leave through its gates** (`Terrain.LayRoads` /
-  `ThroughGate`: gates = its `Portal_*` doors, 6 units straight then a curve onto the layout road 16 units out);
-  gate paving fades into road (`GateRoadWhole 3`, `GateRoadFade 8`).
-- **Cliff rocks** (pack Cliff_01/02) line every wall, **solid** (user's call; exception written into RULE ONEGROUND
-  in `CLAUDE.md`).
-- **Shadows:** only trees, cliff rocks and Rock_Big cast; small props don't.
-- **Flowers:** meadow patches single-colour, **a quarter of the demo's count** (`FlowerThinOut 0.75`), every flower
-  **twice as tall** (`FlowerExtraHeight 1`) with ±15% height roll (`FlowerHeightJitter`); single flowers too.
-- **Fields' fill (newest):** layers `field trees/firs/bushes/rocks/plants` at the pack demo island's density
-  (`DemoTrees 235, DemoFirs 70, DemoBushes 464, DemoRocks 380` per 300×300 demo metres; `ownKeep`), and **grass over
-  every square's open ground** at a quarter of the demo (`FieldGrassThinOut 0.75`). Only on nature-pack themes
-  (`NatureTheme`); kept-biome towns get none.
+**Minimap / map** — `MinimapBaker` draws a seamless world as square pictures (`Minimaps/world/<gx>_<gy>`, 256 px per
+32 units) + one 2048 overview; `Minimap` shows the squares around the player (≤25 held); the world builder redraws
+them. `SeamlessWorldPreview` builds a whole world into a hidden scene for editor work. `MapWindow` works without the
+old atlas (opens the map you are in; no world view).
 
-**Runtime**
-- `FlowerCarpet.cs`: draws only cells in the camera's view and within the player's distance; density re-lay
-  (0.3 s after the slider rests); plant shadows per setting; extra-height/height-jitter/thin-out fields.
-- `WaterPooling.cs`: the downhill step never lands on a no-ground square (fixed an index error on the world map).
-- **Settings ▸ Graphics** (`SettingsWindow.cs`, `GameSettings.cs`): Shadow quality (1024–8192, default Very high),
-  Grass & flower distance (10–40, default 20), Grass & flower density (25–100%), Plant shadows, Show performance.
-- `GraphicsQuality.cs` (new): the game draws with its own copy of the render settings (shadow resolution), so the
-  saved `UniversalRP.asset` stays at 1024 (an asset rule caps it).
-- `PerfHud.cs`: now in every build, shown by the setting / F10; FPS, CPU, GPU, RAM, VRAM coloured green→red.
-  `PlayerInteractor.cs` no longer wraps its hide call in a dev-only guard.
-- Project setting `enableFrameTimingStats` turned on (for the GPU line).
+**Look** — post-processing turned on (`Spike3DRenderer.asset` had none); `IdyllicLook_PostProcessing` = light look (no
+warm white balance / channel mixer / split toning, neutral tone, contrast 5, saturation +15, white bloom, vignette 0.15).
+Settings ▸ Graphics sliders: Brightness, Contrast, Saturation (added to the look, `LookAdjustments`), Fog thickness.
+`DayNightLight`: the sun, the three-direction fill (`dayAmbient*`), sky and billboards keep midday values at every
+hour; time of day is ONE screen tint (a runtime volume, `TimeOfDayTint.At`): white by day, warm in a narrow band at
+sunrise/sunset, (0.34, 0.42, 0.60) at night. Systems scene re-saved without the removed fields.
 
-**Removed again this session:** the URP Outline package trial (code, renderer feature, layers, marks, setting — all
-gone; it drew outlines through occluders and could not look hand-drawn). The blue see-through silhouette is switched
-off on `Spike3DRenderer.asset` "temporarily" (user's word) — switch back when asked.
+**Meadows** — grass no longer grows inside meadow patches. Meadow cards turn about their upright axis to face the
+camera: `Shaders/MeadowFacing.shadergraph` (a copy of the pack's Vegetation graph) + `Shaders/FaceCamera.hlsl`,
+material `FlowerMeadowFacing.mat`, used by the builder for meadows. Cost unchanged (5.79 ms GPU at the pink meadow).
 
-## Measured
-- Trial square before the fill went world-wide (one dense square, quarter flowers): main thread 7.5 ms, GPU 8–10.5 ms,
-  ~100 fps uncapped; carpets were the cost (15 ms GPU at half-density flowers), shadows ~1 ms after the small-prop
-  change; 4096 vs 1024 shadows no measurable difference.
-- Carpet main-thread cost 5.3–6.1 → 2.0–2.6 ms after the camera-view check.
+## Uncommitted working-tree changes
 
-## Uncommitted working-tree changes (measured 2026-10-27 ~11:40)
-~350 entries in `git status`; most are other sessions' work. This session's: untracked (never committed)
-`SeamlessWorldBuilder.cs`, `FlowerCarpet.cs`, `GraphicsQuality.cs`, `SeamlessWorld.cs`; modified `WaterPooling.cs`,
-`GameSettings.cs`, `SettingsWindow.cs`, `PerfHud.cs`, `PlayerInteractor.cs`, `MapEdgeWalls.cs`, `tools/check-map-ids.py`,
-`tools/prove-map-ids-check.py`, `tools/world-layout/build_world_layout.py` + `data/world-layout.json` (untracked),
-`Assets/2_Generated/World/` (untracked), `Spike3DRenderer.asset` (silhouette off), `UniversalRP.asset`,
-`ProjectSettings.asset` (frame timing on; also "bake collision meshes" on — NOT mine, saved by my SaveAssets),
-`GraphicsSettings.asset` (two always-included shaders removed — NOT mine, same save), `EditorBuildSettings.asset`
-(world scene), `CLAUDE.md` (ONEGROUND exception), `.claude/memory/world-builder.md`. The effects pack's
-`FE_ForwardRenderer.asset` shows a Unity file-format upgrade from a save. Nothing committed.
+Everything above is committed together with this file (2026-10-28). Re-run `git status` before trusting this line.
+The font `DejaVuSansCondensed SDF.asset` was committed in a cleared state (glyph list emptied by
+`ClearFontAssetData`; it is a dynamic font and refills while playing) — if text looks wrong, restore it from the commit
+before this one.
 
 ## What's left
-1. Measure the world-wide fill in play (editor focused): frame time in a few dense spots, and the square-load hitch
-   (81 ms build per square in the editor). If too slow: a draw distance for props, like the carpets'.
-2. Ask the user about the two project-setting changes that were not mine (bake collision meshes on; two shaders off
-   the always-included list).
-3. Lastline's pond sits outside the block (layout moved it); the south gate has no road.
-4. Next blocks of the world, minimap per square, the continent.
+
+1. **Rebuild + restart the game server**, then see in Play: townsfolk standing in Lastline, creatures in the 7
+   hunting grounds, a new character starting in the world.
+2. **Top-down meadows still read peach**: the facing cards are upright, so from 65° above the pink tops are a sliver.
+   Next idea, offered to the user: let each card also lean back toward the camera (same shader, one more step).
+3. **Keepers per map**: `WorldTownsfolk.KeeperIn(map)` returns the first Keeper of a map — breaks when a second town
+   is in the world; teleport prices count doors the world does not have. Needs a design call (price by distance?).
+4. **Fog not starting** in my test session (`FogOverlay` had no material/quad) — cause not found.
+5. **Trees missing from the minimap pictures** (the pack's leaf shader draws nothing in the bake camera) — cause not
+   measured.
+6. **Wiki creature list** shows the hunting grounds as "world" (no named areas for fields yet).
+7. **Character stuck** between field trees and rocks at (-56, 50) — the route-finder may not know the field fill.
+8. Next blocks of the world; the 18 Summoners' places; the other 14 towns.
 
 ## Dead ends (proven)
-- Unity Toon Shader: leaf-card trees became outlined triangles. URP Outline (free, MIT): outlines draw through
-  occluders, colour reads lighter than set, a halo not a stroke; its UPM manifest is broken (URP dependency with no
-  version). ToonShading (free) is GPL-3.0 — unusable for a closed game.
-- Shorter carpet distance (40→20) did not help the camera's close top-down view: everything on screen is within 20.
-- Pushing cliff rocks into the wall: dropped in favour of solid rocks (user).
-- Single-frame stats and unfocused-editor readings: unreliable (see Status).
+
+- Single 3D flowers for meadows: face up and stay pink, but 60 triangles vs a card's 8 — at equal cost 13% as many,
+  sparse; at the cards' count ~7× the cost (estimated 35–50 ms). Taken out.
+- Multiplying the plant shader by the time-of-day tint: dimmed plants at night but the user wanted one screen tint —
+  undone.
+- HDR colour grading: pinker flowers but more orange grass; not the cause.
+- Sky-based ambient read right after one `UpdateEnvironment()` was unsettled; settled sky colours turned rocks blue —
+  the saved fill is 60% toward grey.
 
 ## Next single step
-With the user in Play and the editor focused, stand in a dense field square and measure 90-frame averages with the
-frame cap lifted; then walk across a square edge and look for the load hitch in the profiler.
+
+Rebuild and restart the game server, sign in with the test account (alpha@test.local / testpass123), and check that
+Lastline's townsfolk stand in the world and creatures appear in the hunting grounds.
 
 ## How to resume
+
 ```text
 Resume the seamless world work: read handoffs/seamless-world.md first, check editor_status (stop Play before ANY script edit), then continue from "Next single step".
 ```

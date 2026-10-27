@@ -1,77 +1,72 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 /// <summary>
-/// Drives the directional Sun's color, intensity, sky angle, and the scene's ambient fill from the shared
-/// <see cref="TimeOfDay"/> clock — so the world visibly goes from warm bright noon to dim blue midnight and
-/// back. Lives on the Systems Sun (added by <c>SystemsSceneBuilder</c>). All values lerp by
-/// <see cref="TimeOfDay.Daylight01"/>, so it crossfades smoothly with the day/night ambience.
+/// THE TIME OF DAY, as one tint over the whole picture (2026-10-28, the user's call: "keep their colors, and just use a
+/// masking layer that tints everything. warm at sunset and then cold at night. and no tint at day"). The sun, the
+/// whole-scene fill, the sky and the billboards keep their midday colours at every hour; a colour filter laid on the
+/// finished picture does the rest — white at noon, warm while the sun is low, cold at night. The sun still moves
+/// across the sky, so shadows still swing. Lives on the Systems Sun (added by <c>SystemsSceneBuilder</c>).
+///
+/// <para>Cost: the filter is one setting on the colour grading the camera already does every frame, so it adds no
+/// pass. It is rewritten only when the clock moves.</para>
 /// </summary>
 [RequireComponent(typeof(Light))]
 public class DayNightLight : MonoBehaviour
 {
-    [Header("Sun color + brightness")]
-    public Color dayColor = new Color(1f, 0.96f, 0.90f);     // warm midday
-    public Color nightColor = new Color(0.50f, 0.60f, 0.95f); // cool moonlight
+    [Header("Sun (the same at every hour)")]
+    public Color dayColor = new Color(1f, 0.96f, 0.90f);
     public float dayIntensity = 1f;   // the nature pack demo's sun, beside its bright fill
-    [Tooltip("0 = fully dark night. Bump up if night is too black to play in.")]
-    public float nightIntensity = 0f;
 
-    [Header("Sunset / sunrise glow")]
-    // The plain night→day lerp gives a washed-out mid-tone at the horizon. This blends a warm colour into the
-    // sun (and optionally the ambient) ONLY while the sun is low — peaking at sunrise/sunset (Daylight01 ≈ 0.5)
-    // and fading to nothing toward noon and midnight. Sunset and sunrise use DIFFERENT colours: dusk is a
-    // redder, dustier orange; dawn is a cooler, softer pink — picked by whether the sun is rising or setting.
-    [Tooltip("Warm colour mixed into the sun at SUNSET — fiery orange (a day of haze scatters out the blue).")]
-    public Color horizonColor = new Color(0.99f, 0.64f, 0.10f);   // sunset gold-orange
-    [Tooltip("Cooler colour mixed into the sun at SUNRISE — soft lavender dawn (clean morning air).")]
-    public Color sunriseColor = new Color(0.77f, 0.62f, 1f);      // dawn lavender
-    [Range(0f, 1f)] [Tooltip("How strongly the horizon colour takes over at dawn/dusk (0 = off).")]
-    public float horizonStrength = 1f;
-    [Range(0.05f, 0.5f)] [Tooltip("Width of the glow band — bigger = colour lingers longer into day/night.")]
-    public float horizonBand = 0.5f;
-    [Tooltip("Also warm the whole-scene ambient fill at sunset/sunrise (half as strongly as the sun).")]
-    public bool tintAmbient = true;
+    [Header("The tint over the picture")]
+    // Sunset and sunrise use DIFFERENT colours: dusk a redder orange, dawn a softer lavender — picked by whether the sun
+    // is rising or setting. Both peak while the sun is low (Daylight01 ≈ 0.5) and fade to nothing toward noon and
+    // midnight.
+    [Tooltip("The tint at SUNSET, at full strength.")]
+    public Color horizonColor = new Color(0.99f, 0.64f, 0.10f);
+    [Tooltip("The tint at SUNRISE, at full strength.")]
+    public Color sunriseColor = new Color(0.77f, 0.62f, 1f);
+    [Range(0f, 1f)] [Tooltip("How much of the sunset / sunrise colour the tint takes at its peak (0 = none).")]
+    public float horizonStrength = 0.35f;
+    // 0.15 (2026-10-28, the user: "make sure that the warm wont come back at day time"): the warmth shows only while
+    // daylight is between 0.35 and 0.65 — the hour around sunrise and sunset — and is zero for the rest of the day. At
+    // 0.5 it tinted every hour but exact noon.
+    [Range(0.05f, 0.5f)] [Tooltip("Width of the sunset / sunrise band — bigger = the warmth lingers longer into day and night.")]
+    public float horizonBand = 0.15f;
+    [UnityEngine.Serialization.FormerlySerializedAs("nightSpriteTint")]
+    [Tooltip("The tint at midnight — the whole picture is multiplied by it (1,1,1 = no change).")]
+    public Color nightTint = new Color(0.34f, 0.42f, 0.60f);
 
     [Header("Ambient fill (whole-scene)")]
     public bool driveAmbient = true;
-    // Warm white by day (2026-10-27, at the user's ask to look like the nature pack's demo): the pack's plant shader takes
-    // its brightness from this fill alone, never from the sun, so a dim fill drew every flower dark. At this fill the
-    // meadows show the demo's light pink and light green.
-    public Color dayAmbient = new Color(1f, 0.97f, 0.92f);
-    public Color nightAmbient = new Color(0.10f, 0.12f, 0.22f);
-
+    // THE SKY'S OWN LIGHT BY DAY, from three directions (2026-10-28, at the user's ask to look like the nature pack's
+    // demo): the demo lights its shadows from its blue sky, and a flat warm fill turned every pink red. These are the
+    // sky's light at midday read off the game's own sky at 1.6 times its strength, then taken 60% of the way back
+    // toward grey of the same brightness — at the sky's full blue every grey rock came out bright blue. Held as three
+    // colours so nothing has to re-read the sky while the clock runs (re-reading it took about 4 ms a time on the main
+    // thread). The pack's plant shader takes its brightness from this fill alone, never from the sun, so a dim fill
+    // draws every flower dark.
+    [Tooltip("Daytime fill from above (the sky overhead).")]
+    public Color dayAmbient = new Color(1.274f, 1.374f, 1.671f);
+    [Tooltip("Daytime fill from the side (the horizon).")]
+    public Color dayAmbientEquator = new Color(1.105f, 1.265f, 1.544f);
+    [Tooltip("Daytime fill from below (light thrown back off the ground).")]
+    public Color dayAmbientGround = new Color(1.048f, 1.245f, 1.507f);
     [Header("Sky (camera background)")]
-    // Drives the main camera's solid clear colour — the "sky" you see at the world edges and through gaps.
-    // Lerps day→night by Daylight01 (same weight as the sun/ambient) and warms toward the sunrise/sunset
-    // colour while the sun is low, so the backdrop tracks the same dawn/dusk glow as the world. The reflection
-    // camera copies this each frame, so the water's sky follows for free.
-    [Tooltip("Tint the main camera's background (sky) by time of day.")]
+    // The main camera's solid clear colour — the "sky" at the world edges and through gaps — and the horizon colour
+    // the procedural sky and the fog read. The same at every hour; the tint over the picture carries the time of day.
+    [Tooltip("Paint the main camera's background with the sky colour.")]
     public bool driveSky = true;
-    [Tooltip("Sky colour at midday — bright daytime blue.")]
+    [Tooltip("The sky colour — bright daytime blue.")]
     public Color daySky = new Color(0.55f, 0.70f, 0.85f);
-    [Tooltip("Sky colour at midnight — deep night blue.")]
-    public Color nightSky = new Color(0.04f, 0.05f, 0.10f);
-    [Range(0f, 1f)] [Tooltip("How strongly the sunrise/sunset glow bleeds into the sky (0 = off).")]
-    public float skyHorizonTint = 0.6f;
 
-    [Header("Sprite lighting (player / mobs / loot)")]
-    // Billboard sprites use the unlit Unwritten/BillboardLit shader, so they ignore the sun and stay
-    // full-bright at night unless we tell them otherwise. We push a single global tint (_SpriteEnv) that
-    // the shader multiplies in: white at noon (true art) easing to nightSpriteTint (dim, cool moonlight)
-    // at midnight, warmed slightly toward the sunrise/sunset glow. One global write per clock change —
-    // zero per-sprite cost, no extra shadow/dye conflict.
-    [Tooltip("Dim & cool the billboard sprites by time of day (player, mobs, loot).")]
-    public bool driveSpriteLight = true;
-    [Tooltip("Sprite multiply tint at midnight — dim, cool moonlight (1,1,1 = no change).")]
-    public Color nightSpriteTint = new Color(0.34f, 0.42f, 0.60f);
-    [Range(0f, 1f)] [Tooltip("How much the sunrise/sunset glow warms the sprites (0 = off).")]
-    public float spriteHorizonWarmth = 0.25f;
-
+    // The billboards' shader multiplies in a global tint (_SpriteEnv). It stays white: the tint over the picture
+    // already covers them, and a second tint on them alone would darken them twice at night.
     static readonly int SpriteEnvProp = Shader.PropertyToID("_SpriteEnv");
 
     // Seed the global white BEFORE the first frame renders (play mode) and on every editor domain reload,
-    // so billboards are never multiplied by an unset (black) global when no DayNightLight is driving it.
+    // so billboards are never multiplied by an unset (black) global.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void SeedSpriteEnv() => Shader.SetGlobalColor(SpriteEnvProp, Color.white);
 #if UNITY_EDITOR
@@ -97,9 +92,14 @@ public class DayNightLight : MonoBehaviour
     Light sun;
     float lastTime = float.NaN;   // last applied time-of-day; NaN forces the next Update to apply
 
-    /// <summary>The current day/night sky colour (lerped day→night + dawn/dusk glow). <see cref="SkyboxSky"/> reads
-    /// this as the horizon colour so the procedural sky tracks the same clock. Updated whenever the clock moves.</summary>
+    /// <summary>The sky colour. <see cref="SkyboxSky"/> reads this as the horizon colour and <see cref="FogOverlay"/> as
+    /// the haze colour.</summary>
     public Color SkyColorNow { get; private set; } = StartSkyColor;
+
+    // The tint over the picture: a global volume of its own, made at run time, holding only a colour filter. Above the
+    // map's own look in priority, so its filter is the one used; it touches nothing else in the grading.
+    const float TintPriority = 100f;
+    ColorAdjustments tint;
 
     /// <summary>The sky's colour before any clock has run — what anything reading the sky shows until one does.</summary>
     public static readonly Color StartSkyColor = new Color(0.55f, 0.70f, 0.85f);
@@ -112,7 +112,8 @@ public class DayNightLight : MonoBehaviour
     {
         if (GameServer.RemovesPresentation(this)) return;
         sun = GetComponent<Light>();
-        if (driveAmbient) RenderSettings.ambientMode = AmbientMode.Flat;   // so ambientLight actually applies
+        if (driveAmbient) RenderSettings.ambientMode = AmbientMode.Trilight;   // so the three fill colours apply
+        BuildTint();
 
         // Bootstrap the cloud-shadow projector onto the Sun (no scene wiring needed). Guarded so a builder or
         // a previous run that already added one doesn't get a duplicate.
@@ -128,8 +129,28 @@ public class DayNightLight : MonoBehaviour
         SkyboxSky.Ensure();
     }
 
-    // The sky's colour at this much daylight, warmed toward the horizon glow while the sun is low.
-    Color SkyAt(float day, Color glowColor, float glow) => Color.Lerp(Color.Lerp(nightSky, daySky, day), glowColor, glow * skyHorizonTint);
+    /// <summary>The whole-scene fill, the same at every hour. Also how the character preview lights its model.</summary>
+    public void ApplyFill()
+    {
+        RenderSettings.ambientSkyColor = dayAmbient;
+        RenderSettings.ambientEquatorColor = dayAmbientEquator;
+        RenderSettings.ambientGroundColor = dayAmbientGround;
+    }
+
+    void BuildTint()
+    {
+        var holder = new GameObject("Time of day tint") { hideFlags = HideFlags.DontSave };
+        holder.transform.SetParent(transform, false);
+        var volume = holder.AddComponent<Volume>();
+        volume.isGlobal = true;
+        volume.priority = TintPriority;
+        var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+        profile.hideFlags = HideFlags.DontSave;
+        tint = profile.Add<ColorAdjustments>();
+        tint.colorFilter.overrideState = true;
+        tint.colorFilter.value = Color.white;
+        volume.sharedProfile = profile;
+    }
 
     /// <summary>Force the next <see cref="Update"/> to re-apply colour/intensity/angle even when the clock
     /// hasn't moved, so a changed sun setting shows instantly instead of waiting for the next time-of-day
@@ -143,10 +164,10 @@ public class DayNightLight : MonoBehaviour
         float day = tod != null ? tod.Daylight01 : 1f;
 
         // Loading a map scene resets the global lighting to that scene's own (its saved ambient mode and colours), as
-        // SkyboxSky notes for the skybox: put the flat fill back, and re-apply its colour this frame.
-        if (driveAmbient && RenderSettings.ambientMode != AmbientMode.Flat)
+        // SkyboxSky notes for the skybox: put the three-colour fill back, and re-apply its colours this frame.
+        if (driveAmbient && RenderSettings.ambientMode != AmbientMode.Trilight)
         {
-            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientMode = AmbientMode.Trilight;
             lastTime = float.NaN;
         }
 
@@ -168,37 +189,23 @@ public class DayNightLight : MonoBehaviour
         bool rising = t < 0.25f || t > 0.75f;
         Color hc = rising ? sunriseColor : horizonColor;
 
-        sun.color = Color.Lerp(Color.Lerp(nightColor, dayColor, day), hc, glow);
-        sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, day);
-
-        if (driveAmbient)
-        {
-            Color amb = Color.Lerp(nightAmbient, dayAmbient, day);
-            if (tintAmbient) amb = Color.Lerp(amb, hc, glow * 0.5f);
-            RenderSettings.ambientLight = amb;
-        }
+        sun.color = dayColor;
+        sun.intensity = dayIntensity;
+        if (driveAmbient) ApplyFill();
+        if (tint != null) tint.colorFilter.value = TimeOfDayTint.At(day, nightTint, hc, glow);
+        Shader.SetGlobalColor(SpriteEnvProp, Color.white);
 
         if (driveSky)
         {
-            // Always compute + store the sky colour (the SkyboxSky reads SkyColorNow as its horizon colour, even
-            // when there's no camera yet or the camera clears with the skybox instead of this solid colour).
-            Color sky = SkyAt(day, hc, glow);
-            SkyColorNow = sky;
+            // Always store the sky colour (the SkyboxSky reads SkyColorNow as its horizon colour, even when there's no
+            // camera yet or the camera clears with the skybox instead of this solid colour).
+            SkyColorNow = daySky;
 
             var cam = CameraRig.Cam;   // cached; re-fetched after a scene swap
-            if (cam != null) cam.backgroundColor = sky;   // harmless when the camera clears with the skybox
-            // No camera yet (Systems boots before the map's camera). Re-arm so we apply the moment it exists,
-            // instead of being stuck at Bootstrap's colour until the clock next moves (e.g. while paused).
+            if (cam != null) cam.backgroundColor = daySky;   // harmless when the camera clears with the skybox
+            // No camera yet (Systems boots before the map's camera). Re-arm so we apply the moment it exists.
             else lastTime = float.NaN;
         }
-
-        if (driveSpriteLight)
-        {
-            Color env = Color.Lerp(nightSpriteTint, Color.white, day);
-            env = Color.Lerp(env, hc, glow * spriteHorizonWarmth);
-            Shader.SetGlobalColor(SpriteEnvProp, env);
-        }
-        else Shader.SetGlobalColor(SpriteEnvProp, Color.white);   // off → sprites render true art
 
         if (rotateSun)
         {
@@ -209,5 +216,20 @@ public class DayNightLight : MonoBehaviour
             float az = yaw + Mathf.Sin((t - 0.25f) * Mathf.PI * 2f) * (yawSwing * 0.5f);
             sun.transform.rotation = Quaternion.Euler(Mathf.Lerp(horizonPitch, noonPitch, day), az, 0f);
         }
+    }
+}
+
+/// <summary>The time-of-day tint's arithmetic, kept apart so it can be checked by calling it with numbers.</summary>
+public static class TimeOfDayTint
+{
+    /// <summary>The colour the whole picture is multiplied by: white whenever the sun is up (daylight 0.5 and over —
+    /// no tint by day, at the user's word), easing into <paramref name="nightTint"/> as daylight falls to 0 at midnight,
+    /// and that taken <paramref name="glow"/> of the way toward <paramref name="glowColor"/> while the sun is low.</summary>
+    public static Color At(float daylight, Color nightTint, Color glowColor, float glow)
+    {
+        float dayShare = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(daylight / 0.5f));
+        var c = Color.Lerp(Color.Lerp(nightTint, Color.white, dayShare), glowColor, glow);
+        c.a = 1f;
+        return c;
     }
 }

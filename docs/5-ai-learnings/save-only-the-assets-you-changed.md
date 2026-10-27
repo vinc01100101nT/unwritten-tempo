@@ -16,6 +16,11 @@ asked for: a prefab whose bounds flag an earlier read-only script had flipped in
 font asset, which had grown 2,329 lines in memory while the game was played. The prefab line was put back by hand; the
 font write could not be undone by a hand edit and had to be reported to the user instead.
 
+It happened again on 2026-10-27, with this page already written: a script deleting the test maps ended with
+`SaveAssets()` and wrote the same font, which had grown during a Play session from 1×1 to a 1024×1024 letter sheet
+(about 1 MB). Trying to undo it with `ClearFontAssetData` made it worse — that empties the glyph list too, 72,000
+lines away from the committed file. The only clean undo is putting the committed file back, which is the user's to run.
+
 ## How to apply
 
 ```csharp

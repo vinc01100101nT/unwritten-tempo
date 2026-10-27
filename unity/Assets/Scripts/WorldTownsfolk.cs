@@ -113,6 +113,9 @@ public class WorldTownsfolk : ScriptableObject
         // The map was just set down in its place; the ground has to be where it now stands before it is aimed at.
         Physics.SyncTransforms();
 
+        // A SEAMLESS WORLD has no ground yet: its squares come in near people. Each townsperson's ground is held for good
+        // and they are built once it is in, so nobody is ever stood on nothing.
+        var world = SeamlessWorld.InScene(map);
         int people = 0;
         for (int i = 0; i < list.rows.Count; i++)
         {
@@ -123,26 +126,37 @@ public class WorldTownsfolk : ScriptableObject
                 GameLog.Warn(LogCat.Spawn, "townsperson '" + row.name + "' in '" + map.name + "' has no model — left out.");
                 continue;
             }
-
-            Vector3 at = GroundUnder(MapManager.InWorld(row.home, map.name), map);
-            // The ONE recipe for a townsperson, shared with the machines that only watch one.
-            var root = Townsperson.Build(row.model, row.name, at, map, null);
-            // Turned before anybody is told about them, so a shopkeeper is never first seen facing their own door.
-            if (row.wanderRadius <= 0f) root.transform.rotation = Quaternion.Euler(0f, row.facing, 0f);
-            var npc = root.GetComponent<TownNPC>();
-            npc.Init(at, row.wanderRadius, row.barks, row.level, row.name, row.description, row.station, row.shop, row.keeper);
-            npc.Summons = row.summons ?? "";
-            // Who they are to a quest — "talk to Gunnar" is decided against this, never against a name on screen.
-            npc.PersonId = row.id;
-            // What is on their head — the same hair and the same Head items everybody wears.
-            HeadPieces.Resolve(row.model, row.hairStyle, row.hairColour, null, null, out var hairId, out var hairHex);
-            npc.Hair = HeadPieces.Pack(hairId, hairHex);
-            npc.Headgear = row.headgear ?? "";
-            GameNetwork.PublishNpc(root, row.model);
             people++;
+            if (world == null) { Build(row, map); continue; }
+            float reach = row.wanderRadius + 2f;   // server-math: Populate returns at once on any machine but the server
+            world.HoldGround(new Rect(row.home.x - reach, row.home.z - reach, reach * 2f, reach * 2f), () =>
+            {
+                if (map.isLoaded) Build(row, map);
+            });
         }
         if (people > 0)
-            GameLog.Info(LogCat.Spawn, "map '" + map.name + "' given " + people + " townsperson(s).");
+            GameLog.Info(LogCat.Spawn, "map '" + map.name + "' given " + people + " townsperson(s)"
+                                       + (world != null ? ", each built once the ground under them is in." : "."));
+    }
+
+    // The ONE way a townsperson is put in a map, from their row.
+    static void Build(Row row, Scene map)
+    {
+        Vector3 at = GroundUnder(MapManager.InWorld(row.home, map.name), map);
+        // The ONE recipe for a townsperson, shared with the machines that only watch one.
+        var root = Townsperson.Build(row.model, row.name, at, map, null);
+        // Turned before anybody is told about them, so a shopkeeper is never first seen facing their own door.
+        if (row.wanderRadius <= 0f) root.transform.rotation = Quaternion.Euler(0f, row.facing, 0f);
+        var npc = root.GetComponent<TownNPC>();
+        npc.Init(at, row.wanderRadius, row.barks, row.level, row.name, row.description, row.station, row.shop, row.keeper);
+        npc.Summons = row.summons ?? "";
+        // Who they are to a quest — "talk to Gunnar" is decided against this, never against a name on screen.
+        npc.PersonId = row.id;
+        // What is on their head — the same hair and the same Head items everybody wears.
+        HeadPieces.Resolve(row.model, row.hairStyle, row.hairColour, null, null, out var hairId, out var hairHex);
+        npc.Hair = HeadPieces.Pack(hairId, hairHex);
+        npc.Headgear = row.headgear ?? "";
+        GameNetwork.PublishNpc(root, row.model);
     }
 
     /// <summary>Forget a map that has gone, so it is populated again if it comes back.</summary>

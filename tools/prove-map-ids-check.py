@@ -27,7 +27,6 @@ from prove_mirror import mirror_with_change, discard  # noqa: E402
 
 CHECK = os.path.join(HERE, "check-map-ids.py")
 LAYOUT = os.path.join("tools", "world-creator", "worlds", "world-regions.json")
-BUILD = os.path.join("unity", "ProjectSettings", "EditorBuildSettings.asset")
 ATLAS = os.path.join("unity", "Assets", "3_Data", "Resources", "WorldAtlas.asset")
 BGM = os.path.join("unity", "Assets", "3_Data", "Resources", "MapBgmTable.asset")
 SYSTEMS = os.path.join("unity", "Assets", "Scenes", "Systems.unity")
@@ -107,12 +106,42 @@ def case(description, rel, old, new, must_say):
     return 1
 
 
+def finish(bad, code, out):
+    code_after, out_after = run()
+    if code_after != 0 or out_after != out:
+        print(RED + " WRONG" + OFF + " the real project's own answer changed while proving, so this proves nothing")
+        bad += 1
+    print()
+    if bad:
+        print(RED + "%d case(s) wrong — the map id check's silence proves nothing." % bad + OFF)
+        return 1
+    if code != 0:
+        print(GRN + "the map id check sees every planted fault" + OFF + RED + " — but the real project does not pass it:" + OFF)
+        print(out)
+        return 1
+    print(GRN + "the map id check sees every planted fault and the real project passes." + OFF)
+    return 0
+
+
 def main():
     global BASELINE
     code, out = run()
     BASELINE = out
 
     layout = json.loads(read(LAYOUT))
+    first = re.search(r"^\s*firstMap: (.+)$", read(SYSTEMS), re.M).group(0)
+    bgm = re.search(r"^\s*- sceneName: (.+)$", read(BGM), re.M).group(0)
+    world_scene = os.path.join("unity", "Assets", "Scenes", "world.unity")
+    if not layout["maps"]:
+        # THE ZONE WORLD IS GONE (2026-10-27, the user's call): the game is the seamless world, so only the rules that
+        # still have something to stand on are proven — its chunks, the starting map and the music table.
+        bad = 0
+        chunk = re.search(r"^  - address: (.+)$", read(world_scene), re.M).group(1).strip()
+        bad += case("a seamless world naming a chunk the World group does not hold", world_scene,
+                    "  - address: %s\n" % chunk, "  - address: %s_gone\n" % chunk, "is not an address in the World group")
+        bad += case("the starting map naming no scene", SYSTEMS, first, first + "_old", "starting map:")
+        bad += case("the music table naming no scene", BGM, bgm, bgm + "_old", "music table:")
+        return finish(bad, code, out)
     scenes = os.path.join(REPO, "unity", "Assets", "Scenes")
     # A generated map with at least one door, and that door's target and arrival point.
     for m in layout["maps"]:
@@ -125,8 +154,6 @@ def main():
     scene, target, spawn = m["id"], door.group(1), door.group(2)
     special = next(x for x in layout["maps"] if x["type"] == "special" and not os.path.exists(os.path.join(scenes, x["id"] + ".unity")))
     sidecar = os.path.join("tools", "map-painter", "exports", scene + ".map.json")
-    first = re.search(r"^\s*firstMap: (.+)$", read(SYSTEMS), re.M).group(0)
-    bgm = re.search(r"^\s*- sceneName: (.+)$", read(BGM), re.M).group(0)
 
     bad = 0
     bad += case("an id that is not the snake_case of its name", LAYOUT, '"id": "%s"' % scene,
@@ -141,9 +168,6 @@ def main():
     block = re.search(r'\{\s*"id": "%s".*?"type": "special"' % re.escape(special["id"]), txt, re.S).group(0)
     bad += case("a generated map with no scene file", LAYOUT, block, block.replace('"type": "special"', '"type": "field"'),
                 "has no scene file '%s.unity'" % special["id"])
-    bad += case("a world scene missing from Build Settings", BUILD, "path: Assets/Scenes/%s.unity" % scene,
-                "path: Assets/Scenes/%s_gone.unity" % scene, "'%s' is not in the scene list" % scene)
-    world_scene = os.path.join("unity", "Assets", "Scenes", "world.unity")
     if os.path.exists(os.path.join(REPO, world_scene)):
         chunk = re.search(r"^  - address: (.+)$", read(world_scene), re.M).group(1).strip()
         bad += case("a seamless world naming a chunk the World group does not hold", world_scene,
@@ -245,21 +269,7 @@ def main():
                 '"name": "%s_old"' % scene, "says its name is")
     bad += case("the starting map naming no scene", SYSTEMS, first, first + "_old", "starting map:")
     bad += case("the music table naming no scene", BGM, bgm, bgm + "_old", "music table:")
-
-    code_after, out_after = run()
-    if code_after != 0 or out_after != out:
-        print(RED + " WRONG" + OFF + " the real project's own answer changed while proving, so this proves nothing")
-        bad += 1
-    print()
-    if bad:
-        print(RED + "%d case(s) wrong — the map id check's silence proves nothing." % bad + OFF)
-        return 1
-    if code != 0:
-        print(GRN + "the map id check sees every planted fault" + OFF + RED + " — but the real project does not pass it:" + OFF)
-        print(out)
-        return 1
-    print(GRN + "the map id check sees every planted fault and the real project passes." + OFF)
-    return 0
+    return finish(bad, code, out)
 
 
 if __name__ == "__main__":

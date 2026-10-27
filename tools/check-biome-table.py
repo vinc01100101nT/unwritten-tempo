@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Check that every biome's LOOK is whole, and that the biome test maps hold their props where they were put.
+"""Check that every biome's LOOK is whole.
 
 WHY THIS EXISTS: a biome row that is half right generates without a single error. A road tile laid as the main
 ground, a colour wash left over a biome's own tile, a biome whose every prop list is empty, a biome in the list with
 no row at all (the generator stops with a dialog only when somebody happens to pick it) — each one bakes a map that
-looks almost fine. And a map whose saved prop positions point at a part of the prop that no longer exists puts every
-prop at the map centre, which is what happened to 40 older maps. None of that shows until someone walks the map.
+looks almost fine. None of that shows until someone walks the map.
 
 Reads the files on disk, never the editor's copy, so what it checks is what the generator will actually read:
   · the biome list, parsed out of MapRecipe.cs (never copied here);
@@ -14,8 +13,6 @@ Reads the files on disk, never the editor's copy, so what it checks is what the 
     at least one prop somewhere in the field template's categories, and a saved count multiplier on every entry;
   · the Grassland row, pinned exactly as it is (the starting country's look changes only on purpose);
   · the browser World Creator's biome list, which must name every biome;
-  · every biome test map (Scenes/test_*.unity): each saved prop position must point at a part its prefab has, and
-    the map carries one biome marker naming the biome in its own name (test_forest_a → Forest);
   · the per-biome weather list: each biome at most once, every held level between 0 and 1.
 
 USAGE:   tools/check-biome-table.py [--root <repo>]
@@ -36,10 +33,8 @@ TABLE = os.path.join(ASSETS, "3_Data", "Recipes", "BiomeTable.asset")
 FIELD_TEMPLATE = os.path.join(ASSETS, "3_Data", "Recipes", "FieldRecipe.asset")
 TILES = os.path.join(ASSETS, "1_Authored", "Art", "GroundTiles")
 PREFABS = os.path.join(ASSETS, "1_Authored", "Prefabs")
-SCENES = os.path.join(ASSETS, "Scenes")
 WORLD_CREATOR = os.path.join(REPO, "tools", "world-creator", "index.html")
 BIOME_WEATHER = os.path.join(ASSETS, "3_Data", "Resources", "BiomeWeather.asset")
-MAP_BIOME_META = os.path.join(ASSETS, "Scripts", "MapBiome.cs.meta")
 
 # The Grassland row, pinned: meadow grass, soil patches, the recipe's own road, no wash, the same 0.9 patch amount
 # every biome uses (the user's call, 2026-09-25), and all five field-template prop categories listed (an open meadow,
@@ -89,7 +84,7 @@ def uses(tile_name):
 
 
 def main():
-    for p in (MAP_RECIPE_CS, TABLE, FIELD_TEMPLATE, WORLD_CREATOR, BIOME_WEATHER, MAP_BIOME_META):
+    for p in (MAP_RECIPE_CS, TABLE, FIELD_TEMPLATE, WORLD_CREATOR, BIOME_WEATHER):
         if not os.path.isfile(p):
             print("setup: missing %s" % rel(p))
             return 2
@@ -219,53 +214,13 @@ def main():
             elif not 0.0 <= float(fm.group(1)) <= 1.0:
                 problems.append("%s: %s is %s, outside 0..1" % (where, field, fm.group(1)))
 
-    marker_guid = re.search(r"^guid:\s*([0-9a-f]{32})", read(MAP_BIOME_META), re.M).group(1)
-    by_lower = {b.lower(): b for b in map_biomes}
-
-    # Every biome test map: each saved prop position must point at a part its prefab still has.
-    prefab_ids = {}
-    checked_positions = checked_maps = 0
-    for f in sorted(os.listdir(SCENES)):
-        if not (f.startswith("test_") and f.endswith(".unity")):
-            continue
-        scene = os.path.join(SCENES, f)
-        text = read(scene)
-        want = by_lower.get(re.sub(r"_[a-z]$", "", f[len("test_"):-len(".unity")]))
-        marks = re.findall(r"m_Script: \{fileID: 11500000, guid: %s, type: 3\}(?:\n  .*)*?\n  biome: (\d+)" % marker_guid, text)
-        if len(marks) != 1:
-            problems.append("%s carries %d biome markers, not 1 (the running game cannot tell its biome)" % (rel(scene), len(marks)))
-        elif want and biomes[int(marks[0])] != want:
-            problems.append("%s is marked %s, but its name says %s" % (rel(scene), biomes[int(marks[0])], want))
-        orphans = total = instances = 0
-        for block in re.split(r"\n--- !u!1001 &", text)[1:]:
-            src = re.search(r"m_SourcePrefab: \{fileID: \d+, guid: ([0-9a-f]{32})", block)
-            if not src or src.group(1) not in prefabs:
-                continue
-            g = src.group(1)
-            instances += 1
-            if g not in prefab_ids:
-                prefab_ids[g] = set(re.findall(r"^--- !u!\d+ &(-?\d+)", read(prefabs[g]), re.M))
-            for t in re.findall(r"- target: \{fileID: (-?\d+), guid: %s, type: 3\}\n\s+propertyPath: m_LocalPosition\.x" % g, block):
-                total += 1
-                if t not in prefab_ids[g]:
-                    orphans += 1
-        checked_maps += 1
-        checked_positions += total
-        if instances and not total:
-            problems.append("%s: %d props but no saved position could be read — this check cannot see them"
-                            % (rel(scene), instances))
-        if orphans:
-            problems.append("%s: %d of %d saved prop positions point at a part the prefab no longer has "
-                            "(those props sit at the map centre)" % (rel(scene), orphans, total))
-
     if problems:
-        print(RED + "Biome looks / biome test maps — %d problem(s):" % len(problems) + OFF)
+        print(RED + "Biome looks — %d problem(s):" % len(problems) + OFF)
         for p in problems:
             print("  · " + p)
         return 1
     print(GRN + "biome table clean" + OFF + " — %d biomes, each with its own row, tiles used as their names allow, "
-          "no wash, props real; %d test maps, %d saved prop positions, all pointing at real parts."
-          % (len(map_biomes), checked_maps, checked_positions))
+          "no wash, props real." % len(map_biomes))
     return 0
 
 

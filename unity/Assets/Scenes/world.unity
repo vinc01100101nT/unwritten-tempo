@@ -307,7 +307,7 @@ MonoBehaviour:
     min: {x: -24.5, y: -31}
     max: {x: 24.5, y: 31}
   propReach: 1.602
-  measuredLoadSeconds: 0.081
+  measuredLoadSeconds: 0.077
 --- !u!4 &100002
 Transform:
   m_ObjectHideFlags: 0

@@ -146,6 +146,10 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | About to show that changing a rule fixes a lopsided fight, and both fighters use that rule | [A Shared Rule Change Moves Both Sides of the Fight](a-shared-rule-change-moves-both-sides.md) |
 | A look or effect reported "off everywhere" still shows on one screen | [Turning a Look Off Leaves It On Somewhere Else](turning-a-look-off-misses-a-second-reader.md) |
 | About to tell the user why one picture looks better than another | [A Measured Difference May Not Show On Screen](a-measured-difference-may-not-show-on-screen.md) |
+| About to delete assets because an id search found nothing using them — or a feature died right after such a deletion | [Deleting Data Nothing Points At Can Still Switch a Feature Off](deleted-data-loaded-by-name.md) |
+| A light, fill or tint colour you set looks far darker on screen than its numbers | [A Colour You Typed Comes Out Nearly Black](typed-colours-are-linear.md) |
+| A value you saved right after asking the engine to recompute it no longer matches the picture you approved | [A Value Read Right After Asking for a Recompute Is Not the Settled Value](read-a-recomputed-value-after-it-settles.md) |
+| About to tune a look or effect by comparing pictures of a few values | [Turn a Knob to Its Extreme Before Tuning It](turn-a-knob-to-its-extreme-first.md) |
 
 ## Related
 

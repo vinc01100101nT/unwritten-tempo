@@ -30,6 +30,10 @@ public static class GameSettings
     const string PlantDensityKey       = "set_plant_density";
     const string PlantShadowsKey       = "set_plant_shadows";
     const string ShowPerformanceKey    = "set_show_performance";
+    const string LookBrightnessKey     = "set_look_brightness";
+    const string LookContrastKey       = "set_look_contrast";
+    const string LookSaturationKey     = "set_look_saturation";
+    const string FogThicknessKey       = "set_fog_thickness";
 
     public const float ScrollSensitivityMin = 0.25f;
     public const float ScrollSensitivityMax = 3f;
@@ -250,6 +254,64 @@ public static class GameSettings
             SetFlag(ref showPerformance, ShowPerformanceKey, value);
             ShowPerformanceChanged?.Invoke();
         }
+    }
+
+    // ---- the picture: brightness, contrast, saturation, fog ----------------------------------------------------------
+    // Each colour choice is an AMOUNT ADDED to the map's own look (its colour profile), 0 = the look exactly as it was
+    // made, so the same choice holds on every map whatever its look. Fog is a share of the fog's own thickness; it stops
+    // at FogThicknessMin because the fog is what hides the edge of the ground a seamless world has loaded.
+    public const float LookBrightnessMin = -1f, LookBrightnessMax = 1f;
+    public const float LookContrastMin = -50f, LookContrastMax = 50f;
+    public const float LookSaturationMin = -50f, LookSaturationMax = 100f;
+    public const float FogThicknessMin = 0.5f;
+
+    static float? lookBrightness, lookContrast, lookSaturation, fogThickness;
+
+    /// <summary>Raised when brightness, contrast or saturation changes, so the picture is graded again.</summary>
+    public static event System.Action LookChanged;
+
+    /// <summary>Added to the look's brightness (its exposure, in stops). 0 by default.</summary>
+    public static float LookBrightness
+    {
+        get => Ranged(ref lookBrightness, LookBrightnessKey, 0f, LookBrightnessMin, LookBrightnessMax);
+        set { if (SetRanged(ref lookBrightness, LookBrightnessKey, value, LookBrightnessMin, LookBrightnessMax)) LookChanged?.Invoke(); }
+    }
+
+    /// <summary>Added to the look's contrast. 0 by default.</summary>
+    public static float LookContrast
+    {
+        get => Ranged(ref lookContrast, LookContrastKey, 0f, LookContrastMin, LookContrastMax);
+        set { if (SetRanged(ref lookContrast, LookContrastKey, value, LookContrastMin, LookContrastMax)) LookChanged?.Invoke(); }
+    }
+
+    /// <summary>Added to the look's saturation. 0 by default.</summary>
+    public static float LookSaturation
+    {
+        get => Ranged(ref lookSaturation, LookSaturationKey, 0f, LookSaturationMin, LookSaturationMax);
+        set { if (SetRanged(ref lookSaturation, LookSaturationKey, value, LookSaturationMin, LookSaturationMax)) LookChanged?.Invoke(); }
+    }
+
+    /// <summary>The share of the fog's own thickness drawn, <see cref="FogThicknessMin"/> to 1. 1 by default.</summary>
+    public static float FogThickness
+    {
+        get => Ranged(ref fogThickness, FogThicknessKey, 1f, FogThicknessMin, 1f);
+        set => SetRanged(ref fogThickness, FogThicknessKey, value, FogThicknessMin, 1f);
+    }
+
+    static float Ranged(ref float? cache, string key, float fallback, float min, float max)
+    {
+        if (cache == null) cache = Mathf.Clamp(PlayerPrefs.GetFloat(key, fallback), min, max);
+        return cache.Value;
+    }
+
+    // FALSE when the value did not change, so nothing is redone for a slider that did not move.
+    static bool SetRanged(ref float? cache, string key, float value, float min, float max)
+    {
+        value = Mathf.Clamp(value, min, max);
+        if (cache != null && Mathf.Approximately(cache.Value, value)) return false;
+        cache = value;
+        PlayerPrefs.SetFloat(key, value);
+        return true;
     }
 
     // ---- the hotbar's third row: the player's own keys ----------------------------------------------------------

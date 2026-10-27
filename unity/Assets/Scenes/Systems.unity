@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10976022c8b7a624eaf8d3ecbc8dc6cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameRoot
-  firstMap: lastline
+  firstMap: world
 --- !u!4 &8686562
 Transform:
   m_ObjectHideFlags: 0
@@ -991,24 +991,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DayNightLight
   dayColor: {r: 1, g: 0.96, b: 0.9, a: 1}
-  nightColor: {r: 0.5, g: 0.6, b: 0.95, a: 1}
   dayIntensity: 1
-  nightIntensity: 0
   horizonColor: {r: 0.99, g: 0.64, b: 0.1, a: 1}
   sunriseColor: {r: 0.77, g: 0.62, b: 1, a: 1}
-  horizonStrength: 1
-  horizonBand: 0.5
-  tintAmbient: 1
+  horizonStrength: 0.35
+  horizonBand: 0.15
+  nightTint: {r: 0.34, g: 0.42, b: 0.6, a: 1}
   driveAmbient: 1
-  dayAmbient: {r: 1, g: 0.97, b: 0.92, a: 1}
-  nightAmbient: {r: 0.1, g: 0.12, b: 0.22, a: 1}
+  dayAmbient: {r: 1.274, g: 1.374, b: 1.671, a: 1}
+  dayAmbientEquator: {r: 1.105, g: 1.265, b: 1.544, a: 1}
+  dayAmbientGround: {r: 1.048, g: 1.245, b: 1.507, a: 1}
   driveSky: 1
   daySky: {r: 0.55, g: 0.7, b: 0.85, a: 1}
-  nightSky: {r: 0.04, g: 0.05, b: 0.1, a: 1}
-  skyHorizonTint: 0.6
-  driveSpriteLight: 1
-  nightSpriteTint: {r: 0.34, g: 0.42, b: 0.6, a: 1}
-  spriteHorizonWarmth: 0.25
   rotateSun: 1
   noonPitch: 45
   horizonPitch: 12

@@ -41,7 +41,7 @@ public class CharacterPreview : MonoBehaviour
     DayNightLight dayNight;
     Light worldSun;
     bool sunWasOn, ambientSet;
-    Color ambientWas;
+    Color ambientWas, equatorWas, groundWas;
     AmbientMode ambientModeWas;
 
     // How the body is being held right now. The camera and the lights never move sideways — it is the BODY that
@@ -363,10 +363,13 @@ public class CharacterPreview : MonoBehaviour
         sunWasOn = worldSun != null && worldSun.enabled;
         if (sunWasOn) worldSun.enabled = false;
         if (dayNight == null) return;
-        ambientWas = RenderSettings.ambientLight;
+        ambientWas = RenderSettings.ambientSkyColor;
+        equatorWas = RenderSettings.ambientEquatorColor;
+        groundWas = RenderSettings.ambientGroundColor;
         ambientModeWas = RenderSettings.ambientMode;
-        RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = dayNight.dayAmbient;
+        // The world's fill: the preview shows the model as it looks in the world.
+        RenderSettings.ambientMode = AmbientMode.Trilight;
+        dayNight.ApplyFill();
         ambientSet = true;
     }
 
@@ -377,7 +380,9 @@ public class CharacterPreview : MonoBehaviour
         sunWasOn = false;
         if (!ambientSet) return;
         RenderSettings.ambientMode = ambientModeWas;
-        RenderSettings.ambientLight = ambientWas;
+        RenderSettings.ambientSkyColor = ambientWas;
+        RenderSettings.ambientEquatorColor = equatorWas;
+        RenderSettings.ambientGroundColor = groundWas;
         ambientSet = false;
     }
 

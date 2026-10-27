@@ -46,4 +46,5 @@ scripts). If it didn't, the diagnosis was wrong — go back to step 2.
 - Do NOT commit unless the user asks. Summarize what changed and what the user should verify in a build.
 
 Be honest about editor vs build: in-editor frame time is inflated by editor overhead — judge true frame-time
-from a Development Build, but GC allocation from gameplay scripts is trustworthy in the editor.
+in the built client, measured the way the `measure-built-game` skill says; GC allocation from gameplay scripts is
+trustworthy in the editor.

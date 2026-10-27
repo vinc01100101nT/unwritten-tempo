@@ -171,6 +171,7 @@ public class AgentLink : MonoBehaviour
     void Update()
     {
         StopDrawing();
+        SampleFrame();
         if (current == null)
         {
             if (!inbox.TryDequeue(out current)) return;
@@ -286,7 +287,7 @@ public class AgentLink : MonoBehaviour
 
     // ---- what the commands are -------------------------------------------------------------------------------------
 
-    const string Help =
+    static readonly string Help =
         "commands (ids like m3/p1/n2/g4/d1 come from the screen; several per line with ';' — the answer is one line per\n" +
         "command saying how it ended, then the screen once; a say takes the rest of the line):\n" +
         "look                      the whole screen (other answers leave out sections that have not changed)\n" +
@@ -308,7 +309,8 @@ public class AgentLink : MonoBehaviour
         "say <text>                chat; a /command runs like typed\n" +
         "revive                    press Return to last saved point when dead\n" +
         "wait <secs>               let time pass (ends early on a hit)\n" +
-        "log <category|all> on|off switch this game's own log lines (written to its log file)";
+        "log <category|all> on|off switch this game's own log lines (written to its log file)\n" +
+        "perf [nocap|cap]          frame times over the last " + FrameSamples + " frames; nocap lifts the frame-rate cap, cap puts it back";
 
     void Begin(string line)
     {
@@ -345,6 +347,7 @@ public class AgentLink : MonoBehaviour
             case "revive": Revive(); return;
             case "wait": Wait(parts); return;
             case "log": ClientLog(parts); return;
+            case "perf": Perf(parts); return;
             default: Text(() => "unknown command '" + verb + "'. " + Help); return;
         }
     }
@@ -889,6 +892,36 @@ public class AgentLink : MonoBehaviour
         Text(() => cat + " " + (on ? "on" : "off"));
     }
 
+    // ---- frame times: the last FrameSamples frames, kept only while this link is on -------------------------------
+    // The whole frame from one frame's start to the next, and the graphics card's own time for it (0 where the device
+    // does not report it). Fixed-size rings, so nothing grows however long the game runs.
+    const int FrameSamples = 600;
+    readonly float[] frameMs = new float[FrameSamples];
+    readonly float[] gpuMs = new float[FrameSamples];
+    readonly float[] sortScratch = new float[FrameSamples];
+    readonly FrameTiming[] timing = new FrameTiming[1];
+    int frameAt, framesHeld;
+
+    void SampleFrame()
+    {
+        FrameTimingManager.CaptureFrameTimings();
+        gpuMs[frameAt] = FrameTimingManager.GetLatestTimings(1, timing) > 0 ? (float)timing[0].gpuFrameTime : 0f;
+        frameMs[frameAt] = Time.unscaledDeltaTime * 1000f;
+        frameAt = (frameAt + 1) % FrameSamples;
+        if (framesHeld < FrameSamples) framesHeld++;
+    }
+
+    void Perf(string[] parts)
+    {
+        string mode = parts.Length > 1 ? parts[1].ToLowerInvariant() : "";
+        if (mode == "nocap") { Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0; framesHeld = 0; }
+        else if (mode == "cap") { if (GameSystems.Instance != null) GameSystems.Instance.ApplyFrameRate(); framesHeld = 0; }
+        if (mode.Length > 0) { Text(() => "frame cap " + Application.targetFrameRate + ", vsync " + QualitySettings.vSyncCount + " — samples restarted"); return; }
+        Text(() => "frame cap " + Application.targetFrameRate + ", vsync " + QualitySettings.vSyncCount + "\n"
+                   + "frame: " + FrameStats.Summary(frameMs, framesHeld, sortScratch) + "\n"
+                   + "gpu:   " + FrameStats.Summary(gpuMs, framesHeld, sortScratch));
+    }
+
     const float SeeMobs = 25f, SeeOthers = 15f;
     const int MostMobs = 10, MostOthers = 6;
 
@@ -1289,5 +1322,34 @@ public class AgentLink : MonoBehaviour
             if (!inTag) sb.Append(ch);
         }
         return sb.ToString().Replace("​", "");
+    }
+}
+
+/// <summary>Frame-time numbers for the control link's <c>perf</c> answer: plain arithmetic over a ring of samples.</summary>
+public static class FrameStats
+{
+    /// <summary>"avg / median / 99th percentile / slowest, and how many frames took over 25 ms and 50 ms", in ms, over
+    /// the first <paramref name="count"/> entries of <paramref name="samples"/>. <paramref name="scratch"/> is at least
+    /// as long as <paramref name="samples"/> and is overwritten.</summary>
+    public static string Summary(float[] samples, int count, float[] scratch)
+    {
+        if (count <= 0) return "no frames yet";
+        double sum = 0;
+        int over25 = 0, over50 = 0;
+        for (int i = 0; i < count; i++)
+        {
+            float v = samples[i];
+            scratch[i] = v;
+            sum += v;
+            if (v > 25f) over25++;
+            if (v > 50f) over50++;
+        }
+        Array.Sort(scratch, 0, count);
+        float p99 = scratch[Math.Min(count - 1, (int)(count * 0.99f))];
+        return "avg " + (sum / count).ToString("0.0", CultureInfo.InvariantCulture)
+               + " | median " + scratch[count / 2].ToString("0.0", CultureInfo.InvariantCulture)
+               + " | p99 " + p99.ToString("0.0", CultureInfo.InvariantCulture)
+               + " | slowest " + scratch[count - 1].ToString("0.0", CultureInfo.InvariantCulture)
+               + " ms | over 25 ms: " + over25 + ", over 50 ms: " + over50 + " (of " + count + " frames)";
     }
 }

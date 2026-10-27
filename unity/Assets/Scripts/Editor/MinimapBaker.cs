@@ -27,6 +27,11 @@ public static class MinimapBaker
     // As sharp as the live minimap it replaced: 256 pixels across the 40 units it showed.
     const float PixelsPerUnit = 6.4f;
     const int MinPx = 256, MaxPx = 1024;
+    // A seamless world: one overview for the whole-map window (sharper than a zone's, since it covers far more), and
+    // the minimap's own square pictures, each TileUnits wide at TilePx — 8 pixels a unit, a little sharper than a zone.
+    const int OverviewMaxPx = 2048;
+    const float TileUnits = 32f;
+    const int TilePx = 256;
 
     [MenuItem("Tools/unwritten/World/Bake Minimaps (all maps)", priority = 130)]
     public static void BakeAllMenu()
@@ -75,13 +80,24 @@ public static class MinimapBaker
         Vector2 worldMin;
         float worldSize;
         int px;
+        bool seamless;
         try
         {
+            // A seamless world keeps its ground in chunks the game builds near people; all of them go into the copy.
+            seamless = SeamlessWorldPreview.Fill(scene, out var world);
+            PrepareForDrawing(scene);
             if (!TryComputeBounds(scene, out Bounds b)) return false;
+            if (seamless)
+            {
+                // The world's own corners, never how far a prop at its edge happens to reach.
+                b = new Bounds(new Vector3((world.worldMin.x + world.worldMax.x) * 0.5f, b.center.y, (world.worldMin.y + world.worldMax.y) * 0.5f),
+                               new Vector3(world.worldMax.x - world.worldMin.x, b.size.y, world.worldMax.y - world.worldMin.y));
+                BakeTiles(map, world, b, scene);
+            }
             float extent = Mathf.Max(b.size.x, b.size.z) * 0.5f * (1f + MarginFrac);
             worldSize = extent * 2f;
             worldMin = new Vector2(b.center.x - extent, b.center.z - extent);
-            px = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(worldSize * PixelsPerUnit)), MinPx, MaxPx);
+            px = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(worldSize * PixelsPerUnit)), MinPx, seamless ? OverviewMaxPx : MaxPx);
             var tex = Snapshot(b, extent, px, scene);
             png = tex.EncodeToPNG();
             // editor-write-ok: destroys the throwaway picture this bake just made in memory; nothing saved is touched.
@@ -90,15 +106,87 @@ public static class MinimapBaker
         finally { EditorSceneManager.ClosePreviewScene(scene); }
 
         SavePicture(map, png, px);
-        SaveEntry(map, worldMin, worldSize);
+        SaveEntry(map, worldMin, worldSize, seamless ? TileUnits : 0f);
         WorldMapExport.WritePreview(map, png);
         return true;
     }
 
+    // Two things the game's own camera has and a camera high above a hidden copy does not:
+    //  · THE SUN. A zone carries its own; a seamless world is lit by the one in the Systems scene, which a hidden copy of
+    //    the world does not hold — drawn unlit it came out nearly black. A copy of that sun is put into the copy.
+    //  · THE NEAR LOOK of every model. From that high up a tree is a few pixels tall, so its detail levels swap it for
+    //    nothing at all — the world's 19,000 props were missing from its picture. Every one is held at its nearest look.
+    static void PrepareForDrawing(Scene scene)
+    {
+        bool lit = false;
+        foreach (var root in scene.GetRootGameObjects())
+            foreach (var l in root.GetComponentsInChildren<Light>(false))
+                if (l.type == LightType.Directional && l.enabled) lit = true;
+        if (!lit)
+        {
+            Light sun = null;
+            for (int i = 0; i < SceneManager.sceneCount && sun == null; i++)
+            {
+                var s = SceneManager.GetSceneAt(i);
+                if (!s.isLoaded || s.name != MapManager.SystemsScene) continue;
+                foreach (var root in s.GetRootGameObjects())
+                    foreach (var l in root.GetComponentsInChildren<Light>(false))
+                        if (sun == null && l.type == LightType.Directional) sun = l;
+            }
+            if (sun == null) Debug.LogWarning("[minimap] '" + scene.name + "' has no sun and the Systems scene is not open to lend one — its picture is drawn unlit.");
+            else
+            {
+                var go = new GameObject("~MinimapBakeSun") { hideFlags = HideFlags.HideAndDontSave };
+                SceneManager.MoveGameObjectToScene(go, scene);
+                // editor-write-ok: a throwaway light inside the hidden copy, matching the Systems sun; never saved.
+                go.transform.rotation = sun.transform.rotation;
+                var l = go.AddComponent<Light>();
+                l.type = LightType.Directional;
+                l.color = sun.color;
+                l.intensity = sun.intensity;
+                l.shadows = sun.shadows;
+            }
+        }
+        foreach (var root in scene.GetRootGameObjects())
+            foreach (var g in root.GetComponentsInChildren<LODGroup>(false))
+                // editor-write-ok: holds a model at its nearest look inside the hidden copy only; never saved.
+                g.ForceLOD(0);
+    }
+
+    // The minimap's square pictures of a seamless world: one per TileUnits square that holds any of its ground, under
+    // Minimaps/<map>/. A square that no longer holds ground loses its picture.
+    static void BakeTiles(string map, SeamlessWorld world, Bounds b, Scene scene)
+    {
+        var made = new HashSet<string>();
+        int gx0 = Mathf.FloorToInt(world.worldMin.x / TileUnits), gx1 = Mathf.CeilToInt(world.worldMax.x / TileUnits) - 1;
+        int gy0 = Mathf.FloorToInt(world.worldMin.y / TileUnits), gy1 = Mathf.CeilToInt(world.worldMax.y / TileUnits) - 1;
+        for (int gy = gy0; gy <= gy1; gy++)
+            for (int gx = gx0; gx <= gx1; gx++)
+            {
+                var square = new Rect(gx * TileUnits, gy * TileUnits, TileUnits, TileUnits);
+                if (!world.chunks.Exists(c => square.Overlaps(Rect.MinMaxRect(c.min.x, c.min.y, c.max.x, c.max.y)))) continue;
+                var tb = new Bounds(new Vector3(square.center.x, b.center.y, square.center.y), new Vector3(TileUnits, b.size.y, TileUnits));
+                var tex = Snapshot(tb, TileUnits * 0.5f, TilePx, scene);
+                string name = MinimapCatalog.TilePicture(map, gx, gy);
+                SavePicture(name, tex.EncodeToPNG(), TilePx);
+                // editor-write-ok: destroys the throwaway picture this bake just made in memory; nothing saved is touched.
+                Object.DestroyImmediate(tex);
+                made.Add(PictureDir + "/" + name + ".png");
+            }
+        string dir = PictureDir + "/" + map;
+        if (!Directory.Exists(dir)) return;
+        foreach (var f in Directory.GetFiles(dir, "*.png"))
+        {
+            string path = f.Replace('\\', '/');
+            // editor-write-ok: removes a square picture whose square no longer holds ground, during the user's bake.
+            if (!made.Contains(path)) AssetDatabase.DeleteAsset(path);
+        }
+    }
+
     static void SavePicture(string map, byte[] png, int px)
     {
-        Directory.CreateDirectory(PictureDir);
         string path = PictureDir + "/" + map + ".png";
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
         if (File.Exists(path) && SameBytes(File.ReadAllBytes(path), png) && AssetImporter.GetAtPath(path) != null) return;
         // editor-write-ok: writes the picture this bake just drew, because the user saved the map or ran the bake.
         File.WriteAllBytes(path, png);
@@ -127,7 +215,7 @@ public static class MinimapBaker
         return true;
     }
 
-    static void SaveEntry(string map, Vector2 worldMin, float worldSize)
+    static void SaveEntry(string map, Vector2 worldMin, float worldSize, float tileSize)
     {
         var catalog = AssetDatabase.LoadAssetAtPath<MinimapCatalog>(CatalogPath);
         if (catalog == null)
@@ -137,10 +225,12 @@ public static class MinimapBaker
             AssetDatabase.CreateAsset(catalog, CatalogPath);
         }
         var entry = catalog.Find(map);
-        if (entry != null && entry.worldMin == worldMin && Mathf.Approximately(entry.worldSize, worldSize)) return;
+        if (entry != null && entry.worldMin == worldMin && Mathf.Approximately(entry.worldSize, worldSize)
+            && Mathf.Approximately(entry.tileSize, tileSize)) return;
         if (entry == null) { entry = new MinimapCatalog.Entry { map = map }; catalog.maps.Add(entry); }
         entry.worldMin = worldMin;
         entry.worldSize = worldSize;
+        entry.tileSize = tileSize;
         catalog.maps.Sort((a, b) => string.CompareOrdinal(a.map, b.map));
         // editor-write-ok: records where the map's new picture sits, because the user saved the map or ran the bake.
         EditorUtility.SetDirty(catalog);

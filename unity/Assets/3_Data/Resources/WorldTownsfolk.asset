@@ -17,7 +17,7 @@ MonoBehaviour:
     name: Marta
     description: Soup Peddler
     model: Chef_Female
-    map: lastline
+    map: world
     home: {x: -10.83, y: 0, z: -0.5}
     wanderRadius: 6
     facing: 0
@@ -35,7 +35,7 @@ MonoBehaviour:
     name: Bram
     description: Retired Town Gossip
     model: OldClassy_Male
-    map: lastline
+    map: world
     home: {x: 10.58, y: 0, z: -0.5}
     wanderRadius: 6
     facing: 0
@@ -53,7 +53,7 @@ MonoBehaviour:
     name: Elowen
     description: Wandering Herbalist
     model: Elf
-    map: lastline
+    map: world
     home: {x: 0, y: 0, z: 8.31}
     wanderRadius: 6
     facing: 0
@@ -71,7 +71,7 @@ MonoBehaviour:
     name: Haru
     description: Tea Brewer
     model: Kimono_Male
-    map: lastline
+    map: world
     home: {x: 0, y: 0, z: -9.95}
     wanderRadius: 6
     facing: 0
@@ -89,7 +89,7 @@ MonoBehaviour:
     name: Sena
     description: South Gate Lantern Keeper
     model: Kimono_Female
-    map: lastline
+    map: world
     home: {x: 0, y: 0, z: -21.66}
     wanderRadius: 6
     facing: 0
@@ -107,7 +107,7 @@ MonoBehaviour:
     name: Alder
     description: Town Physician
     model: Doctor_Male_Old
-    map: lastline
+    map: world
     home: {x: 0, y: 0, z: 19.9}
     wanderRadius: 6
     facing: 0
@@ -125,7 +125,7 @@ MonoBehaviour:
     name: Ilse
     description: Cobblestone Mender
     model: Worker_Female
-    map: lastline
+    map: world
     home: {x: 17.51, y: 0, z: -5.54}
     wanderRadius: 6
     facing: 0
@@ -143,7 +143,7 @@ MonoBehaviour:
     name: Torvald
     description: Off-Duty Raider
     model: Viking_Male
-    map: lastline
+    map: world
     home: {x: 17.51, y: 0, z: 9.57}
     wanderRadius: 6
     facing: 0
@@ -161,7 +161,7 @@ MonoBehaviour:
     name: Mags
     description: Retired Smuggler
     model: Pirate_Female
-    map: lastline
+    map: world
     home: {x: -17.38, y: 0, z: 9.57}
     wanderRadius: 6
     facing: 0
@@ -179,7 +179,7 @@ MonoBehaviour:
     name: Pip
     description: Errand Runner
     model: Casual_Male
-    map: lastline
+    map: world
     home: {x: 15.62, y: 0, z: 20.28}
     wanderRadius: 6
     facing: 0
@@ -197,7 +197,7 @@ MonoBehaviour:
     name: Wren
     description: Fortune Teller
     model: Witch
-    map: lastline
+    map: world
     home: {x: 9.32, y: 0, z: -23.17}
     wanderRadius: 6
     facing: 0
@@ -215,7 +215,7 @@ MonoBehaviour:
     name: Edmund
     description: Tax Collector
     model: Suit_Male
-    map: lastline
+    map: world
     home: {x: -9.57, y: 0, z: 20.91}
     wanderRadius: 6
     facing: 0
@@ -233,7 +233,7 @@ MonoBehaviour:
     name: Gunnar
     description: Smith
     model: Worker_Male
-    map: lastline
+    map: world
     home: {x: -2.42, y: 0, z: -2.59}
     wanderRadius: 0
     facing: 41
@@ -251,7 +251,7 @@ MonoBehaviour:
     name: Fenwick
     description: Tool Dealer
     model: Casual2_Male
-    map: lastline
+    map: world
     home: {x: 3.06, y: 0, z: -2.18}
     wanderRadius: 0
     facing: -41
@@ -269,280 +269,10 @@ MonoBehaviour:
     name: Keeper
     description: Save Point, Storage, Teleport
     model: Suit_Female
-    map: lastline
+    map: world
     home: {x: -0.05, y: 0, z: -2}
     wanderRadius: 0
     facing: 180
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-old-oak
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: old_oak
-    home: {x: 30.5, y: 0, z: 2}
-    wanderRadius: 0
-    facing: 270
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-gemmara
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: gemmara
-    home: {x: -30.5, y: 0, z: -2}
-    wanderRadius: 0
-    facing: 90
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-pluvenne
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: pluvenne
-    home: {x: -30.5, y: 0, z: -2}
-    wanderRadius: 0
-    facing: 90
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-hilt
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: hilt
-    home: {x: -30.5, y: 0, z: -2}
-    wanderRadius: 0
-    facing: 90
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-parley
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: parley
-    home: {x: 22.5, y: 0, z: 2}
-    wanderRadius: 0
-    facing: 270
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-tornel
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: tornel
-    home: {x: 2, y: 0.18, z: 22.5}
-    wanderRadius: 0
-    facing: 180
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-harrowen
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: harrowen
-    home: {x: 22.5, y: 0, z: 2}
-    wanderRadius: 0
-    facing: 270
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-pennaryl
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: pennaryl
-    home: {x: 2, y: 0, z: -30.5}
-    wanderRadius: 0
-    facing: 0
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-velmora
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: velmora
-    home: {x: -2, y: 0.66, z: 30.5}
-    wanderRadius: 0
-    facing: 180
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-brimstone
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: brimstone
-    home: {x: -22.5, y: 0, z: -2}
-    wanderRadius: 0
-    facing: 90
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-cindrel
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: cindrel
-    home: {x: -30.5, y: 0, z: -2}
-    wanderRadius: 0
-    facing: 90
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-luminhal
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: luminhal
-    home: {x: 2, y: 0, z: -30.5}
-    wanderRadius: 0
-    facing: 0
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-kharnel
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: kharnel
-    home: {x: -21.5, y: 0, z: 2}
-    wanderRadius: 0
-    facing: 90
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-halcyra
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: halcyra
-    home: {x: -30.5, y: 0, z: -2}
-    wanderRadius: 0
-    facing: 90
-    station: 0
-    shop: 
-    keeper: 1
-    summons: 
-    summonAt: {x: 0, y: 0, z: 0}
-    level: 1
-    barks: 0
-    hairStyle: 
-    hairColour: 
-    headgear: 
-  - id: keeper-hazemere
-    name: Keeper
-    description: Save Point, Storage, Teleport
-    model: Suit_Female
-    map: hazemere
-    home: {x: -30.5, y: 0.18, z: -2}
-    wanderRadius: 0
-    facing: 90
     station: 0
     shop: 
     keeper: 1
@@ -557,7 +287,7 @@ MonoBehaviour:
     name: Hatter
     description: Headgear (beta testing)
     model: Casual2_Male
-    map: lastline
+    map: world
     home: {x: 0.3, y: 0, z: -3.8}
     wanderRadius: 0
     facing: 180

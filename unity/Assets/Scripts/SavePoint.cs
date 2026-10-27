@@ -8,7 +8,7 @@
 /// </summary>
 public static class SavePoint
 {
-    public const string DefaultMap = "lastline";
+    public const string DefaultMap = "world";
     public const string DefaultSpawnId = "center";
 
     /// <summary>The health a person stands back up with: a tenth of their maximum, never less than one point.

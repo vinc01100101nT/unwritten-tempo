@@ -24,7 +24,15 @@ public class MinimapCatalog : ScriptableObject
         public Vector2 worldMin;
         [Tooltip("The width (and height — the picture is square) of the ground the picture covers, in world units.")]
         public float worldSize = 100f;
+        [Tooltip("Written by the minimap baker. 0 = the map is the one picture above. Above 0 = the map is also drawn in " +
+                 "square pictures this many world units wide (TilePicture), which the minimap shows around the player; " +
+                 "the one picture is then only the whole-map overview.")]
+        public float tileSize;
     }
+
+    /// <summary>The Resources name (under <see cref="PictureFolder"/>) of the square picture covering map units
+    /// gx*tileSize..(gx+1)*tileSize west to east and gy*tileSize.. south to north.</summary>
+    public static string TilePicture(string map, int gx, int gy) => map + "/" + gx + "_" + gy;
 
     public List<Entry> maps = new List<Entry>();
 

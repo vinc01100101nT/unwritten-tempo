@@ -22,7 +22,7 @@ public static class SystemsSceneBuilder
 {
     const string ScenesDir = "Assets/Scenes";
     const string SystemsPath = ScenesDir + "/Systems.unity";
-    const string FirstMap = "lastline";   // boot into the starting town
+    const string FirstMap = SavePoint.DefaultMap;   // boot where a new character starts
 
     [MenuItem("Tools/unwritten/Scene Setup/Setup Systems Scene", priority = 101)]
     static void Build()

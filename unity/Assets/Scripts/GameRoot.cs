@@ -22,7 +22,7 @@ public class GameRoot : MonoBehaviour
 {
     [Tooltip("Map to load when a character enters the world (the build's starting map). In the editor, " +
              "whichever map you had open is remembered and used instead.")]
-    public string firstMap = "lastline";
+    public string firstMap = SavePoint.DefaultMap;
 
     bool worldUp;
 

@@ -23,7 +23,6 @@ CHECK = os.path.join(HERE, "check-biome-table.py")
 TABLE = os.path.join("unity", "Assets", "3_Data", "Recipes", "BiomeTable.asset")
 ENUM = os.path.join("unity", "Assets", "Scripts", "MapRecipe.cs")
 WEB = os.path.join("tools", "world-creator", "index.html")
-TEST_MAP = os.path.join("unity", "Assets", "Scenes", "test_desert.unity")
 HELD = os.path.join("unity", "Assets", "3_Data", "Resources", "BiomeWeather.asset")
 SANDSTONE_META = os.path.join(REPO, "unity", "Assets", "1_Authored", "Art", "GroundTiles", "PATH_OR_SIDEWALK_sandstone.png.meta")
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
@@ -80,8 +79,6 @@ def main():
     rocks_mult_line = rocks_mult.splitlines()[-1] + "\n"
     grass = row_of(0)
     web = read(WEB)
-    scene = read(TEST_MAP)
-    pos = re.search(r"- target: \{fileID: (-?\d+), guid: ([0-9a-f]{32}), type: 3\}\n\s+propertyPath: m_LocalPosition\.x", scene)
 
     bad = 0
     bad += case("a colour wash left over a biome's own tiles", TABLE, coast,
@@ -100,17 +97,11 @@ def main():
                 coast.replace(rocks_mult, rocks_mult.replace(rocks_mult_line, "      countMultiplier: 0\n"), 1), "places none")
     bad += case("a held weather level above 1", HELD, "    alwaysPuddles: 1\n", "    alwaysPuddles: 1.5\n",
                 "outside 0..1")
-    bad += case("a test map marked with the wrong biome", TEST_MAP, "Assembly-CSharp::MapBiome\n  biome: 2\n",
-                "Assembly-CSharp::MapBiome\n  biome: 3\n", "but its name says Desert")
-    bad += case("a test map with no biome marker", TEST_MAP, "Assembly-CSharp::MapBiome\n  biome: 2\n",
-                "Assembly-CSharp::MapBiome\n", "carries 0 biome markers")
     bad += case("the Grassland row changed", TABLE, grass,
                 grass.replace("patchAmount: 0.9", "patchAmount: 0.5", 1), "Grassland's look is pinned")
     bad += case("a biome added to the list with no row", ENUM, "Haunted, Mist }", "Haunted, Mist, Tundra }",
                 "Tundra has no row")
     bad += case("the World Creator missing a biome", WEB, '"coast",', "", "biome list has no coast")
-    bad += case("a saved prop position pointing at a part the prefab lacks", TEST_MAP, pos.group(0),
-                pos.group(0).replace("fileID: %s," % pos.group(1), "fileID: 424242,", 1), "no longer has")
 
     code_after, out_after = run()
     if code_after != 0 or out_after != out:

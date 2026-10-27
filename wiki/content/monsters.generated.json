@@ -53,13 +53,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild01",
-                    "name": "Lastline Field 1",
-                    "count": 7
-                },
-                {
-                    "map": "prl_fild01",
-                    "name": "Parley Field 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 7
                 }
             ]
@@ -88,13 +83,7 @@
             "dex": 5,
             "luk": 3,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun01",
-                    "name": "Old Oak Dungeon 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-flutterby",
@@ -148,19 +137,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild01",
-                    "name": "Lastline Field 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 10
-                },
-                {
-                    "map": "prl_fild01",
-                    "name": "Parley Field 1",
-                    "count": 10
-                },
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 3
                 }
             ]
         },
@@ -214,13 +193,7 @@
             "dex": 10,
             "luk": 3,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun02",
-                    "name": "Old Oak Dungeon 2",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.squeak",
@@ -248,24 +221,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild01",
-                    "name": "Lastline Field 1",
-                    "count": 4
-                },
-                {
-                    "map": "prl_fild01",
-                    "name": "Parley Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "gmr_fild01",
-                    "name": "Gemmara Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "lst_fild04",
-                    "name": "Lastline Field 4",
-                    "count": 1
+                    "map": "world",
+                    "name": "world",
+                    "count": 5
                 }
             ]
         },
@@ -293,13 +251,7 @@
             "dex": 10,
             "luk": 3,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun01",
-                    "name": "Old Oak Dungeon 1",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-crawlet",
@@ -353,24 +305,9 @@
             "hardDef": 0.30000001192092898,
             "homes": [
                 {
-                    "map": "lst_fild01",
-                    "name": "Lastline Field 1",
-                    "count": 7
-                },
-                {
-                    "map": "prl_fild01",
-                    "name": "Parley Field 1",
-                    "count": 7
-                },
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "lst_fild04",
-                    "name": "Lastline Field 4",
-                    "count": 9
+                    "map": "world",
+                    "name": "world",
+                    "count": 16
                 }
             ]
         },
@@ -450,13 +387,7 @@
             "dex": 8,
             "luk": 6,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-capling",
@@ -536,29 +467,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild01",
-                    "name": "Lastline Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "prl_fild01",
-                    "name": "Parley Field 1",
-                    "count": 4
-                },
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "lst_fild04",
-                    "name": "Lastline Field 4",
-                    "count": 5
+                    "map": "world",
+                    "name": "world",
+                    "count": 9
                 }
             ]
         },
@@ -612,13 +523,7 @@
             "dex": 4,
             "luk": 10,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun02",
-                    "name": "Old Oak Dungeon 2",
-                    "count": 8
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blinkbat",
@@ -646,19 +551,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 13
-                },
-                {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 8
-                },
-                {
-                    "map": "gmr_fild01",
-                    "name": "Gemmara Field 1",
-                    "count": 10
                 }
             ]
         },
@@ -686,13 +581,7 @@
             "dex": 4,
             "luk": 10,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun01",
-                    "name": "Old Oak Dungeon 1",
-                    "count": 11
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-mossnail",
@@ -746,29 +635,9 @@
             "hardDef": 0.30000001192092898,
             "homes": [
                 {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 3
-                },
-                {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
-                    "count": 2
-                },
-                {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
-                    "count": 1
                 }
             ]
         },
@@ -822,13 +691,7 @@
             "dex": 8,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun02",
-                    "name": "Old Oak Dungeon 2",
-                    "count": 8
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-tarantix",
@@ -854,18 +717,7 @@
             "dex": 8,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun01",
-                    "name": "Old Oak Dungeon 1",
-                    "count": 11
-                },
-                {
-                    "map": "hlt_dun01",
-                    "name": "Hilt Dungeon 1",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tarantix",
@@ -893,18 +745,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
-                    "count": 7
-                },
-                {
-                    "map": "gmr_fild01",
-                    "name": "Gemmara Field 1",
-                    "count": 9
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 7
                 }
             ]
@@ -961,29 +803,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 6
-                },
-                {
-                    "map": "hlt_fild02",
-                    "name": "Hilt Field 2",
-                    "count": 2
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
-                    "count": 5
-                },
-                {
-                    "map": "hrw_fild02",
-                    "name": "Harrowen Field 2",
-                    "count": 2
                 }
             ]
         },
@@ -1065,34 +887,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
-                    "count": 6
-                },
-                {
-                    "map": "lst_fild03",
-                    "name": "Lastline Field 3",
-                    "count": 14
-                },
-                {
-                    "map": "prl_fild02",
-                    "name": "Parley Field 2",
-                    "count": 4
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
-                    "count": 5
-                },
-                {
-                    "map": "lst_fild04",
-                    "name": "Lastline Field 4",
-                    "count": 13
-                },
-                {
-                    "map": "hrw_fild02",
-                    "name": "Harrowen Field 2",
-                    "count": 6
+                    "map": "world",
+                    "name": "world",
+                    "count": 33
                 }
             ]
         },
@@ -1174,13 +971,8 @@
             "hardDef": 1.2000000476837159,
             "homes": [
                 {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 8
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
+                    "map": "world",
+                    "name": "world",
                     "count": 8
                 }
             ]
@@ -1263,19 +1055,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
-                    "count": 5
-                },
-                {
-                    "map": "hrw_fild02",
-                    "name": "Harrowen Field 2",
-                    "count": 6
                 }
             ]
         },
@@ -1357,13 +1139,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
+                    "map": "world",
+                    "name": "world",
                     "count": 3
                 }
             ]
@@ -1446,13 +1223,8 @@
             "hardDef": 1.2000000476837159,
             "homes": [
                 {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
+                    "map": "world",
+                    "name": "world",
                     "count": 3
                 }
             ]
@@ -1507,13 +1279,7 @@
             "dex": 11,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun02",
-                    "name": "Old Oak Dungeon 2",
-                    "count": 8
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-webber",
@@ -1539,13 +1305,7 @@
             "dex": 11,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun01",
-                    "name": "Hilt Dungeon 1",
-                    "count": 10
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.webber",
@@ -1571,38 +1331,7 @@
             "dex": 11,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "gmr_fild01",
-                    "name": "Gemmara Field 1",
-                    "count": 10
-                },
-                {
-                    "map": "hrw_fild01",
-                    "name": "Harrowen Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild02",
-                    "name": "Kharnel Field 2",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
-                    "count": 7
-                },
-                {
-                    "map": "hrw_fild02",
-                    "name": "Harrowen Field 2",
-                    "count": 9
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-newtie",
@@ -1656,13 +1385,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 8
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
+                    "map": "world",
+                    "name": "world",
                     "count": 8
                 }
             ]
@@ -1743,28 +1467,7 @@
             "dex": 12,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hrw_fild01",
-                    "name": "Harrowen Field 1",
-                    "count": 10
-                },
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "hrw_fild02",
-                    "name": "Harrowen Field 2",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-pando",
@@ -1844,23 +1547,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 8
-                },
-                {
-                    "map": "hlt_fild02",
-                    "name": "Hilt Field 2",
-                    "count": 8
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 7
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
+                    "map": "world",
+                    "name": "world",
                     "count": 8
                 }
             ]
@@ -1915,18 +1603,7 @@
             "dex": 8,
             "luk": 8,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun02",
-                    "name": "Old Oak Dungeon 2",
-                    "count": 1
-                },
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.burrowbo",
@@ -1954,28 +1631,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "gmr_fild01",
-                    "name": "Gemmara Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "hlt_fild02",
-                    "name": "Hilt Field 2",
-                    "count": 4
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "lst_fild05",
-                    "name": "Lastline Field 5",
+                    "map": "world",
+                    "name": "world",
                     "count": 3
                 }
             ]
@@ -2004,23 +1661,7 @@
             "dex": 8,
             "luk": 8,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun01",
-                    "name": "Hilt Dungeon 1",
-                    "count": 4
-                },
-                {
-                    "map": "gmr_fild01",
-                    "name": "Gemmara Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-pilfer",
@@ -2074,29 +1715,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild03",
-                    "name": "Lastline Field 3",
-                    "count": 11
-                },
-                {
-                    "map": "prl_fild02",
-                    "name": "Parley Field 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 17
-                },
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "lst_fild04",
-                    "name": "Lastline Field 4",
-                    "count": 6
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 2
                 }
             ]
         },
@@ -2150,13 +1771,7 @@
             "dex": 10,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.grumbear",
@@ -2182,33 +1797,7 @@
             "dex": 10,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_fild02",
-                    "name": "Hilt Field 2",
-                    "count": 6
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "hrw_fild01",
-                    "name": "Harrowen Field 1",
-                    "count": 8
-                },
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "hrw_fild02",
-                    "name": "Harrowen Field 2",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-grumbear",
@@ -2234,13 +1823,7 @@
             "dex": 10,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun01",
-                    "name": "Hilt Dungeon 1",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-mossgore",
@@ -2266,18 +1849,7 @@
             "dex": 18,
             "luk": 11,
             "hardDef": 2.700000047683716,
-            "homes": [
-                {
-                    "map": "hlt_dun02",
-                    "name": "Hilt Dungeon 2",
-                    "count": 2
-                },
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-wyrmlet",
@@ -2331,38 +1903,8 @@
             "hardDef": 2.700000047683716,
             "homes": [
                 {
-                    "map": "hlt_fild02",
-                    "name": "Hilt Field 2",
-                    "count": 6
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 5
-                },
-                {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild02",
-                    "name": "Kharnel Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "gmr_fild02",
-                    "name": "Gemmara Field 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 3
                 }
             ]
@@ -2393,23 +1935,8 @@
             "hardDef": 2.700000047683716,
             "homes": [
                 {
-                    "map": "hlt_dun01",
-                    "name": "Hilt Dungeon 1",
-                    "count": 2
-                },
-                {
-                    "map": "olk_dun01",
-                    "name": "Old Oak Dungeon 1",
-                    "count": 4
-                },
-                {
-                    "map": "lst_fild02",
-                    "name": "Lastline Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
                 }
             ]
@@ -2438,13 +1965,7 @@
             "dex": 18,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "prl_fild02",
-                    "name": "Parley Field 2",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.wyrmlet",
@@ -2472,24 +1993,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild03",
-                    "name": "Lastline Field 3",
+                    "map": "world",
+                    "name": "world",
                     "count": 2
-                },
-                {
-                    "map": "hrw_fild01",
-                    "name": "Harrowen Field 1",
-                    "count": 5
-                },
-                {
-                    "map": "prl_fild02",
-                    "name": "Parley Field 2",
-                    "count": 9
-                },
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 4
                 }
             ]
         },
@@ -2517,13 +2023,7 @@
             "dex": 30,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.digger",
@@ -2549,13 +2049,7 @@
             "dex": 30,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-digger",
@@ -2581,13 +2075,7 @@
             "dex": 30,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun02",
-                    "name": "Hilt Dungeon 2",
-                    "count": 8
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-scaly",
@@ -2613,13 +2101,7 @@
             "dex": 12,
             "luk": 19,
             "hardDef": 2.700000047683716,
-            "homes": [
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.scaly",
@@ -2645,18 +2127,7 @@
             "dex": 12,
             "luk": 19,
             "hardDef": 2.700000047683716,
-            "homes": [
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-scaly",
@@ -2682,13 +2153,7 @@
             "dex": 12,
             "luk": 19,
             "hardDef": 2.700000047683716,
-            "homes": [
-                {
-                    "map": "hlt_dun02",
-                    "name": "Hilt Dungeon 2",
-                    "count": 8
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-canewick",
@@ -2740,33 +2205,7 @@
             "dex": 37,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hrw_fild01",
-                    "name": "Harrowen Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "trn_fild01",
-                    "name": "Tornel Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 7
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-canewick",
@@ -2792,13 +2231,7 @@
             "dex": 37,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hrw_fild01",
-                    "name": "Harrowen Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-dewdrop",
@@ -2826,8 +2259,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
                 }
             ]
@@ -2856,23 +2289,7 @@
             "dex": 21,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_fild02",
-                    "name": "Hilt Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-dewdrop",
@@ -2900,13 +2317,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun01",
-                    "name": "Lastline Dungeon 1",
-                    "count": 1
-                },
-                {
-                    "map": "hlt_fild01",
-                    "name": "Hilt Field 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
                 }
             ]
@@ -2935,13 +2347,7 @@
             "dex": 13,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.peeper",
@@ -2967,13 +2373,7 @@
             "dex": 13,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-peeper",
@@ -2999,13 +2399,7 @@
             "dex": 13,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hlt_dun02",
-                    "name": "Hilt Dungeon 2",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-viper",
@@ -3057,13 +2451,7 @@
             "dex": 22,
             "luk": 13,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun01",
-                    "name": "Velmora Dungeon 1",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.viper",
@@ -3089,28 +2477,7 @@
             "dex": 22,
             "luk": 13,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "trn_fild01",
-                    "name": "Tornel Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-coily",
@@ -3162,13 +2529,7 @@
             "dex": 22,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-coily",
@@ -3194,13 +2555,7 @@
             "dex": 22,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-emberhoot",
@@ -3252,33 +2607,7 @@
             "dex": 23,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "trn_fild01",
-                    "name": "Tornel Field 1",
-                    "count": 9
-                },
-                {
-                    "map": "brm_fild02",
-                    "name": "Brimstone Field 2",
-                    "count": 2
-                },
-                {
-                    "map": "vlm_fild03",
-                    "name": "Velmora Field 3",
-                    "count": 2
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-emberhoot",
@@ -3356,13 +2685,7 @@
             "dex": 24,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-emberwyrm",
@@ -3388,13 +2711,7 @@
             "dex": 24,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun01",
-                    "name": "Velmora Dungeon 1",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-chomper",
@@ -3446,28 +2763,7 @@
             "dex": 15,
             "luk": 32,
             "hardDef": 4.800000190734863,
-            "homes": [
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 7
-                },
-                {
-                    "map": "trn_fild01",
-                    "name": "Tornel Field 1",
-                    "count": 11
-                },
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 7
-                },
-                {
-                    "map": "pnr_fild02",
-                    "name": "Pennaryl Field 2",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-chomper",
@@ -3493,23 +2789,7 @@
             "dex": 15,
             "luk": 32,
             "hardDef": 4.800000190734863,
-            "homes": [
-                {
-                    "map": "vlm_dun01",
-                    "name": "Velmora Dungeon 1",
-                    "count": 8
-                },
-                {
-                    "map": "trn_fild01",
-                    "name": "Tornel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "vlm_fild01",
-                    "name": "Velmora Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-sunscale",
@@ -3535,13 +2815,7 @@
             "dex": 16,
             "luk": 26,
             "hardDef": 4.800000190734863,
-            "homes": [
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.gloop-king",
@@ -3567,13 +2841,7 @@
             "dex": 4,
             "luk": 4,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "prl_fild01",
-                    "name": "Parley Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.sunscale",
@@ -3599,18 +2867,7 @@
             "dex": 16,
             "luk": 26,
             "hardDef": 4.800000190734863,
-            "homes": [
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 3
-                },
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-sunscale",
@@ -3636,13 +2893,7 @@
             "dex": 16,
             "luk": 26,
             "hardDef": 4.800000190734863,
-            "homes": [
-                {
-                    "map": "vlm_dun01",
-                    "name": "Velmora Dungeon 1",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.oculord",
@@ -3668,13 +2919,7 @@
             "dex": 18,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_dun02",
-                    "name": "Old Oak Dungeon 2",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.autumn-stalk",
@@ -3700,13 +2945,7 @@
             "dex": 5,
             "luk": 10,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "olk_fild01",
-                    "name": "Old Oak Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-willo",
@@ -3732,18 +2971,7 @@
             "dex": 28,
             "luk": 17,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 10
-                },
-                {
-                    "map": "vlm_dun02",
-                    "name": "Velmora Dungeon 2",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-willo",
@@ -3769,13 +2997,7 @@
             "dex": 28,
             "luk": 17,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun02",
-                    "name": "Velmora Dungeon 2",
-                    "count": 8
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.willo",
@@ -3801,23 +3023,7 @@
             "dex": 28,
             "luk": 17,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 5
-                },
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 8
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.bandit-boss",
@@ -3845,8 +3051,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_fild03",
-                    "name": "Lastline Field 3",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
                 }
             ]
@@ -3875,13 +3081,7 @@
             "dex": 13,
             "luk": 8,
             "hardDef": 5.400000095367432,
-            "homes": [
-                {
-                    "map": "plv_fild01",
-                    "name": "Pluvenne Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.adder",
@@ -3907,23 +3107,7 @@
             "dex": 18,
             "luk": 30,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-adder",
@@ -3949,13 +3133,7 @@
             "dex": 18,
             "luk": 30,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-adder",
@@ -3981,13 +3159,7 @@
             "dex": 18,
             "luk": 30,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun02",
-                    "name": "Velmora Dungeon 2",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-bloodshot",
@@ -4013,13 +3185,7 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.bloodshot",
@@ -4045,28 +3211,7 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_fild02",
-                    "name": "Velmora Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.mossmaw",
@@ -4092,13 +3237,7 @@
             "dex": 24,
             "luk": 19,
             "hardDef": 8.399999618530274,
-            "homes": [
-                {
-                    "map": "hlt_dun03",
-                    "name": "Hilt Dungeon 3",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-bloodshot",
@@ -4124,18 +3263,7 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun02",
-                    "name": "Velmora Dungeon 2",
-                    "count": 3
-                },
-                {
-                    "map": "cdl_dun01",
-                    "name": "Cindrel Dungeon 1",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-hornscale",
@@ -4187,13 +3315,7 @@
             "dex": 14,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.hornscale",
@@ -4219,18 +3341,7 @@
             "dex": 31,
             "luk": 19,
             "hardDef": 7.800000190734863,
-            "homes": [
-                {
-                    "map": "brm_fild02",
-                    "name": "Brimstone Field 2",
-                    "count": 9
-                },
-                {
-                    "map": "vlm_fild03",
-                    "name": "Velmora Field 3",
-                    "count": 9
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-hornscale",
@@ -4284,8 +3395,8 @@
             "hardDef": 7.800000190734863,
             "homes": [
                 {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 5
                 }
             ]
@@ -4314,13 +3425,7 @@
             "dex": 31,
             "luk": 20,
             "hardDef": 7.800000190734863,
-            "homes": [
-                {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-rivershell",
@@ -4348,14 +3453,9 @@
             "hardDef": 7.800000190734863,
             "homes": [
                 {
-                    "map": "lst_dun01",
-                    "name": "Lastline Dungeon 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 5
-                },
-                {
-                    "map": "khn_dun05",
-                    "name": "Kharnel Dungeon 5",
-                    "count": 1
                 }
             ]
         },
@@ -4383,13 +3483,7 @@
             "dex": 15,
             "luk": 15,
             "hardDef": 8.399999618530274,
-            "homes": [
-                {
-                    "map": "pnr_fild01",
-                    "name": "Pennaryl Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-snapper",
@@ -4417,8 +3511,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
                 }
             ]
@@ -4447,13 +3541,7 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "cdl_dun03",
-                    "name": "Cindrel Dungeon 3",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.snapper",
@@ -4479,23 +3567,7 @@
             "dex": 20,
             "luk": 42,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "brm_fild02",
-                    "name": "Brimstone Field 2",
-                    "count": 3
-                },
-                {
-                    "map": "vlm_fild03",
-                    "name": "Velmora Field 3",
-                    "count": 3
-                },
-                {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-snapper",
@@ -4523,8 +3595,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun01",
-                    "name": "Lastline Dungeon 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 2
                 }
             ]
@@ -4555,8 +3627,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 5
                 }
             ]
@@ -4585,13 +3657,7 @@
             "dex": 21,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-octi",
@@ -4619,8 +3685,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun01",
-                    "name": "Lastline Dungeon 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 5
                 }
             ]
@@ -4677,8 +3743,8 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
                 }
             ]
@@ -4707,28 +3773,7 @@
             "dex": 52,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "brm_fild02",
-                    "name": "Brimstone Field 2",
-                    "count": 6
-                },
-                {
-                    "map": "vlm_fild03",
-                    "name": "Velmora Field 3",
-                    "count": 6
-                },
-                {
-                    "map": "hcr_fild01",
-                    "name": "Halcyra Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "hcr_fild02",
-                    "name": "Halcyra Field 2",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-iris",
@@ -4782,8 +3827,8 @@
             "hardDef": 7.800000190734863,
             "homes": [
                 {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 5
                 }
             ]
@@ -4812,13 +3857,7 @@
             "dex": 60,
             "luk": 21,
             "hardDef": 7.800000190734863,
-            "homes": [
-                {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-gnasher",
@@ -4846,8 +3885,8 @@
             "hardDef": 7.800000190734863,
             "homes": [
                 {
-                    "map": "lst_dun01",
-                    "name": "Lastline Dungeon 1",
+                    "map": "world",
+                    "name": "world",
                     "count": 5
                 }
             ]
@@ -4876,13 +3915,7 @@
             "dex": 41,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-cinder",
@@ -4934,28 +3967,7 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "cdl_fild02",
-                    "name": "Cindrel Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.oni-tengu",
@@ -4981,13 +3993,7 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hcr_fild01",
-                    "name": "Halcyra Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-cinder",
@@ -5013,13 +4019,7 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "cdl_dun01",
-                    "name": "Cindrel Dungeon 1",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.bittersweet",
@@ -5045,13 +4045,7 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild03",
-                    "name": "Kharnel Field 3",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-bittersweet",
@@ -5077,13 +4071,7 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-bittersweet",
@@ -5109,13 +4097,7 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun05",
-                    "name": "Kharnel Dungeon 5",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.venom-gloop",
@@ -5141,13 +4123,7 @@
             "dex": 50,
             "luk": 33,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun09",
-                    "name": "Kharnel Dungeon 9",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-cyclo",
@@ -5173,18 +4149,7 @@
             "dex": 46,
             "luk": 23,
             "hardDef": 7.800000190734863,
-            "homes": [
-                {
-                    "map": "vlm_dun03",
-                    "name": "Velmora Dungeon 3",
-                    "count": 1
-                },
-                {
-                    "map": "cdl_dun03",
-                    "name": "Cindrel Dungeon 3",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.cyclo",
@@ -5210,28 +4175,7 @@
             "dex": 46,
             "luk": 23,
             "hardDef": 7.800000190734863,
-            "homes": [
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 4
-                },
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 3
-                },
-                {
-                    "map": "cdl_fild02",
-                    "name": "Cindrel Field 2",
-                    "count": 3
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-cyclo",
@@ -5257,18 +4201,7 @@
             "dex": 46,
             "luk": 23,
             "hardDef": 7.800000190734863,
-            "homes": [
-                {
-                    "map": "vlm_dun02",
-                    "name": "Velmora Dungeon 2",
-                    "count": 3
-                },
-                {
-                    "map": "cdl_dun01",
-                    "name": "Cindrel Dungeon 1",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.abyss-maw",
@@ -5294,13 +4227,7 @@
             "dex": 52,
             "luk": 34,
             "hardDef": 8.399999618530274,
-            "homes": [
-                {
-                    "map": "khn_dun04",
-                    "name": "Kharnel Dungeon 4",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-emberlurk",
@@ -5326,13 +4253,7 @@
             "dex": 37,
             "luk": 23,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_dun03",
-                    "name": "Cindrel Dungeon 3",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.emberlurk",
@@ -5358,43 +4279,7 @@
             "dex": 37,
             "luk": 23,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 5
-                },
-                {
-                    "map": "cdl_fild02",
-                    "name": "Cindrel Field 2",
-                    "count": 5
-                },
-                {
-                    "map": "khn_fild02",
-                    "name": "Kharnel Field 2",
-                    "count": 6
-                },
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 5
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 6
-                },
-                {
-                    "map": "khn_fild08",
-                    "name": "Kharnel Field 8",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-emberlurk",
@@ -5420,18 +4305,7 @@
             "dex": 37,
             "luk": 23,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_dun01",
-                    "name": "Cindrel Dungeon 1",
-                    "count": 7
-                },
-                {
-                    "map": "brm_fild01",
-                    "name": "Brimstone Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-moldy",
@@ -5457,13 +4331,7 @@
             "dex": 48,
             "luk": 24,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.moldy",
@@ -5489,18 +4357,7 @@
             "dex": 48,
             "luk": 24,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild03",
-                    "name": "Kharnel Field 3",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-moldy",
@@ -5526,13 +4383,7 @@
             "dex": 48,
             "luk": 24,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun05",
-                    "name": "Kharnel Dungeon 5",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-horngore",
@@ -5558,23 +4409,7 @@
             "dex": 67,
             "luk": 24,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_dun03",
-                    "name": "Cindrel Dungeon 3",
-                    "count": 5
-                },
-                {
-                    "map": "khn_dun09",
-                    "name": "Kharnel Dungeon 9",
-                    "count": 1
-                },
-                {
-                    "map": "cdl_dun02",
-                    "name": "Cindrel Dungeon 2",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.horngore",
@@ -5600,38 +4435,7 @@
             "dex": 67,
             "luk": 24,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 5
-                },
-                {
-                    "map": "cdl_fild02",
-                    "name": "Cindrel Field 2",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild05",
-                    "name": "Kharnel Field 5",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild07",
-                    "name": "Kharnel Field 7",
-                    "count": 1
-                },
-                {
-                    "map": "brm_fild03",
-                    "name": "Brimstone Field 3",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild10",
-                    "name": "Kharnel Field 10",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-horngore",
@@ -5657,23 +4461,7 @@
             "dex": 67,
             "luk": 24,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_dun02",
-                    "name": "Cindrel Dungeon 2",
-                    "count": 6
-                },
-                {
-                    "map": "khn_dun07",
-                    "name": "Kharnel Dungeon 7",
-                    "count": 2
-                },
-                {
-                    "map": "khn_dun08",
-                    "name": "Kharnel Dungeon 8",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-drizzle",
@@ -5725,28 +4513,7 @@
             "dex": 24,
             "luk": 50,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild02",
-                    "name": "Kharnel Field 2",
-                    "count": 6
-                },
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 5
-                },
-                {
-                    "map": "khn_fild06",
-                    "name": "Kharnel Field 6",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild08",
-                    "name": "Kharnel Field 8",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-drizzle",
@@ -5798,33 +4565,7 @@
             "dex": 40,
             "luk": 25,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "cdl_fild02",
-                    "name": "Cindrel Field 2",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild02",
-                    "name": "Kharnel Field 2",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild08",
-                    "name": "Kharnel Field 8",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-blazeskull",
@@ -5850,13 +4591,7 @@
             "dex": 40,
             "luk": 25,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_dun03",
-                    "name": "Cindrel Dungeon 3",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-blazeskull",
@@ -5882,13 +4617,7 @@
             "dex": 40,
             "luk": 25,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "cdl_dun02",
-                    "name": "Cindrel Dungeon 2",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-inky",
@@ -5916,14 +4645,9 @@
             "hardDef": 0.0,
             "homes": [
                 {
-                    "map": "lst_dun02",
-                    "name": "Lastline Dungeon 2",
+                    "map": "world",
+                    "name": "world",
                     "count": 1
-                },
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 4
                 }
             ]
         },
@@ -5951,23 +4675,7 @@
             "dex": 25,
             "luk": 40,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild03",
-                    "name": "Kharnel Field 3",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-inky",
@@ -5993,18 +4701,7 @@
             "dex": 25,
             "luk": 40,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun05",
-                    "name": "Kharnel Dungeon 5",
-                    "count": 3
-                },
-                {
-                    "map": "lmh_fild01",
-                    "name": "Luminhal Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-sucker",
@@ -6030,13 +4727,7 @@
             "dex": 41,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "cdl_dun03",
-                    "name": "Cindrel Dungeon 3",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.sucker",
@@ -6062,18 +4753,7 @@
             "dex": 41,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "cdl_fild02",
-                    "name": "Cindrel Field 2",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-sucker",
@@ -6099,18 +4779,7 @@
             "dex": 41,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "cdl_dun02",
-                    "name": "Cindrel Dungeon 2",
-                    "count": 5
-                },
-                {
-                    "map": "cdl_fild01",
-                    "name": "Cindrel Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-squirt",
@@ -6136,13 +4805,7 @@
             "dex": 63,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.squirt",
@@ -6168,33 +4831,7 @@
             "dex": 63,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild02",
-                    "name": "Kharnel Field 2",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild03",
-                    "name": "Kharnel Field 3",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild08",
-                    "name": "Kharnel Field 8",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-squirt",
@@ -6220,23 +4857,7 @@
             "dex": 63,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun01",
-                    "name": "Kharnel Dungeon 1",
-                    "count": 3
-                },
-                {
-                    "map": "khn_dun02",
-                    "name": "Kharnel Dungeon 2",
-                    "count": 1
-                },
-                {
-                    "map": "khn_dun05",
-                    "name": "Kharnel Dungeon 5",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-swampfang",
@@ -6262,13 +4883,7 @@
             "dex": 42,
             "luk": 26,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blood-ronin",
@@ -6372,23 +4987,7 @@
             "dex": 42,
             "luk": 26,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "khn_fild03",
-                    "name": "Kharnel Field 3",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild09",
-                    "name": "Kharnel Field 9",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-swampfang",
@@ -6414,13 +5013,7 @@
             "dex": 42,
             "luk": 26,
             "hardDef": 11.399999618530274,
-            "homes": [
-                {
-                    "map": "khn_dun05",
-                    "name": "Kharnel Dungeon 5",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.wraithmother",
@@ -6524,18 +5117,7 @@
             "dex": 44,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hcr_fild01",
-                    "name": "Halcyra Field 1",
-                    "count": 6
-                },
-                {
-                    "map": "hcr_fild02",
-                    "name": "Halcyra Field 2",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-skywing",
@@ -6587,18 +5169,7 @@
             "dex": 58,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hcr_fild01",
-                    "name": "Halcyra Field 1",
-                    "count": 4
-                },
-                {
-                    "map": "hcr_fild02",
-                    "name": "Halcyra Field 2",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-skywing",
@@ -6650,18 +5221,7 @@
             "dex": 30,
             "luk": 46,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun04",
-                    "name": "Kharnel Dungeon 4",
-                    "count": 2
-                },
-                {
-                    "map": "khn_dun06",
-                    "name": "Kharnel Dungeon 6",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.glowcoil",
@@ -6687,33 +5247,7 @@
             "dex": 30,
             "luk": 46,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild03",
-                    "name": "Kharnel Field 3",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild08",
-                    "name": "Kharnel Field 8",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild09",
-                    "name": "Kharnel Field 9",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-glowcoil",
@@ -6739,28 +5273,7 @@
             "dex": 30,
             "luk": 46,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun01",
-                    "name": "Kharnel Dungeon 1",
-                    "count": 7
-                },
-                {
-                    "map": "khn_dun02",
-                    "name": "Kharnel Dungeon 2",
-                    "count": 4
-                },
-                {
-                    "map": "khn_dun05",
-                    "name": "Kharnel Dungeon 5",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild01",
-                    "name": "Kharnel Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-grubble",
@@ -6786,13 +5299,7 @@
             "dex": 47,
             "luk": 30,
             "hardDef": 15.600000381469727,
-            "homes": [
-                {
-                    "map": "khn_dun09",
-                    "name": "Kharnel Dungeon 9",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.grubble",
@@ -6818,33 +5325,7 @@
             "dex": 47,
             "luk": 30,
             "hardDef": 15.600000381469727,
-            "homes": [
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild05",
-                    "name": "Kharnel Field 5",
-                    "count": 5
-                },
-                {
-                    "map": "khn_fild07",
-                    "name": "Kharnel Field 7",
-                    "count": 5
-                },
-                {
-                    "map": "khn_fild09",
-                    "name": "Kharnel Field 9",
-                    "count": 5
-                },
-                {
-                    "map": "khn_fild10",
-                    "name": "Kharnel Field 10",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-grubble",
@@ -6870,13 +5351,7 @@
             "dex": 47,
             "luk": 30,
             "hardDef": 15.600000381469727,
-            "homes": [
-                {
-                    "map": "khn_dun07",
-                    "name": "Kharnel Dungeon 7",
-                    "count": 6
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-frostskull",
@@ -6902,13 +5377,7 @@
             "dex": 83,
             "luk": 31,
             "hardDef": 15.600000381469727,
-            "homes": [
-                {
-                    "map": "khn_dun04",
-                    "name": "Kharnel Dungeon 4",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.frostskull",
@@ -6934,18 +5403,7 @@
             "dex": 83,
             "luk": 31,
             "hardDef": 15.600000381469727,
-            "homes": [
-                {
-                    "map": "khn_fild06",
-                    "name": "Kharnel Field 6",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild08",
-                    "name": "Kharnel Field 8",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-frostskull",
@@ -6971,18 +5429,7 @@
             "dex": 83,
             "luk": 31,
             "hardDef": 15.600000381469727,
-            "homes": [
-                {
-                    "map": "khn_dun01",
-                    "name": "Kharnel Dungeon 1",
-                    "count": 5
-                },
-                {
-                    "map": "khn_dun02",
-                    "name": "Kharnel Dungeon 2",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-nightsqueak",
@@ -7008,18 +5455,7 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun04",
-                    "name": "Kharnel Dungeon 4",
-                    "count": 2
-                },
-                {
-                    "map": "khn_dun09",
-                    "name": "Kharnel Dungeon 9",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.nightsqueak",
@@ -7045,28 +5481,7 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild05",
-                    "name": "Kharnel Field 5",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild07",
-                    "name": "Kharnel Field 7",
-                    "count": 2
-                },
-                {
-                    "map": "khn_fild08",
-                    "name": "Kharnel Field 8",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild10",
-                    "name": "Kharnel Field 10",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-nightsqueak",
@@ -7092,23 +5507,7 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun02",
-                    "name": "Kharnel Dungeon 2",
-                    "count": 2
-                },
-                {
-                    "map": "khn_dun03",
-                    "name": "Kharnel Dungeon 3",
-                    "count": 3
-                },
-                {
-                    "map": "khn_dun08",
-                    "name": "Kharnel Dungeon 8",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-frostcap",
@@ -7160,23 +5559,7 @@
             "dex": 32,
             "luk": 31,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild06",
-                    "name": "Kharnel Field 6",
-                    "count": 7
-                },
-                {
-                    "map": "hcr_fild01",
-                    "name": "Halcyra Field 1",
-                    "count": 4
-                },
-                {
-                    "map": "hcr_fild02",
-                    "name": "Halcyra Field 2",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-frostcap",
@@ -7202,13 +5585,7 @@
             "dex": 32,
             "luk": 31,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "hcr_fild01",
-                    "name": "Halcyra Field 1",
-                    "count": 1
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-goopie",
@@ -7234,13 +5611,7 @@
             "dex": 32,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun09",
-                    "name": "Kharnel Dungeon 9",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.goopie",
@@ -7266,33 +5637,7 @@
             "dex": 32,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild04",
-                    "name": "Kharnel Field 4",
-                    "count": 1
-                },
-                {
-                    "map": "khn_fild05",
-                    "name": "Kharnel Field 5",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild07",
-                    "name": "Kharnel Field 7",
-                    "count": 3
-                },
-                {
-                    "map": "khn_fild09",
-                    "name": "Kharnel Field 9",
-                    "count": 4
-                },
-                {
-                    "map": "khn_fild10",
-                    "name": "Kharnel Field 10",
-                    "count": 4
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-goopie",
@@ -7318,13 +5663,7 @@
             "dex": 32,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun08",
-                    "name": "Kharnel Dungeon 8",
-                    "count": 3
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-frostwick",
@@ -7350,13 +5689,7 @@
             "dex": 50,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun04",
-                    "name": "Kharnel Dungeon 4",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.frostwick",
@@ -7382,13 +5715,7 @@
             "dex": 50,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild06",
-                    "name": "Kharnel Field 6",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-frostwick",
@@ -7414,18 +5741,7 @@
             "dex": 50,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun02",
-                    "name": "Kharnel Dungeon 2",
-                    "count": 1
-                },
-                {
-                    "map": "khn_dun03",
-                    "name": "Kharnel Dungeon 3",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.blighted-lovebite",
@@ -7451,28 +5767,7 @@
             "dex": 33,
             "luk": 51,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun04",
-                    "name": "Kharnel Dungeon 4",
-                    "count": 5
-                },
-                {
-                    "map": "khn_dun09",
-                    "name": "Kharnel Dungeon 9",
-                    "count": 4
-                },
-                {
-                    "map": "khn_dun03",
-                    "name": "Kharnel Dungeon 3",
-                    "count": 2
-                },
-                {
-                    "map": "khn_dun08",
-                    "name": "Kharnel Dungeon 8",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.lovebite",
@@ -7498,23 +5793,7 @@
             "dex": 33,
             "luk": 51,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_fild05",
-                    "name": "Kharnel Field 5",
-                    "count": 5
-                },
-                {
-                    "map": "khn_fild07",
-                    "name": "Kharnel Field 7",
-                    "count": 5
-                },
-                {
-                    "map": "khn_fild10",
-                    "name": "Kharnel Field 10",
-                    "count": 2
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.tainted-lovebite",
@@ -7540,28 +5819,7 @@
             "dex": 33,
             "luk": 51,
             "hardDef": 0.0,
-            "homes": [
-                {
-                    "map": "khn_dun02",
-                    "name": "Kharnel Dungeon 2",
-                    "count": 6
-                },
-                {
-                    "map": "khn_dun03",
-                    "name": "Kharnel Dungeon 3",
-                    "count": 6
-                },
-                {
-                    "map": "khn_dun07",
-                    "name": "Kharnel Dungeon 7",
-                    "count": 5
-                },
-                {
-                    "map": "khn_dun08",
-                    "name": "Kharnel Dungeon 8",
-                    "count": 5
-                }
-            ]
+            "homes": []
         },
         {
             "id": "mob.shadow.riven",

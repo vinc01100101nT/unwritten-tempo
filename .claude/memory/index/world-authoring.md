@@ -34,3 +34,4 @@
 - [No players yet; fields/dungeons disposable](../no-players-fields-dungeons-disposable.md) — world rework: no character migration, delete/replace fields and dungeons freely; keep only the 16 towns and 14 landmarks.
 - [Seamless world layout decisions](../seamless-world-layout-decisions.md) — 2026-10-27: continent fresh, nature props only, few dark biomes, invisible blended borders, layout file first then area-by-area
 - [World builder](../world-builder.md) — the real world 'world' built square by square from the layout; ids, coords, independence proofs, road grading
+- [Seamless world: ground on the server, old zone world gone](../seamless-world-ground-on-server.md) — anything placed at map load must `HoldGround` first; old maps/atlas/layout deleted 2026-10-28 and what that changed; Keepers per map still open

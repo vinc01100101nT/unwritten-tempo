@@ -77,6 +77,11 @@ public class MapWindow : MonoBehaviour
     }
 
     WorldAtlas data;
+    // The world view is the zone maps' picture of how they join up. A seamless world has no zone maps (the old ones were
+    // deleted 2026-10-27), so there is no world view: M opens the map you are in, which for a seamless world is the
+    // whole world.
+    bool hasWorldView;
+    GameObject switchButton;
     Canvas canvas;
     GameObject panel;
     static MapWindow shown;
@@ -173,10 +178,16 @@ public class MapWindow : MonoBehaviour
     void Start()
     {
         data = Resources.Load<WorldAtlas>("WorldAtlas");
+        if (data == null)
+        {
+            data = ScriptableObject.CreateInstance<WorldAtlas>();
+            data.hideFlags = HideFlags.DontSave;
+        }
+        hasWorldView = data.atlas != null && data.maps != null && data.maps.Count > 0;
         shown = this;
         canvas = UiKit.HudCanvas;
         // A server draws nothing.
-        if (data == null || data.atlas == null || canvas == null || (GameServer.IsServer && !GameNetwork.TheWorldIsElsewhere))
+        if (canvas == null || (GameServer.IsServer && !GameNetwork.TheWorldIsElsewhere))
         {
             enabled = false;
             return;
@@ -280,7 +291,7 @@ public class MapWindow : MonoBehaviour
     void SwitchView()
     {
         UISounds.PlayClick();
-        if (active == world) ShowZone(zoneMap ?? MapManager.CurrentMap); else ShowWorld();
+        if (active == world) ShowZone(zoneMap ?? MapManager.CurrentMap); else if (hasWorldView) ShowWorld();
     }
 
     // ── world view: the marker over the map you are in ────────────────────────────────────────────────────────────
@@ -869,7 +880,8 @@ public class MapWindow : MonoBehaviour
         dim.raycastTarget = true;
         dim.gameObject.AddComponent<MapInput>().owner = this;
 
-        atlasImage = BuildView(world, "World", data.atlas, (float)data.atlas.width / Mathf.Max(1, data.atlas.height));
+        atlasImage = BuildView(world, "World", hasWorldView ? data.atlas : null,
+                               hasWorldView ? (float)data.atlas.width / Mathf.Max(1, data.atlas.height) : 1f);
         zoneImage = BuildView(zone, "Zone", null, 1f);
         BuildDoors();
         BuildKindIcons();
@@ -910,13 +922,15 @@ public class MapWindow : MonoBehaviour
         Bottom(hint.rectTransform, 23f, 420f);
 
         // between the zone and the world map
-        var switchButton = UiKit.Btn("", panel.transform, SwitchView);
-        var srt = (RectTransform)switchButton.transform;
+        var switchBtn = UiKit.Btn("", panel.transform, SwitchView);
+        switchButton = switchBtn.gameObject;
+        switchButton.SetActive(hasWorldView);
+        var srt = (RectTransform)switchBtn.transform;
         srt.anchorMin = srt.anchorMax = srt.pivot = new Vector2(0f, 1f);
         srt.sizeDelta = new Vector2(110f, 28f);
         srt.anchoredPosition = new Vector2(24f, -24f);
-        switchLabel = switchButton.GetComponentInChildren<TMP_Text>();
-        switchIcon = UiKit.ButtonIcon(switchButton, UiIcons.Get("WorldMap"), keepWords: true);
+        switchLabel = switchBtn.GetComponentInChildren<TMP_Text>();
+        switchIcon = UiKit.ButtonIcon(switchBtn, UiIcons.Get("WorldMap"), keepWords: true);
 
         // back to where you are (see Update for when it shows)
         var locate = UiKit.Btn("", panel.transform, Locate);

@@ -96,20 +96,22 @@ public class SettingsWindow : MonoBehaviour
                                      GameSettings.ShadowQualityNames[GameSettings.ShadowQuality], OpenShadowPicker);
         shadowLabel = shadowBtn.GetComponentInChildren<TMPro.TMP_Text>();
 
-        var plantDistance = UiKit.MakeSlider(Row(graphics, "Grass & flower distance"), 0f);
-        plantDistance.minValue = GameSettings.PlantDistanceMin;
-        plantDistance.maxValue = GameSettings.PlantDistanceMax;
-        plantDistance.value = GameSettings.PlantDistance;
-        plantDistance.onValueChanged.AddListener(v => GameSettings.PlantDistance = v);
-
-        var plantDensity = UiKit.MakeSlider(Row(graphics, "Grass & flower density"), 0f);
-        plantDensity.minValue = GameSettings.PlantDensityMin;
-        plantDensity.maxValue = 1f;
-        plantDensity.value = GameSettings.PlantDensity;
-        plantDensity.onValueChanged.AddListener(v => GameSettings.PlantDensity = v);
+        AddSlider(graphics, "Grass & flower distance", GameSettings.PlantDistanceMin, GameSettings.PlantDistanceMax,
+                  GameSettings.PlantDistance, v => GameSettings.PlantDistance = v);
+        AddSlider(graphics, "Grass & flower density", GameSettings.PlantDensityMin, 1f,
+                  GameSettings.PlantDensity, v => GameSettings.PlantDensity = v);
 
         var plantShadows = UiKit.Checkbox(Row(graphics, "Plant shadows", 0.85f), GameSettings.PlantShadows);
         plantShadows.onValueChanged.AddListener(v => GameSettings.PlantShadows = v);
+
+        AddSlider(graphics, "Brightness", GameSettings.LookBrightnessMin, GameSettings.LookBrightnessMax,
+                  GameSettings.LookBrightness, v => GameSettings.LookBrightness = v);
+        AddSlider(graphics, "Contrast", GameSettings.LookContrastMin, GameSettings.LookContrastMax,
+                  GameSettings.LookContrast, v => GameSettings.LookContrast = v);
+        AddSlider(graphics, "Saturation", GameSettings.LookSaturationMin, GameSettings.LookSaturationMax,
+                  GameSettings.LookSaturation, v => GameSettings.LookSaturation = v);
+        AddSlider(graphics, "Fog thickness", GameSettings.FogThicknessMin, 1f,
+                  GameSettings.FogThickness, v => GameSettings.FogThickness = v);
 
         performanceToggle = UiKit.Checkbox(Row(graphics, "Show performance", 0.85f), GameSettings.ShowPerformance);
         performanceToggle.onValueChanged.AddListener(v => GameSettings.ShowPerformance = v);
@@ -289,6 +291,16 @@ public class SettingsWindow : MonoBehaviour
             pages[i].SetActive(i == index);
             UiKit.MarkTab(tabs[i], i == index);
         }
+    }
+
+    // A slider option: its line, its range, where it stands now, and what moving it does.
+    void AddSlider(Transform page, string label, float min, float max, float now, UnityEngine.Events.UnityAction<float> moved)
+    {
+        var slider = UiKit.MakeSlider(Row(page, label), 0f);
+        slider.minValue = min;
+        slider.maxValue = max;
+        slider.value = now;
+        slider.onValueChanged.AddListener(moved);
     }
 
     // One option line: its name on the left, room for its control on the right. The caller drops the control

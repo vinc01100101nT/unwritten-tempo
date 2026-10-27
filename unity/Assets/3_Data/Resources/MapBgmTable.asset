@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: MapBgmTable
   m_EditorClassIdentifier: Assembly-CSharp::MapBgmTable
   entries:
-  - sceneName: lastline
+  - sceneName: world
     track: {fileID: 11400000, guid: 9f789e14cd645e94fb20ee148f1c54c4, type: 2}

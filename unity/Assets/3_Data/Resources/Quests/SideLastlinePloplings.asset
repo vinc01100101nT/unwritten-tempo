@@ -31,6 +31,7 @@ MonoBehaviour:
     items:
     - itemId: item.minor-healing-potion
       count: 5
+  levelNeeded: 0
   steps:
   - id: kill-ploplings
     text: Defeat 10 Ploplings in the field west of Lastline.
@@ -41,7 +42,8 @@ MonoBehaviour:
       folds: 1
       creatureId: mob.plopling
       count: 10
-      map: lst_fild01
+      map: world
+      percent: 80
     hints: []
   - id: report-torvald
     text: Tell Torvald the Ploplings are dealt with.
@@ -53,4 +55,5 @@ MonoBehaviour:
       creatureId: 
       count: 1
       map: 
+      percent: 80
     hints: []

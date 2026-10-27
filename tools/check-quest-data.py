@@ -51,6 +51,8 @@ ATLAS = os.path.join(ASSETS, "3_Data", "Resources", "WorldAtlas.asset")
 SHOPS = os.path.join(ASSETS, "3_Data", "Resources", "WorldShops.asset")
 MONSTERS = os.path.join(ASSETS, "3_Data", "Resources", "Monsters")
 SPAWNS = os.path.join(ASSETS, "3_Data", "Resources", "WorldSpawns.asset")
+SCENES = os.path.join(ASSETS, "Scenes")
+BUILD = os.path.join(REPO, "unity", "ProjectSettings", "EditorBuildSettings.asset")
 QUEST_DEF = os.path.join(ASSETS, "Scripts", "QuestDef.cs")
 CRAFTING_MATH = os.path.join(ASSETS, "Scripts", "CraftingMath.cs")
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
@@ -183,15 +185,47 @@ def main():
             if is_keeper:
                 where_map = re.search(r"^\s*map: (.*)$", block, re.M)
                 wander = re.search(r"^\s*wanderRadius: ([-\d.]+)", block, re.M)
+                home = re.search(r"^\s*home: \{x: ([-\d.e]+), y: [-\d.e]+, z: ([-\d.e]+)\}", block, re.M)
                 town_keepers.append((pid, where_map.group(1).strip() if where_map else "", serves,
-                                     float(wander.group(1)) if wander else 0.0))
-    towns = None   # scene names of every map of type town, or None when the atlas cannot be read
+                                     float(wander.group(1)) if wander else 0.0,
+                                     (float(home.group(1)), float(home.group(2))) if home else None))
+    towns = []   # scene names of every zone map of type town (the old zone world; none once it is gone)
     if os.path.isfile(ATLAS):
         towns = [m.group(1) for m in re.finditer(
             r"^  - scene: (\S+)\n(?:^    (?!type:).*\n)*^    type: town\s*$", read(ATLAS), re.M)]
-    if not towns:
-        print(RED + "could not read any town out of WorldAtlas.asset — fix this checker, it is now blind to Keepers" + OFF)
+    # A town map the game does not ship (left out of Build Settings) is no town anybody can reach.
+    shipped = set(re.findall(r"path: Assets/Scenes/(.+)\.unity", read(BUILD)))
+    towns = [t for t in towns if t in shipped]
+    town_names = {m.group(1): m.group(2).strip() for m in re.finditer(
+        r"^  - scene: (\S+)\n(?:^    (?!name:).*\n)*^    name: (.+)$", read(ATLAS), re.M)}
+    # A SEAMLESS WORLD holds its towns as named areas, not as maps: map name -> [(town name, x0, z0, x1, z1)]. A town
+    # map whose name is one of those areas has moved into the world, and the world's area is now the town.
+    world_towns = {}
+    for f in sorted(os.listdir(SCENES)):
+        if not f.endswith(".unity"):
+            continue
+        text = read(os.path.join(SCENES, f))
+        if "\n  chunks:\n" not in text or "\n  areas:\n" not in text:
+            continue
+        world_towns[f[:-len(".unity")]] = [
+            (m.group(1).strip(), float(m.group(2)), float(m.group(3)), float(m.group(4)), float(m.group(5)))
+            for m in re.finditer(r"^  - name: (.+)\n    kind: 1\n    min: \{x: ([-\d.e]+), y: ([-\d.e]+)\}\n"
+                                 r"    max: \{x: ([-\d.e]+), y: ([-\d.e]+)\}", text, re.M)]
+    moved = {n for areas in world_towns.values() for n, *_ in areas}
+    if not towns and not moved:
+        print(RED + "could not read any town out of WorldAtlas.asset or a seamless world — fix this checker, it is now "
+              "blind to Keepers" + OFF)
         return 2
+
+    # The town a Keeper standing at `home` in `where_map` keeps: the map itself for a town map, the area around them
+    # in a seamless world, None when it is neither.
+    def town_of(where_map, home):
+        if where_map in world_towns:
+            for name, x0, z0, x1, z1 in world_towns[where_map]:
+                if home and x0 <= home[0] <= x1 and z0 <= home[1] <= z1:
+                    return name
+            return None
+        return where_map if where_map in towns else None
     placed = set()   # (creature, map) pairs the world spawn list really places
     if os.path.isfile(SPAWNS):
         for block in re.split(r"^  - (?=map: )", read(SPAWNS), flags=re.M)[1:]:
@@ -214,14 +248,15 @@ def main():
 
     faults = []
     # ---- every town has exactly one Keeper --------------------------------------------------------------
-    for town in towns:
-        here = [pid for pid, where_map, _, _ in town_keepers if where_map == town]
+    every_town = [t for t in towns if town_names.get(t) not in moved] + sorted(moved)
+    for town in every_town:
+        here = [pid for pid, where_map, _, _, home in town_keepers if town_of(where_map, home) == town]
         if not here:
             faults.append("WorldTownsfolk.asset: town '%s' has no Keeper" % town)
         elif len(here) > 1:
             faults.append("WorldTownsfolk.asset: town '%s' has more than one Keeper (%s)" % (town, ", ".join(here)))
-    for pid, where_map, serves, wander in town_keepers:
-        if where_map not in towns:
+    for pid, where_map, serves, wander, home in town_keepers:
+        if town_of(where_map, home) is None:
             faults.append("WorldTownsfolk.asset: Keeper '%s' lives in '%s', which is not a town" % (pid, where_map))
         if serves:
             faults.append("WorldTownsfolk.asset: Keeper '%s' also keeps a shop or works a station" % pid)
@@ -351,7 +386,7 @@ def main():
         for x in faults:
             print("  " + x)
         return 1
-    print(GRN + "quest data clean: %d quest(s); %d town(s), each with one Keeper." % (len(files), len(towns)) + OFF)
+    print(GRN + "quest data clean: %d quest(s); %d town(s), each with one Keeper." % (len(files), len(every_town)) + OFF)
     return 0
 
 

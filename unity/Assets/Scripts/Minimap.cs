@@ -55,6 +55,19 @@ public class Minimap : MonoBehaviour
     Texture2D picture;
     string pictureMap;
 
+    // A TILED MAP (a seamless world, MinimapCatalog.Entry.tileSize above 0): the square pictures around the player, each
+    // its own image in a layer under the route and the dots. A square is taken when it comes within the view and given
+    // back when it leaves it, so at most ((2 * maxViewRadius / tileSize) + 1)^2 are held at once, however big the world.
+    sealed class Tile
+    {
+        public RawImage image;
+        public string picture;     // the name it was taken under; null = this slot is free
+        public int gx, gy;
+    }
+    readonly List<Tile> tiles = new List<Tile>();
+    RectTransform tileRoot;
+    string tiledMap;
+
     // The route's arrows, in a layer under every dot, each drawn with the ground arrow's own picture.
     RectTransform routeRoot;
     readonly List<Image> routePool = new List<Image>();
@@ -93,6 +106,13 @@ public class Minimap : MonoBehaviour
             .GetComponent<RectTransform>();
         routeRoot.SetParent(blipRoot, false);
         routeRoot.SetAsFirstSibling();
+
+        tileRoot = new GameObject("Tiles", typeof(RectTransform)) { hideFlags = HideFlags.DontSaveInEditor }
+            .GetComponent<RectTransform>();
+        tileRoot.SetParent(blipRoot, false);
+        tileRoot.SetAsFirstSibling();
+        tileRoot.anchorMin = Vector2.zero; tileRoot.anchorMax = Vector2.one;
+        tileRoot.offsetMin = tileRoot.offsetMax = Vector2.zero;
         routeRoot.anchorMin = Vector2.zero; routeRoot.anchorMax = Vector2.one;
         routeRoot.offsetMin = routeRoot.offsetMax = Vector2.zero;
     }
@@ -179,6 +199,7 @@ public class Minimap : MonoBehaviour
     void OnDestroy()
     {
         MinimapCatalog.ReleasePicture(pictureMap);
+        ReleaseTiles();
     }
 
     GameObject Panel => view.transform.parent.gameObject;   // the themed HUD_Minimap frame
@@ -213,6 +234,7 @@ public class Minimap : MonoBehaviour
             SwapPicture(MapManager.CurrentMap);
         }
         if (shown == null) return;
+        if (tiledMap != null) { ShowTiles(); return; }
 
         float size = Mathf.Max(1f, shown.worldSize);
         // Where you stand INSIDE the map, the same coordinates the picture was drawn in.
@@ -228,10 +250,19 @@ public class Minimap : MonoBehaviour
     void SwapPicture(string map)
     {
         MinimapCatalog.ReleasePicture(pictureMap);
+        ReleaseTiles();
         picture = null;
         pictureMap = null;
+        tiledMap = null;
         var catalog = MinimapCatalog.Instance;
         shown = catalog != null ? catalog.Find(map) : null;
+        if (shown != null && shown.tileSize > 0f)
+        {
+            tiledMap = map;
+            view.texture = null;
+            view.enabled = false;
+            return;
+        }
         if (shown != null) { picture = MinimapCatalog.AcquirePicture(map); if (picture != null) pictureMap = map; }
         if (picture == null)
         {
@@ -242,6 +273,81 @@ public class Minimap : MonoBehaviour
         }
         view.texture = picture;
         view.enabled = picture != null;
+    }
+
+    void ShowTiles()
+    {
+        if (tileRoot == null) return;
+        float size = shown.tileSize;
+        Vector3 p = MapManager.InMap(player.position, MapManager.CurrentMap);
+        int gx0 = Mathf.FloorToInt((p.x - viewRadius) / size), gx1 = Mathf.FloorToInt((p.x + viewRadius) / size);
+        int gy0 = Mathf.FloorToInt((p.z - viewRadius) / size), gy1 = Mathf.FloorToInt((p.z + viewRadius) / size);
+
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            var t = tiles[i];
+            if (t.picture == null || (t.gx >= gx0 && t.gx <= gx1 && t.gy >= gy0 && t.gy <= gy1)) continue;
+            FreeTile(t);
+        }
+        for (int gy = gy0; gy <= gy1; gy++)
+            for (int gx = gx0; gx <= gx1; gx++)
+                if (!HoldingTile(gx, gy)) TakeTile(gx, gy);
+
+        Vector2 half = blipRoot.rect.size * 0.5f;
+        var tileSizePx = new Vector2(size / viewRadius * half.x, size / viewRadius * half.y);
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            var t = tiles[i];
+            if (t.picture == null || !t.image.enabled) continue;
+            var rt = t.image.rectTransform;
+            rt.anchoredPosition = new Vector2(((t.gx + 0.5f) * size - p.x) / viewRadius * half.x,
+                                              ((t.gy + 0.5f) * size - p.z) / viewRadius * half.y);
+            rt.sizeDelta = tileSizePx;
+        }
+    }
+
+    bool HoldingTile(int gx, int gy)
+    {
+        for (int i = 0; i < tiles.Count; i++)
+            if (tiles[i].picture != null && tiles[i].gx == gx && tiles[i].gy == gy) return true;
+        return false;
+    }
+
+    // A square with no picture (open sea, past the world's edge) is held all the same, with its image off, so it is
+    // not asked for again every frame.
+    void TakeTile(int gx, int gy)
+    {
+        Tile t = null;
+        for (int i = 0; i < tiles.Count && t == null; i++) if (tiles[i].picture == null) t = tiles[i];
+        if (t == null)
+        {
+            var go = new GameObject("Tile", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)) { hideFlags = HideFlags.DontSaveInEditor };
+            go.transform.SetParent(tileRoot, false);
+            var img = go.GetComponent<RawImage>();
+            img.raycastTarget = false;
+            var rt = img.rectTransform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            t = new Tile { image = img };
+            tiles.Add(t);
+        }
+        t.gx = gx; t.gy = gy;
+        t.picture = MinimapCatalog.TilePicture(tiledMap, gx, gy);
+        var tex = MinimapCatalog.AcquirePicture(t.picture);
+        t.image.texture = tex;
+        t.image.enabled = tex != null;
+    }
+
+    void FreeTile(Tile t)
+    {
+        if (t.image.texture != null) MinimapCatalog.ReleasePicture(t.picture);
+        t.picture = null;
+        t.image.texture = null;
+        t.image.enabled = false;
+    }
+
+    void ReleaseTiles()
+    {
+        for (int i = 0; i < tiles.Count; i++) if (tiles[i].picture != null) FreeTile(tiles[i]);
     }
 
     // ---- the route ---------------------------------------------------------------

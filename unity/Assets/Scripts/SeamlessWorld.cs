@@ -306,6 +306,7 @@ public class SeamlessWorld : MonoBehaviour
 
         Stream();
         if (labelsDirty) RefreshAreaLabels();
+        if (server) RunWhatWaitedForGround();
         if (server) TendSpawnAreas();
         else TrackArea();
     }
@@ -334,6 +335,37 @@ public class SeamlessWorld : MonoBehaviour
             var s = spawners[i];
             if (s == null || !(s.gameObject.activeSelf || WantsAwake(s))) continue;
             focusRects.Add(SpawnRect(s));
+        }
+        focusRects.AddRange(heldForGood);
+    }
+
+    // ---- ground a server keeps for good, and work that waits for it ---------------------------------------------------
+    // A body standing on a square that is not loaded has nothing under it. Townsfolk are built when the world loads,
+    // before any square is in, and they stand in one place for good — so the ground under them is held from the start,
+    // and each is built once it is in (2026-10-27: Lastline's 16 townsfolk were built at load, the first square came in
+    // nearly two minutes later, and no player ever saw one).
+    readonly List<Rect> heldForGood = new List<Rect>();
+    readonly List<(Rect where, System.Action then)> waitingForGround = new List<(Rect, System.Action)>();
+
+    /// <summary>SERVER: keep the ground under <paramref name="inMap"/> (this world's own coordinates) loaded from now on,
+    /// whoever is near, and call <paramref name="then"/> once it is in.</summary>
+    public void HoldGround(Rect inMap, System.Action then)
+    {
+        heldForGood.Add(inMap);
+        if (then != null) waitingForGround.Add((inMap, then));
+        nextTick = 0f;
+    }
+
+    void RunWhatWaitedForGround()
+    {
+        for (int i = waitingForGround.Count - 1; i >= 0; i--)
+        {
+            if (!ReadyUnder(waitingForGround[i].where)) continue;
+            var then = waitingForGround[i].then;
+            waitingForGround.RemoveAt(i);
+            // The physics engine learns where the new ground is before anything is put on it.
+            Physics.SyncTransforms();
+            then();
         }
     }
 

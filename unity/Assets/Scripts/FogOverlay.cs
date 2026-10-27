@@ -128,8 +128,11 @@ public class FogOverlay : MonoBehaviour
         mat.SetFloat(IntensityID, 1f);
         mat.SetFloat(PhaseID, phase);
         mat.SetFloat(ScaleID, 1f / Mathf.Max(0.01f, patchSize));
-        mat.SetFloat(CoverageID, coverage);
-        mat.SetFloat(FloorID, floor);
+        // The player's fog thickness (Settings ▸ Graphics) thins the whole veil; it never goes below the share that still
+        // hides the edge of the loaded ground.
+        float thickness = GameSettings.FogThickness;
+        mat.SetFloat(CoverageID, coverage * thickness);
+        mat.SetFloat(FloorID, floor * thickness);
         mat.SetFloat(FogStartID, startDistance);
         mat.SetFloat(FogEndID, Mathf.Max(startDistance + 0.1f, fullDistance));
     }

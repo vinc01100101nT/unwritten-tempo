@@ -33,10 +33,11 @@ public static class SeamlessWorldBuilder
 {
     public const string MapId = "world";
     const string ScenePath = "Assets/Scenes/" + MapId + ".unity";
-    const string LastlineScenePath = "Assets/Scenes/lastline.unity";
+    // Lastline as the world builds it: its ground, props, walls, a marker in each gate and its arrival spot. Authored,
+    // since the old Lastline map it was taken from is gone (2026-10-27).
+    const string LastlineSourcePath = "Assets/1_Authored/Prefabs/Towns/Lastline.prefab";
     const string OutDir = "Assets/2_Generated/World";
     const string GroupName = "World";
-    const string TemplateScene = "Assets/Scenes/test_grassland.unity";
     const string FieldRecipePath = "Assets/3_Data/Recipes/FieldRecipe.asset";
     // The world layout, at the repository's top: the one description of where everything big in the world is.
     static string LayoutPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "data", "world-layout.json"));
@@ -647,30 +648,37 @@ public static class SeamlessWorldBuilder
         {
             EditorSceneManager.ClosePreviewScene(preview);
         }
+        // The scene is written as text, so the bake a saved scene triggers never sees it: the minimap is drawn here.
+        report.AppendLine(MinimapBaker.Bake(ScenePath) ? "Minimap drawn: the overview and every square." : "Minimap: nothing to draw.");
         return report.ToString();
     }
-    // Lastline's ground, buildings and walls, copied out of a hidden copy of its own scene into one prefab, exactly.
-    // Its doors and their arrival points stay behind; its middle arrival point becomes the world's. Its rim heights are
-    // read off its ground mesh so the fields meet it.
+    // Lastline's ground, buildings and walls, copied out of a hidden copy of its authored prefab into one prefab, exactly.
+    // Its gate markers stay behind; its arrival spot becomes the world's. Its rim heights are read off its ground mesh so
+    // the fields meet it.
     static Vector3 LastlinePiece(Terrain terrain, Material world, StringBuilder report, out string prefabPath)
     {
         prefabPath = $"{OutDir}/Chunks/lastline.prefab";
-        var town = EditorSceneManager.OpenPreviewScene(LastlineScenePath);
+        var source = AssetDatabase.LoadAssetAtPath<GameObject>(LastlineSourcePath)
+                     ?? throw new System.Exception(LastlineSourcePath + " is missing");
+        var town = EditorSceneManager.NewPreviewScene();
         try
         {
+            var copy = (GameObject)PrefabUtility.InstantiatePrefab(source, town);
+            // Only the outer prefab: the props inside stay instances of their palette prefabs, as they were in the old map.
+            PrefabUtility.UnpackPrefabInstance(copy, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
             GameObject ground = null, props = null, wall = null;
             Vector3 arrival = Vector3.zero;
             var gates = new List<(Vector2 at, Vector2 outward)>();
-            foreach (var root in town.GetRootGameObjects())
+            foreach (Transform part in copy.transform)
             {
-                // Its doors out stand in its gates: each is a gate, facing out of the side it is nearest.
-                if (root.name.StartsWith("Portal_")) gates.Add(Gate(new Vector2(root.transform.position.x, root.transform.position.z)));
-                if (root.name == "Ground_lastline") ground = root;
-                else if (root.name == "Props") props = root;
-                else if (root.name == "Wall") wall = root;
-                else if (root.name == "SpawnPoint_Center") arrival = root.transform.position;
+                // Each gate marker is a gate, facing out of the side it is nearest.
+                if (part.name.StartsWith("Gate_")) gates.Add(Gate(new Vector2(part.position.x, part.position.z)));
+                if (part.name == "Ground_lastline") ground = part.gameObject;
+                else if (part.name == "Props") props = part.gameObject;
+                else if (part.name == "Wall") wall = part.gameObject;
+                else if (part.name == "Arrival") arrival = part.position;
             }
-            if (ground == null) throw new System.Exception("lastline.unity has no Ground_lastline");
+            if (ground == null) throw new System.Exception(LastlineSourcePath + " has no Ground_lastline");
 
             ReadRim(terrain, ground, report);
             terrain.LayRoads(Town, gates);
@@ -1319,6 +1327,10 @@ public static class SeamlessWorldBuilder
     // Every flower stands this much taller again than the pack's size for it (1 = twice as tall; the user, 2026-10-27:
     // "increase the flower heights by x2"), the carpets' flowers and the single flowers alike. Widths are unchanged.
     const float FlowerExtraHeight = 1f;
+    // A meadow's cards are drawn with this copy of the pack's meadow material, whose shader turns each card about its
+    // upright axis so one of its four crossed pictures always faces the camera (the user, 2026-10-28): seen edge-on from
+    // the top-down camera, a card's colour averaged to peach.
+    const string MeadowFacingMaterialPath = "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Materials/Flowers/FlowerMeadowFacing.mat";
 
     // THE FIELDS' FILL (the user, 2026-10-27, after a one-square trial): every field filled the way the pack's own store
     // pictures are — grass over all its open ground, and trees, firs, bushes, plants and rocks all through it, not only
@@ -1502,6 +1514,9 @@ public static class SeamlessWorldBuilder
         // touches, whether or not its other squares are built, so a square's carpet never depends on its neighbours.
         var built = Rect.MinMaxRect(WorldMin.x, WorldMin.y, WorldMax.x, WorldMax.y);
         uint where = StableRandom.Seed("carpet patches");
+        // The middles of the meadow patches (flowers only): the fields' grass leaves them alone, so a meadow is flowers and
+        // nothing under them (the user, 2026-10-28).
+        var meadowCentres = new List<Vector2>();
         for (int gj = Mathf.FloorToInt((built.yMin - PatchRadius) / PatchGrid); gj <= Mathf.FloorToInt((built.yMax + PatchRadius) / PatchGrid); gj++)
             for (int gi = Mathf.FloorToInt((built.xMin - PatchRadius) / PatchGrid); gi <= Mathf.FloorToInt((built.xMax + PatchRadius) / PatchGrid); gi++)
             {
@@ -1522,6 +1537,7 @@ public static class SeamlessWorldBuilder
                 // A meadow patch is ONE colour (the user, 2026-10-27), picked by the patch's own roll; grass and plants
                 // still mix plant by plant, as the demo grows them.
                 bool meadow = th.carpet.All(n => n.StartsWith("FlowerMeadow_"));
+                if (meadow) meadowCentres.Add(centre);
                 int only = meadow ? Mathf.Min(th.carpet.Length - 1, (int)(StableRandom.Value(sq, 3) * th.carpet.Length)) : -1;
                 for (int kind = 0; kind < th.carpet.Length; kind++)
                 {
@@ -1531,7 +1547,8 @@ public static class SeamlessWorldBuilder
                     var mf = prefab != null ? prefab.GetComponentInChildren<MeshFilter>(true) : null;
                     var mr = mf != null ? mf.GetComponent<MeshRenderer>() : null;
                     if (mr == null) throw new System.Exception("no plant mesh in " + name);
-                    var mat = mr.sharedMaterial;
+                    var mat = meadow ? AssetDatabase.LoadAssetAtPath<Material>(MeadowFacingMaterialPath) : mr.sharedMaterial;
+                    if (mat == null) throw new System.Exception(MeadowFacingMaterialPath + " is missing");
                     if (!mat.enableInstancing) { mat.enableInstancing = true; EditorUtility.SetDirty(mat); AssetDatabase.SaveAssetIfDirty(mat); }
                     LayPiece(disc, centre, PatchRadius, name, mf, mat, chances, meadow ? 1 : th.carpet.Length, meadow ? 0 : kind,
                              meadow ? 0f : patchWidth, seed, perSpot / (meadow ? 1 : th.carpet.Length));
@@ -1553,7 +1570,7 @@ public static class SeamlessWorldBuilder
                 if (!mat.enableInstancing) { mat.enableInstancing = true; EditorUtility.SetDirty(mat); AssetDatabase.SaveAssetIfDirty(mat); }
                 foreach (var c in chunks)
                     LayPiece(c.rect, c.rect.center, c.rect.size.magnitude * 0.5f + 0.1f, name, mf, mat, gChances, grass.carpet.Length, kind, gWidth,
-                             gSeed, gPerSpot / grass.carpet.Length, FieldGrassThinOut, natureOnly: true);
+                             gSeed, gPerSpot / grass.carpet.Length, FieldGrassThinOut, natureOnly: true, skipMeadows: true);
             }
             report.AppendLine($"Fields' grass: over every square's open ground, {gPerSpot:0.00} plants a spot at the demo's count, a quarter of it drawn.");
         }
@@ -1561,7 +1578,7 @@ public static class SeamlessWorldBuilder
         // One patch's piece in every built square it crosses: the plants on its open ground (no road, water, steep
         // ground or town — and, for natureOnly, no land whose theme keeps its biome's own props), at the demo's sizes.
         void LayPiece(Rect disc, Vector2 centre, float radius, string name, MeshFilter mf, Material mat, float[] chances, int kinds, int kind,
-                      float patchWidth, int seed, float perSpotOfThis, float thin = -1f, bool natureOnly = false)
+                      float patchWidth, int seed, float perSpotOfThis, float thin = -1f, bool natureOnly = false, bool skipMeadows = false)
         {
             foreach (var c in chunks)
             {
@@ -1593,6 +1610,9 @@ public static class SeamlessWorldBuilder
                             int theme = t.ThemeAt(x, z);
                             bare = theme < 0 || !NatureTheme(ThemeOf(t, theme));
                         }
+                        if (!bare && skipMeadows)
+                            foreach (var m in meadowCentres)
+                                if ((new Vector2(x, z) - m).sqrMagnitude < PatchRadius * PatchRadius) { bare = true; break; }
                         patch.heights[j * patch.gridW + i] = bare ? float.NaN : y;
                     }
                 var carpet = c.root.GetComponent<FlowerCarpet>();
@@ -2083,11 +2103,13 @@ public static class SeamlessWorldBuilder
         AssetDatabase.SaveAssetIfDirty(settings);
     }
 
-    // The world scene, written as text: the four settings blocks copied from a generated map, then the world, the
-    // pathfinder settings, the grassland marker and the arrival point. Written directly so no scene is ever opened.
+    // The world scene, written as text: its own four settings blocks (light, fog, sky) kept from the scene as it is,
+    // then the world, the pathfinder settings, the grassland marker and the arrival point. Written directly so no
+    // scene is ever opened.
     static void WriteScene(List<(string address, Rect rect)> chunks, Vector3 arrival, float reach, float loadSeconds)
     {
-        var template = File.ReadAllLines(TemplateScene);
+        if (!File.Exists(ScenePath)) throw new System.Exception(ScenePath + " is missing — its settings blocks are what a rebuild keeps");
+        var template = File.ReadAllLines(ScenePath);
         var sb = new StringBuilder();
         foreach (var line in template)
         {
