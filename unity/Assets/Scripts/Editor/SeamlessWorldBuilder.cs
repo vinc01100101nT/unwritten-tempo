@@ -60,9 +60,16 @@ public static class SeamlessWorldBuilder
     // Velmora's 7 x 7 (2026-10-30): the middle river joining the east one, the Old Oak–Velmora and Old Oak–Pluvenne
     // bridges, and the sea in its north-west corner. Hilt's 7 x 7: the coast, the sea cave and Hilt's dungeon door. And the
     // Tide Temple's islet east of it (39..41 x 23..26), where the low-tide path from Hilt's shore ends.
+    // Halcyra's high ground (2026-10-30): its tableland and sea cliffs, the long slope down to Tornel, the Tornel–Halcyra
+    // bridge, the Hill of the Flame and the Unmarked Path — every square holding land in 3..15 x 2..11, one row of
+    // squares or more per entry. And the Sky Cairn's levelled clearing at Pennaryl's forest edge, with the forest ridge
+    // and its cave beside it: every square holding land in 2..8 x 15..20.
     static readonly (int i0, int i1, int j0, int j1)[] Blocks =
         { (17, 23, 17, 23), (17, 23, 12, 16), (16, 22, 5, 11), (16, 19, 4, 4), (14, 15, 6, 7), (19, 21, 24, 25), (24, 24, 14, 20),
-          (28, 34, 7, 13), (32, 38, 20, 26), (39, 41, 23, 26) };
+          (28, 34, 7, 13), (32, 38, 20, 26), (39, 41, 23, 26),
+          (4, 10, 2, 2), (12, 13, 2, 2), (15, 15, 2, 2), (3, 15, 3, 5), (3, 13, 6, 6), (5, 13, 7, 7), (6, 15, 8, 8),
+          (7, 15, 9, 10), (8, 15, 11, 11),
+          (5, 8, 15, 15), (3, 8, 16, 16), (2, 8, 17, 18), (3, 8, 19, 20) };
     // Every other town with a plan (data/towns/<id>.json, started in the town editor) gets the same 7 x 7 as Lastline,
     // around the square its middle falls in, unless its own ground is already in the squares above.
     const int TownBlockReach = 3;
@@ -98,8 +105,10 @@ public static class SeamlessWorldBuilder
         public string[] themes; public int[] theme_cells;
         public LTown[] towns; public LRiver[] rivers; public LRoad[] roads; public LBridge[] bridges;
         public LPond[] ponds; public LPlace[] landmarks; public LDoor[] dungeon_doors;
-        public LCave[] caves; public LGorge[] gorges; public LTidePath[] low_tide_paths;
+        public LCave[] caves; public LGorge[] gorges; public LTidePath[] low_tide_paths; public LClearing[] clearings;
     }
+    // Open flat ground levelled like a town's (the Sky Cairn's at Pennaryl's forest edge): its middle and its flat radius.
+    [System.Serializable] sealed class LClearing { public float x, y, radius; }
     [System.Serializable] sealed class LTown { public string id, name, weapon; public float x, y, height; }
     [System.Serializable] sealed class LRiver { public float[] spring, xy, bed; }
     [System.Serializable] sealed class LRoad { public string from, to; public float[] xy, heights; }
@@ -202,6 +211,8 @@ public static class SeamlessWorldBuilder
         public readonly Lines roads = new Lines(12f), rivers = new Lines(14f);
         public readonly List<(LPond p, Vector2 at, float level)> ponds = new List<(LPond, Vector2, float)>();
         public readonly List<(string name, Vector2 at)> keepClear = new List<(string, Vector2)>();
+        // The clearings' flat ground, where no tree, bush, rock or plant stands (the ground's grass and flower carpets do).
+        public readonly List<(Vector2 at, float radius)> clearings = new List<(Vector2, float)>();
         public readonly List<BridgeDecks.Deck> bridges = new List<BridgeDecks.Deck>();
         // Each bridge's ends, its deck's height, how far either side of its line the ground eases up to the deck, and the
         // fitted bridge itself.
@@ -231,6 +242,8 @@ public static class SeamlessWorldBuilder
             foreach (var p in L.ponds) ponds.Add((p, Scene(p.x, p.y), p.water - baseHeight));
             foreach (var m in L.landmarks) keepClear.Add((m.name, Scene(m.x, m.y)));
             foreach (var d in L.dungeon_doors) keepClear.Add((d.town + " dungeon door", Scene(d.x, d.y)));
+            if (L.clearings != null)
+                foreach (var c in L.clearings) clearings.Add((Scene(c.x, c.y), c.radius));
             if (L.caves != null)
                 foreach (var c in L.caves)
                 {
@@ -829,6 +842,7 @@ public static class SeamlessWorldBuilder
             var p = new Vector2(x, z);
             if (InTown(p, 4f)) return false;
             foreach (var (_, at) in keepClear) if ((at - p).sqrMagnitude < 36f) return false;
+            foreach (var (at, r) in clearings) if ((at - p).sqrMagnitude < r * r) return false;
             if (CaveAt(x, z, out _) != CavePart.None) return false;
             // Never held back from the built squares' edge: that edge moves as the world grows, and a square must not.
             return Normal(x, z).y > 0.93f;

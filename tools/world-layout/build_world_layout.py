@@ -686,6 +686,7 @@ layout = {
     "caves": caves,
     "gorges": [{k: v for k, v in g.items() if k not in ("mouth", "into", "top")} for g in gorges],
     "ponds": ponds,
+    "clearings": [{"x": x, "y": y, "radius": r} for x, y, r in CLEARINGS],
     "passes": [{"x": round(centre(c % NX, c // NX)[0], 1), "y": round(centre(c % NX, c // NX)[1], 1)} for c in passes],
     "cliff": "a cliff is wherever the ground rises more than 1.5 units from one cell to the next",
     "low_tide_paths": [{"from": a, "to": b, "start": list(s), "end": list(e)} for a, b, s, e in LOW_TIDE_PATHS],

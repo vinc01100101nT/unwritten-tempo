@@ -148,8 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfb9f0651bbe84e4bb3d6e0f70c8f8a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  worldMin: {x: -192, y: -224}
-  worldMax: {x: 704, y: 512}
+  worldMin: {x: -576, y: -224}
+  worldMax: {x: 704, y: 576}
   chunks:
   - address: world/square_17_17
     min: {x: -96, y: 64}
@@ -943,6 +943,429 @@ MonoBehaviour:
   - address: world/square_41_26
     min: {x: 672, y: -224}
     max: {x: 704, y: -192}
+  - address: world/square_4_2
+    min: {x: -512, y: 544}
+    max: {x: -480, y: 576}
+  - address: world/square_5_2
+    min: {x: -480, y: 544}
+    max: {x: -448, y: 576}
+  - address: world/square_6_2
+    min: {x: -448, y: 544}
+    max: {x: -416, y: 576}
+  - address: world/square_7_2
+    min: {x: -416, y: 544}
+    max: {x: -384, y: 576}
+  - address: world/square_8_2
+    min: {x: -384, y: 544}
+    max: {x: -352, y: 576}
+  - address: world/square_9_2
+    min: {x: -352, y: 544}
+    max: {x: -320, y: 576}
+  - address: world/square_10_2
+    min: {x: -320, y: 544}
+    max: {x: -288, y: 576}
+  - address: world/square_12_2
+    min: {x: -256, y: 544}
+    max: {x: -224, y: 576}
+  - address: world/square_13_2
+    min: {x: -224, y: 544}
+    max: {x: -192, y: 576}
+  - address: world/square_15_2
+    min: {x: -160, y: 544}
+    max: {x: -128, y: 576}
+  - address: world/square_3_3
+    min: {x: -544, y: 512}
+    max: {x: -512, y: 544}
+  - address: world/square_4_3
+    min: {x: -512, y: 512}
+    max: {x: -480, y: 544}
+  - address: world/square_5_3
+    min: {x: -480, y: 512}
+    max: {x: -448, y: 544}
+  - address: world/square_6_3
+    min: {x: -448, y: 512}
+    max: {x: -416, y: 544}
+  - address: world/square_7_3
+    min: {x: -416, y: 512}
+    max: {x: -384, y: 544}
+  - address: world/square_8_3
+    min: {x: -384, y: 512}
+    max: {x: -352, y: 544}
+  - address: world/square_9_3
+    min: {x: -352, y: 512}
+    max: {x: -320, y: 544}
+  - address: world/square_10_3
+    min: {x: -320, y: 512}
+    max: {x: -288, y: 544}
+  - address: world/square_11_3
+    min: {x: -288, y: 512}
+    max: {x: -256, y: 544}
+  - address: world/square_12_3
+    min: {x: -256, y: 512}
+    max: {x: -224, y: 544}
+  - address: world/square_13_3
+    min: {x: -224, y: 512}
+    max: {x: -192, y: 544}
+  - address: world/square_14_3
+    min: {x: -192, y: 512}
+    max: {x: -160, y: 544}
+  - address: world/square_15_3
+    min: {x: -160, y: 512}
+    max: {x: -128, y: 544}
+  - address: world/square_3_4
+    min: {x: -544, y: 480}
+    max: {x: -512, y: 512}
+  - address: world/square_4_4
+    min: {x: -512, y: 480}
+    max: {x: -480, y: 512}
+  - address: world/square_5_4
+    min: {x: -480, y: 480}
+    max: {x: -448, y: 512}
+  - address: world/square_6_4
+    min: {x: -448, y: 480}
+    max: {x: -416, y: 512}
+  - address: world/square_7_4
+    min: {x: -416, y: 480}
+    max: {x: -384, y: 512}
+  - address: world/square_8_4
+    min: {x: -384, y: 480}
+    max: {x: -352, y: 512}
+  - address: world/square_9_4
+    min: {x: -352, y: 480}
+    max: {x: -320, y: 512}
+  - address: world/square_10_4
+    min: {x: -320, y: 480}
+    max: {x: -288, y: 512}
+  - address: world/square_11_4
+    min: {x: -288, y: 480}
+    max: {x: -256, y: 512}
+  - address: world/square_12_4
+    min: {x: -256, y: 480}
+    max: {x: -224, y: 512}
+  - address: world/square_13_4
+    min: {x: -224, y: 480}
+    max: {x: -192, y: 512}
+  - address: world/square_14_4
+    min: {x: -192, y: 480}
+    max: {x: -160, y: 512}
+  - address: world/square_15_4
+    min: {x: -160, y: 480}
+    max: {x: -128, y: 512}
+  - address: world/square_3_5
+    min: {x: -544, y: 448}
+    max: {x: -512, y: 480}
+  - address: world/square_4_5
+    min: {x: -512, y: 448}
+    max: {x: -480, y: 480}
+  - address: world/square_5_5
+    min: {x: -480, y: 448}
+    max: {x: -448, y: 480}
+  - address: world/square_6_5
+    min: {x: -448, y: 448}
+    max: {x: -416, y: 480}
+  - address: world/square_7_5
+    min: {x: -416, y: 448}
+    max: {x: -384, y: 480}
+  - address: world/square_8_5
+    min: {x: -384, y: 448}
+    max: {x: -352, y: 480}
+  - address: world/square_9_5
+    min: {x: -352, y: 448}
+    max: {x: -320, y: 480}
+  - address: world/square_10_5
+    min: {x: -320, y: 448}
+    max: {x: -288, y: 480}
+  - address: world/square_11_5
+    min: {x: -288, y: 448}
+    max: {x: -256, y: 480}
+  - address: world/square_12_5
+    min: {x: -256, y: 448}
+    max: {x: -224, y: 480}
+  - address: world/square_13_5
+    min: {x: -224, y: 448}
+    max: {x: -192, y: 480}
+  - address: world/square_14_5
+    min: {x: -192, y: 448}
+    max: {x: -160, y: 480}
+  - address: world/square_15_5
+    min: {x: -160, y: 448}
+    max: {x: -128, y: 480}
+  - address: world/square_3_6
+    min: {x: -544, y: 416}
+    max: {x: -512, y: 448}
+  - address: world/square_4_6
+    min: {x: -512, y: 416}
+    max: {x: -480, y: 448}
+  - address: world/square_5_6
+    min: {x: -480, y: 416}
+    max: {x: -448, y: 448}
+  - address: world/square_6_6
+    min: {x: -448, y: 416}
+    max: {x: -416, y: 448}
+  - address: world/square_7_6
+    min: {x: -416, y: 416}
+    max: {x: -384, y: 448}
+  - address: world/square_8_6
+    min: {x: -384, y: 416}
+    max: {x: -352, y: 448}
+  - address: world/square_9_6
+    min: {x: -352, y: 416}
+    max: {x: -320, y: 448}
+  - address: world/square_10_6
+    min: {x: -320, y: 416}
+    max: {x: -288, y: 448}
+  - address: world/square_11_6
+    min: {x: -288, y: 416}
+    max: {x: -256, y: 448}
+  - address: world/square_12_6
+    min: {x: -256, y: 416}
+    max: {x: -224, y: 448}
+  - address: world/square_13_6
+    min: {x: -224, y: 416}
+    max: {x: -192, y: 448}
+  - address: world/square_5_7
+    min: {x: -480, y: 384}
+    max: {x: -448, y: 416}
+  - address: world/square_6_7
+    min: {x: -448, y: 384}
+    max: {x: -416, y: 416}
+  - address: world/square_7_7
+    min: {x: -416, y: 384}
+    max: {x: -384, y: 416}
+  - address: world/square_8_7
+    min: {x: -384, y: 384}
+    max: {x: -352, y: 416}
+  - address: world/square_9_7
+    min: {x: -352, y: 384}
+    max: {x: -320, y: 416}
+  - address: world/square_10_7
+    min: {x: -320, y: 384}
+    max: {x: -288, y: 416}
+  - address: world/square_11_7
+    min: {x: -288, y: 384}
+    max: {x: -256, y: 416}
+  - address: world/square_12_7
+    min: {x: -256, y: 384}
+    max: {x: -224, y: 416}
+  - address: world/square_13_7
+    min: {x: -224, y: 384}
+    max: {x: -192, y: 416}
+  - address: world/square_6_8
+    min: {x: -448, y: 352}
+    max: {x: -416, y: 384}
+  - address: world/square_7_8
+    min: {x: -416, y: 352}
+    max: {x: -384, y: 384}
+  - address: world/square_8_8
+    min: {x: -384, y: 352}
+    max: {x: -352, y: 384}
+  - address: world/square_9_8
+    min: {x: -352, y: 352}
+    max: {x: -320, y: 384}
+  - address: world/square_10_8
+    min: {x: -320, y: 352}
+    max: {x: -288, y: 384}
+  - address: world/square_11_8
+    min: {x: -288, y: 352}
+    max: {x: -256, y: 384}
+  - address: world/square_12_8
+    min: {x: -256, y: 352}
+    max: {x: -224, y: 384}
+  - address: world/square_13_8
+    min: {x: -224, y: 352}
+    max: {x: -192, y: 384}
+  - address: world/square_14_8
+    min: {x: -192, y: 352}
+    max: {x: -160, y: 384}
+  - address: world/square_15_8
+    min: {x: -160, y: 352}
+    max: {x: -128, y: 384}
+  - address: world/square_7_9
+    min: {x: -416, y: 320}
+    max: {x: -384, y: 352}
+  - address: world/square_8_9
+    min: {x: -384, y: 320}
+    max: {x: -352, y: 352}
+  - address: world/square_9_9
+    min: {x: -352, y: 320}
+    max: {x: -320, y: 352}
+  - address: world/square_10_9
+    min: {x: -320, y: 320}
+    max: {x: -288, y: 352}
+  - address: world/square_11_9
+    min: {x: -288, y: 320}
+    max: {x: -256, y: 352}
+  - address: world/square_12_9
+    min: {x: -256, y: 320}
+    max: {x: -224, y: 352}
+  - address: world/square_13_9
+    min: {x: -224, y: 320}
+    max: {x: -192, y: 352}
+  - address: world/square_14_9
+    min: {x: -192, y: 320}
+    max: {x: -160, y: 352}
+  - address: world/square_15_9
+    min: {x: -160, y: 320}
+    max: {x: -128, y: 352}
+  - address: world/square_7_10
+    min: {x: -416, y: 288}
+    max: {x: -384, y: 320}
+  - address: world/square_8_10
+    min: {x: -384, y: 288}
+    max: {x: -352, y: 320}
+  - address: world/square_9_10
+    min: {x: -352, y: 288}
+    max: {x: -320, y: 320}
+  - address: world/square_10_10
+    min: {x: -320, y: 288}
+    max: {x: -288, y: 320}
+  - address: world/square_11_10
+    min: {x: -288, y: 288}
+    max: {x: -256, y: 320}
+  - address: world/square_12_10
+    min: {x: -256, y: 288}
+    max: {x: -224, y: 320}
+  - address: world/square_13_10
+    min: {x: -224, y: 288}
+    max: {x: -192, y: 320}
+  - address: world/square_14_10
+    min: {x: -192, y: 288}
+    max: {x: -160, y: 320}
+  - address: world/square_15_10
+    min: {x: -160, y: 288}
+    max: {x: -128, y: 320}
+  - address: world/square_8_11
+    min: {x: -384, y: 256}
+    max: {x: -352, y: 288}
+  - address: world/square_9_11
+    min: {x: -352, y: 256}
+    max: {x: -320, y: 288}
+  - address: world/square_10_11
+    min: {x: -320, y: 256}
+    max: {x: -288, y: 288}
+  - address: world/square_11_11
+    min: {x: -288, y: 256}
+    max: {x: -256, y: 288}
+  - address: world/square_12_11
+    min: {x: -256, y: 256}
+    max: {x: -224, y: 288}
+  - address: world/square_13_11
+    min: {x: -224, y: 256}
+    max: {x: -192, y: 288}
+  - address: world/square_14_11
+    min: {x: -192, y: 256}
+    max: {x: -160, y: 288}
+  - address: world/square_15_11
+    min: {x: -160, y: 256}
+    max: {x: -128, y: 288}
+  - address: world/square_5_15
+    min: {x: -480, y: 128}
+    max: {x: -448, y: 160}
+  - address: world/square_6_15
+    min: {x: -448, y: 128}
+    max: {x: -416, y: 160}
+  - address: world/square_7_15
+    min: {x: -416, y: 128}
+    max: {x: -384, y: 160}
+  - address: world/square_8_15
+    min: {x: -384, y: 128}
+    max: {x: -352, y: 160}
+  - address: world/square_3_16
+    min: {x: -544, y: 96}
+    max: {x: -512, y: 128}
+  - address: world/square_4_16
+    min: {x: -512, y: 96}
+    max: {x: -480, y: 128}
+  - address: world/square_5_16
+    min: {x: -480, y: 96}
+    max: {x: -448, y: 128}
+  - address: world/square_6_16
+    min: {x: -448, y: 96}
+    max: {x: -416, y: 128}
+  - address: world/square_7_16
+    min: {x: -416, y: 96}
+    max: {x: -384, y: 128}
+  - address: world/square_8_16
+    min: {x: -384, y: 96}
+    max: {x: -352, y: 128}
+  - address: world/square_2_17
+    min: {x: -576, y: 64}
+    max: {x: -544, y: 96}
+  - address: world/square_3_17
+    min: {x: -544, y: 64}
+    max: {x: -512, y: 96}
+  - address: world/square_4_17
+    min: {x: -512, y: 64}
+    max: {x: -480, y: 96}
+  - address: world/square_5_17
+    min: {x: -480, y: 64}
+    max: {x: -448, y: 96}
+  - address: world/square_6_17
+    min: {x: -448, y: 64}
+    max: {x: -416, y: 96}
+  - address: world/square_7_17
+    min: {x: -416, y: 64}
+    max: {x: -384, y: 96}
+  - address: world/square_8_17
+    min: {x: -384, y: 64}
+    max: {x: -352, y: 96}
+  - address: world/square_2_18
+    min: {x: -576, y: 32}
+    max: {x: -544, y: 64}
+  - address: world/square_3_18
+    min: {x: -544, y: 32}
+    max: {x: -512, y: 64}
+  - address: world/square_4_18
+    min: {x: -512, y: 32}
+    max: {x: -480, y: 64}
+  - address: world/square_5_18
+    min: {x: -480, y: 32}
+    max: {x: -448, y: 64}
+  - address: world/square_6_18
+    min: {x: -448, y: 32}
+    max: {x: -416, y: 64}
+  - address: world/square_7_18
+    min: {x: -416, y: 32}
+    max: {x: -384, y: 64}
+  - address: world/square_8_18
+    min: {x: -384, y: 32}
+    max: {x: -352, y: 64}
+  - address: world/square_3_19
+    min: {x: -544, y: 0}
+    max: {x: -512, y: 32}
+  - address: world/square_4_19
+    min: {x: -512, y: 0}
+    max: {x: -480, y: 32}
+  - address: world/square_5_19
+    min: {x: -480, y: 0}
+    max: {x: -448, y: 32}
+  - address: world/square_6_19
+    min: {x: -448, y: 0}
+    max: {x: -416, y: 32}
+  - address: world/square_7_19
+    min: {x: -416, y: 0}
+    max: {x: -384, y: 32}
+  - address: world/square_8_19
+    min: {x: -384, y: 0}
+    max: {x: -352, y: 32}
+  - address: world/square_3_20
+    min: {x: -544, y: -32}
+    max: {x: -512, y: 0}
+  - address: world/square_4_20
+    min: {x: -512, y: -32}
+    max: {x: -480, y: 0}
+  - address: world/square_5_20
+    min: {x: -480, y: -32}
+    max: {x: -448, y: 0}
+  - address: world/square_6_20
+    min: {x: -448, y: -32}
+    max: {x: -416, y: 0}
+  - address: world/square_7_20
+    min: {x: -416, y: -32}
+    max: {x: -384, y: 0}
+  - address: world/square_8_20
+    min: {x: -384, y: -32}
+    max: {x: -352, y: 0}
   - address: world/square_25_14
     min: {x: 160, y: 160}
     max: {x: 192, y: 192}
@@ -1105,7 +1528,7 @@ MonoBehaviour:
     kind: 1
     min: {x: -44.5, y: 139}
     max: {x: 4.5, y: 201}
-  propReach: 10.336
+  propReach: 11.398
   measuredLoadSeconds: 0.144
 --- !u!4 &100002
 Transform:
