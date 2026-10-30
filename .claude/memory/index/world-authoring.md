@@ -1,5 +1,7 @@
 # World authoring / generation / data tables
 
+- ⭐ The seamless world and its towns — the layout, town plans, the builders, bridges, rebuilding and the checks — live in the **world-authoring skill** (`.claude/skills/world-authoring/SKILL.md`), not here — and new world and town learnings are written into that skill, never as a new memory here.
+
 - [Biome-agnostic mobs = Biome.None](../biome-none-agnostic.md) — spawns any tier band; `Biome` enum APPEND-ONLY.
 - [Mobs/items/maps as data tables](../mob-item-map-data-tables.md) — `MonsterDef` SO in `Resources/Monsters`, kebab `id` via `MonsterCatalog`.
 - [Runtime mob spawn via Addressables + pooled field spawner](../mob-summon-addressables.md) — `MobSpawner.Spawn` async loads baked `Mobs/<id>` prefabs (`Bake Mob Prefabs`); `/summon`; `FieldMobSpawner` = RO-style pooled data-driven population vs baked recycle; `MobRespawn.Reactivate` SSOT; `Health.Die` PooledMob branch.
@@ -32,6 +34,3 @@
 - [Wiki Database pages are generated](../wiki-database-generated-pages.md) — Monsters, Skills, Equipment, Materials, World Map and Elements are generated (MobExport/WorldMapExport/ElementExport/ItemExport + the skill export); never hand-edit their json; hooks on save.
 - [Play-test QoL batch 2026-10-11](../playtest-qol-batch-2026-10-11.md) — map edge walls, standing portals only, map-window doors/guide/mob counts, arrival name flash, hotbar keeps used-up items, server equip preview, every station job on worn gear, far-prop LODs; the decisions behind each.
 - [No players yet; fields/dungeons disposable](../no-players-fields-dungeons-disposable.md) — world rework: no character migration, delete/replace fields and dungeons freely; keep only the 16 towns and 14 landmarks.
-- [Seamless world layout decisions](../seamless-world-layout-decisions.md) — 2026-10-27: continent fresh, nature props only, few dark biomes, invisible blended borders, layout file first then area-by-area
-- [World builder](../world-builder.md) — the real world 'world' built square by square from the layout; ids, coords, independence proofs, road grading
-- [Seamless world: ground on the server, old zone world gone](../seamless-world-ground-on-server.md) — anything placed at map load must `HoldGround` first; old maps/atlas/layout deleted 2026-10-28 and what that changed; Keepers per map still open

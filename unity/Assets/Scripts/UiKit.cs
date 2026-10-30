@@ -34,6 +34,21 @@ public static class UiKit
     public static TMP_FontAsset ClockFont => _clock != null ? _clock : (_clock = MakeFont("Fonts/DSEG7Classic-Bold"));
     static TMP_FontAsset _clock;
 
+    /// <summary>The map's place names: Selawik (SIL OFL), the free stand-in for Segoe UI, whose licence forbids shipping
+    /// it — the face the world layout's map is drawn in. Made in memory, like the clock's; a sign it lacks (★ ▼) is
+    /// taken from the interface face.</summary>
+    public static TMP_FontAsset LabelFont
+    {
+        get
+        {
+            if (_label != null) return _label;
+            _label = MakeFont("Fonts/Selawik");
+            if (_label != Fallback && Font != null) _label.fallbackFontAssetTable = new System.Collections.Generic.List<TMP_FontAsset> { Font };
+            return _label;
+        }
+    }
+    static TMP_FontAsset _label;
+
     static TMP_FontAsset Fallback => _fallback != null ? _fallback
         : (_fallback = TMP_Settings.defaultFontAsset != null
             ? TMP_Settings.defaultFontAsset
@@ -91,11 +106,14 @@ public static class UiKit
     // The edge is a switch (OUTLINE_ON) a build keeps only if a saved material has it on, and nothing else saved uses
     // the always-on-top text shader: Resources/Fonts/Floating Text Outline.mat exists only to keep that switch in the
     // build (ASSETS.md, rule 12). Without it the editor draws the edge and every built game draws none.
-    static readonly System.Collections.Generic.Dictionary<(TMP_FontAsset, float), Material> _outlined = new();
-    public static Material OutlinedMaterial(TMP_FontAsset font, float width = 0.2f)
+    // The mobile text shader draws an outline inside the letter's edge; `outside` grows the letter by the outline's
+    // width first, so the outline lies outside it and a small dark word keeps its face under a light edge.
+    static readonly System.Collections.Generic.Dictionary<(TMP_FontAsset, float, Color, bool), Material> _outlined = new();
+    public static Material OutlinedMaterial(TMP_FontAsset font, float width = 0.2f, Color? edge = null, bool outside = false)
     {
         if (font == null) return null;
-        if (_outlined.TryGetValue((font, width), out var m) && m != null) return m;
+        Color edgeColour = edge ?? Color.black;
+        if (_outlined.TryGetValue((font, width, edgeColour, outside), out var m) && m != null) return m;
         m = new Material(font.material);
         // Words floating in the world draw over it, never behind the grass or the ground they stand on. MOVED ONTO
         // THE ALWAYS-ON-TOP SHADER FIRST, and only then given the edge: a material changing shader keeps no promise
@@ -104,8 +122,9 @@ public static class UiKit
         DrawOverTheWorld(m);
         m.EnableKeyword("OUTLINE_ON");
         m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
-        m.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
-        _outlined[(font, width)] = m;
+        m.SetColor(ShaderUtilities.ID_OutlineColor, edgeColour);
+        if (outside) m.SetFloat(ShaderUtilities.ID_FaceDilate, width);
+        _outlined[(font, width, edgeColour, outside)] = m;
         return m;
     }
 
@@ -832,6 +851,10 @@ public static class UiKit
         }
     }
 
+    /// <summary>How far one wheel notch moves a scrolling list, before the player's scroll setting
+    /// (<see cref="ScaledScrollInput"/>) scales it.</summary>
+    public const float ScrollStep = 22f;
+
     /// <summary>Turn a window's fixed "Content" node into a clipped vertical scroll (wheel and drag) and return the
     /// inner node to build rows into. Idempotent: a second call returns the same inner node. THE one scroll
     /// column every list window uses — the Skills window and the station window alike — so a long list can never run
@@ -848,7 +871,7 @@ public static class UiKit
         var scroll = viewport.GetComponent<ScrollRect>() ?? viewport.gameObject.AddComponent<ScrollRect>();
         scroll.horizontal = false; scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 22f;
+        scroll.scrollSensitivity = ScrollStep;
 
         var sc = new GameObject("ScrollContent", typeof(RectTransform));
         var scrt = (RectTransform)sc.transform;

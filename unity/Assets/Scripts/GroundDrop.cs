@@ -249,7 +249,7 @@ public class GroundDrop : MonoBehaviour
     // you have moved a stride away. No ground under it (off the edge of the world) leaves the height alone.
     static Vector3 Seated(Vector3 at)
     {
-        if (GroundSnap.TryGroundY(at, GroundSnap.GroundMask, out float y)) at.y = y;
+        if (GroundSnap.SurfaceNearestY(at, out float y)) at.y = y;
         return at;
     }
 

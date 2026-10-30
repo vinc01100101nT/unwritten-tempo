@@ -1,0 +1,548 @@
+{
+ "id": "old_oak",
+ "name": "Old Oak",
+ "weapon": "Sniper",
+ "theme": "open grass, lone oaks",
+ "gates": [],
+ "areas": [
+  {
+   "look": "stone",
+   "label": "",
+   "rect": [
+    -22.0,
+    -28.5,
+    22.0,
+    28.5
+   ],
+   "level": "normal",
+   "tile": "PATH_OR_SIDEWALK_flagstone"
+  }
+ ],
+ "streets": [],
+ "canals": [],
+ "bridges": [],
+ "mounds": [],
+ "pieces": [],
+ "kit": [
+  {
+   "kind": "House_A",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_A.prefab",
+   "footprint": [
+    1.49,
+    2.0
+   ],
+   "role": "house",
+   "scale": 0.0
+  },
+  {
+   "kind": "House_B",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_B.prefab",
+   "footprint": [
+    1.66,
+    1.71
+   ],
+   "role": "house",
+   "scale": 0.0
+  },
+  {
+   "kind": "House_C",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_C.prefab",
+   "footprint": [
+    2.97,
+    2.99
+   ],
+   "role": "house",
+   "scale": 0.0
+  },
+  {
+   "kind": "House_D",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_D.prefab",
+   "footprint": [
+    3.4,
+    1.84
+   ],
+   "role": "house",
+   "scale": 0.0
+  },
+  {
+   "kind": "House1",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House1.prefab",
+   "footprint": [
+    2.46,
+    2.25
+   ],
+   "role": "house",
+   "scale": 0.0
+  },
+  {
+   "kind": "House2",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House2.prefab",
+   "footprint": [
+    2.75,
+    2.3
+   ],
+   "role": "house",
+   "scale": 0.0
+  },
+  {
+   "kind": "House3",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House3.prefab",
+   "footprint": [
+    1.17,
+    2.31
+   ],
+   "role": "house",
+   "scale": 0.0
+  },
+  {
+   "kind": "Tavern",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Tavern_LOD0.prefab",
+   "footprint": [
+    9.5,
+    7.1
+   ],
+   "role": "landmark",
+   "scale": 0.0
+  },
+  {
+   "kind": "Fountain",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Central_Fountain.prefab",
+   "footprint": [
+    2.0,
+    2.0
+   ],
+   "role": "landmark",
+   "scale": 0.0
+  },
+  {
+   "kind": "Statue",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Hero_Statue.prefab",
+   "footprint": [
+    1.44,
+    1.3
+   ],
+   "role": "landmark",
+   "scale": 0.0
+  },
+  {
+   "kind": "Cart",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/cart4_LOD0.prefab",
+   "footprint": [
+    0.84,
+    2.16
+   ],
+   "role": "market",
+   "scale": 0.0
+  },
+  {
+   "kind": "Handcart",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/cart2_LOD0.prefab",
+   "footprint": [
+    0.61,
+    1.57
+   ],
+   "role": "market",
+   "scale": 0.0
+  },
+  {
+   "kind": "Barrel",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_barrel.prefab",
+   "footprint": [
+    0.29,
+    0.29
+   ],
+   "role": "market",
+   "scale": 0.0
+  },
+  {
+   "kind": "Basket",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_basket.prefab",
+   "footprint": [
+    0.26,
+    0.24
+   ],
+   "role": "market",
+   "scale": 0.0
+  },
+  {
+   "kind": "Sack",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_bag.prefab",
+   "footprint": [
+    0.29,
+    0.19
+   ],
+   "role": "market",
+   "scale": 0.0
+  },
+  {
+   "kind": "Blossom",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BlossomTree_0{n}.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "PinkWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Pink.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "BlueBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Blue.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "GreenBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Green.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "PurpleBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Purple.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "RedBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Red.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "BlueWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Blue.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "GreenWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Green.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "PurpleWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Purple.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "RedWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Red.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "Fir",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Fir_0{n}.prefab",
+   "footprint": [
+    0.6,
+    0.6
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "Pine_tree1",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Trees/Pine_tree1.prefab",
+   "footprint": [
+    3.52,
+    3.52
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "Pine_tree3",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Trees/Pine_tree3.prefab",
+   "footprint": [
+    1.52,
+    1.52
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "Willow_tree2",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Trees/Willow_tree2.prefab",
+   "footprint": [
+    3.8,
+    3.8
+   ],
+   "role": "tree",
+   "scale": 0.0
+  },
+  {
+   "kind": "RoseBush",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_0{n}.prefab",
+   "footprint": [
+    0.36,
+    0.36
+   ],
+   "role": "bush",
+   "scale": 0.0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FloatingLeafs_Green.prefab",
+   "footprint": [
+    17.2,
+    17.2
+   ],
+   "role": "effect",
+   "scale": 0.0
+  },
+  {
+   "kind": "Table",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Indoor/Furniture_table_round.prefab",
+   "footprint": [
+    0.38,
+    0.39
+   ],
+   "role": "market",
+   "scale": 0.3
+  },
+  {
+   "kind": "Chair",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Indoor/Furniture_chair1.prefab",
+   "footprint": [
+    0.16,
+    0.17
+   ],
+   "role": "market",
+   "scale": 0.3
+  }
+ ],
+ "wall": {
+  "line": 2.5,
+  "gate": 3.4
+ },
+ "lawnTile": "BASE_OR_PATCH_painted_grass",
+ "soilTile": "BASE_OR_PATCH_OR_PATH_soil",
+ "tiles": [
+  {
+   "name": "BASE_OR_PATCH_painted_grass",
+   "tiling": 1.4525994
+  },
+  {
+   "name": "BASE_OR_PATCH_OR_PATH_soil",
+   "tiling": 0.4
+  },
+  {
+   "name": "PATH_OR_SIDEWALK_flagstone",
+   "tiling": 0.4
+  }
+ ],
+ "plants": [
+  {
+   "kind": "Grass_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_01.prefab"
+  },
+  {
+   "kind": "Grass_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_02.prefab"
+  },
+  {
+   "kind": "Grass_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_03.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Blue",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Blue.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_BluePurple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_BluePurple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Orange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Orange.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_OrangePinkRedPurpleBlue",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_OrangePinkRedPurpleBlue.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Pink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Pink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Purple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Purple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_PurpleRedPink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_PurpleRedPink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Red",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Red.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedOrange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedOrange.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedPink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedPink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedPurple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedPurple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_White",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_White.prefab"
+  },
+  {
+   "kind": "Flower_Blue_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Blue_01.prefab"
+  },
+  {
+   "kind": "Flower_Blue_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Blue_02.prefab"
+  },
+  {
+   "kind": "Flower_Orange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Orange.prefab"
+  },
+  {
+   "kind": "Flower_Pink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Pink.prefab"
+  },
+  {
+   "kind": "Flower_Purple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Purple.prefab"
+  },
+  {
+   "kind": "Flower_Red",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Red.prefab"
+  },
+  {
+   "kind": "Flower_White",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_White.prefab"
+  },
+  {
+   "kind": "Flower_Yellow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Yellow.prefab"
+  },
+  {
+   "kind": "Flower_YellowRed",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_YellowRed.prefab"
+  },
+  {
+   "kind": "Bush_01_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_01_01.prefab"
+  },
+  {
+   "kind": "Bush_01_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_01_02.prefab"
+  },
+  {
+   "kind": "Bush_02_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_02_01.prefab"
+  },
+  {
+   "kind": "Bush_02_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_02_02.prefab"
+  },
+  {
+   "kind": "Bush_03_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_01.prefab"
+  },
+  {
+   "kind": "Bush_03_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_02.prefab"
+  },
+  {
+   "kind": "Plant_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_01.prefab"
+  },
+  {
+   "kind": "Plant_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_02.prefab"
+  },
+  {
+   "kind": "Plant_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_03.prefab"
+  },
+  {
+   "kind": "Plant_04",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_04.prefab"
+  },
+  {
+   "kind": "Plant_05",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_05.prefab"
+  },
+  {
+   "kind": "Plant_06",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_06.prefab"
+  },
+  {
+   "kind": "Plant_07",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_07.prefab"
+  },
+  {
+   "kind": "Plant_08",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_08.prefab"
+  },
+  {
+   "kind": "Plants",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plants.prefab"
+  },
+  {
+   "kind": "Reeds_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_01.prefab"
+  },
+  {
+   "kind": "Reeds_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_02.prefab"
+  },
+  {
+   "kind": "Reeds_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_03.prefab"
+  }
+ ]
+}

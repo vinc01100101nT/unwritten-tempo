@@ -245,10 +245,15 @@ public class FieldMobSpawner : MonoBehaviour
 
         for (int i = 0; i < 16; i++)
         {
-            Vector2 r = Random.insideUnitCircle * radius;
-            Vector3 probe = new Vector3(c.x + r.x, c.y + 30f, c.z + r.y);
+            Vector3 probe;
+            if (shapeSquares > 0) probe = SpotInShape(c.y);
+            else
+            {
+                Vector2 r = Random.insideUnitCircle * radius;
+                probe = new Vector3(c.x + r.x, c.y + 30f, c.z + r.y);
+            }
             if (groundMask != 0 &&
-                Physics.Raycast(probe, Vector3.down, out var hit, 120f, groundMask, QueryTriggerInteraction.Ignore))
+                Physics.Raycast(probe, Vector3.down, out var hit, shapeSquares > 0 ? ProbeDrop : 120f, groundMask, QueryTriggerInteraction.Ignore))
             {
                 // Clear of everybody IN THIS MAP. Judged across all of them, a spot is refused because somebody is
                 // standing on the same coordinates in a different place entirely.
@@ -269,6 +274,80 @@ public class FieldMobSpawner : MonoBehaviour
     }
 
     bool warnedNoFloor;
+
+    // THE AREA'S OWN SHAPE (WorldSpawns.Area): runs of squares, in the map's own coordinates, and where the map's
+    // middle stands in the world. Empty = the circle of `radius`.
+    int[] shapeRuns;
+    int shapeSquares;
+    Vector3 mapOrigin;
+
+    // A shaped area spans more height than a circle round one spot, so its probe starts higher and falls further.
+    const float ProbeRise = 60f, ProbeDrop = 160f;
+
+    /// <summary>Spawn on <paramref name="runs"/> (see <see cref="WorldSpawns.Area.runs"/>) instead of the circle;
+    /// <paramref name="mapOriginInWorld"/> is where the map's own (0, 0, 0) stands. Set before the area starts.
+    /// <paramref name="areaMates"/>: every spawner on the same area, this one included, whose creatures this one's
+    /// spread away from (null = only its own).</summary>
+    public void SetShape(int[] runs, Vector3 mapOriginInWorld, List<FieldMobSpawner> areaMates = null)
+    {
+        shapeRuns = runs; mapOrigin = mapOriginInWorld; shapeSquares = 0; mates = areaMates;
+        for (int k = 2; k < runs.Length; k += 3) shapeSquares += runs[k];
+    }
+
+    List<FieldMobSpawner> mates;
+
+    // SPREAD EVENLY, never in clumps: of SpreadTries random points of the shape, the one farthest from every creature
+    // the area already has out. Random points alone leave crowds beside empty stretches on a big patch.
+    const int SpreadTries = 8;
+
+    Vector3 SpotInShape(float aroundY)
+    {
+        Vector3 best = RandomInShape(aroundY);
+        float bestGap = NearestCreatureSqr(best);
+        for (int t = 1; t < SpreadTries; t++)
+        {
+            Vector3 p = RandomInShape(aroundY);
+            float gap = NearestCreatureSqr(p);
+            if (gap > bestGap) { best = p; bestGap = gap; }
+        }
+        return best;
+    }
+
+    // Flat distance, squared, from p to the nearest creature this area has out (every spawner on it).
+    float NearestCreatureSqr(Vector3 p)
+    {
+        float best = float.MaxValue;
+        if (mates == null) return NearestIn(this, p, best);
+        for (int m = 0; m < mates.Count; m++) if (mates[m] != null) best = NearestIn(mates[m], p, best);
+        return best;
+    }
+
+    static float NearestIn(FieldMobSpawner s, Vector3 p, float best)
+    {
+        for (int i = 0; i < s.live.Count; i++)
+        {
+            var go = s.live[i].go;
+            if (go == null) continue;
+            Vector3 q = go.transform.position;
+            float dx = q.x - p.x, dz = q.z - p.z, d = dx * dx + dz * dz;
+            if (d < best) best = d;
+        }
+        return best;
+    }
+
+    // A point straight above a random square of the shape, every square as likely as any other.
+    Vector3 RandomInShape(float aroundY)
+    {
+        int pick = Random.Range(0, shapeSquares);
+        for (int k = 0; k + 2 < shapeRuns.Length; k += 3)
+        {
+            if (pick >= shapeRuns[k + 2]) { pick -= shapeRuns[k + 2]; continue; }
+            float x = shapeRuns[k] + (pick + Random.value) * WorldSpawns.AreaSquare;
+            float z = shapeRuns[k + 1] + Random.value * WorldSpawns.AreaSquare;
+            return new Vector3(mapOrigin.x + x, aroundY + ProbeRise, mapOrigin.z + z);
+        }
+        return new Vector3(transform.position.x, aroundY + ProbeRise, transform.position.z);
+    }
 
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()

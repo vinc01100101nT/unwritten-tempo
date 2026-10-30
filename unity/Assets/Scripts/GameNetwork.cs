@@ -923,25 +923,6 @@ public class GameNetwork : NetworkManager
         public string text;
     }
 
-    /// <summary>A player's machine asking how many of each creature are alive in one map, by its scene name — sent while
-    /// the map window's zone view shows that map. It carries the map and nothing else.</summary>
-    public struct MapCountsRequest : NetworkMessage
-    {
-        public string map;
-    }
-
-    /// <summary>The server's counts for that map (<see cref="MapCreatureCounts.Count"/>): each creature id there, how
-    /// many are alive and how many the map keeps (0 when it keeps no number of its own), side by side. <c>held</c> is
-    /// false when the server holds no such map. Sent only to the asker.</summary>
-    public struct MapCountsReply : NetworkMessage
-    {
-        public string map;
-        public bool held;
-        public string[] ids;
-        public int[] counts;
-        public int[] kept;
-    }
-
     /// <summary>A LINE SOMEBODY TYPED AND SAID OUT LOUD. It carries the words and nothing else: not who said them
     /// and not where they were standing, because the server already knows which connection this arrived on and
     /// where it holds that person. A machine that named its own speaker could put words in anybody's mouth.</summary>
@@ -1035,7 +1016,6 @@ public class GameNetwork : NetworkManager
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
         NetworkServer.RegisterHandler<MobInfoRequest>(OnMobInfoRequest);
-        NetworkServer.RegisterHandler<MapCountsRequest>(OnMapCountsRequest);
         NetworkServer.RegisterHandler<ChatSaid>(OnChatSaid);
         NetworkServer.RegisterHandler<PmSend>(OnPmSend);
     }
@@ -1058,8 +1038,6 @@ public class GameNetwork : NetworkManager
         // A new connection may be to a server holding different numbers, so nothing an earlier one sent is kept.
         MobInfo.ForgetSent();
         NetworkClient.RegisterHandler<MobInfoReply>(OnMobInfoReply);
-        MapCreatureCounts.ForgetSent();
-        NetworkClient.RegisterHandler<MapCountsReply>(OnMapCountsReply);
         NetworkClient.RegisterHandler<WorldTime>(OnWorldTime);
         NetworkClient.RegisterHandler<TimeOfDayShift>(OnTimeOfDayShift);
         NetworkClient.RegisterHandler<WeatherHeld>(OnWeatherHeld);
@@ -3116,32 +3094,6 @@ public class GameNetwork : NetworkManager
         if (string.IsNullOrEmpty(msg.id) || msg.id.Length > 64) return;
         var d = MonsterCatalog.ById(msg.id);
         conn.Send(new MobInfoReply { id = msg.id, text = d != null ? MobInfo.Text(d) : "No creature called '" + msg.id + "'." });
-    }
-
-    /// <summary>The map window asking how many of each creature live in a map; false when there is no server to ask.</summary>
-    public static bool AskMapCreatureCounts(string map)
-    {
-        if (!NetworkClient.isConnected || string.IsNullOrEmpty(map)) return false;
-        NetworkClient.Send(new MapCountsRequest { map = map });
-        return true;
-    }
-
-    static void OnMapCountsReply(MapCountsReply msg) => MapCreatureCounts.TakeSent(msg.map, msg.held, msg.ids, msg.counts, msg.kept);
-
-    static readonly System.Collections.Generic.List<string> countIds = new System.Collections.Generic.List<string>(32);
-    static readonly System.Collections.Generic.List<int> countNumbers = new System.Collections.Generic.List<int>(32);
-    static readonly System.Collections.Generic.List<int> keptNumbers = new System.Collections.Generic.List<int>(32);
-
-    // Asked BY a player, answered HERE: one walk over the creatures filed under that map. Counted with the other
-    // questions a connection asks, so it cannot be used to flood the server.
-    void OnMapCountsRequest(NetworkConnectionToClient conn, MapCountsRequest msg)
-    {
-        if (conn == null || AskingTooFast(conn.connectionId)) return;
-        if (ShellFor(conn) == null) return;
-        if (string.IsNullOrEmpty(msg.map) || msg.map.Length > 64) return;
-        bool held = MapCreatureCounts.Count(msg.map, countIds, countNumbers, keptNumbers);
-        conn.Send(new MapCountsReply { map = msg.map, held = held, ids = countIds.ToArray(), counts = countNumbers.ToArray(),
-                                       kept = keptNumbers.ToArray() });
     }
 
     // ---- SAYING SOMETHING OUT LOUD ----------------------------------------------------------------------

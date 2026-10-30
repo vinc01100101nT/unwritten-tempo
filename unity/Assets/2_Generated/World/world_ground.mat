@@ -41,7 +41,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RockMap:
-        m_Texture: {fileID: 2800000, guid: 6ac7dd17046342f498429072a9879660, type: 3}
+        m_Texture: {fileID: 2800000, guid: a1a1c1f2aa25fd8429cad68a22c5c2d7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _StoneMap:
@@ -54,7 +54,7 @@ Material:
     - _DirtTiling: 1.4525994
     - _GrassTiling: 1.4525994
     - _PathTiling: 1.4525994
-    - _RockTiling: 0.8300568
+    - _RockTiling: 0.7262997
     - _StoneTiling: 0.5810397
     m_Colors:
     - _CliffFaceColor: {r: 1, g: 1, b: 1, a: 1}

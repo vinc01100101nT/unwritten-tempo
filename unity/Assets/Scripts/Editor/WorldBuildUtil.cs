@@ -90,6 +90,16 @@ public static class WorldBuildUtil
         if (mesh.colors.Length == count) old.SetColors(mesh.colors);
         var uv = new List<Vector2>();
         for (int ch = 0; ch < 2; ch++) { uv.Clear(); mesh.GetUVs(ch, uv); if (uv.Count == count) old.SetUVs(ch, uv); }
+        // The further channels a town's tile ground carries (GroundTileArray: its corners' tiles and tilings, the world's rim),
+        // each kept at the size it was written.
+        for (int ch = 2; ch < 8; ch++)
+        {
+            int dim = mesh.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.TexCoord0 + ch)
+                ? mesh.GetVertexAttributeDimension(UnityEngine.Rendering.VertexAttribute.TexCoord0 + ch) : 0;
+            if (dim == 2) { var l = new List<Vector2>(); mesh.GetUVs(ch, l); old.SetUVs(ch, l); }
+            else if (dim == 3) { var l = new List<Vector3>(); mesh.GetUVs(ch, l); old.SetUVs(ch, l); }
+            else if (dim == 4) { var l = new List<Vector4>(); mesh.GetUVs(ch, l); old.SetUVs(ch, l); }
+        }
         old.subMeshCount = mesh.subMeshCount;
         for (int sm = 0; sm < mesh.subMeshCount; sm++) old.SetTriangles(mesh.GetTriangles(sm), sm);
         old.RecalculateBounds();

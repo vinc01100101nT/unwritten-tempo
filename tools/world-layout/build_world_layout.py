@@ -6,6 +6,10 @@ same world.
 
     python tools/world-layout/build_world_layout.py [map.html]
 
+The map is written beside the file, data/world-layout.html, on every run — the one picture of the layout, never
+out of date with it. At the end it runs tools/world-spawns/build_world_spawns.py, which works the creatures' patches out
+of the new layout and lays them over the same map.
+
 What is decided by hand (the PLACES block) and what is worked out from it:
   - land and sea: a noise coast grown round the places, with bays, a strait, and a ring of sea round each small island;
   - height: rising from the coast, mountain ranges, rolling hills, the ground flattened under each town;
@@ -19,7 +23,7 @@ import heapq, json, math, os, random, sys, base64, struct, zlib
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT_JSON = os.path.join(ROOT, "data", "world-layout.json")
-OUT_MAP = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.expanduser("~"), "Downloads", "world-layout.html")
+OUT_MAP = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "data", "world-layout.html")
 CHUNK = 32                                # the world is built and streamed in squares this wide (128 ground points of 0.25)
 
 # ---------------------------------------------------------------- PLACES (decided with the user, 2026-10-27)
@@ -49,20 +53,48 @@ ROADS = [("lastline", "parley"), ("lastline", "harrowen"), ("lastline", "old_oak
          ("lastline", "hazemere"), ("pluvenne", "hilt"), ("hazemere", "hilt")]
 SPRINGS = [(700, 90), (1050, 220), (330, 250)]          # where the three rivers start, in the hills
 RIVER_HINTS = [[(690, 200), (600, 300), (560, 420), (540, 560), (560, 680), (600, 800), (640, 910)],
-               [(1080, 330), (1110, 420), (1150, 500), (1200, 530)],
+               [(1080, 330), (1110, 420), (1150, 500), (1200, 530), (1250, 522), (1272, 560), (1242, 588), (1268, 618)],   # Narrowbend's hairpin past Pluvenne
                [(360, 380), (330, 480), (250, 560), (150, 600)]]   # the course agreed on the preview: the ground is shaped to it
-LANDMARKS = [("last_bridge", "Last Bridge", 590, 760), ("hill_of_the_flame", "Hill of the Flame", 1120, 250),
-             ("thousand_gates", "Thousand Gates", 880, 110), ("narrowbend", "Narrowbend", 500, 420),
-             ("masked_ballroom", "Masked Ballroom", 400, 1260), ("burning_keel", "Burning Keel", 640, 1390),
-             ("everburning_plain", "Everburning Plain", 500, 1400), ("sky_cairn", "Sky Cairn", 300, 250),
-             ("tide_temple", "Tide Temple", 1300, 800), ("dusk_tower", "Dusk Tower", 420, 1360),
-             ("walking_road", "Walking Road", 780, 380), ("drowned_chapel", "Drowned Chapel", 200, 1260),
-             ("aurora_steps", "Aurora Steps", 690, 150), ("unmarked_path", "Unmarked Path", 830, 720)]
+# Channels joining the rivers into one water (2026-10-28): (river the water leaves, river it runs into, its course).
+# Each course is the cheapest found over this ground, clear of towns, landmarks, ponds, caves and dungeon doors, along
+# which the bed only ever falls — never raised over lower ground — and arrives no lower than the river it joins.
+RIVER_LINKS = [(2, 0, [(338, 266), (378, 290), (418, 282), (458, 282), (498, 310), (538, 310)]),
+               (0, 1, [(710, 254), (726, 294), (766, 334), (806, 350), (846, 358), (886, 358), (926, 354), (966, 366),
+                       (1006, 378), (1046, 362)])]
+# Each shadow's place stands in its own weapon town's land, on the far side from the town (decided 2026-10-29).
+LANDMARKS = [("last_bridge", "Last Bridge", 536, 195), ("hill_of_the_flame", "Hill of the Flame", 312, 112),
+             ("thousand_gates", "Thousand Gates", 440, 488), ("narrowbend", "Narrowbend", 1252, 556),
+             ("masked_ballroom", "Masked Ballroom", 1168, 296), ("burning_keel", "Burning Keel", 376, 806),
+             ("everburning_plain", "Everburning Plain", 500, 1400), ("sky_cairn", "Sky Cairn", 144, 584),
+             ("tide_temple", "Tide Temple", 1300, 800), ("dusk_tower", "Dusk Tower", 976, 584),
+             ("walking_road", "Walking Road", 984, 896), ("drowned_chapel", "Drowned Chapel", 208, 1352),
+             ("aurora_steps", "Aurora Steps", 1575, 455), ("unmarked_path", "Unmarked Path", 472, 136)]
+# The coast was agreed on these points (where the landmarks first stood, and the rivers' first courses): the land is
+# grown round them, so a place or a river bend moving never moves the coast.
+LAND_ANCHORS = [(590, 760), (1120, 250), (880, 110), (500, 420), (400, 1260), (640, 1390), (500, 1400), (300, 250),
+                (1300, 800), (420, 1360), (780, 380), (200, 1260), (690, 150), (830, 720),
+                (690, 200), (600, 300), (560, 420), (540, 560), (560, 680), (600, 800), (640, 910),
+                (1080, 330), (1110, 420), (1150, 500), (1200, 530), (360, 380), (330, 480), (250, 560), (150, 600)]
 DUNGEON_DOORS = [("lastline", 700, 690), ("old_oak", 940, 610), ("hazemere", 1010, 850), ("hilt", 1190, 790),
                  ("cindrel", 600, 1350), ("kharnel", 260, 1380)]
-MOUNTAINS = [(620, 150, 220, 110, 34), (790, 120, 190, 100, 30), (1070, 180, 150, 100, 26)]   # x, y, half-width, half-depth, peak height
+MOUNTAINS = [(620, 150, 220, 110, 34), (790, 120, 190, 100, 30), (1070, 180, 150, 100, 26),   # x, y, half-width, half-depth, peak height
+             (440, 488, 40, 40, 16),        # the Thousand Gates' climb, in Parley's land
+             (312, 112, 28, 28, 6),         # the Hill of the Flame's top, on Halcyra's high ground
+             (976, 584, 30, 30, 6),         # the rise the Dusk Tower stands on, above Old Oak
+             (1575, 455, 32, 32, 14),       # Luminhal's mountain, under the Aurora Steps
+             (376, 830, 55, 55, 20)]        # Harrowen's volcano, the Burning Keel on its lip
+CRATERS = [(376, 830, 14, 12)]
+# THE MOUNTAIN'S ROOT (decided 2026-10-29): its cave stands on a round rock ringed by a sheer gorge at the mountain's
+# foot, and the Last Bridge is the one way across. (cave id, rock middle x, y, rock radius, gorge width, how far the
+# gorge's floor lies below the lowest ground round it,
+# which way the bridge leaves the rock, the landmark on the bridge.) The cave's rock (48 x 44) sits on the rock's back
+# half, its mouth facing the bridge.
+GORGES = [("mountains_root", 580, 195, 36, 16, 14, (-1, 0), "last_bridge")]   # the bridge leaves westward, where the far side stands level with the rock              # a hollow in a mountain's top: x, y, radius, depth
+# open flat ground, levelled like a town's: x, y, radius (the Sky Cairn's steppe at Pennaryl's forest edge)
+CLEARINGS = [(144, 584, 50)]
 BOATS = [("south_coast", "dark_isle", (400, 900), (380, 1210)), ("pluvenne", "luminhal", (1265, 500), (1500, 555))]
-LOW_TIDE_PATHS = [("hilt", "tide_temple", (1215, 800), (1265, 800))]
+# a path across the sea at wading depth, from land to land (the world cuts its way down each sea cliff)
+LOW_TIDE_PATHS = [("hilt", "tide_temple", (1160, 800), (1265, 800))]
 # caves like the test map's (a block of rock with a hall inside and one way in), each opened out of the foot of the
 # nearest cliff to its spot: (id, the town it belongs near, x, y)
 # raised blocks with a cliff all round: Hilt's sea-cliff headland, and the forest ridge west of Pennaryl (x, y, radius, rise)
@@ -76,7 +108,8 @@ PONDS = [("lastline_pond", "lastline", 590, 700, 22), ("pluvenne_pond", "pluvenn
          ("pennaryl_pond", "pennaryl", 360, 640, 20), ("hazemere_oasis", "hazemere", 950, 700, 18)]
 CAVES = [("mountains_root", "gemmara", 650, 190), ("sea_cave", "hilt", 1240, 760),
          ("forest_cave", "pennaryl", 200, 600), ("dark_cave", "kharnel", 430, 1300)]
-SMALL_ISLANDS = [(1560, 560), (1300, 800)]
+SMALL_ISLANDS = [[(1560, 560), (1563, 530), (1567, 500), (1572, 470)], [(1300, 800)]]   # each island the points it is grown round (Luminhal long enough for its mountain)
+ISLAND_PTS = [p for isl in SMALL_ISLANDS for p in isl]
 BAYS = [(150, 410, 110), (800, 990, 150), (1300, 330, 90), (40, 760, 120), (980, 40, 120)]
 
 # ---------------------------------------------------------------- noise, the same every run
@@ -94,17 +127,16 @@ def fbm(x, y):
 
 # ---------------------------------------------------------------- land and sea
 continent = [(t[3], t[4]) for t in TOWNS if t[4] < 950 and t[0] != "luminhal"] + \
-            [(x, y) for i, n, x, y in LANDMARKS if y < 950 and i != "tide_temple"] + \
-            [p for hint in RIVER_HINTS for p in hint] + SPRINGS
-isle = [(t[3], t[4]) for t in TOWNS if t[4] >= 950] + [(x, y) for i, n, x, y in LANDMARKS if y >= 950]
+            [(x, y) for x, y in LAND_ANCHORS if y < 950 and (x, y) != (1300, 800)] + SPRINGS
+isle = [(t[3], t[4]) for t in TOWNS if t[4] >= 950] + [(x, y) for x, y in LAND_ANCHORS if y >= 950]
 def gauss(x, y, pts, sigma):
     return max(math.exp(-((x - a) ** 2 + (y - b) ** 2) / (2 * sigma * sigma)) for a, b in pts)
 def land_field(x, y):
-    v = -0.55 + gauss(x, y, continent, 150) * 1.15 + gauss(x, y, isle, 110) * 1.05 + gauss(x, y, SMALL_ISLANDS, 45) * 0.95
+    v = -0.55 + gauss(x, y, continent, 150) * 1.15 + gauss(x, y, isle, 110) * 1.05 + gauss(x, y, ISLAND_PTS, 45) * 0.95
     for a, b, r in BAYS: v -= math.exp(-((x - a) ** 2 + (y - b) ** 2) / (2 * r * r)) * 0.9
     if 920 < y < 1150: v -= 1.4 * (1 - abs(y - 1035) / 115)
-    for a, b in SMALL_ISLANDS:
-        d = math.hypot(x - a, y - b)
+    for isl in SMALL_ISLANDS:
+        d = min(math.hypot(x - a, y - b) for a, b in isl)
         if 50 < d < 120: v -= 0.9 * math.sin((d - 50) / 70 * math.pi)
     edge = min(x, y, W - x, H - y)
     if edge < 90: v -= (90 - edge) / 90 * 1.2
@@ -117,7 +149,7 @@ land = [False] * (NX * NY)
 for j in range(NY):
     for i in range(NX):
         land[idx(i, j)] = land_field(*centre(i, j)) > 0
-for x, y in continent + isle + SMALL_ISLANDS:            # every place stands on land
+for x, y in continent + isle + ISLAND_PTS:              # every place stands on land
     ci, cj = cell_of(x, y)
     for j in range(cj - 6, cj + 7):
         for i in range(ci - 6, ci + 7):
@@ -184,6 +216,7 @@ for j in range(NY):
         h = min(coast_dist[k] * C, 160) / 160 * 6.0
         mount = sum(peak * math.exp(-(((x - mx) / rx) ** 2 + ((y - my) / ry) ** 2)) for mx, my, rx, ry, peak in MOUNTAINS)
         h += mount
+        h -= sum(dep * math.exp(-((x - cx) ** 2 + (y - cy) ** 2) / (cr * cr)) for cx, cy, cr, dep in CRATERS)
         h += (vnoise(x, y, 120, 11.0) - 0.5) * 8 + (vnoise(x, y, 40, 17.0) - 0.5) * 2
         plat[k] = plateau(x, y, coast_dist[k]) * max(0.0, 1 - mount / 8)   # mountains rise as one mass, not in steps
         for town, toward, rise, reach_r in HIGH_GROUND:
@@ -225,9 +258,31 @@ for tid, name, wpn, tx, ty, *_ in TOWNS:
                 if d < out_r:
                     k = max(0.0, d - flat_r) / TOWN_EASE; k = k * k * (3 - 2 * k)
                     height[idx(i, j)] += (flat - height[idx(i, j)]) * (1 - k)
+for cx, cy, cr in CLEARINGS:                              # the same levelling as a town's, at the clearing's own radius
+    ci, cj = cell_of(cx, cy); flat = height[idx(ci, cj)]
+    out_r = cr + TOWN_EASE; reach = int(out_r / C) + 1
+    for j in range(cj - reach, cj + reach + 1):
+        for i in range(ci - reach, ci + reach + 1):
+            if 0 <= i < NX and 0 <= j < NY and land[idx(i, j)]:
+                d = math.hypot(i - ci, j - cj) * C
+                if d < out_r:
+                    k = max(0.0, d - cr) / TOWN_EASE; k = k * k * (3 - 2 * k)
+                    height[idx(i, j)] += (flat - height[idx(i, j)]) * (1 - k)
 
 # ---------------------------------------------------------------- rivers: the agreed course, its bed always falling to the sea
 rivers = []; river_cell = set()
+def lay_bed(c, bed):
+    ci, cj = c % NX, c // NX
+    # the valley: its sides rise gently from the bed until they meet the ground, so a river through high ground
+    # runs in a wide valley, never between walls that leave a pit (sides 0.2 units up per unit out)
+    for v in range(cj - 30, cj + 31):
+        for u in range(ci - 30, ci + 31):
+            if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)]:
+                d = math.hypot(u - ci, v - cj) * C
+                if bed + d * 0.2 < height[idx(u, v)]: height[idx(u, v)] = bed + d * 0.2
+    height[c] = bed
+    for u, v in [(ci, cj), (ci + 1, cj), (ci - 1, cj), (ci, cj + 1), (ci, cj - 1)]:   # the water is three cells wide
+        if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)]: river_cell.add(idx(u, v))
 for spring, hint in zip(SPRINGS, RIVER_HINTS):
     pts = [spring] + hint
     (ax, ay), (bx, by) = pts[-2], pts[-1]
@@ -246,18 +301,32 @@ for spring, hint in zip(SPRINGS, RIVER_HINTS):
     for n, c in enumerate(path[:mouth]):                     # the bed falls from the spring to the shore, never rising
         bed = min(top * (1 - n / max(1, mouth)) + 0.2 * (n / max(1, mouth)), height[c], last - 0.001)
         last = bed
-        ci, cj = c % NX, c // NX
-        # the valley: its sides rise gently from the bed until they meet the ground, so a river through high ground
-        # runs in a wide valley, never between walls that leave a pit (sides 0.2 units up per unit out)
-        for v in range(cj - 30, cj + 31):
-            for u in range(ci - 30, ci + 31):
-                if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)]:
-                    d = math.hypot(u - ci, v - cj) * C
-                    if bed + d * 0.2 < height[idx(u, v)]: height[idx(u, v)] = bed + d * 0.2
-        height[c] = bed
-        for u, v in [(ci, cj), (ci + 1, cj), (ci - 1, cj), (ci, cj + 1), (ci, cj - 1)]:   # the water is three cells wide
-            if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)]: river_cell.add(idx(u, v))
+        lay_bed(c, bed)
     rivers.append(path[:mouth + 1])
+
+# ---------------------------------------------------------------- river links: a channel joining two rivers, so the three are one water
+# Its bed is the lowest ground met so far from where it leaves, cutting through anything higher and never raised over
+# anything lower, so the water runs one way and the channel is a valley like the rivers', never a bank.
+link_ends = []
+for a, b, course in RIVER_LINKS:
+    ends = []
+    for r, near in ((a, course[0]), (b, course[-1])):
+        c = min((c for c in rivers[r] if land[c]), key=lambda c: math.dist(centre(c % NX, c // NX), near))
+        ends.append(c)
+    pts = [centre(ends[0] % NX, ends[0] // NX)] + course + [centre(ends[1] % NX, ends[1] // NX)]
+    path = []
+    for p0, p1 in zip(pts, pts[1:]):
+        steps = max(1, int(math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 2))
+        for n in range(steps + 1):
+            c = idx(*cell_of(p0[0] + (p1[0] - p0[0]) * n / steps, p0[1] + (p1[1] - p0[1]) * n / steps))
+            if not path or path[-1] != c: path.append(c)
+    last = height[path[0]]
+    for n, c in enumerate(path):
+        bed = height[c] if n in (0, len(path) - 1) else min(last, height[c])
+        last = bed
+        lay_bed(c, bed)
+    rivers.append(path)
+    link_ends.append((a, b))
 
 # ---------------------------------------------------------------- themes: nearest town on the same landmass, wavy
 town_cell = {t[0]: idx(*cell_of(t[3], t[4])) for t in TOWNS}
@@ -284,6 +353,45 @@ for n, t in enumerate(TOWNS):                             # a town always stands
             if 0 <= i < NX and 0 <= j < NY and land[idx(i, j)] and math.hypot(i - ci, j - cj) <= r:
                 if theme[idx(i, j)] != n: theme2[idx(i, j)] = theme[idx(i, j)]; blend[idx(i, j)] = 0.0
                 theme[idx(i, j)] = n
+
+# ---------------------------------------------------------------- gorges: a rock ringed by a sheer drop, after the rivers so no valley wears it down
+gorge_rock = set(); gorges = []
+for cid, gx, gy, gr, gw, gd, (bx, by), lid in GORGES:
+    top = height[idx(*cell_of(gx, gy))]
+    rim = [height[idx(*cell_of(gx + math.cos(a / 36 * math.tau) * (gr + gw + 6), gy + math.sin(a / 36 * math.tau) * (gr + gw + 6)))] for a in range(36)]
+    floor = min(rim) - gd
+    ci, cj = cell_of(gx, gy); reach_c = int((gr + gw) / C) + 2
+    for j in range(cj - reach_c, cj + reach_c + 1):
+        for i in range(ci - reach_c, ci + reach_c + 1):
+            if not (0 <= i < NX and 0 <= j < NY and land[idx(i, j)]): continue
+            d = math.dist(centre(i, j), (gx, gy))
+            if d < gr: height[idx(i, j)] = top; gorge_rock.add(idx(i, j))
+            elif d < gr + gw: height[idx(i, j)] = floor
+    # the one way back up from the floor: a cutting climbing out on the lowest side clear of towns and rivers, at most 0.2 up per unit,
+    # so nobody who falls in is trapped and nobody walks from it onto the rock (the rock's wall stays sheer)
+    def cutting(a):
+        """The cells of a way out leaving at angle a, each with the height it is cut to, or None when it would run
+        within reach of a town or a river."""
+        ux, uy = math.cos(a / 36 * math.tau), math.sin(a / 36 * math.tau); r = gr + gw / 2; out = []
+        while True:
+            want = floor + max(0.0, r - (gr + gw)) * 0.2
+            x0, y0 = gx + ux * r, gy + uy * r
+            if r > gr + gw and want >= height[idx(*cell_of(x0, y0))]: return out
+            if any(math.hypot(x0 - t[3], y0 - t[4]) < TOWN_REACH + TOWN_CLEAR + TOWN_EASE for t in TOWNS): return None
+            for side in (-6, -3, 0, 3, 6):
+                k = idx(*cell_of(x0 - uy * side, y0 + ux * side))
+                ki, kj = k % NX, k // NX
+                if any(idx(u, v) in river_cell for u in range(ki - 6, ki + 7) for v in range(kj - 6, kj + 7) if 0 <= u < NX and 0 <= v < NY): return None
+                out.append((k, want))
+            r += 2
+    way_out = next(w for w in (cutting(a) for a in sorted(range(36), key=lambda a: rim[a])) if w)
+    for k, want in way_out:
+        if land[k] and k not in gorge_rock and height[k] > want: height[k] = want
+    mouth = (gx + bx * (gr - 14), gy + by * (gr - 14))
+    gorges.append({"id": lid, "cave": cid, "x": gx, "y": gy, "rock_radius": gr, "width": gw, "rock_top": round(top, 2), "top": top,
+                   "floor": round(floor, 2), "lowest_rim": round(min(rim), 2),
+                   "bridge": {"from": [gx + bx * (gr - 4), gy + by * (gr - 4)], "to": [gx + bx * (gr + gw + 4), gy + by * (gr + gw + 4)]},
+                   "mouth": mouth, "into": [-bx, -by]})
 
 # ---------------------------------------------------------------- ponds: the ground dipped and filled
 ponds = []; pond_cell = set()
@@ -350,6 +458,17 @@ for k in lake:
     ponds.append({"id": "%s_oasis" % near, "near": near, "x": round(cx, 1), "y": round(cy, 1),
                   "radius": round(math.sqrt(len(piece) * C * C / math.pi), 1), "water": 0.0})
 
+for p in ponds:                                           # a pond stands in its own town's theme too, 60 units round,
+    n = [t[0] for t in TOWNS].index(p["near"])            # short of any town's own 60
+    ci, cj = cell_of(p["x"], p["y"]); r = int(60 // C)
+    for j in range(cj - r, cj + r + 1):
+        for i in range(ci - r, ci + r + 1):
+            if not (0 <= i < NX and 0 <= j < NY) or not land[idx(i, j)] or math.hypot(i - ci, j - cj) > r: continue
+            x, y = centre(i, j)
+            if any(math.hypot(x - t[3], y - t[4]) <= 60 for t in TOWNS): continue
+            if theme[idx(i, j)] != n: theme2[idx(i, j)] = theme[idx(i, j)]; blend[idx(i, j)] = 0.0
+            theme[idx(i, j)] = n
+
 # ---------------------------------------------------------------- roads: cheapest walk over the ground
 CLIMB = 1.0                                       # the most a road (or a player) rises from one cell to the next
 def walk(a, b, steep_ok=False):
@@ -403,7 +522,7 @@ def ramp(cells):
             ci, cj = cells[m] % NX, cells[m] // NX
             for v in range(cj - 3, cj + 4):
                 for u in range(ci - 3, ci + 4):
-                    if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)] and idx(u, v) not in river_cell:
+                    if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)] and idx(u, v) not in river_cell and idx(u, v) not in gorge_rock:
                         height[idx(u, v)] = target
         if not passes or passes[-1] != ("ramp", id(cells)): passes.append(("ramp", id(cells))); pass_cells.append(cells[n])
 roads = []; bridges = []; walk_cells = {}
@@ -460,7 +579,7 @@ def free_traps():
           k = q[h2]; h2 += 1; i, j = k % NX, k // NX
           for a, b in N8[:4]:
               u, v = i + a, j + b
-              if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)] and idx(u, v) not in prev:
+              if 0 <= u < NX and 0 <= v < NY and land[idx(u, v)] and idx(u, v) not in prev and idx(u, v) not in gorge_rock:
                   prev[idx(u, v)] = k; q.append(idx(u, v))
                   if idx(u, v) in walked: found = idx(u, v); break
       if found is None: starts.append(cut); continue     # a landmass with no town and no path: nothing to join it to
@@ -480,6 +599,11 @@ passes = list(dict.fromkeys(pass_cells))
 caves = []
 walked = reach(starts)
 for cid, near, cx, cy in CAVES:
+    g = next((g for g in gorges if g["cave"] == cid), None)
+    if g:                                                  # a gorge's cave stands on its rock, facing the bridge
+        caves.append({"id": cid, "near": near, "x": round(g["mouth"][0], 1), "y": round(g["mouth"][1], 1), "into": g["into"],
+                      "ground": g["rock_top"], "rock_size": [48, 44], "hall_size": [36, 32]})
+        continue
     best = None
     for j in range(int(cy // C) - 60, int(cy // C) + 61):
         for i in range(int(cx // C) - 60, int(cx // C) + 61):
@@ -500,13 +624,18 @@ for cid, near, cx, cy in CAVES:
                   "rock_size": [48, 44], "hall_size": [36, 32]})
 problems = []
 left = cut_off(reach(starts))
+walked_now = reach(starts)
+for g in gorges:
+    if any(k in walked_now for k in gorge_rock): problems.append("the gorge round %s can be walked across" % g["cave"])
+    if g["lowest_rim"] - g["floor"] < 4: problems.append("the gorge round %s is not deep enough on every side" % g["cave"])
+    if any(height[k] != g["top"] for k in gorge_rock): problems.append("the rock in the gorge round %s was reshaped" % g["cave"])
 if left: problems.append("%d places (%d cells) nobody can walk to" % (len(left), sum(map(len, left))))
 for a, b in ROADS:
     cells = walk_cells[(a, b)]
     worst = max(abs(height[q] - height[p]) for p, q in zip(cells, cells[1:]) if p not in river_cell and q not in river_cell)
     if worst > CLIMB + 1e-6: problems.append("the road %s - %s climbs %.1f units in one step" % (a, b, worst))
 for n, path in enumerate(rivers):
-    if not path or land[path[-1]]: problems.append("river %d does not reach the sea" % n)
+    if n < len(SPRINGS) and (not path or land[path[-1]]): problems.append("river %d does not reach the sea" % n)
     beds = [height[c] for c in path if land[c]]
     if any(b2 > b1 + 1e-6 for b1, b2 in zip(beds, beds[1:])): problems.append("river %d climbs somewhere" % n)
 for t in TOWNS:
@@ -527,8 +656,12 @@ if problems:
 def ground_at(x, y): return height[idx(*cell_of(x, y))]
 def river_record(n, path):
     pts = smooth(thin(path, 3), 2)
-    return {"spring": list(SPRINGS[n]), "xy": [round(v, 1) for x, y in pts for v in (x, y)],
-            "bed": [round(min(ground_at(x, y), height[path[min(len(path) - 1, int(i / max(1, len(pts) - 1) * (len(path) - 1)))]]), 2) for i, (x, y) in enumerate(pts)]}
+    link = n >= len(SPRINGS)
+    rec = {"spring": list(SPRINGS[n]) if not link else [round(v, 1) for v in centre(path[0] % NX, path[0] // NX)],
+           "xy": [round(v, 1) for x, y in pts for v in (x, y)],
+           "bed": [round(min(ground_at(x, y), height[path[min(len(path) - 1, int(i / max(1, len(pts) - 1) * (len(path) - 1)))]]), 2) for i, (x, y) in enumerate(pts)]}
+    if link: rec["joins"] = list(link_ends[n - len(SPRINGS)])
+    return rec
 for r in roads:                                  # each road point's ground height, after every ramp has settled
     cells = r.pop("cells")
     pts = list(zip(r["xy"][0::2], r["xy"][1::2]))
@@ -551,6 +684,7 @@ layout = {
     "roads": roads, "bridges": bridges,
     "boats": [{"from": a, "to": b, "start": list(s), "end": list(e)} for a, b, s, e in BOATS],
     "caves": caves,
+    "gorges": [{k: v for k, v in g.items() if k not in ("mouth", "into", "top")} for g in gorges],
     "ponds": ponds,
     "passes": [{"x": round(centre(c % NX, c // NX)[0], 1), "y": round(centre(c % NX, c // NX)[1], 1)} for c in passes],
     "cliff": "a cliff is wherever the ground rises more than 1.5 units from one cell to the next",
@@ -559,6 +693,37 @@ layout = {
 os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
 with open(OUT_JSON, "w", encoding="utf-8") as f: json.dump(layout, f, separators=(",", ":"))
 print("wrote", OUT_JSON, os.path.getsize(OUT_JSON) // 1024, "KB")
+
+# ---------------------------------------------------------------- the named places, for the game to load by name
+# Every place a GM's /tp can name, at a spot a body can stand on: a town, a landmark and a dungeon door where the layout
+# puts them; a cave 4 units in front of its mouth; a pond on the first dry cell 3 units past its edge, looking from the
+# south round. x, y and height are the layout's own; "origin" is Lastline, the point the world is built around. "kind" is
+# what it is, and mark_x, mark_y where the game's map marks it: the spot itself, but a cave's mouth.
+OUT_PLACES = os.path.join(ROOT, "unity", "Assets", "3_Data", "Resources", "WorldPlaces.json")
+def ground_at(x, y): return round(height[idx(*cell_of(x, y))], 2)
+places = [{"id": t[0], "name": t[1], "kind": "town", "x": t[3], "y": t[4], "height": round(height[town_cell[t[0]]], 2)} for t in TOWNS]
+places += [{"id": i2, "name": n, "kind": "landmark", "x": x, "y": y, "height": ground_at(x, y)} for i2, n, x, y in LANDMARKS]
+places += [{"id": t + "_dungeon_door", "name": "", "kind": "dungeon_door", "x": x, "y": y, "height": ground_at(x, y)} for t, x, y in DUNGEON_DOORS]
+for c in caves:
+    fx, fy = c["x"] - c["into"][0] * 4, c["y"] - c["into"][1] * 4
+    places.append({"id": c["id"], "name": "", "kind": "cave", "x": round(fx, 1), "y": round(fy, 1), "height": ground_at(fx, fy),
+                   "mark_x": c["x"], "mark_y": c["y"]})
+for p in ponds:
+    spot = None
+    for k in range(8):
+        a = math.pi / 2 + k * math.pi / 4
+        fx, fy = p["x"] + math.cos(a) * (p["radius"] + 3), p["y"] + math.sin(a) * (p["radius"] + 3)
+        if spot is None or ground_at(fx, fy) > p["water"]:
+            spot = (fx, fy)
+            if ground_at(fx, fy) > p["water"]: break
+    places.append({"id": p["id"], "name": "", "kind": "pond", "x": round(spot[0], 1), "y": round(spot[1], 1), "height": ground_at(*spot)})
+for pl in places: pl.setdefault("mark_x", pl["x"]); pl.setdefault("mark_y", pl["y"])
+origin = next(t for t in TOWNS if t[0] == "lastline")
+with open(OUT_PLACES, "w", encoding="utf-8") as f:
+    json.dump({"about": "Written by tools/world-layout/build_world_layout.py from the world layout; never edit by hand.",
+               "origin": {"x": origin[3], "y": origin[4], "height": round(height[town_cell["lastline"]], 2)},
+               "places": places}, f, indent=1)
+print("wrote", OUT_PLACES, len(places), "places")
 
 # ---------------------------------------------------------------- the map, drawn from the file alone
 L = json.load(open(OUT_JSON, encoding="utf-8"))
@@ -600,6 +765,10 @@ s = ['<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 
 s.append('<image href="data:image/png;base64,%s" width="%d" height="%d" preserveAspectRatio="none"/>' % (img, W, H))
 for r in L["rivers"]: s.append('<path d="%s" fill="none" stroke="#3d8fd6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>' % pl(r["xy"]))
 for r in L["roads"]: s.append('<path d="%s" fill="none" stroke="#7a5a32" stroke-width="4.5" stroke-dasharray="12 6" stroke-linejoin="round"/>' % pl(r["xy"]))
+for g in L["gorges"]:
+    s.append('<circle cx="%.0f" cy="%.0f" r="%.0f" fill="none" stroke="#1a1a1a" stroke-width="%.0f" stroke-opacity="0.8"/>' % (g["x"], g["y"], g["rock_radius"] + g["width"] / 2, g["width"]))
+    (fx, fy), (tx, ty) = g["bridge"]["from"], g["bridge"]["to"]
+    s.append('<line x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="#9a9a9a" stroke-width="7"/>' % (fx, fy, tx, ty))
 for b in L["bridges"]: s.append('<rect x="%.0f" y="%.0f" width="18" height="10" fill="#9a9a9a" stroke="#333" stroke-width="2"/>' % (b["x"] - 9, b["y"] - 5))
 for b in L["boats"]: s.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="#fff" stroke-width="4" stroke-dasharray="4 10"/>' % (*b["start"], *b["end"]))
 for b in L["low_tide_paths"]: s.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="#ead9a4" stroke-width="12" stroke-dasharray="6 5"/>' % (*b["start"], *b["end"]))
@@ -636,7 +805,7 @@ for sym, txt in [("&#9733;", "landmark"), ("&#9660;", "dungeon door"), ("&#9632;
 for color, dash, txt in [("#3d8fd6", "", "river"), ("#7a5a32", "10 6", "road"), ("#ffffff", "4 8", "boat"), ("#ead9a4", "6 5", "low-tide path")]:
     s.append('<rect x="%d" y="%d" width="22" height="14" fill="#2f6fa8"/><line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="5" stroke-dasharray="%s"/><text x="%d" y="%d" font-size="14">%s</text>'
              % (lx, y0 - 12, lx, y0 - 5, lx + 22, y0 - 5, color, dash, lx + 30, y0, txt)); y0 += 26
-s.append('<text x="%d" y="%d" font-size="14">%d roads, %d bridges, %d rivers</text>' % (lx, y0 + 10, len(L["roads"]), len(L["bridges"]), len(L["rivers"])))
+s.append('<text x="%d" y="%d" font-size="14">%d roads, %d bridges, %d rivers</text>' % (lx, y0 + 10, len(L["roads"]), len(L["bridges"]), sum(1 for r in L["rivers"] if "joins" not in r)))
 grid = "".join('<line x1="%d" y1="0" x2="%d" y2="%d"/>' % (x, x, H) for x in range(0, W + 1, CHUNK)) + \
        "".join('<line x1="0" y1="%d" x2="%d" y2="%d"/>' % (y, W, y) for y in range(0, H + 1, CHUNK))
 s.append('<g id="squares" style="display:none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="0.8">%s</g>' % grid)
@@ -649,3 +818,7 @@ html = ('<!DOCTYPE html><html><head><meta charset="utf-8"><title>World layout</t
         % (toggle, CHUNK, CHUNK, "\n".join(s)))
 open(OUT_MAP, "w", encoding="utf-8").write(html)
 print("drew", OUT_MAP)
+# THE CREATURES FOLLOW THE LAND: the spawn tool works its patches out of the file just written and lays them over this map
+if OUT_MAP == os.path.join(ROOT, "data", "world-layout.html"):
+    import subprocess
+    subprocess.run([sys.executable, os.path.join(ROOT, "tools", "world-spawns", "build_world_spawns.py")], check=True)

@@ -33,16 +33,49 @@ public class WorldSpawns : ScriptableObject
         public bool includeCommons = true;
         [Tooltip("How many of them are kept alive at once.")]
         [Min(0)] public int population = 1;
-        [Tooltip("The middle of the area, in the map's own coordinates — what /where prints: X west to east, Y south " +
-                 "to north, Z height.")]
+        [Tooltip("Which of the list's Areas they appear in, by its place in that list. -1 = the circle of Center and " +
+                 "Radius below.")]
+        public int area = -1;
+        [Tooltip("Only when Area is -1: the middle of the circle, in the map's own coordinates — what /where prints: " +
+                 "X west to east, Y south to north, Z height.")]
         [ShownCoords] public Vector3 center;
-        [Tooltip("They appear anywhere on the ground within this distance of the middle.")]
+        [Tooltip("Only when Area is -1: they appear anywhere on the ground within this distance of the middle.")]
         [Min(0f)] public float radius = 10f;
         [Tooltip("Never appear closer than this to a player.")]
         [Min(0f)] public float playerClearRadius = 6f;
     }
 
+    /// <summary>A piece of ground of any shape, shared by every row living on it. Written by
+    /// <c>tools/world-spawns/build_world_spawns.py</c> from the world layout, never by hand.</summary>
+    [System.Serializable]
+    public class Area
+    {
+        [Tooltip("The middle of the area, in the map's own coordinates — what /where prints.")]
+        [ShownCoords] public Vector3 center;
+        [Tooltip("Every square of the area lies within this distance of the middle. The area wakes when a player comes " +
+                 "this close plus the seeing range.")]
+        [Min(0f)] public float radius;
+        [Tooltip("The lowest level of any creature kept on the area — the map's level range for it.")]
+        public int lowLevel;
+        [Tooltip("The highest level of any creature kept on the area, its visitor and elite included.")]
+        public int highLevel;
+        [Tooltip("The area's ground as runs of squares, each AreaSquare units wide, three numbers a run, in the map's own " +
+                 "coordinates: the first square's west edge, the row's south edge, and how many squares run east from there.")]
+        public int[] runs = new int[0];
+    }
+
+    /// <summary>How wide one square of an <see cref="Area"/> is, in world units — the world layout's own cell.</summary>
+    public const float AreaSquare = 4f;
+
     public List<Row> rows = new List<Row>();
+    public List<Area> areas = new List<Area>();
+
+    /// <summary>The area <paramref name="row"/> lives on, or null when it uses its own circle (or names an area the
+    /// list does not have).</summary>
+    public Area AreaOf(Row row) => row != null && row.area >= 0 && row.area < areas.Count ? areas[row.area] : null;
+
+    /// <summary>The middle of the ground <paramref name="row"/> spawns on, in the map's own coordinates.</summary>
+    public Vector3 CenterOf(Row row) => AreaOf(row)?.center ?? row.center;
 
     /// <summary>Every map <paramref name="def"/> is placed in BY NAME, with how many of it that map keeps alive —
     /// several rows naming it in one map are one map. A row that draws a mix is left out: it says only that the
@@ -58,24 +91,6 @@ public class WorldSpawns : ScriptableObject
             int at = into.FindIndex(h => h.map == row.map);
             if (at < 0) into.Add((row.map, row.population));
             else into[at] = (row.map, into[at].count + row.population);
-        }
-    }
-
-    /// <summary>How many of each creature <paramref name="map"/> keeps alive, by creature id — every row there that names
-    /// the creature, added up. A row that draws a random mix is left out: its count belongs to the whole mix, never to
-    /// one creature in it. Adds to <paramref name="into"/> (cleared first).</summary>
-    public static void KeptIn(string map, Dictionary<string, int> into)
-    {
-        into.Clear();
-        var list = Instance;
-        if (list == null || string.IsNullOrEmpty(map)) return;
-        foreach (var row in list.rows)
-        {
-            if (row == null || row.map != map || row.population <= 0 || string.IsNullOrWhiteSpace(row.creature)) continue;
-            var def = MonsterCatalog.Get(row.creature);
-            if (def == null || string.IsNullOrEmpty(def.id)) continue;
-            into.TryGetValue(def.id, out int n);
-            into[def.id] = n + row.population;
         }
     }
 
@@ -102,6 +117,29 @@ public class WorldSpawns : ScriptableObject
             foreach (var m in mixScratch) if (!into.Contains(m)) into.Add(m);
         }
         into.Sort(ByLevelThenName);
+    }
+
+    /// <summary>What lives on one <paramref name="area"/> of <paramref name="map"/>, row by row as the list writes it:
+    /// each row's creature with the number it keeps, and each creature a mix row can draw with 0 — a mix's count belongs
+    /// to the whole mix. Lowest level first, then by name. Adds to <paramref name="into"/> (cleared first).</summary>
+    public static void RowsOn(string map, int area, List<(MonsterDef def, int kept)> into)
+    {
+        into.Clear();
+        var list = Instance;
+        if (list == null || string.IsNullOrEmpty(map)) return;
+        foreach (var row in list.rows)
+        {
+            if (row == null || row.map != map || row.area != area || row.population <= 0) continue;
+            if (!string.IsNullOrWhiteSpace(row.creature))
+            {
+                var named = MonsterCatalog.Get(row.creature);
+                if (named != null) into.Add((named, row.population));
+                continue;
+            }
+            MonsterCatalog.MixOf(row.biome, row.minLevel, row.maxLevel, row.includeCommons, mixScratch);
+            foreach (var m in mixScratch) into.Add((m, 0));
+        }
+        into.Sort((a, b) => ByLevelThenName(a.def, b.def));
     }
 
     static int ByLevelThenName(MonsterDef a, MonsterDef b) =>

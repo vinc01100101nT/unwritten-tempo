@@ -37,6 +37,8 @@ builds/
 # the guards heartbeat — a local record of which hooks actually ran on THIS machine
 tools/hook-analytics/hook-heartbeat.json
 tools/hook-analytics/hook-heartbeat.json.*
+# which context-size reminder each recent session already got
+tools/hook-analytics/context-watch.json
 
 # database backups (tools/backup-database.sh) — the live data, never in git
 backups/
@@ -49,3 +51,4 @@ __pycache__/
 
 # Addressables flips a setting in here off and back on during every build; every value matches the package default
 unity/ProjectSettings/ScriptableBuildPipeline.json
+tools/town-editor/pictures/

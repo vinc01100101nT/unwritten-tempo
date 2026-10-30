@@ -1,0 +1,2666 @@
+{
+ "id": "parley",
+ "name": "Parley",
+ "weapon": "Sword",
+ "theme": "Blossom Wind",
+ "tint": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BlossomTree_01.prefab",
+ "gates": [
+  {
+   "x": -6,
+   "z": -28.5,
+   "road": "Lastline"
+  },
+  {
+   "x": 8,
+   "z": 28.5,
+   "road": "Tornel and Gemmara"
+  },
+  {
+   "x": 22.0,
+   "z": -8,
+   "road": ""
+  }
+ ],
+ "areas": [
+  {
+   "look": "stone",
+   "label": "",
+   "rect": [
+    -26.28,
+    -28.92,
+    17.72,
+    28.08
+   ],
+   "level": "normal",
+   "tile": "PATH_OR_SIDEWALK_flagstone"
+  },
+  {
+   "look": "grass",
+   "label": "Petal Grove",
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_painted_grass",
+   "poly": [
+    -22,
+    1.01,
+    -17.96,
+    9.83,
+    -4,
+    13,
+    -4,
+    28.1,
+    -21.6,
+    28.1
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "grass",
+   "label": "Blossom Garden",
+   "rect": [
+    9,
+    -28.1,
+    21.6,
+    -18.5
+   ],
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_painted_grass"
+  },
+  {
+   "look": "meadow",
+   "label": "",
+   "circle": [
+    17.6,
+    -25,
+    1.5
+   ],
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_painted_grass"
+  },
+  {
+   "look": "meadow",
+   "label": "",
+   "circle": [
+    12.2,
+    -21,
+    1.2
+   ],
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_painted_grass"
+  },
+  {
+   "look": "grass",
+   "label": "",
+   "circle": [
+    -12.48,
+    -1,
+    5.2
+   ],
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_painted_grass"
+  },
+  {
+   "look": "dirt",
+   "label": "Duelist's Ring",
+   "circle": [
+    -12.5,
+    -1,
+    3
+   ],
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_OR_PATH_soil"
+  },
+  {
+   "look": "court",
+   "label": "Petal Square",
+   "circle": [
+    5.5,
+    -2.5,
+    6.8
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "look": "dirt",
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_OR_PATH_soil",
+   "label": "",
+   "poly": [
+    -15,
+    -6.72,
+    -7.38,
+    -6.16,
+    -7.05,
+    2.7,
+    -10.79,
+    3.66,
+    -11.11,
+    3.44,
+    -12.07,
+    3.2,
+    -10.93,
+    2.46,
+    -9.39,
+    0.99,
+    -8.59,
+    -1.47,
+    -9.09,
+    -3.44,
+    -10.28,
+    -5.03,
+    -12.62,
+    -5.68,
+    -14.53,
+    -5.1,
+    -15.82,
+    -3.68,
+    -16.67,
+    -1.79,
+    -16.16,
+    0.9,
+    -14.4,
+    2.55,
+    -11.59,
+    3.71,
+    -12.76,
+    4.43,
+    -18.52,
+    0.64
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "dirt",
+   "level": "normal",
+   "tile": "BASE_OR_PATCH_OR_PATH_soil",
+   "label": "",
+   "rect": [
+    -14.66,
+    3.22,
+    -10.94,
+    4.05
+   ]
+  }
+ ],
+ "streets": [
+  {
+   "name": "Blossom Road",
+   "width": 3,
+   "xz": [
+    -6,
+    -31,
+    -5,
+    -22,
+    -1.5,
+    -14,
+    2.5,
+    -8
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "name": "High Street",
+   "width": 3,
+   "xz": [
+    8.5,
+    4,
+    7.6,
+    9,
+    6.4,
+    13,
+    6.6,
+    18,
+    8,
+    23,
+    8,
+    31
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "name": "Sword Lane",
+   "width": 2.6,
+   "xz": [
+    12,
+    -4.8,
+    17,
+    -6.6,
+    24.5,
+    -8
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "name": "Willow Walk",
+   "width": 2.2,
+   "xz": [
+    -0.8,
+    -3.5,
+    -3.8,
+    3.6,
+    -4,
+    6
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "name": "Island Lane",
+   "width": 2,
+   "xz": [
+    -1.8,
+    -13,
+    -6,
+    -12.2,
+    -10,
+    -11
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "name": "Orchard Lane",
+   "width": 2,
+   "xz": [
+    3.4,
+    12.8,
+    -2,
+    14.2,
+    -6,
+    17.5,
+    -9,
+    22
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "name": "Mill Row",
+   "width": 2,
+   "xz": [
+    9,
+    20.5,
+    14,
+    22.5,
+    19,
+    24.5
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  },
+  {
+   "name": "Weaver's Lane",
+   "width": 2,
+   "xz": [
+    -4.6,
+    -21,
+    -10,
+    -19.5,
+    -15,
+    -21,
+    -19.5,
+    -20
+   ],
+   "level": "low",
+   "tile": "BASE_OR_SIDEWALK_plaza"
+  }
+ ],
+ "canals": [
+  {
+   "name": "Petal Stream",
+   "width": 3,
+   "xz": [
+    19,
+    18.9,
+    16,
+    17.5,
+    9,
+    14,
+    3,
+    11,
+    -3,
+    9.2,
+    -8,
+    6.5,
+    -12.5,
+    5.5
+   ]
+  },
+  {
+   "name": "",
+   "width": 2.4,
+   "xz": [
+    -12.5,
+    5.5,
+    -17.5,
+    2.5,
+    -18.4,
+    -2.5,
+    -15.5,
+    -7,
+    -12.5,
+    -7.6
+   ]
+  },
+  {
+   "name": "",
+   "width": 2.4,
+   "xz": [
+    -12.5,
+    5.5,
+    -7.6,
+    2,
+    -6.8,
+    -3,
+    -9.4,
+    -6.8,
+    -12.5,
+    -7.6
+   ]
+  },
+  {
+   "name": "",
+   "width": 3,
+   "xz": [
+    -12.5,
+    -7.6,
+    -16.5,
+    -10.5,
+    -19.2,
+    -12.9
+   ]
+  }
+ ],
+ "bridges": [
+  {
+   "kind": "BridgeRock",
+   "x": 6.68,
+   "z": 12.84,
+   "bearing": 333.4,
+   "length": 5,
+   "width": 2.66,
+   "scale": 0.406,
+   "canal": 0
+  },
+  {
+   "kind": "BridgeRock",
+   "x": -4.26,
+   "z": 8.52,
+   "bearing": 331.6,
+   "length": 5,
+   "width": 2.66,
+   "scale": 0.406,
+   "canal": 0
+  },
+  {
+   "kind": "BridgeRock",
+   "x": -7.38,
+   "z": 0.6,
+   "bearing": 260.9,
+   "length": 4.4,
+   "width": 2.34,
+   "scale": 0.357,
+   "canal": 2
+  },
+  {
+   "kind": "BridgeRock",
+   "x": -18.14,
+   "z": -1.03,
+   "bearing": 280.2,
+   "length": 4.4,
+   "width": 2.34,
+   "scale": 0.357,
+   "canal": 1
+  },
+  {
+   "kind": "BridgeRock",
+   "x": 15.2,
+   "z": 17.1,
+   "bearing": 333.4,
+   "length": 5,
+   "width": 2.66,
+   "scale": 0.406,
+   "canal": 0
+  },
+  {
+   "kind": "BridgeRock",
+   "x": -17.56,
+   "z": -11.44,
+   "bearing": 318.4,
+   "length": 5,
+   "width": 2.66,
+   "scale": 0.406,
+   "canal": 3
+  }
+ ],
+ "mounds": [
+  {
+   "x": 15.2,
+   "z": 17.1,
+   "dir": [
+    0.904,
+    0.428
+   ],
+   "length": 6,
+   "width": 6.5
+  },
+  {
+   "x": -17.56,
+   "z": -11.44,
+   "dir": [
+    -0.753,
+    -0.659
+   ],
+   "length": 4.2,
+   "width": 5.5
+  }
+ ],
+ "pieces": [
+  {
+   "kind": "Statue",
+   "variant": 1,
+   "x": 5.5,
+   "z": -2.5,
+   "rot": 210
+  },
+  {
+   "kind": "Cart",
+   "variant": 1,
+   "x": 2.3,
+   "z": -0.65,
+   "rot": 21
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": 2.71,
+   "z": -1.24,
+   "rot": 21
+  },
+  {
+   "kind": "Basket",
+   "variant": 1,
+   "x": 2.95,
+   "z": -0.9,
+   "rot": 62
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": 3.45,
+   "z": 0.01,
+   "rot": 72
+  },
+  {
+   "kind": "Sack",
+   "variant": 1,
+   "x": 4.28,
+   "z": 0.07,
+   "rot": 154
+  },
+  {
+   "kind": "Cart",
+   "variant": 1,
+   "x": 7.88,
+   "z": -5.33,
+   "rot": 221
+  },
+  {
+   "kind": "Basket",
+   "variant": 1,
+   "x": 7.35,
+   "z": -4.88,
+   "rot": 262
+  },
+  {
+   "kind": "Sack",
+   "variant": 1,
+   "x": 7.01,
+   "z": -5.11,
+   "rot": 303
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": 6.83,
+   "z": -5.45,
+   "rot": 267
+  },
+  {
+   "kind": "Basket",
+   "variant": 1,
+   "x": 6.42,
+   "z": -5.37,
+   "rot": 308
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 9.53,
+   "z": 1.53,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": 11.01,
+   "z": -1.02,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": 9.53,
+   "z": -6.53,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 6.98,
+   "z": -8.01,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 1.47,
+   "z": 1.53,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 4.02,
+   "z": 3.01,
+   "rot": 0
+  },
+  {
+   "kind": "Tavern",
+   "variant": 1,
+   "x": 16.4,
+   "z": 1.6,
+   "rot": 70
+  },
+  {
+   "kind": "Table",
+   "variant": 1,
+   "x": 12.9,
+   "z": -1,
+   "rot": 0
+  },
+  {
+   "kind": "Chair",
+   "variant": 1,
+   "x": 13.21,
+   "z": -1.25,
+   "rot": 309
+  },
+  {
+   "kind": "Chair",
+   "variant": 1,
+   "x": 12.53,
+   "z": -1.14,
+   "rot": 69
+  },
+  {
+   "kind": "Chair",
+   "variant": 1,
+   "x": 12.96,
+   "z": -0.6,
+   "rot": 189
+  },
+  {
+   "kind": "Table",
+   "variant": 1,
+   "x": 12.6,
+   "z": 0.9,
+   "rot": 0
+  },
+  {
+   "kind": "Chair",
+   "variant": 1,
+   "x": 12.23,
+   "z": 0.74,
+   "rot": 66
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": -11.34,
+   "z": 2.19,
+   "rot": 0
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": -9.31,
+   "z": 0.16,
+   "rot": 0
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": -13.66,
+   "z": -4.19,
+   "rot": 0
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": -15.69,
+   "z": -2.16,
+   "rot": 0
+  },
+  {
+   "kind": "Barrel",
+   "variant": 1,
+   "x": -15.44,
+   "z": 0.7,
+   "rot": 0
+  },
+  {
+   "kind": "House1",
+   "variant": 1,
+   "x": -9.12,
+   "z": -26.3,
+   "rot": 96.3
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -8.59,
+   "z": -23.93,
+   "rot": 96.3
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": -6.85,
+   "z": -17.11,
+   "rot": 113.6
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -3.32,
+   "z": -9.52,
+   "rot": 123.7
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": 4.47,
+   "z": 5.79,
+   "rot": 79.8
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": 3.11,
+   "z": 16.28,
+   "rot": 92.3
+  },
+  {
+   "kind": "House1",
+   "variant": 1,
+   "x": 3.49,
+   "z": 20.34,
+   "rot": 105.6
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 4.4,
+   "z": 22.59,
+   "rot": 105.6
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": 4.35,
+   "z": 25.19,
+   "rot": 90
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -8.2,
+   "z": -14.63,
+   "rot": 16.7
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -9.8,
+   "z": -13.83,
+   "rot": 16.7
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -3.99,
+   "z": 12.21,
+   "rot": 129.5
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -5.38,
+   "z": 13.55,
+   "rot": 39.5
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -6.93,
+   "z": 14.44,
+   "rot": 39.5
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -8.58,
+   "z": 16.32,
+   "rot": 146.3
+  },
+  {
+   "kind": "House1",
+   "variant": 1,
+   "x": -9.97,
+   "z": 18.19,
+   "rot": 56.3
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -11.2,
+   "z": 19.97,
+   "rot": 56.3
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 11.2,
+   "z": 24.24,
+   "rot": 158.2
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": 13.46,
+   "z": 25.46,
+   "rot": 158.2
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": 15.81,
+   "z": 26.24,
+   "rot": 248.2
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -1.41,
+   "z": -25.89,
+   "rot": 276.3
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": -1.4,
+   "z": -22.66,
+   "rot": 276.3
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": 0,
+   "z": -19.1,
+   "rot": 293.6
+  },
+  {
+   "kind": "House1",
+   "variant": 1,
+   "x": 1.51,
+   "z": -16.17,
+   "rot": 293.6
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 2.47,
+   "z": -14.1,
+   "rot": 303.7
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": 4.13,
+   "z": -12.13,
+   "rot": 303.7
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": 11.65,
+   "z": 7.08,
+   "rot": 259.8
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": 11.25,
+   "z": 10.73,
+   "rot": 253.3
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": 12.72,
+   "z": -8.62,
+   "rot": 19.8
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": 15.1,
+   "z": -9.32,
+   "rot": 109.8
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": 18.32,
+   "z": -10.02,
+   "rot": 10.6
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -6.02,
+   "z": -9.11,
+   "rot": 196.7
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -7.8,
+   "z": -8.89,
+   "rot": 196.7
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": 0.86,
+   "z": 16.35,
+   "rot": 284.5
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -1.04,
+   "z": 16.69,
+   "rot": 194.5
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -2.4,
+   "z": 18.36,
+   "rot": 219.5
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -3.79,
+   "z": 19.31,
+   "rot": 309.5
+  },
+  {
+   "kind": "House1",
+   "variant": 1,
+   "x": -5.11,
+   "z": 21.43,
+   "rot": 236.3
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -6.28,
+   "z": 23.25,
+   "rot": 236.3
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 11.31,
+   "z": 18.57,
+   "rot": 338.2
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -0.6,
+   "z": 3.47,
+   "rot": 337.1
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -10.5,
+   "z": -22.27,
+   "rot": 105.5
+  },
+  {
+   "kind": "House1",
+   "variant": 1,
+   "x": -13.05,
+   "z": -23.47,
+   "rot": 343.3
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -16.63,
+   "z": -23.67,
+   "rot": 12.5
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -18.29,
+   "z": -22.99,
+   "rot": 12.5
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -20.11,
+   "z": -22.73,
+   "rot": 102.5
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": 18.91,
+   "z": 13.65,
+   "rot": 335
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 16.41,
+   "z": 12.5,
+   "rot": 333.4
+  },
+  {
+   "kind": "House1",
+   "variant": 1,
+   "x": 14.37,
+   "z": 11.18,
+   "rot": 333.4
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": 2.12,
+   "z": 5.56,
+   "rot": 343.3
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -9.12,
+   "z": -16.99,
+   "rot": 195.5
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -12.48,
+   "z": -17.32,
+   "rot": 253.3
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -14.28,
+   "z": -18.01,
+   "rot": 163.3
+  },
+  {
+   "kind": "House3",
+   "variant": 1,
+   "x": -16.04,
+   "z": -17.74,
+   "rot": 192.5
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -17.71,
+   "z": -17.53,
+   "rot": 282.5
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -7.69,
+   "z": 11.96,
+   "rot": 151.6
+  },
+  {
+   "kind": "House2",
+   "variant": 1,
+   "x": -10.08,
+   "z": 11,
+   "rot": 151.6
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -13.11,
+   "z": 10.28,
+   "rot": 257.5
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -20,
+   "z": 14.6,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -18.75,
+   "z": 17.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -20,
+   "z": 20.4,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -18.75,
+   "z": 23.3,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -20,
+   "z": 26.2,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -17.5,
+   "z": 14.6,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -16.25,
+   "z": 17.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -17.5,
+   "z": 20.4,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -16.25,
+   "z": 23.3,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -17.5,
+   "z": 26.2,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -15,
+   "z": 14.6,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -13.75,
+   "z": 17.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -15,
+   "z": 20.4,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -13.75,
+   "z": 23.3,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -15,
+   "z": 26.2,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -12.5,
+   "z": 14.6,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -11.25,
+   "z": 17.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -12.5,
+   "z": 20.4,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -11.25,
+   "z": 23.3,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -12.5,
+   "z": 26.2,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -10,
+   "z": 14.6,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -8.75,
+   "z": 23.3,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -10,
+   "z": 26.2,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -7.5,
+   "z": 26.2,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -3.75,
+   "z": 17.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -3.75,
+   "z": 23.3,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -5,
+   "z": 26.2,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 16.49,
+   "z": 20.37,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 18.51,
+   "z": 16.03,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": 13.76,
+   "z": 19.06,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": 15.91,
+   "z": 14.77,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 13.57,
+   "z": 13.6,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 9.09,
+   "z": 16.73,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 9.07,
+   "z": 11.35,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 3,
+   "x": 5.07,
+   "z": 9.35,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 2.19,
+   "z": 8.25,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 3,
+   "x": -2.19,
+   "z": 11.95,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -0.81,
+   "z": 7.35,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -5.39,
+   "z": 10.64,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 4,
+   "x": -7.89,
+   "z": 9.29,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -5.61,
+   "z": 5.06,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -9.65,
+   "z": 8.59,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 1,
+   "x": -11.9,
+   "z": 8.09,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -14.83,
+   "z": 6.55,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -12.67,
+   "z": 2.95,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 2,
+   "x": -17.33,
+   "z": 5.05,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -15.17,
+   "z": 1.45,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -19.79,
+   "z": 1.62,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 4,
+   "x": -20.24,
+   "z": -0.88,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -16.11,
+   "z": -1.62,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -19.44,
+   "z": -4.76,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -15.5,
+   "z": -3.11,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 2,
+   "x": -17.99,
+   "z": -7.01,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -14.46,
+   "z": -4.74,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -13.59,
+   "z": -5.24,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -7.6,
+   "z": 4.58,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -5.33,
+   "z": 1.08,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 1,
+   "x": -9.07,
+   "z": -2.08,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -4.93,
+   "z": -1.42,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -9.18,
+   "z": -2.76,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -5.72,
+   "z": -5.14,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 2,
+   "x": -10.04,
+   "z": -4.24,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -7.02,
+   "z": -7.04,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -11.47,
+   "z": -5.17,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -10.43,
+   "z": -9.23,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -12.09,
+   "z": -10.27,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 1,
+   "x": -16.91,
+   "z": -7.83,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -14.09,
+   "z": -11.72,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -19.44,
+   "z": -9.91,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -16.26,
+   "z": -13.49,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -19.5,
+   "z": -26,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -18,
+   "z": -18.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": 2.5,
+   "z": -20.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 5.5,
+   "z": -16,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -2.5,
+   "z": -27.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": 20,
+   "z": 12,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": 12,
+   "z": 27,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 18,
+   "z": 27.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": 2.5,
+   "z": 26.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -1.5,
+   "z": 22.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 2,
+   "z": 19,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -20.5,
+   "z": 8.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -20.5,
+   "z": -6.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": 20.5,
+   "z": -14,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": 11.5,
+   "z": 2.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -6,
+   "z": -19,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 15.72,
+   "z": 19.5,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 17.21,
+   "z": 18.05,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": 18.69,
+   "z": 16.6,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": 17.67,
+   "z": 20.43,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": 19.16,
+   "z": 18.97,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": 20.65,
+   "z": 17.52,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": 19.63,
+   "z": 21.35,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -17.26,
+   "z": -13.37,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -18.73,
+   "z": -12.46,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 3,
+   "x": -20.2,
+   "z": -11.55,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 4,
+   "x": -18.4,
+   "z": -14.37,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 5,
+   "x": -19.87,
+   "z": -13.46,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 1,
+   "x": -21.34,
+   "z": -12.55,
+   "rot": 0
+  },
+  {
+   "kind": "Blossom",
+   "variant": 2,
+   "x": -19.54,
+   "z": -15.37,
+   "rot": 0
+  },
+  {
+   "kind": "Fountain",
+   "variant": 1,
+   "x": 15,
+   "z": -23,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 1,
+   "x": 11,
+   "z": -26.5,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 2,
+   "x": 19.8,
+   "z": -20,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 3,
+   "x": 11,
+   "z": -19.8,
+   "rot": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "variant": 4,
+   "x": 19.8,
+   "z": -27,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 16.9,
+   "z": -23,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 16.65,
+   "z": -22.05,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 15.95,
+   "z": -21.35,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 15,
+   "z": -21.1,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 14.05,
+   "z": -21.35,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 13.35,
+   "z": -22.05,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 13.1,
+   "z": -23,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 13.35,
+   "z": -23.95,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 14.05,
+   "z": -24.65,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 15,
+   "z": -24.9,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 15.95,
+   "z": -24.65,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 16.65,
+   "z": -23.95,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -7.64,
+   "z": -25.43,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -7.56,
+   "z": -24.68,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 5.64,
+   "z": 7.19,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 4.54,
+   "z": 18.98,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -7.43,
+   "z": -13.39,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -10.09,
+   "z": -12.59,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -3.62,
+   "z": 13.52,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -5.16,
+   "z": 14.8,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -5.74,
+   "z": 15.28,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -7.24,
+   "z": 16.56,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -8.25,
+   "z": 18.1,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 11.03,
+   "z": 22.98,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 15.07,
+   "z": 24.6,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 15.77,
+   "z": 24.88,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -0.47,
+   "z": -17.26,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 0.66,
+   "z": -14.68,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 1.9,
+   "z": -12.96,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 3.62,
+   "z": -10.38,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 17.06,
+   "z": -8.59,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -6.79,
+   "z": -10.35,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -5.01,
+   "z": 18.69,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -5.68,
+   "z": 19.81,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": 10.31,
+   "z": 19.36,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -12.46,
+   "z": -21.86,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -15.95,
+   "z": -22.38,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -17.44,
+   "z": -22.05,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -20.37,
+   "z": -21.39,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 19.77,
+   "z": 15.34,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": 2.09,
+   "z": 7.02,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -8.81,
+   "z": -18.22,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -14.57,
+   "z": -19.25,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -16.72,
+   "z": -19.03,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 1,
+   "x": -17.45,
+   "z": -18.87,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -7.72,
+   "z": 10.69,
+   "rot": 0
+  },
+  {
+   "kind": "RoseBush",
+   "variant": 2,
+   "x": -10.45,
+   "z": 9.21,
+   "rot": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "variant": 1,
+   "x": -12,
+   "z": -19,
+   "rot": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "variant": 1,
+   "x": -12,
+   "z": 0,
+   "rot": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "variant": 1,
+   "x": -12,
+   "z": 19,
+   "rot": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "variant": 1,
+   "x": 12,
+   "z": -19,
+   "rot": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "variant": 1,
+   "x": 12,
+   "z": 0,
+   "rot": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "variant": 1,
+   "x": 12,
+   "z": 19,
+   "rot": 0
+  }
+ ],
+ "kit": [
+  {
+   "kind": "House_A",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_A.prefab",
+   "footprint": [
+    1.49,
+    2
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House_B",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_B.prefab",
+   "footprint": [
+    1.66,
+    1.71
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House_C",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_C.prefab",
+   "footprint": [
+    2.97,
+    2.99
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House_D",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_D.prefab",
+   "footprint": [
+    3.4,
+    1.84
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House1",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House1.prefab",
+   "footprint": [
+    2.46,
+    2.25
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House2",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House2.prefab",
+   "footprint": [
+    2.75,
+    2.3
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House3",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House3.prefab",
+   "footprint": [
+    1.17,
+    2.31
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "Tavern",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Tavern_LOD0.prefab",
+   "footprint": [
+    9.5,
+    7.1
+   ],
+   "role": "landmark",
+   "scale": 0
+  },
+  {
+   "kind": "Fountain",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Central_Fountain.prefab",
+   "footprint": [
+    2,
+    2
+   ],
+   "role": "landmark",
+   "scale": 0
+  },
+  {
+   "kind": "Statue",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Hero_Statue.prefab",
+   "footprint": [
+    1.44,
+    1.3
+   ],
+   "role": "landmark",
+   "scale": 0
+  },
+  {
+   "kind": "Cart",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/cart4_LOD0.prefab",
+   "footprint": [
+    0.84,
+    2.16
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Barrel",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_barrel.prefab",
+   "footprint": [
+    0.29,
+    0.29
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Basket",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_basket.prefab",
+   "footprint": [
+    0.26,
+    0.24
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Sack",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_bag.prefab",
+   "footprint": [
+    0.29,
+    0.19
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Blossom",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BlossomTree_0{n}.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Pink.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "RoseBush",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_0{n}.prefab",
+   "footprint": [
+    0.36,
+    0.36
+   ],
+   "role": "bush",
+   "scale": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FloatingLeafs_Green.prefab",
+   "footprint": [
+    17.2,
+    17.2
+   ],
+   "role": "effect",
+   "scale": 0
+  },
+  {
+   "kind": "Table",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Indoor/Furniture_table_round.prefab",
+   "footprint": [
+    0.38,
+    0.39
+   ],
+   "role": "market",
+   "scale": 0.3
+  },
+  {
+   "kind": "Chair",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Indoor/Furniture_chair1.prefab",
+   "footprint": [
+    0.16,
+    0.17
+   ],
+   "role": "market",
+   "scale": 0.3
+  }
+ ],
+ "wall": {
+  "line": 2.5,
+  "gate": 3.4
+ },
+ "walls": [
+  {
+   "xz": [
+    -22.0,
+    -28.5,
+    -11.0,
+    -28.5,
+    0.0,
+    -28.5,
+    11.0,
+    -28.5,
+    22.0,
+    -28.5,
+    22.0,
+    -17.1,
+    22.0,
+    5.7,
+    22.0,
+    17.1,
+    22.0,
+    28.5,
+    0.0,
+    28.5,
+    -11.0,
+    28.5,
+    -22.0,
+    28.5,
+    -22.0,
+    17.1,
+    -22.0,
+    5.7,
+    -22.0,
+    -5.7,
+    -22.0,
+    -17.1
+   ],
+   "closed": true,
+   "towers": [
+    "Wall_tower2",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower2",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower2",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower2",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1"
+   ]
+  }
+ ],
+ "lawnTile": "BASE_OR_PATCH_painted_grass",
+ "soilTile": "BASE_OR_PATCH_OR_PATH_soil",
+ "tiles": [
+  {
+   "name": "BASE_OR_PATCH_painted_grass",
+   "tiling": 1.4525994
+  },
+  {
+   "name": "BASE_OR_PATCH_OR_PATH_soil",
+   "tiling": 0.4
+  },
+  {
+   "name": "BASE_OR_SIDEWALK_plaza",
+   "tiling": 0.4
+  },
+  {
+   "name": "PATH_OR_SIDEWALK_flagstone",
+   "tiling": 0.4
+  }
+ ],
+ "plants": [
+  {
+   "kind": "Grass_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_01.prefab"
+  },
+  {
+   "kind": "Grass_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_02.prefab"
+  },
+  {
+   "kind": "Grass_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_03.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Blue",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Blue.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_BluePurple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_BluePurple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Orange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Orange.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_OrangePinkRedPurpleBlue",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_OrangePinkRedPurpleBlue.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Pink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Pink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Purple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Purple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_PurpleRedPink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_PurpleRedPink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Red",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Red.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedOrange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedOrange.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedPink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedPink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedPurple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedPurple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_White",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_White.prefab"
+  },
+  {
+   "kind": "Flower_Blue_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Blue_01.prefab"
+  },
+  {
+   "kind": "Flower_Blue_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Blue_02.prefab"
+  },
+  {
+   "kind": "Flower_Orange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Orange.prefab"
+  },
+  {
+   "kind": "Flower_Pink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Pink.prefab"
+  },
+  {
+   "kind": "Flower_Purple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Purple.prefab"
+  },
+  {
+   "kind": "Flower_Red",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Red.prefab"
+  },
+  {
+   "kind": "Flower_White",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_White.prefab"
+  },
+  {
+   "kind": "Flower_Yellow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Yellow.prefab"
+  },
+  {
+   "kind": "Flower_YellowRed",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_YellowRed.prefab"
+  },
+  {
+   "kind": "Bush_01_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_01_01.prefab"
+  },
+  {
+   "kind": "Bush_01_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_01_02.prefab"
+  },
+  {
+   "kind": "Bush_02_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_02_01.prefab"
+  },
+  {
+   "kind": "Bush_02_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_02_02.prefab"
+  },
+  {
+   "kind": "Bush_03_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_01.prefab"
+  },
+  {
+   "kind": "Bush_03_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_02.prefab"
+  },
+  {
+   "kind": "Plant_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_01.prefab"
+  },
+  {
+   "kind": "Plant_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_02.prefab"
+  },
+  {
+   "kind": "Plant_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_03.prefab"
+  },
+  {
+   "kind": "Plant_04",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_04.prefab"
+  },
+  {
+   "kind": "Plant_05",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_05.prefab"
+  },
+  {
+   "kind": "Plant_06",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_06.prefab"
+  },
+  {
+   "kind": "Plant_07",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_07.prefab"
+  },
+  {
+   "kind": "Plant_08",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_08.prefab"
+  },
+  {
+   "kind": "Plants",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plants.prefab"
+  },
+  {
+   "kind": "Reeds_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_01.prefab"
+  },
+  {
+   "kind": "Reeds_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_02.prefab"
+  },
+  {
+   "kind": "Reeds_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_03.prefab"
+  }
+ ],
+ "lift": {
+  "x0": -24.5,
+  "z0": -31,
+  "step": 0.5,
+  "nx": 99,
+  "nz": 125,
+  "h": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.001,0.001,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.001,0.005,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.001,0.008,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.003,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.022,0.004,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.001,0.032,0.002,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.009,0.017,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+ }
+}

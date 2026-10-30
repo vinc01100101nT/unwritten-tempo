@@ -46,22 +46,30 @@ def edit(root, rel, old, new, count=1):
     return True
 
 
+def elite_area_plant():
+    """The first Oculord row's area line, and the same line moved onto the first Gloop King row's area."""
+    text = open(os.path.join(REPO, RES, "WorldSpawns.asset"), encoding="utf-8").read()
+    def first(creature):
+        m = re.search(r"(?ms)^    creature: " + re.escape(creature) + r"\n.*?^    area: (\d+)\n", text)
+        return m.group(0) if m else "", m.group(1) if m else ""
+    row, _ = first("mob.oculord"); _, gloop = first("mob.gloop-king")
+    return row, re.sub(r"area: \d+\n$", "area: " + gloop + "\n", row)
+
+
 def main():
     bad = 0
+    ELITE_AREA = elite_area_plant()
     cases = [
         ("a creature with no multiplier", "Monsters/Plopling.asset", "  multiplier: 1\n", "", "plopling"),
         ("a multiplier below 1", "Monsters/Shadow_Riven.asset", "multiplier: 90", "multiplier: 0.5", "riven"),
-        ("a C elite with a second spawn row", "WorldSpawns.asset", "    creature: mob.oculord\n",
-         "    creature: mob.oculord\n    biome: 0\n  - map: olk_fild02\n    creature: mob.oculord\n", "oculord"),
+        ("a C elite with a third spawn row", "WorldSpawns.asset", "  areas:\n",
+         "  - map: world\n    creature: mob.oculord\n    population: 1\n    area: 0\n  areas:\n", "oculord"),
+        ("two C elites on one area", "WorldSpawns.asset", ELITE_AREA[0], ELITE_AREA[1], "holds 2 c elites"),
         ("a summon-only boss with no recipe", "SummonRecipes.asset", "bossId: mob.blood-ronin", "bossId: mob.nobody", "blood-ronin"),
-        ("an original back on a dungeon floor", "WorldSpawns.asset", "creature: mob.tainted-grumbear", "creature: mob.grumbear",
-         "holds the original"),
-        ("a Blighted creature in a field", "WorldSpawns.asset", "map: trn_fild01\n    creature: mob.tainted-chomper",
-         "map: trn_fild01\n    creature: mob.blighted-chomper", "a field holds nothing of x10"),
-        ("a Tainted creature on a deepest floor", "WorldSpawns.asset", "creature: mob.blighted-willo", "creature: mob.tainted-willo",
-         "deepest floor's creatures are x10"),
-        ("a x2 creature on a newbie map", "WorldSpawns.asset", "map: lst_fild01\n    creature: mob.plopling",
-         "map: lst_fild01\n    creature: mob.rascal", "newbie map"),
+        ("a shadow given a spawn row", "WorldSpawns.asset", "  areas:\n",
+         "  - map: world\n    creature: mob.shadow.riven\n    population: 1\n    area: 0\n  areas:\n", "summon-only but has a spawn row"),
+        ("an original on a dungeon floor", "WorldSpawns.asset", "  areas:\n",
+         "  - map: test_dun01\n    creature: mob.plopling\n    population: 3\n    area: -1\n  areas:\n", "holds the original"),
     ]
     with tempfile.TemporaryDirectory() as clean:
         copy_tree(clean)

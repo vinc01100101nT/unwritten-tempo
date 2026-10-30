@@ -943,16 +943,19 @@ public static class SkillEffectApplier
                 // and flung its caster round to that creature's far side.
                 var relocSkill = SkillCatalog.Get(srcId);
                 bool exact = relocSkill != null && relocSkill.IsGetawayDash && aimUnit == null;
+                // EVERY RELOCATION LANDS ON THE GROUND. The aimed spot's height is the player's word, and a landing
+                // corner beside a creature carries the creature's height — on a slope either can sit under the
+                // surface, and a body set down there is sealed in the ground with no way to walk out.
+                var dest = exact ? relocatePoint
+                                 : RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars));
+                if (GroundSnap.SurfaceNearestY(dest, out float landY)) dest.y = landY;
                 if (e.kind == SkillEffectKind.Teleport)
-                    unit.TeleportTo(exact ? relocatePoint
-                                          : RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)), look);   // instant blink
+                    unit.TeleportTo(dest, look);
                 else
                 {
                     // Face what the hop is AIMED AT for the whole trip, not the direction it flies. A relocation lands
                     // BESIDE its target (a star corner), so facing the travel line leaves the caster swinging at empty
                     // air on arrival — and nothing turns it back afterwards. No aimed unit = face travel, as before.
-                    var dest = exact ? relocatePoint
-                                     : RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars));
                     float speedMult = e.dashSpeedMult.Resolve(vars);
                     float easeSeconds = Mathf.Max(0.05f, e.dashEaseSeconds.Resolve(vars));
                     float trip = unit.GlideTo(dest, speedMult, e.dashEaseIn, e.dashEaseOut, easeSeconds,

@@ -131,7 +131,7 @@ public class FlowerCarpet : MonoBehaviour
     void Update()
     {
         if (relayAt >= 0f && Time.unscaledTime >= relayAt) LayAgain();
-        if (layPatch < patches.Count) Lay(LayPerFrame);
+        if (layPatch < patches.Count) Lay(LayPerFrame, GameSettings.PlantDensity);
         // ONLY THE CELLS THE GAME CAMERA CAN SEE ARE HANDED OVER. Unity drops an unseen cell itself, but only after
         // copying all its plants: MEASURED 2026-10-27 in the trial square, 594 cells (509,151 plants) were handed over
         // every frame for 263 (231,918) on screen, and this Update cost 5.3-6.1 ms a frame. A cell outside the game
@@ -158,7 +158,7 @@ public class FlowerCarpet : MonoBehaviour
 
     // Lays up to `budget` more spots and plants, patch by patch, row by row of spots, each spot's plant and count worked
     // out from its place and its patch's seed; a finished patch is cut into cells of CellSize metres, each its own draw.
-    void Lay(int budget)
+    void Lay(int budget, float density)
     {
         while (budget > 0 && layPatch < patches.Count)
         {
@@ -168,7 +168,6 @@ public class FlowerCarpet : MonoBehaviour
             int rowEnd = Mathf.FloorToInt(p.clip.yMax / s), colStart = Mathf.FloorToInt(p.clip.xMin / s), colEnd = Mathf.FloorToInt(p.clip.xMax / s);
             if (layRow == int.MinValue) { layRow = Mathf.FloorToInt(p.clip.yMin / s); layCells.Clear(); }
             uint seed = unchecked((uint)p.seed);
-            float density = GameSettings.PlantDensity;
             for (; layRow <= rowEnd && budget > 0; layRow++)
                 for (int col = colStart; col <= colEnd; col++)
                 {
@@ -204,6 +203,25 @@ public class FlowerCarpet : MonoBehaviour
             layPatch++;
         }
     }
+
+    /// <summary>THE WHOLE CARPET IN ONE PICTURE (the map's, drawn in the editor where no game camera runs): every plant, at
+    /// full density whatever the player's setting, handed to <paramref name="cam"/>'s next render only. Call
+    /// <see cref="ForgetLaid"/> once it is drawn; a square's carpet is a few hundred thousand plants.</summary>
+    public void DrawAllInto(Camera cam)
+    {
+        LayAgain();
+        Lay(int.MaxValue, 1f);
+        for (int i = 0; i < cells.Count; i++)
+        {
+            var rp = cells[i].rp;
+            rp.camera = cam;
+            rp.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            Graphics.RenderMeshInstanced(rp, cells[i].mesh, 0, cells[i].matrices, cells[i].count);
+        }
+    }
+
+    /// <summary>Drops every plant laid, so the next frame lays them again from the first patch.</summary>
+    public void ForgetLaid() => LayAgain();
 
     /// <summary>Which of <paramref name="kinds"/> plants a plant is, from its roll <paramref name="u"/> (0 up to 1).</summary>
     public static int KindAt(int kinds, float u) => kinds <= 1 ? 0 : Mathf.Min((int)(u * kinds), kinds - 1);

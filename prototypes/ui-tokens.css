@@ -12,6 +12,11 @@
   src: url("../unity/Assets/3_Data/Resources/Fonts/PixelFont.ttf") format("truetype");
   font-display: swap;
 }
+@font-face {
+  font-family: "Selawik";
+  src: url("../unity/Assets/3_Data/Resources/Fonts/Selawik.ttf") format("truetype");
+  font-display: swap;
+}
 
 :root {
   /* the shared palette */
@@ -46,4 +51,36 @@
   /* the game's own faces */
   --font-ui: "DejaVu Sans Condensed";
   --font-pixel: "PixelFont";
+  --font-label: "Selawik";
+}
+
+/* the dark set, the same names: put data-theme="dark" on the page's root element */
+:root[data-theme="dark"] {
+  --accent: #4f7cc4;
+  --bad: #ef6b6b;
+  --button-edge: #4c5668;
+  --button-fill: #313949;
+  --button-text: #e4e8ef;
+  --close-fill: #3a4456;
+  --good: #5cc97a;
+  --hover: #2f4466;
+  --notice-failure: #ff5f5f;
+  --notice-success: #66e673;
+  --notice-warning: #ffd940;
+  --panel-fill: #1e232c;
+  --panel-raise: #262c37;
+  --pm-text: #d9c04a;
+  --rarity-epic: #b98af0;
+  --rarity-legendary: #f0a040;
+  --rarity-rare: #6aa0ff;
+  --rule: #3a4352;
+  --slot-empty: rgba(10, 12, 16, 0.6);
+  --slot-fill: #2c3340;
+  --text-dim: #9aa3b2;
+  --text-main: #e6e9ee;
+  --text-on-dim: #ffffff;
+  --title-bar-bottom: #232c3e;
+  --title-bar-top: #34405a;
+  --title-text: #dbe5f5;
+  --window-edge: #4a5d7c;
 }

@@ -138,15 +138,13 @@ At the END of every bugfix response, state your confidence that the bug is ALREA
 
 ## Second-fix rule: after ONE failed fix, stop hypothesizing — go get GROUND TRUTH
 
-If a fix attempt doesn't resolve the bug, do NOT ship a second fix built on more reasoning about how the system "probably" works. The next move is to MEASURE: read the real data and replay the real math, then fix from evidence. Reasoning-only fixes on a bug that already survived one round burn many turns and usually miss a deeper cause. (This wardrobe bug ate \~4 rounds of plausible-but-wrong fixes; it was cracked in one pass the moment I decoded the actual save + PNG + FBX bytes and re-ran detection offline — the true cause, a dark-color gamma mismatch, was invisible to reasoning but obvious in the numbers.)
+The rule itself is the global one of the same name; this section adds what it means here. (The wardrobe bug ate \~4 rounds of plausible-but-wrong fixes; it was cracked in one pass the moment I decoded the actual save + PNG + FBX bytes and re-ran detection offline — the true cause, a dark-color gamma mismatch, was invisible to reasoning but obvious in the numbers.)
 
 Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python/Bash script reads them):
 
 - **Textures** = decode the PNG bytes (pure-Python zlib/PNG, no PIL) to get exact per-pixel colors/coverage.
 - **Meshes/rigs** = parse the binary FBX (zlib-compressed node arrays: Vertices / PolygonVertexIndex / UV) to get real UVs, tris, verts.
 - **Scenes/prefabs/.meta** = YAML/text — grep them directly for the actual wired values (renderer names, import flags).
-
-Escalate EFFORT/model only once the evidence is in hand and the remaining hard part is genuinely synthesis — not as a substitute for looking. Missing information is fixed by looking, not by thinking harder.
 
 ## Agent roles — WHEN to spawn one without being asked
 
@@ -188,6 +186,11 @@ cold without this conversation's context.
   answered here, because it starts cold knowing nothing of the conversation.
 - **`doc-keeper`** revises docs and the wiki. Writing a doc is usually part of the work in hand,
   so it is usually faster here.
+- **`data-author`, `doc-keeper` and `analyzer` are sized before they start** (added 2026-10-28 at the user's
+  instruction): run `tools/size-helper-job.py <role> "<one-line job>"` and pass the model it prints. It asks Jev
+  (through jev-ai.pro, key in `settings.env`) and steps down from Opus only when Jev puts under a 20% chance on the
+  job needing more; any failure prints `opus`. The line sent is the job only — never chat, code or private detail,
+  because jev-ai.pro is an unnamed third party. Every other role runs on the model in its own file.
 - **`reviewer` and `tester` stay exactly as their own sections below say** — the user's words are the
   only thing that starts either, and neither is ever offered. Nothing here loosens that.
 
@@ -257,7 +260,9 @@ handoff — a handoff carries an UNFINISHED task to the next session; a harvest 
 1. **A lesson that generalises past this project** — a way of measuring, diagnosing, or running a long task →
    a page in `docs/5-ai-learnings/` **and its index line**.
 2. **A project fact** — a bug's real root cause, how something actually works, a decision → **memory**, plus the
-   pointer line in the matching `memory/index/<group>.md`.
+   pointer line in the matching `memory/index/<group>.md`. **Except the seamless world and its towns** (layout, town
+   plans, the builders, bridges, ground, rebuilding): those facts go into the `world-authoring` skill, updated in place
+   in the section they belong to — never a memory file or a separate doc.
 3. **Something that must change behaviour every session with nobody looking it up** → a line in THIS file or the
    global one. Never a page; a page nobody opens at the right moment is a diary.
 4. **An OPEN DEFECT you found and only described in prose** → **fix it now, or it is gone.** This is the whole

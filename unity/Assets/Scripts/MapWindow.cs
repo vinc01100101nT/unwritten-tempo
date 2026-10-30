@@ -18,7 +18,8 @@ using TMPro;
 /// (<see cref="WorldMapDoors"/>) and a pulsing "you are here" over the map you are in.
 /// Clicking a map that has a picture opens the zone view on it.</para>
 ///
-/// <para>In both, the wheel zooms toward the cursor and a zoomed view drags with the mouse. The location button brings
+/// <para>In both, the wheel zooms toward the cursor (over the zone view's list, when it is too long to show whole, it
+/// scrolls the list instead) and a zoomed view drags with the mouse. The location button brings
 /// the view back to you: in the world view it glides to your marker; in the zone view it opens your own map and
 /// glides to you. Esc or M closes.</para>
 ///
@@ -27,7 +28,8 @@ using TMPro;
 /// </summary>
 public class MapWindow : MonoBehaviour
 {
-    [Tooltip("How far in the wheel can zoom; 1 is the whole map filling the screen.")]
+    [Tooltip("How far in the wheel can zoom; 1 is the whole map filling the screen. A map drawn in square pictures " +
+             "zooms further, until one pixel of a square picture is one pixel of the screen.")]
     public float maxZoom = 4f;
     [Tooltip("How much one wheel notch zooms.")]
     public float zoomPerNotch = 1.2f;
@@ -72,8 +74,11 @@ public class MapWindow : MonoBehaviour
         public RectTransform zoomRoot;
         public RectTransform picture;
         public RectTransform marker;
+        // What is drawn this frame. The wheel and the zoom buttons move the goal; the drawn view eases to it.
         public float zoom = 1f;
         public Vector2 pan;
+        public float goalZoom = 1f;
+        public Vector2 goalPan;
     }
 
     WorldAtlas data;
@@ -86,6 +91,73 @@ public class MapWindow : MonoBehaviour
     GameObject panel;
     static MapWindow shown;
 
+    // THE ROOM THE MAP HAS: the screen left of the side panel, above the footer. Both views live in it and never run
+    // under the panel; the zoom, the drag and the corner buttons are all measured in it.
+    RectTransform viewport;
+    // THE SIDE PANEL on the right: the map's name, where you stand, the two toggles and the mobs where you stand. Its
+    // fold button narrows it to a strip and the map widens into the room it gave up.
+    RectTransform sidePanel, mapArea;
+    GameObject panelBody;
+    TMP_Text foldLabel;
+    bool folded, pointerOverPanel;
+    float panelWidth = PanelWidth;
+    const float ListWidth = PanelWidth - 1f;
+    const float PanelWidth = 300f, FoldedWidth = 28f, FoldSeconds = 0.15f, FooterHeight = 28f;
+    // How long the drawn view takes to ease to where the wheel sent it, in seconds.
+    const float ZoomEaseSeconds = 0.07f;
+
+    // THINGS THAT FADE instead of popping: the patches, the lit patch, the labels, the level ranges and the list beside
+    // the pointer. Each eases its alpha to on or off, and is switched off once it has faded out.
+    sealed class Fade
+    {
+        public CanvasGroup group;
+        public float seconds, t;
+        public bool on;
+        public void Restart() { t = 0f; Apply(); }
+        public void Step(float dt)
+        {
+            float to = on ? 1f : 0f;
+            if (Mathf.Approximately(t, to) && group.gameObject.activeSelf == on) return;
+            t = Mathf.MoveTowards(t, to, dt / seconds);
+            Apply();
+        }
+        void Apply()
+        {
+            group.alpha = t * t * (3f - 2f * t);
+            bool live = on || t > 0f;
+            if (group.gameObject.activeSelf != live) group.gameObject.SetActive(live);
+        }
+    }
+    readonly List<Fade> fades = new List<Fade>();
+    Fade patchFade, patchHoverFade, labelFade, rangeFade, tipFade;
+    const float FadeSeconds = 0.18f, TipFadeSeconds = 0.12f;
+
+    Fade NewFade(GameObject on, float seconds)
+    {
+        var f = new Fade { group = on.AddComponent<CanvasGroup>(), seconds = seconds };
+        f.group.blocksRaycasts = false;
+        f.group.interactable = false;
+        f.group.alpha = 0f;
+        on.SetActive(false);
+        fades.Add(f);
+        return f;
+    }
+
+    // THE LEVEL RANGE OF EACH PATCH ("Lv 48–59"), over its middle while the patches are shown: the biggest patches first,
+    // and a range that would sit on another is left out. A layer of its own under the labels, so showing or hiding the
+    // labels never moves a range. Laid again whenever the view moves, from a list made once per map and picture size.
+    RectTransform rangeRoot;
+    readonly List<TextMeshProUGUI> rangeTexts = new List<TextMeshProUGUI>();
+    readonly List<(Vector2 at, string text, float width)> rangeList = new List<(Vector2, string, float)>();
+    readonly List<Rect> rangeTaken = new List<Rect>();
+    string rangesListedMap;
+    Vector2 rangesListedSize;
+    float rangesDrawnZoom = -1f;
+    Vector2 rangesDrawnPan, rangesDrawnRoom;
+    // A range's words, and the room it keeps to itself: from RangeBelow under its middle to RangeAbove over it, and
+    // RangeMargin either side of its words.
+    const float RangeSize = 12f, RangeBelow = 7f, RangeAbove = 8f, RangeMargin = 2f;
+
     /// <summary>True while the map covers the screen — the tutorial's sentence steps aside for it.</summary>
     public static bool IsOpen => shown != null && shown.panel != null && shown.panel.activeSelf;
     RectTransform panelRect;
@@ -94,12 +166,20 @@ public class MapWindow : MonoBehaviour
     RawImage atlasImage, zoneImage;
     TMP_Text title, whereLabel, zoneMissing, switchLabel;
     Image switchIcon;   // a globe while the button leads to the world map, the folded map while it leads back
-    GameObject locateButton;
     Transform player;
 
     // The map the zone view shows, and the picture it holds for it (taken from, and given back to, MinimapCatalog).
     string zoneMap, zonePictureMap;
     MinimapCatalog.Entry zoneEntry;
+
+    // THE SQUARE PICTURES OVER THE OVERVIEW. A tiled map's one overview picture is at most 2,048 pixels for the whole
+    // world, so zoomed in a tree is a smudge of two or three pixels. Once a square picture would be drawn at half its own
+    // pixels or more, the squares in view are laid over the overview, loaded TileLoadMilliseconds' worth a frame (the
+    // overview shows until each one arrives), and given back as they leave the view or the zoom drops back under that
+    // line. Measured 2026-10-30 in the editor: a square takes about 0.8 ms to load and holds 66 KB.
+    MapTileLayer zoneTiles;
+    readonly Vector3[] viewCorners = new Vector3[4];
+    const float TileLoadMilliseconds = 2f;
 
     // The route's arrows in the zone view, laid when the route, the map or the picture's size changed.
     RectTransform routeRoot;
@@ -121,6 +201,45 @@ public class MapWindow : MonoBehaviour
     Vector2 doorsDrawnSize;
     float doorsDrawnZoom = -1f;
 
+    // THE RESPAWN PATCHES of the map the zone view shows (WorldSpawns' areas), laid over its picture while the toggle is
+    // on: each patch filled in the colour of what lives there — green originals, purple Tainted, red Blighted — with its
+    // edge darker. Painted into one small texture once per map, when first shown; nothing is redrawn while it is up.
+    RawImage patchImage;
+    GameObject patchButton, labelButton;
+    TMP_Text patchLabel;
+    bool showPatches;
+    string patchesDrawnMap;
+    Texture2D patchTexture;
+    const float PatchUnitsPerPixel = 2f;
+    const int PatchMaxPixels = 1024;
+    // Which patch each of those pixels belongs to (index + 1, 0 = none), worked out once per map: what the paint, the
+    // patch you stand on and the patch under the pointer are all read from.
+    int[] patchOwner;
+    int patchPixels;
+    string patchOwnerMap;
+
+    // THE PATCH UNDER THE POINTER in the zone view: lit in the accent colour, with what the world keeps on it beside the
+    // pointer (never how many are alive). Repainted only when the pointer moves onto another patch.
+    RawImage patchHoverImage;
+    Texture2D patchHoverTexture;
+    Color32[] patchHoverPixels;
+    int hoverArea = -1;
+
+    // The patch you stand on, whose mobs the zone view's list shows; NoPatchLaid until it is first laid out.
+    int rosterArea = NoPatchLaid;
+    const int NoPatchLaid = int.MinValue + 1;
+
+    // THE WORLD'S PLACES on its picture — towns, landmarks, caves, dungeon doors (WorldPlaces), in the world layout's own
+    // look, on and off with a button. Laid once per map and picture size, resized only when the zoom changes.
+    RectTransform labelRoot;
+    readonly List<RectTransform> labelParts = new List<RectTransform>();
+    int labelsShown;
+    bool showLabels = true;
+    string labelsDrawnMap;
+    Vector2 labelsDrawnSize;
+    float labelsDrawnZoom = -1f;
+    TMP_Text labelLabel;
+
     // The spot picked to be led to (MapGuide), as a pin on the zone view of its map.
     Image guidePin;
     int guideDrawnVersion = -1;
@@ -128,9 +247,6 @@ public class MapWindow : MonoBehaviour
     Vector2 guideDrawnSize;
     float guideDrawnZoom = -1f;
     Sprite pinSprite;
-
-    // The creature counts the list was last laid out with.
-    int rosterCountsVersion = -1;
 
     bool gliding;
     float glideT;
@@ -199,6 +315,9 @@ public class MapWindow : MonoBehaviour
     void OnDestroy()
     {
         MinimapCatalog.ReleasePicture(zonePictureMap);
+        zoneTiles?.Clear();
+        if (patchTexture != null) Destroy(patchTexture);
+        if (patchHoverTexture != null) Destroy(patchHoverTexture);
         if (panel != null) Destroy(panel);
     }
 
@@ -209,9 +328,69 @@ public class MapWindow : MonoBehaviour
         if (Hotkeys.CancelDown()) { Close(); Hotkeys.MarkCancelHandled(); return; }
         if (player == null && PersistentPlayer3D.Instance != null) player = PersistentPlayer3D.Instance.transform;
 
-        if (active == world) { UpdateWorldMarker(); UpdateHover(); UpdateTrail(); } else { UpdateZone(); UpdateMobCard(); }
+        StepFold();
         StepGlide();
-        locateButton.SetActive(active == zone ? LocateUsefulInZone() : Zoomed(world) && !CentredOnMarker(world));
+        StepZoom(active);
+        if (active == world) { UpdateWorldMarker(); UpdateHover(); UpdateTrail(); }
+        else { UpdateZoneTiles(); UpdateZone(); UpdatePatchHover(); UpdateMobCard(); DrawRanges(); }
+        zoneRoster.LightRow(pointer, pointerOverPanel);
+        float dt = Time.unscaledDeltaTime;
+        foreach (var f in fades) f.Step(dt);
+        zoneRoster.StepRows(dt);
+        hoverRoster.StepRows(dt);
+    }
+
+    // The panel narrows to its strip or widens back over FoldSeconds; the map's room follows it.
+    void ToggleFold()
+    {
+        UISounds.PlayClick();
+        folded = !folded;
+        foldLabel.text = folded ? "‹" : "›";
+        panelBody.SetActive(!folded);
+    }
+
+    void StepFold()
+    {
+        float want = folded ? FoldedWidth : PanelWidth;
+        if (Mathf.Approximately(panelWidth, want)) return;
+        panelWidth = Mathf.MoveTowards(panelWidth, want, (PanelWidth - FoldedWidth) * Time.unscaledDeltaTime / FoldSeconds);
+        LayRoom();
+    }
+
+    void LayRoom()
+    {
+        sidePanel.sizeDelta = new Vector2(panelWidth, 0f);
+        mapArea.offsetMax = new Vector2(-panelWidth, 0f);
+        Reclamp(world);
+        Reclamp(zone);
+    }
+
+    void Reclamp(View v)
+    {
+        v.goalPan = ClampPan(v, v.goalPan, v.goalZoom);
+        v.pan = ClampPan(v, v.pan, v.zoom);
+        ApplyView(v);
+    }
+
+    // THE DRAWN VIEW EASES TO ITS GOAL — the zoom on a log scale and the map point at the middle of the room in a straight
+    // line, so nothing swims sideways while it zooms.
+    void StepZoom(View v)
+    {
+        if (gliding) { v.goalZoom = v.zoom; v.goalPan = v.pan; return; }
+        if (Mathf.Abs(v.zoom - v.goalZoom) < 1e-3f && (v.pan - v.goalPan).sqrMagnitude < 0.09f)
+        {
+            if (v.zoom == v.goalZoom && v.pan == v.goalPan) return;
+            v.zoom = v.goalZoom;
+            v.pan = v.goalPan;
+            ApplyView(v);
+            return;
+        }
+        float k = 1f - Mathf.Exp(-Mathf.Min(0.05f, Time.unscaledDeltaTime) / ZoomEaseSeconds);
+        float z = Mathf.Exp(Mathf.Lerp(Mathf.Log(v.zoom), Mathf.Log(v.goalZoom), k));
+        Vector2 middle = Vector2.Lerp(-v.pan / v.zoom, -v.goalPan / v.goalZoom, k);
+        v.zoom = z;
+        v.pan = -middle * z;
+        ApplyView(v);
     }
 
     void Toggle()
@@ -219,6 +398,7 @@ public class MapWindow : MonoBehaviour
         if (panel.activeSelf) { Close(); return; }
         panel.SetActive(true);
         UiLayers.Raise(panel.transform, UiLayers.Layer.Window);
+        LayRoom();
         ResetView(world);
         ShowZone(MapManager.CurrentMap);
     }
@@ -233,6 +413,7 @@ public class MapWindow : MonoBehaviour
         MinimapCatalog.ReleasePicture(zonePictureMap);
         zonePictureMap = null;
         zoneImage.texture = null;
+        zoneTiles.Clear();
     }
 
     // ── the two views ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -269,11 +450,10 @@ public class MapWindow : MonoBehaviour
             routeDrawnVersion = -1;
             doorsDrawnMap = null;
             guideDrawnVersion = -1;
-            MapCreatureCounts.Ask(map);
-            rosterCountsVersion = MapCreatureCounts.Version;
-            zoneRoster.Show(null, map, panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom);
+            rosterArea = NoPatchLaid;
             HideMobCard();
         }
+        RefreshPatches();
         UpdateZone();
     }
 
@@ -283,9 +463,131 @@ public class MapWindow : MonoBehaviour
         gliding = false;
         world.zoomRoot.gameObject.SetActive(v == world);
         zone.zoomRoot.gameObject.SetActive(v == zone);
-        zoneRoster.SetVisible(v == zone && zoneRoster.HasPeople);
+        zoneRoster.Root.gameObject.SetActive(v == zone);
         if (v != world) HideHover();
+        HidePatchHover();
         if (v != zone) HideMobCard();
+        if (patchButton != null) patchButton.SetActive(v == zone);
+        if (labelButton != null) labelButton.SetActive(v == zone);
+    }
+
+    void TogglePatches()
+    {
+        UISounds.PlayClick();
+        showPatches = !showPatches;
+        RefreshPatches();
+    }
+
+    // Show or hide the patches over the zone picture, painting them the first time a map's are shown.
+    void RefreshPatches()
+    {
+        patchLabel.text = showPatches ? "Hide respawn patches" : "Show respawn patches";
+        bool on = showPatches && zoneEntry != null && zoneImage.enabled;
+        if (on && patchesDrawnMap != zoneMap)
+        {
+            patchesDrawnMap = zoneMap;
+            if (patchTexture != null) Destroy(patchTexture);
+            patchTexture = EnsurePatchOwners() ? PaintPatches(zoneMap, patchOwner, patchPixels) : null;
+            patchImage.texture = patchTexture;
+        }
+        patchFade.on = rangeFade.on = on && patchTexture != null;
+        rangesDrawnZoom = -1f;
+    }
+
+    // The patch owners of the map the zone view shows, worked out the first time they are asked for; false when it has
+    // no picture or no patches.
+    bool EnsurePatchOwners()
+    {
+        if (zoneEntry == null) return false;
+        if (patchOwnerMap != zoneMap)
+        {
+            patchOwnerMap = zoneMap;
+            patchOwner = PatchOwners(zoneMap, zoneEntry.worldMin, zoneEntry.worldSize, out patchPixels);
+        }
+        return patchOwner != null;
+    }
+
+    /// <summary>The patch (its index in WorldSpawns' areas) holding <paramref name="inMap"/> — the map's own x east, y
+    /// north — in the map the zone view shows; -1 on ground that is no patch.</summary>
+    int PatchAt(Vector2 inMap)
+    {
+        if (!EnsurePatchOwners()) return -1;
+        float perPixel = zoneEntry.worldSize / patchPixels;
+        int x = Mathf.FloorToInt((inMap.x - zoneEntry.worldMin.x) / perPixel), z = Mathf.FloorToInt((inMap.y - zoneEntry.worldMin.y) / perPixel);
+        if (x < 0 || z < 0 || x >= patchPixels || z >= patchPixels) return -1;
+        return patchOwner[z * patchPixels + x] - 1;
+    }
+
+    // One pixel per PatchUnitsPerPixel of the picture's square of the map, holding the patch it belongs to (index + 1,
+    // 0 = none); null when the map has no patches.
+    static int[] PatchOwners(string map, Vector2 worldMin, float worldSize, out int px)
+    {
+        px = Mathf.Clamp(Mathf.CeilToInt(worldSize / PatchUnitsPerPixel), 1, PatchMaxPixels);
+        var spawns = WorldSpawns.Instance;
+        if (spawns == null || spawns.areas.Count == 0) return null;
+        float perPixel = worldSize / px;
+        var owner = new int[px * px];
+        var laid = new bool[spawns.areas.Count];
+        bool any = false;
+        foreach (var row in spawns.rows)
+        {
+            if (row == null || row.map != map || row.area < 0 || row.area >= spawns.areas.Count || laid[row.area]) continue;
+            laid[row.area] = true;
+            int[] runs = spawns.areas[row.area].runs;
+            for (int k = 0; k + 2 < runs.Length; k += 3)
+                for (int n = 0; n < runs[k + 2]; n++)
+                {
+                    float x0 = runs[k] + n * WorldSpawns.AreaSquare - worldMin.x, z0 = runs[k + 1] - worldMin.y;
+                    int ax = Mathf.Max(0, Mathf.FloorToInt(x0 / perPixel)), bx = Mathf.Min(px, Mathf.CeilToInt((x0 + WorldSpawns.AreaSquare) / perPixel));
+                    int az = Mathf.Max(0, Mathf.FloorToInt(z0 / perPixel)), bz = Mathf.Min(px, Mathf.CeilToInt((z0 + WorldSpawns.AreaSquare) / perPixel));
+                    for (int z = az; z < bz; z++) for (int x = ax; x < bx; x++) { owner[z * px + x] = row.area + 1; any = true; }
+                }
+        }
+        return any ? owner : null;
+    }
+
+    // Each patch filled in the colour of its first row's creature — every resident of a patch is the same version —
+    // with its edge darker.
+    static Texture2D PaintPatches(string map, int[] owner, int px)
+    {
+        var spawns = WorldSpawns.Instance;
+        var colour = new Color[spawns.areas.Count];
+        var coloured = new bool[spawns.areas.Count];
+        foreach (var row in spawns.rows)
+        {
+            if (row == null || row.map != map || row.area < 0 || row.area >= spawns.areas.Count || coloured[row.area]) continue;
+            coloured[row.area] = true;
+            colour[row.area] = VersionColour(MonsterCatalog.Get(row.creature));
+        }
+        var pixels = new Color32[px * px];
+        bool any = false;
+        for (int z = 0; z < px; z++)
+            for (int x = 0; x < px; x++)
+            {
+                int o = owner[z * px + x];
+                if (o == 0) continue;
+                any = true;
+                bool edge = (x > 0 && owner[z * px + x - 1] != o) || (x < px - 1 && owner[z * px + x + 1] != o)
+                         || (z > 0 && owner[(z - 1) * px + x] != o) || (z < px - 1 && owner[(z + 1) * px + x] != o);
+                var c = colour[o - 1];
+                pixels[z * px + x] = edge ? new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.45f, 0.85f) : new Color(c.r, c.g, c.b, 0.35f);
+            }
+        if (!any) return null;
+        var tex = new Texture2D(px, px, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+        tex.SetPixels32(pixels);
+        tex.Apply(false, true);
+        return tex;
+    }
+
+    // An original green, a Tainted version purple, a Blighted one red: of the two versions of one creature, the one
+    // with the higher multiplier is the Blighted.
+    static Color VersionColour(MonsterDef def)
+    {
+        if (def == null || def.versionOf == null) return UiKit.Good.Value;
+        foreach (var other in MonsterCatalog.All)
+            if (other != null && other != def && other.versionOf == def.versionOf && other.multiplier > def.multiplier)
+                return UiKit.RarityEpic.Value;
+        return UiKit.Bad.Value;
     }
 
     void SwitchView()
@@ -367,17 +669,18 @@ public class MapWindow : MonoBehaviour
         if (map != hoverMap)
         {
             hoverMap = map;
-            if (map != null) hoverRoster.Show(map, map, panelRect.rect.height - 2f * HoverEdge);
-            else hoverRoster.SetVisible(false);
+            if (map != null) hoverRoster.Show(map, map, WholeMap, panelRect.rect.height - 2f * HoverEdge, TipMinWidth, RosterMaxWidth);
+            tipFade.on = map != null && hoverRoster.HasPeople;
         }
-        if (hoverMap != null && hoverRoster.HasPeople) PlaceBesidePointer(hoverRoster.Root, pointer);
+        if (tipFade.on) PlaceBesidePointer(hoverRoster.Root, pointer);
     }
 
     void HideHover()
     {
         hoverMap = null;
         hoverAsked = false;
-        if (hoverRoster != null) hoverRoster.SetVisible(false);
+        if (tipFade != null) tipFade.on = false;
+        HidePatchHover();
     }
 
     // Below and to the right of the pointer, flipped to the other side when that would run off the screen.
@@ -403,7 +706,7 @@ public class MapWindow : MonoBehaviour
         {
             cardLooked = true;
             cardLookedAt = pointer;
-            var under = pointerOverMap ? zoneRoster.MobUnder(pointer) : null;
+            var under = pointerOverPanel ? zoneRoster.MobUnder(pointer) : null;
             if (under != cardMob)
             {
                 cardMob = under;
@@ -449,16 +752,32 @@ public class MapWindow : MonoBehaviour
 
     // ── zone view: you, and the route, on the map you stand in ────────────────────────────────────────────────────
     string whereShownFor = "";
+    int whereX, whereY, whereZ;
+    // Passed as the patch you stand on while the map shown is another one.
+    const int NoPatchHere = -2;
     string YouAreIn(string map) => "You are in " + data.NameOf(map);
 
     bool ShowingOwnMap => zoneMap == MapManager.CurrentMap && zoneEntry != null;
 
     void UpdateZone()
     {
-        // Where YOU are, said only while the map shown is another one: on your own map the title already says it.
-        string where = ShowingOwnMap ? null : MapManager.CurrentMap;
-        if (whereLabel && where != whereShownFor) { whereShownFor = where; whereLabel.text = where == null ? "" : YouAreIn(where); }
+        // Where YOU are: your position on your own map, the map you are in on another one.
         bool own = ShowingOwnMap && player != null;
+        if (own)
+        {
+            Vector3 p = Coords.ToShown(player.position);
+            int x = Mathf.RoundToInt(p.x), y = Mathf.RoundToInt(p.y), z = Mathf.RoundToInt(p.z);
+            if (whereShownFor != null || x != whereX || y != whereY || z != whereZ)
+            {
+                whereShownFor = null; whereX = x; whereY = y; whereZ = z;
+                whereLabel.text = Coords.Shown(x, y, z);
+            }
+        }
+        else if (MapManager.CurrentMap != whereShownFor)
+        {
+            whereShownFor = MapManager.CurrentMap;
+            whereLabel.text = whereShownFor == null ? "" : YouAreIn(whereShownFor);
+        }
         zone.marker.gameObject.SetActive(own);
         if (own)
         {
@@ -469,17 +788,300 @@ public class MapWindow : MonoBehaviour
         DrawDoors();
         DrawPeople();
         DrawGuidePin();
-        // The counts beside the names come from the server, asked again every few seconds while the map is shown; the
-        // list is laid out again only when an answer arrives.
-        MapCreatureCounts.Ask(zoneMap);
-        // The screen changed size, or new counts arrived: the list is laid out again.
-        float rosterRoom = panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom;
-        if (!Mathf.Approximately(rosterRoom, zoneRoster.LaidForHeight) || rosterCountsVersion != MapCreatureCounts.Version)
+        DrawPlaceLabels();
+        // The panel's list is the mobs of the patch you stand on, laid out again when you step onto another or the
+        // screen changed size; on ground that is no patch it says so, and on another map it is empty.
+        int here = own ? PatchAt(InMapOnPicture(player.position)) : NoPatchHere;
+        float rosterRoom = listRoom.rect.height;
+        if (here != rosterArea || !Mathf.Approximately(rosterRoom, zoneRoster.LaidForHeight))
         {
-            rosterCountsVersion = MapCreatureCounts.Version;
-            zoneRoster.Show(null, zoneMap, rosterRoom);
+            rosterArea = here;
+            if (here >= 0) zoneRoster.Show("Mobs", zoneMap, here, rosterRoom, ListWidth, ListWidth);
+            else if (here == -1) zoneRoster.ShowNone("Mobs", "No mobs here", rosterRoom, ListWidth);
+            else zoneRoster.Clear(rosterRoom, ListWidth);
             HideMobCard();
         }
+    }
+
+    // A spot on the ground of the map the zone view shows, in that map's own x east, y north.
+    Vector2 InMapOnPicture(Vector3 worldPos)
+    {
+        Vector3 p = MapManager.InMap(worldPos, zoneMap);
+        return new Vector2(p.x, p.z);
+    }
+
+    // ── zone view: the patch under the pointer, and what the world keeps on it ───────────────────────────────────────
+    void UpdatePatchHover()
+    {
+        int area = -1;
+        if (pointerOverMap && zoneEntry != null && zoneImage.enabled && !zoneRoster.Contains(pointer)
+            && RectTransformUtility.ScreenPointToLocalPointInRectangle(zone.picture, pointer, null, out Vector2 local))
+        {
+            Vector2 size = zone.picture.rect.size;
+            if (Mathf.Abs(local.x) <= size.x * 0.5f && Mathf.Abs(local.y) <= size.y * 0.5f)
+                area = PatchAt(PictureToMap(local, zoneEntry.worldMin, zoneEntry.worldSize, size));
+        }
+        if (area != hoverArea)
+        {
+            hoverArea = area;
+            PaintHoveredPatch();
+            if (area >= 0) hoverRoster.Show(null, zoneMap, area, panelRect.rect.height - 2f * HoverEdge, TipMinWidth, RosterMaxWidth);
+            tipFade.on = area >= 0 && hoverRoster.HasPeople;
+        }
+        if (tipFade.on) PlaceBesidePointer(hoverRoster.Root, pointer);
+    }
+
+    // The patch under the pointer as one point-filtered texture over the picture: filled in the accent colour, its edge
+    // solid — the same pixels the patches are painted with.
+    void PaintHoveredPatch()
+    {
+        bool on = hoverArea >= 0 && patchOwner != null && patchOwnerMap == zoneMap;
+        patchHoverFade.on = on;
+        if (!on) return;
+        patchHoverFade.Restart();
+        int px = patchPixels, mark = hoverArea + 1;
+        if (patchHoverTexture == null || patchHoverTexture.width != px)
+        {
+            if (patchHoverTexture != null) Destroy(patchHoverTexture);
+            patchHoverTexture = new Texture2D(px, px, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            patchHoverPixels = new Color32[px * px];
+            patchHoverImage.texture = patchHoverTexture;
+        }
+        Color accent = UiKit.Accent.Value;
+        Color32 fill = new Color(accent.r, accent.g, accent.b, 0.45f), edge = accent, none = default;
+        for (int z = 0; z < px; z++)
+            for (int x = 0; x < px; x++)
+            {
+                int i = z * px + x;
+                if (patchOwner[i] != mark) { patchHoverPixels[i] = none; continue; }
+                bool rim = (x > 0 && patchOwner[i - 1] != mark) || (x < px - 1 && patchOwner[i + 1] != mark)
+                        || (z > 0 && patchOwner[i - px] != mark) || (z < px - 1 && patchOwner[i + px] != mark);
+                patchHoverPixels[i] = rim ? edge : fill;
+            }
+        patchHoverTexture.SetPixels32(patchHoverPixels);
+        patchHoverTexture.Apply(false, false);
+    }
+
+    void HidePatchHover()
+    {
+        hoverArea = -1;
+        if (patchHoverFade != null) patchHoverFade.on = false;
+        if (tipFade != null && hoverMap == null) tipFade.on = false;
+    }
+
+    // ── zone view: the world's places, in the world layout's own look ───────────────────────────────────────────────
+    // Sizes as the world layout draws them, on the main screen layer.
+    const float TownRingSize = 27f, TownDotSize = 21f, TownNameSize = 17f, TownNameRise = 18f;
+    const float StarSize = 24f, StarDrop = 8f, LandmarkNameSize = 13f, LandmarkNameDrop = 25f;
+    const float CaveWidth = 22f, CaveHeight = 19f, CaveEdge = 1f, CaveRise = -0.5f, CaveNameSize = 12f, CaveNameDrop = 24f, DoorGlyphSize = 20f, DoorDrop = 7f;
+    // The world layout's label colours.
+    static readonly Color PlaceNameColour = new Color(0.067f, 0.067f, 0.067f), PlaceEdgeColour = new Color(1f, 1f, 1f),
+        TownRingColour = new Color(0.133f, 0.133f, 0.133f), LandmarkNameColour = new Color(0.114f, 0.114f, 0.114f),
+        StarColour = new Color(1f, 0.827f, 0.302f), StarEdgeColour = new Color(0.353f, 0.239f, 0f),
+        CaveColour = new Color(0.114f, 0.09f, 0.071f), CaveEdgeColour = new Color(0.91f, 0.878f, 0.816f),
+        CaveNameEdgeColour = new Color(0f, 0f, 0f), DoorColour = new Color(0.165f, 0.102f, 0.039f);
+    // How wide each word's outline is, in the text package's own measure.
+    const float NameEdge = 0.2f, ThinEdge = 0.1f;
+    const int RoundestCorner = 14;
+
+    void ToggleLabels()
+    {
+        UISounds.PlayClick();
+        showLabels = !showLabels;
+        labelLabel.text = showLabels ? "Hide map labels" : "Show map labels";
+        labelFade.on = showLabels;
+    }
+
+    void DrawPlaceLabels()
+    {
+        Vector2 size = zone.picture.rect.size;
+        if (labelsDrawnMap != zoneMap || labelsDrawnSize != size)
+        {
+            labelsDrawnMap = zoneMap;
+            labelsDrawnSize = size;
+            labelsDrawnZoom = -1f;
+            int used = 0;
+            if (zoneEntry != null && zoneImage.enabled && zoneMap == WorldPlaces.Map)
+                foreach (var place in WorldPlaces.All)
+                {
+                    Vector2 at = MapToPicture(new Vector2(place.mark.x, place.mark.z), zoneEntry.worldMin, zoneEntry.worldSize, size);
+                    if (Mathf.Abs(at.x) > size.x * 0.5f || Mathf.Abs(at.y) > size.y * 0.5f) continue;
+                    switch (place.kind)
+                    {
+                        case WorldPlaces.Kind.Town:
+                            Shape(ref used, at, Vector2.zero, TownRingSize, TownRingSize, TownRingColour);
+                            Shape(ref used, at, Vector2.zero, TownDotSize, TownDotSize, PlaceEdgeColour);
+                            Word(ref used, at, new Vector2(0f, TownNameRise), place.name, TownNameSize, true, PlaceNameColour, PlaceEdgeColour, NameEdge);
+                            break;
+                        case WorldPlaces.Kind.Landmark:
+                            Word(ref used, at, new Vector2(0f, -StarDrop), "★", StarSize, false, StarColour, StarEdgeColour, ThinEdge);
+                            Word(ref used, at, new Vector2(0f, -LandmarkNameDrop), place.name, LandmarkNameSize, false, LandmarkNameColour, PlaceEdgeColour, NameEdge);
+                            break;
+                        case WorldPlaces.Kind.Cave:
+                            Shape(ref used, at, new Vector2(0f, CaveRise), CaveWidth + CaveEdge * 2f, CaveHeight + CaveEdge * 2f, CaveEdgeColour);
+                            Shape(ref used, at, new Vector2(0f, CaveRise), CaveWidth - CaveEdge * 2f, CaveHeight - CaveEdge * 2f, CaveColour);
+                            Word(ref used, at, new Vector2(0f, -CaveNameDrop), "cave", CaveNameSize, false, PlaceEdgeColour, CaveNameEdgeColour, ThinEdge);
+                            break;
+                        case WorldPlaces.Kind.DungeonDoor:
+                            Word(ref used, at, new Vector2(0f, -DoorDrop), "▼", DoorGlyphSize, false, DoorColour, PlaceEdgeColour, ThinEdge);
+                            break;
+                    }
+                }
+            for (int i = used; i < labelParts.Count; i++)
+                if (labelParts[i].gameObject.activeSelf) labelParts[i].gameObject.SetActive(false);
+            labelsShown = used;
+        }
+        if (!Mathf.Approximately(labelsDrawnZoom, zone.zoom))
+        {
+            labelsDrawnZoom = zone.zoom;
+            var sc = new Vector3(1f / zone.zoom, 1f / zone.zoom, 1f);
+            for (int i = 0; i < labelsShown; i++) labelParts[i].localScale = sc;
+        }
+    }
+
+    // ── zone view: the level range of each patch ──────────────────────────────────────────────────────────────────
+    // Laid only while the layer is up, again whenever the view moved: the biggest patches first, each on the room's
+    // screen only, and none on another.
+    void DrawRanges()
+    {
+        if (!rangeRoot.gameObject.activeSelf) return;
+        Vector2 size = zone.picture.rect.size;
+        if (rangesListedMap != zoneMap || rangesListedSize != size) ListRanges(size);
+        Vector2 room = viewport.rect.size;
+        if (Mathf.Approximately(rangesDrawnZoom, zone.zoom) && rangesDrawnPan == zone.pan && rangesDrawnRoom == room) return;
+        rangesDrawnZoom = zone.zoom;
+        rangesDrawnPan = zone.pan;
+        rangesDrawnRoom = room;
+        rangeTaken.Clear();
+        var scale = new Vector3(1f / zone.zoom, 1f / zone.zoom, 1f);
+        var edge = UiKit.OutlinedMaterial(UiKit.Font, NameEdge, UiKit.PanelFill.Value, outside: true);
+        int used = 0;
+        foreach (var (at, text, width) in rangeList)
+        {
+            Vector2 s = at * zone.zoom + zone.pan;
+            if (Mathf.Abs(s.x) > room.x * 0.5f || Mathf.Abs(s.y) > room.y * 0.5f) continue;
+            var box = new Rect(s.x - width * 0.5f - RangeMargin, s.y - RangeBelow, width + 2f * RangeMargin, RangeBelow + RangeAbove);
+            bool free = true;
+            foreach (var taken in rangeTaken) if (taken.Overlaps(box)) { free = false; break; }
+            if (!free) continue;
+            rangeTaken.Add(box);
+            var t = RangeText(used++);
+            if (t.fontSharedMaterial != edge) t.fontSharedMaterial = edge;
+            t.text = text;
+            t.rectTransform.anchoredPosition = at;
+            t.rectTransform.sizeDelta = new Vector2(width + 8f, RangeSize * 1.6f);
+            t.rectTransform.localScale = scale;
+        }
+        for (int i = used; i < rangeTexts.Count; i++)
+            if (rangeTexts[i].gameObject.activeSelf) rangeTexts[i].gameObject.SetActive(false);
+    }
+
+    // Every patch of the map the zone view shows: where its middle lies on the picture, its range as words and their
+    // width — biggest patch first. Made once per map and picture size.
+    void ListRanges(Vector2 size)
+    {
+        rangesListedMap = zoneMap;
+        rangesListedSize = size;
+        rangesDrawnZoom = -1f;
+        rangeList.Clear();
+        var spawns = WorldSpawns.Instance;
+        if (spawns == null || zoneEntry == null) return;
+        var listed = new bool[spawns.areas.Count];
+        var squares = new List<(int squares, int area)>();
+        foreach (var row in spawns.rows)
+        {
+            if (row == null || row.map != zoneMap || row.area < 0 || row.area >= listed.Length || listed[row.area]) continue;
+            listed[row.area] = true;
+            int[] runs = spawns.areas[row.area].runs;
+            int n = 0;
+            for (int k = 2; k < runs.Length; k += 3) n += runs[k];
+            squares.Add((n, row.area));
+        }
+        squares.Sort((a, b) => a.squares != b.squares ? b.squares.CompareTo(a.squares) : a.area.CompareTo(b.area));
+        var probe = RangeText(0);
+        foreach (var (_, area) in squares)
+        {
+            var a = spawns.areas[area];
+            string text = a.lowLevel == a.highLevel ? "Lv " + a.lowLevel : "Lv " + a.lowLevel + "–" + a.highLevel;
+            Vector2 at = MapToPicture(new Vector2(a.center.x, a.center.z), zoneEntry.worldMin, zoneEntry.worldSize, size);
+            // a patch the picture does not reach gets no range, as it gets no paint
+            if (Mathf.Abs(at.x) > size.x * 0.5f || Mathf.Abs(at.y) > size.y * 0.5f) continue;
+            rangeList.Add((at, text, probe.GetPreferredValues(text).x));
+        }
+        probe.gameObject.SetActive(false);
+    }
+
+    TextMeshProUGUI RangeText(int i)
+    {
+        while (rangeTexts.Count <= i)
+        {
+            var t = (TextMeshProUGUI)UiKit.MakeText("Range", rangeRoot, "", RangeSize, FontStyle.Normal, TextAnchor.MiddleCenter);
+            UiKit.Paint(t, UiKit.TextMain);
+            t.raycastTarget = false;
+            t.richText = false;
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            t.alignment = TextAlignmentOptions.Center;
+            t.rectTransform.anchorMin = t.rectTransform.anchorMax = t.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rangeTexts.Add(t);
+        }
+        var text = rangeTexts[i];
+        if (!text.gameObject.activeSelf) text.gameObject.SetActive(true);
+        return text;
+    }
+
+    // One round mark of a label: its middle `offset` (screen units, before the zoom) from the place.
+    void Shape(ref int used, Vector2 at, Vector2 offset, float width, float height, Color colour)
+    {
+        var img = Part<Image>(ref used, "Mark");
+        // The theme's largest corner, which rounds anything up to twice its size into a circle; a bigger mark has its
+        // corners drawn larger to stay round.
+        UiKit.Round(img, RoundestCorner);
+        img.pixelsPerUnitMultiplier = Mathf.Min(1f, 2f * RoundestCorner / Mathf.Min(width, height));
+        UiKit.Paint(img, colour);
+        var rt = img.rectTransform;
+        rt.pivot = new Vector2(0.5f - offset.x / width, 0.5f - offset.y / height);
+        rt.sizeDelta = new Vector2(width, height);
+        rt.anchoredPosition = at;
+    }
+
+    // One word of a label in the labels' face, outlined, its baseline `offset` (screen units, before the zoom) from the
+    // place — the way the world layout writes its words.
+    void Word(ref int used, Vector2 at, Vector2 offset, string text, float size, bool bold, Color colour, Color edge, float edgeWidth)
+    {
+        var t = Part<TextMeshProUGUI>(ref used, "Word");
+        t.font = UiKit.LabelFont;
+        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.LabelFont, edgeWidth, edge, outside: true);
+        t.fontSize = size;
+        t.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
+        t.alignment = TextAlignmentOptions.Baseline;
+        t.textWrappingMode = TextWrappingModes.NoWrap;
+        t.color = colour;
+        t.text = text;
+        var rt = t.rectTransform;
+        rt.sizeDelta = new Vector2(t.GetPreferredValues(text).x + 8f, size * 1.6f);
+        rt.pivot = new Vector2(0.5f, 0.5f - offset.y / rt.sizeDelta.y);
+        rt.anchoredPosition = at;
+    }
+
+    // The next free piece of the labels, made the first time it is needed; anything else on the slot is a bug.
+    T Part<T>(ref int used, string name) where T : Graphic
+    {
+        T part = used < labelParts.Count ? labelParts[used].GetComponent<T>() : null;
+        if (part == null)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(T));
+            go.transform.SetParent(labelRoot, false);
+            part = go.GetComponent<T>();
+            part.raycastTarget = false;
+            var rt = part.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            if (used < labelParts.Count) { Destroy(labelParts[used].gameObject); labelParts[used] = rt; }
+            else labelParts.Add(rt);
+        }
+        if (!part.gameObject.activeSelf) part.gameObject.SetActive(true);
+        part.transform.SetSiblingIndex(used);
+        used++;
+        return part;
     }
 
     // A spot on the ground of the map you stand in → a point on the zone picture, from its centre.
@@ -753,26 +1355,38 @@ public class MapWindow : MonoBehaviour
         return mark;
     }
 
-    // ── the location button ───────────────────────────────────────────────────────────────────────────────────────
-    static bool Zoomed(View v) => v.zoom > 1.001f;
+    // ── the square pictures ───────────────────────────────────────────────────────────────────────────────────────
+    bool TiledZone => zoneEntry != null && zoneEntry.tileSize > 0f && zoneEntry.tilePixels > 0;
+    float SquarePixelsPerUnit => zoneEntry.tilePixels / zoneEntry.tileSize;
+    float ScreenPixelsPerUnit(float zoom) => zone.picture.rect.width * zoom * canvas.scaleFactor / Mathf.Max(1f, zoneEntry.worldSize);
 
-    bool CentredOnMarker(View v) => (ClampPan(v, -v.marker.anchoredPosition * v.zoom) - v.pan).sqrMagnitude <= 16f;
+    float MaxZoom(View v) => v == zone && TiledZone ? Mathf.Max(maxZoom, SquarePixelsPerUnit / Mathf.Max(1e-4f, ScreenPixelsPerUnit(1f))) : maxZoom;
 
-    // In the zone view it is useful while another map is shown (it brings you home), or while zoomed away from you.
-    bool LocateUsefulInZone()
+    void UpdateZoneTiles()
     {
-        string here = MapManager.CurrentMap;
-        if (zoneMap != here) { var c = MinimapCatalog.Instance; return c != null && c.Find(here) != null; }
-        return zone.marker.gameObject.activeSelf && Zoomed(zone) && !CentredOnMarker(zone);
+        if (!TiledZone || ScreenPixelsPerUnit(zone.zoom) < 0.5f * SquarePixelsPerUnit) { zoneTiles.Clear(); return; }
+        Vector2 size = zone.picture.rect.size;
+        viewport.GetWorldCorners(viewCorners);
+        Vector2 lo = PictureToMap(zone.picture.InverseTransformPoint(viewCorners[0]), zoneEntry.worldMin, zoneEntry.worldSize, size);
+        Vector2 hi = PictureToMap(zone.picture.InverseTransformPoint(viewCorners[2]), zoneEntry.worldMin, zoneEntry.worldSize, size);
+        float perUnit = 1f / Mathf.Max(1f, zoneEntry.worldSize);
+        var scale = new Vector2(size.x * perUnit, size.y * perUnit);
+        var origin = new Vector2(-0.5f * size.x - zoneEntry.worldMin.x * scale.x, -0.5f * size.y - zoneEntry.worldMin.y * scale.y);
+        zoneTiles.Show(zoneMap, zoneEntry.tileSize, Rect.MinMaxRect(lo.x, lo.y, hi.x, hi.y), origin, scale, TileLoadMilliseconds);
     }
 
+    // ── the location button ───────────────────────────────────────────────────────────────────────────────────────
+    static bool Zoomed(View v) => v.goalZoom > 1.001f;
+
+    // Glides the view back to you; on another map's view it opens your own.
     void Locate()
     {
         UISounds.PlayClick();
         if (active == zone && zoneMap != MapManager.CurrentMap) { ShowZone(MapManager.CurrentMap); return; }
         var v = active;
+        v.zoom = v.goalZoom;
         glideFrom = v.pan;
-        glideTo = ClampPan(v, -v.marker.anchoredPosition * v.zoom);
+        glideTo = ClampPan(v, -v.marker.anchoredPosition * v.zoom, v.zoom);
         glideT = 0f;
         gliding = true;
     }
@@ -781,7 +1395,7 @@ public class MapWindow : MonoBehaviour
     {
         if (!gliding) return;
         glideT = Mathf.Min(1f, glideT + Time.unscaledDeltaTime / Mathf.Max(0.01f, locateSeconds));
-        active.pan = ClampPan(active, Vector2.LerpUnclamped(glideFrom, glideTo, EaseOut(glideT)));
+        active.pan = ClampPan(active, Vector2.LerpUnclamped(glideFrom, glideTo, EaseOut(glideT)), active.zoom);
         ApplyView(active);
         if (glideT >= 1f) gliding = false;
     }
@@ -790,33 +1404,42 @@ public class MapWindow : MonoBehaviour
     static float EaseOut(float t) { float u = 1f - t; return 1f - u * u * u; }
 
     // ── zoom and drag, on whichever view is up ────────────────────────────────────────────────────────────────────
+    // The goal moves; the drawn view eases after it (StepZoom). The map point under the pointer stays under it.
     void ZoomAt(Vector2 screenPoint, float notches)
     {
         var v = active;
-        float next = Mathf.Clamp(v.zoom * Mathf.Pow(zoomPerNotch, notches), 1f, maxZoom);
-        if (Mathf.Approximately(next, v.zoom)) return;
+        float next = Mathf.Clamp(v.goalZoom * Mathf.Pow(zoomPerNotch, notches), 1f, MaxZoom(v));
+        if (Mathf.Approximately(next, v.goalZoom)) return;
         gliding = false;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRect, screenPoint, null, out Vector2 cursor);
-        Vector2 underCursor = (cursor - v.pan) / v.zoom;
-        v.zoom = next;
-        v.pan = ClampPan(v, cursor - underCursor * v.zoom);
-        ApplyView(v);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenPoint, null, out Vector2 cursor);
+        Vector2 underCursor = (cursor - v.goalPan) / v.goalZoom;
+        v.goalZoom = next;
+        v.goalPan = ClampPan(v, cursor - underCursor * next, next);
     }
 
+    // The zoom buttons zoom toward the middle of the map's room.
+    void ZoomStep(float notches)
+    {
+        UISounds.PlayClick();
+        ZoomAt(RectTransformUtility.WorldToScreenPoint(null, viewport.TransformPoint(viewport.rect.center)), notches);
+    }
+
+    // A drag moves the drawn view at once, so the map stays under the hand.
     void DragBy(Vector2 screenDelta)
     {
         var v = active;
         if (!Zoomed(v)) return;
         gliding = false;
-        v.pan = ClampPan(v, v.pan + screenDelta / Mathf.Max(0.0001f, canvas.scaleFactor));
+        v.zoom = v.goalZoom;
+        v.pan = v.goalPan = ClampPan(v, v.pan + screenDelta / Mathf.Max(0.0001f, canvas.scaleFactor), v.zoom);
         ApplyView(v);
     }
 
-    Vector2 ClampPan(View v, Vector2 want)
+    Vector2 ClampPan(View v, Vector2 want, float zoom)
     {
-        Vector2 picture = v.picture.rect.size * v.zoom;
-        Vector2 screen = panelRect.rect.size;
-        float mx = Mathf.Max(0f, (picture.x - screen.x) * 0.5f), my = Mathf.Max(0f, (picture.y - screen.y) * 0.5f);
+        Vector2 picture = v.picture.rect.size * zoom;
+        Vector2 room = viewport.rect.size;
+        float mx = Mathf.Max(0f, (picture.x - room.x) * 0.5f), my = Mathf.Max(0f, (picture.y - room.y) * 0.5f);
         return new Vector2(Mathf.Clamp(want.x, -mx, mx), Mathf.Clamp(want.y, -my, my));
     }
 
@@ -828,17 +1451,20 @@ public class MapWindow : MonoBehaviour
 
     static void ResetView(View v)
     {
-        v.zoom = 1f;
-        v.pan = Vector2.zero;
+        v.zoom = v.goalZoom = 1f;
+        v.pan = v.goalPan = Vector2.zero;
         ApplyView(v);
     }
 
-    /// <summary>The wheel, the drag and the click, caught by the black backdrop that covers the whole screen.</summary>
+    /// <summary>The wheel, the drag and the click, caught over the map's room.</summary>
     sealed class MapInput : MonoBehaviour, IScrollHandler, IBeginDragHandler, IDragHandler, IPointerClickHandler,
                             IPointerMoveHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public MapWindow owner;
-        public void OnScroll(PointerEventData e) => owner.ZoomAt(e.position, e.scrollDelta.y);
+        public void OnScroll(PointerEventData e)
+        {
+            owner.ZoomAt(e.position, e.scrollDelta.y);
+        }
         public void OnBeginDrag(PointerEventData e) { }
         public void OnDrag(PointerEventData e)
         {
@@ -866,7 +1492,28 @@ public class MapWindow : MonoBehaviour
         }
     }
 
+    /// <summary>The wheel and the pointer over the side panel: the wheel scrolls its list, and a name the pointer rests
+    /// on opens its creature card. The panel catches clicks, so nothing behind it is picked.</summary>
+    sealed class PanelInput : MonoBehaviour, IScrollHandler, IPointerMoveHandler, IPointerEnterHandler, IPointerExitHandler
+    {
+        public MapWindow owner;
+        public void OnScroll(PointerEventData e)
+        {
+            // The list moved under a still pointer, so the name under it is looked up again.
+            if (owner.zoneRoster.ScrollAt(e.position, e.scrollDelta.y)) owner.cardLooked = false;
+        }
+        public void OnPointerEnter(PointerEventData e) { owner.pointerOverPanel = true; owner.pointer = e.position; }
+        public void OnPointerMove(PointerEventData e) => owner.pointer = e.position;
+        public void OnPointerExit(PointerEventData e) => owner.pointerOverPanel = false;
+    }
+
     // ── UI construction, on the main screen layer ─────────────────────────────────────────────────────────────────
+    // The side panel's sizes.
+    const float PanelPadX = 14f, HeadPadTop = 10f, HeadPadBottom = 12f, WhereGap = 2f, HeadButtonsGap = 10f,
+                HeadButtonHeight = 28f, HeadButtonPad = 10f, HeadButtonSpacing = 6f, ListPadTop = 4f, ListPadBottom = 10f;
+    // The corner buttons: square, stacked up from the room's bottom-right corner.
+    const float CornerButton = 38f, CornerGap = 6f, CornerInset = 16f;
+
     void BuildUI()
     {
         panel = new GameObject("MapWindow", typeof(RectTransform)) { hideFlags = HideFlags.DontSaveInEditor };
@@ -874,15 +1521,41 @@ public class MapWindow : MonoBehaviour
         panelRect = panel.GetComponent<RectTransform>();
         Stretch(panelRect);
 
-        // solid black, click-blocking backdrop — and the thing the wheel, the drag and the click land on
-        var dim = NewImage("Dim", panel.transform, Color.black);
-        Stretch(dim.rectTransform);
-        dim.raycastTarget = true;
-        dim.gameObject.AddComponent<MapInput>().owner = this;
+        // THE MAP'S ROOM, left of the side panel: the window's fill, the map over it, the footer under it.
+        mapArea = new GameObject("MapArea", typeof(RectTransform)).GetComponent<RectTransform>();
+        mapArea.SetParent(panel.transform, false);
+        Stretch(mapArea);
+        Stretch(NewImage("Fill", mapArea, UiKit.PanelFill).rectTransform);
+        viewport = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D)).GetComponent<RectTransform>();
+        viewport.SetParent(mapArea, false);
+        Stretch(viewport);
+        viewport.offsetMin = new Vector2(0f, FooterHeight);
+        // the thing the wheel, the drag and the click land on, and that keeps a click off the world behind
+        var catcher = UiKit.Img("Catcher", viewport, new Color(0f, 0f, 0f, 0f));
+        Stretch(catcher.rectTransform);
+        catcher.raycastTarget = true;
+        catcher.gameObject.AddComponent<MapInput>().owner = this;
 
         atlasImage = BuildView(world, "World", hasWorldView ? data.atlas : null,
                                hasWorldView ? (float)data.atlas.width / Mathf.Max(1, data.atlas.height) : 1f);
         zoneImage = BuildView(zone, "Zone", null, 1f);
+        var tileRoot = new GameObject("Squares", typeof(RectTransform)).GetComponent<RectTransform>();
+        tileRoot.SetParent(zone.picture, false);
+        tileRoot.SetAsFirstSibling();
+        Stretch(tileRoot);
+        zoneTiles = new MapTileLayer(tileRoot);
+        patchImage = new GameObject("RespawnPatches", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage))
+            .GetComponent<RawImage>();
+        patchImage.transform.SetParent(zone.picture, false);
+        patchImage.raycastTarget = false;
+        Stretch(patchImage.rectTransform);
+        patchFade = NewFade(patchImage.gameObject, FadeSeconds);
+        patchHoverImage = new GameObject("PatchUnderPointer", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage))
+            .GetComponent<RawImage>();
+        patchHoverImage.transform.SetParent(zone.picture, false);
+        patchHoverImage.raycastTarget = false;
+        Stretch(patchHoverImage.rectTransform);
+        patchHoverFade = NewFade(patchHoverImage.gameObject, FadeSeconds);
         BuildDoors();
         BuildKindIcons();
 
@@ -899,6 +1572,19 @@ public class MapWindow : MonoBehaviour
         peopleRoot.SetParent(zone.picture, false);
         peopleRoot.anchorMin = peopleRoot.anchorMax = peopleRoot.pivot = new Vector2(0.5f, 0.5f);
 
+        // the level ranges under the labels, each layer fading on its own
+        rangeRoot = new GameObject("LevelRanges", typeof(RectTransform)).GetComponent<RectTransform>();
+        rangeRoot.SetParent(zone.picture, false);
+        rangeRoot.anchorMin = rangeRoot.anchorMax = rangeRoot.pivot = new Vector2(0.5f, 0.5f);
+        rangeFade = NewFade(rangeRoot.gameObject, FadeSeconds);
+
+        labelRoot = new GameObject("Places", typeof(RectTransform)).GetComponent<RectTransform>();
+        labelRoot.SetParent(zone.picture, false);
+        labelRoot.anchorMin = labelRoot.anchorMax = labelRoot.pivot = new Vector2(0.5f, 0.5f);
+        labelFade = NewFade(labelRoot.gameObject, FadeSeconds);
+        labelFade.on = showLabels;
+        labelFade.t = showLabels ? 1f : 0f;
+
         pinSprite = GuidePin.Sprite;
         guidePin = NewImage("GuidePin", zone.picture, UiKit.Accent);
         guidePin.sprite = pinSprite;
@@ -910,46 +1596,45 @@ public class MapWindow : MonoBehaviour
         guidePin.gameObject.SetActive(false);
         zone.marker.SetAsLastSibling();
 
-        zoneMissing = NewText("NoPicture", panel.transform, "This map has no picture yet.", 16, TextAnchor.MiddleCenter);
+        zoneMissing = NewText("NoPicture", viewport, "This map has no picture yet.", 16, TextAnchor.MiddleCenter);
+        UiKit.Paint(zoneMissing, UiKit.TextDim);
         Stretch(zoneMissing.rectTransform);
 
-        title = NewText("Title", panel.transform, "", 22, TextAnchor.UpperCenter);
-        Top(title.rectTransform, 24f, 420f);
-        whereLabel = NewText("Where", panel.transform, "", 14, TextAnchor.LowerCenter);
-        Bottom(whereLabel.rectTransform, 43f, 420f);
-        var hint = NewText("Hint", panel.transform, $"[{GameKeys.Label(GameKeys.Map)}] / [Esc] to close", 11, TextAnchor.LowerCenter);
-        UiKit.Paint(hint, UiKit.TextOnDim, 0.6f);
-        Bottom(hint.rectTransform, 23f, 420f);
-
         // between the zone and the world map
-        var switchBtn = UiKit.Btn("", panel.transform, SwitchView);
+        var switchBtn = UiKit.Btn("", viewport, SwitchView);
         switchButton = switchBtn.gameObject;
         switchButton.SetActive(hasWorldView);
         var srt = (RectTransform)switchBtn.transform;
         srt.anchorMin = srt.anchorMax = srt.pivot = new Vector2(0f, 1f);
         srt.sizeDelta = new Vector2(110f, 28f);
-        srt.anchoredPosition = new Vector2(24f, -24f);
+        srt.anchoredPosition = new Vector2(16f, -16f);
         switchLabel = switchBtn.GetComponentInChildren<TMP_Text>();
         switchIcon = UiKit.ButtonIcon(switchBtn, UiIcons.Get("WorldMap"), keepWords: true);
 
-        // back to where you are (see Update for when it shows)
-        var locate = UiKit.Btn("", panel.transform, Locate);
-        var lrt = (RectTransform)locate.transform;
-        lrt.anchorMin = lrt.anchorMax = lrt.pivot = new Vector2(1f, 0f);
-        lrt.sizeDelta = new Vector2(38f, 38f);
-        lrt.anchoredPosition = new Vector2(-26f, 26f);
+        // the corner: zoom in, zoom out, back to where you are
+        CornerBtn("+", 2, () => ZoomStep(1f));
+        CornerBtn("−", 1, () => ZoomStep(-1f));
+        var locate = CornerBtn("", 0, Locate);
         var pin = NewImage("Pin", locate.transform, UiKit.Accent);
         pin.sprite = pinSprite;
         pin.rectTransform.sizeDelta = new Vector2(24f, 24f);
-        locateButton = locate.gameObject;
-        locateButton.SetActive(false);
 
-        zoneRoster = new RosterCard(panel.transform);
-        var zrt = zoneRoster.Root;
-        zrt.anchorMin = zrt.anchorMax = zrt.pivot = new Vector2(1f, 1f);
-        zrt.anchoredPosition = new Vector2(-24f, -ZoneRosterTop);
-        hoverRoster = new RosterCard(panel.transform);
+        // the footer under the map
+        var footer = new GameObject("Footer", typeof(RectTransform)).GetComponent<RectTransform>();
+        footer.SetParent(mapArea, false);
+        footer.anchorMin = Vector2.zero; footer.anchorMax = new Vector2(1f, 0f); footer.pivot = new Vector2(0.5f, 0f);
+        footer.sizeDelta = new Vector2(0f, FooterHeight);
+        Line(footer, top: true);
+        var hint = NewText("Hint", footer, $"[{GameKeys.Label(GameKeys.Map)}] / [Esc] to close", 11, TextAnchor.MiddleCenter);
+        UiKit.Paint(hint, UiKit.TextDim);
+        Stretch(hint.rectTransform);
+
+        BuildSidePanel();
+
+        // the list beside the pointer: what the world keeps on the patch under it
+        hoverRoster = new RosterCard(panel.transform, card: true, padTop: 4f, padBottom: 4f);
         hoverRoster.Root.anchorMin = hoverRoster.Root.anchorMax = new Vector2(0.5f, 0.5f);
+        tipFade = NewFade(hoverRoster.Root.gameObject, TipFadeSeconds);
 
         // the creature card — built last, so it draws over the list it belongs to; it catches no clicks
         var card = UiKit.Card(UiKit.Img("MobCard", panel.transform, Color.white));
@@ -970,18 +1655,149 @@ public class MapWindow : MonoBehaviour
         frt.sizeDelta = new Vector2(MobCardFaceSize, MobCardFaceSize);
         foreach (var g in card.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
         mobCard.gameObject.SetActive(false);
+
+        LayRoom();
     }
 
-    // Where the zone view's list sits: below the title, above the location button.
-    const float ZoneRosterTop = 64f, ZoneRosterBottom = 76f;
+    // THE SIDE PANEL: the fold bar on top; under it the map's name, where you stand and the two toggles; under those the
+    // mobs where you stand.
+    void BuildSidePanel()
+    {
+        // clipped, so its words never spill past it while it widens
+        sidePanel = new GameObject("SidePanel", typeof(RectTransform), typeof(RectMask2D)).GetComponent<RectTransform>();
+        sidePanel.SetParent(panel.transform, false);
+        sidePanel.anchorMin = new Vector2(1f, 0f); sidePanel.anchorMax = Vector2.one; sidePanel.pivot = new Vector2(1f, 0.5f);
+        var fill = UiKit.Img("Fill", sidePanel, UiKit.PanelFill);
+        Stretch(fill.rectTransform);
+        fill.raycastTarget = true;
+        fill.gameObject.AddComponent<PanelInput>().owner = this;
+        var edge = NewImage("Edge", sidePanel, UiKit.WindowEdge);
+        var ert = edge.rectTransform;
+        ert.anchorMin = Vector2.zero; ert.anchorMax = new Vector2(0f, 1f); ert.pivot = new Vector2(0f, 0.5f);
+        ert.sizeDelta = new Vector2(1f, 0f);
+
+        // the fold bar
+        var bar = UiKit.Img("Fold", sidePanel, UiKit.PanelRaise);
+        var brt = bar.rectTransform;
+        brt.anchorMin = new Vector2(0f, 1f); brt.anchorMax = Vector2.one; brt.pivot = new Vector2(0.5f, 1f);
+        brt.offsetMin = new Vector2(1f, -FooterHeight); brt.offsetMax = Vector2.zero;
+        var fold = bar.gameObject.AddComponent<Button>();
+        fold.targetGraphic = bar;
+        bar.gameObject.AddComponent<UiButtonFx>();
+        fold.onClick.AddListener(ToggleFold);
+        Line(brt, top: false);
+        foldLabel = NewText("Arrow", brt, "›", 14, TextAnchor.MiddleLeft);
+        UiKit.Paint(foldLabel, UiKit.TextDim);
+        Stretch(foldLabel.rectTransform);
+        foldLabel.rectTransform.offsetMin = new Vector2(9f, 0f);
+
+        var body = new GameObject("Body", typeof(RectTransform)).GetComponent<RectTransform>();
+        body.SetParent(sidePanel, false);
+        Stretch(body);
+        body.offsetMin = new Vector2(1f, 0f);
+        body.offsetMax = new Vector2(0f, -FooterHeight);
+        panelBody = body.gameObject;
+
+        float y = HeadPadTop;
+        title = NewText("Title", body, "", 22, TextAnchor.UpperLeft);
+        UiKit.Paint(title, UiKit.TitleText);
+        y = HeadLine(title.rectTransform, y, title.GetPreferredValues("Ag").y);
+        whereLabel = NewText("Where", body, "", 14, TextAnchor.UpperLeft);
+        UiKit.Paint(whereLabel, UiKit.TextDim);
+        y = HeadLine(whereLabel.rectTransform, y + WhereGap, whereLabel.GetPreferredValues("Ag").y);
+        y += HeadButtonsGap;
+
+        // the respawn patches over the map, and the world's places on it, on and off; side by side while they fit
+        float x = PanelPadX;
+        HeadButton(body, "Show respawn patches", TogglePatches, ref x, ref y, out patchLabel, out patchButton);
+        HeadButton(body, "Hide map labels", ToggleLabels, ref x, ref y, out labelLabel, out labelButton);
+        y += HeadButtonHeight + HeadPadBottom;
+        var rule = new GameObject("Rule", typeof(RectTransform)).GetComponent<RectTransform>();
+        rule.SetParent(body, false);
+        rule.anchorMin = new Vector2(0f, 1f); rule.anchorMax = Vector2.one; rule.pivot = new Vector2(0.5f, 1f);
+        rule.sizeDelta = new Vector2(0f, 0f);
+        rule.anchoredPosition = new Vector2(0f, -y);
+        Line(rule, top: true);
+
+        // the mobs where you stand
+        listRoom = new GameObject("List", typeof(RectTransform)).GetComponent<RectTransform>();
+        listRoom.SetParent(body, false);
+        Stretch(listRoom);
+        listRoom.offsetMax = new Vector2(0f, -y);
+        zoneRoster = new RosterCard(listRoom, card: false, padTop: ListPadTop, padBottom: ListPadBottom);
+        var zrt = zoneRoster.Root;
+        zrt.anchorMin = zrt.anchorMax = zrt.pivot = new Vector2(0f, 1f);
+    }
+
+    RectTransform listRoom;
+
+    // One line of the panel's head: full width less the padding, `height` tall, `top` down from the body's top.
+    static float HeadLine(RectTransform rt, float top, float height)
+    {
+        rt.anchorMin = new Vector2(0f, 1f); rt.anchorMax = Vector2.one; rt.pivot = new Vector2(0.5f, 1f);
+        rt.offsetMin = new Vector2(PanelPadX, -top - height);
+        rt.offsetMax = new Vector2(-PanelPadX, -top);
+        return top + height;
+    }
+
+    // A head button as wide as its words, beside the last one, or on the next line when it would run past the panel.
+    void HeadButton(Transform parent, string words, System.Action onClick, ref float x, ref float y, out TMP_Text label, out GameObject button)
+    {
+        var b = UiKit.Btn(words, parent, onClick);
+        label = b.GetComponentInChildren<TMP_Text>();
+        label.fontSize = 13f;
+        // as wide as the longer of its two wordings, so it never changes size when it flips
+        string other = words.StartsWith("Show") ? "Hide" + words.Substring(4) : "Show" + words.Substring(4);
+        float width = Mathf.Max(label.GetPreferredValues(words).x, label.GetPreferredValues(other).x) + 2f * HeadButtonPad;
+        if (x > PanelPadX && x + width > PanelWidth - PanelPadX) { x = PanelPadX; y += HeadButtonHeight + HeadButtonSpacing; }
+        var rt = (RectTransform)b.transform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+        rt.sizeDelta = new Vector2(width, HeadButtonHeight);
+        rt.anchoredPosition = new Vector2(x, -y);
+        x += width + HeadButtonSpacing;
+        button = b.gameObject;
+    }
+
+    // A square button in the map's bottom-right corner, `fromBottom` places up the stack.
+    Button CornerBtn(string words, int fromBottom, System.Action onClick)
+    {
+        var b = UiKit.Btn(words, viewport, onClick);
+        b.GetComponentInChildren<TMP_Text>().fontSize = 20f;
+        var rt = (RectTransform)b.transform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0f);
+        rt.sizeDelta = new Vector2(CornerButton, CornerButton);
+        rt.anchoredPosition = new Vector2(-CornerInset, CornerInset + fromBottom * (CornerButton + CornerGap));
+        return b;
+    }
+
+    // A one-unit rule along the top or the bottom edge of `rt`.
+    static void Line(RectTransform rt, bool top)
+    {
+        var line = NewImage("Rule", rt, UiKit.Rule).rectTransform;
+        float y = top ? 1f : 0f;
+        line.anchorMin = new Vector2(0f, y); line.anchorMax = new Vector2(1f, y); line.pivot = new Vector2(0.5f, y);
+        line.sizeDelta = new Vector2(0f, 1f);
+        line.anchoredPosition = Vector2.zero;
+    }
+
+    // The list beside the pointer is at least this wide.
+    const float TipMinWidth = 230f;
+    // The most of the screen's width a list may take, so the map beside it stays in view however many live there.
+    const float RosterWidthShare = 0.4f;
+    float RosterMaxWidth => panelRect.rect.width * RosterWidthShare;
     // The hover list's distance from the pointer, and the least it keeps from the screen's edge.
     const float HoverGap = 16f, HoverEdge = 12f;
 
+    // Passed as the patch to a roster card: the whole map.
+    const int WholeMap = int.MinValue;
+
     /// <summary>
-    /// WHO LIVES IN ONE MAP — its mobs, then its NPCs, each with its level (<see cref="UnitLabel.WithLevel"/>), read
-    /// from the two lists of who lives where (<see cref="WorldSpawns.CreaturesIn"/>, <see cref="WorldTownsfolk.PeopleIn"/>).
-    /// A list taller than the room it is given carries on in another column to the right. It catches no clicks, so
-    /// the map under it still zooms, drags and picks. Hidden while the map has nobody.
+    /// WHO LIVES IN ONE MAP OR ONE PATCH OF IT — a whole map's mobs, then its NPCs; a patch's mobs alone — one row each:
+    /// the name, the level, and for a patch the number its row of the spawn list keeps there, never how many are alive.
+    /// Read from the two lists of who lives where (<see cref="WorldSpawns.CreaturesIn"/>, <see cref="WorldSpawns.RowsOn"/>,
+    /// <see cref="WorldTownsfolk.PeopleIn"/>). Each new list slides its rows in one after another. A list longer than its
+    /// room scrolls inside it with the wheel (<see cref="ScrollAt"/>). It catches no clicks, so the map under it still
+    /// drags and picks.
     /// </summary>
     sealed class RosterCard
     {
@@ -989,153 +1805,308 @@ public class MapWindow : MonoBehaviour
         public bool HasPeople { get; private set; }
         public float LaidForHeight { get; private set; } = -1f;
 
-        const float Pad = 10f, ColumnGap = 18f, EntrySize = 13f, HeadSize = 14f;
+        // The map window's list sizes: a row is its name, a 52-wide level and a 36-wide count, 6 apart.
+        const float RowSize = 13f, HeadSize = 14f, PadX = 14f, RowPadY = 3f, LevelColumn = 52f, CountColumn = 36f, ColumnGap = 6f;
+        const float HeadPadTop = 10f, HeadPadBottom = 4f;
+        // Each row fades in rising RowRise over RowInSeconds, RowStagger after the one above it.
+        const float RowInSeconds = 0.2f, RowStagger = 0.025f, RowRise = 4f;
 
-        readonly TMP_Text title;
-        readonly List<TMP_Text> columns = new List<TMP_Text>();
+        sealed class Line
+        {
+            public RectTransform rt;
+            public CanvasGroup fade;
+            public TMP_Text name, level, count;
+            public MonsterDef mob;
+            public float top, height, delay, age = -1f;
+        }
+
+        readonly bool lightsRows;
+        readonly float padTop, padBottom;
+        // The clipped window onto the list, and the list itself, which slides up inside it as it scrolls.
+        readonly RectTransform view, content;
+        readonly Image lit;
+        readonly List<Line> lines = new List<Line>();
+        int used;
         readonly List<MonsterDef> mobs = new List<MonsterDef>();
         readonly List<WorldTownsfolk.Row> people = new List<WorldTownsfolk.Row>();
-        readonly List<string> lines = new List<string>();
-        readonly List<bool> heads = new List<bool>();
-        // The creature each line names (null for a heading, a blank or a person), and the line each shown column opens on.
-        readonly List<MonsterDef> lineMobs = new List<MonsterDef>();
-        readonly List<int> columnStarts = new List<int>();
-        int shownColumns;
-        readonly System.Text.StringBuilder sb = new System.Text.StringBuilder();
-        readonly string headOpen;
+        readonly List<(MonsterDef def, int kept)> rows = new List<(MonsterDef def, int kept)>();
+        // How far the list is scrolled down, the most it can be, and the map and patch it was laid out for — a new one
+        // starts at the top and slides its rows in, the same one laid out again (a new screen size) stays as it was.
+        float scrolled, scrollMax, rowHeight, headHeight;
+        string laidMap;
+        int laidArea = int.MaxValue;
+        bool entering;
 
-        public RosterCard(Transform parent)
+        /// <summary>A card of its own beside the pointer (<paramref name="card"/>), or a plain list inside a panel, whose
+        /// row under the pointer is lit (<see cref="LightRow"/>).</summary>
+        public RosterCard(Transform parent, bool card, float padTop, float padBottom)
         {
-            var card = UiKit.Card(UiKit.Img("Roster", parent, Color.white));
-            foreach (var g in card.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
-            Root = card.rectTransform;
-            title = UiKit.MakeText("Map", Root, "", HeadSize, FontStyle.Bold, TextAnchor.UpperLeft);
-            UiKit.Paint(title, UiKit.TitleText);
-            title.raycastTarget = false;
-            Corner(title.rectTransform);
-            headOpen = "<b><color=" + UiKit.Hex(UiKit.TitleText) + ">";
-            Root.gameObject.SetActive(false);
+            Root = card ? UiKit.Card(UiKit.Img("Roster", parent, Color.white)).rectTransform
+                        : new GameObject("Roster", typeof(RectTransform)).GetComponent<RectTransform>();
+            if (!card) Root.SetParent(parent, false);
+            foreach (var g in Root.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
+            lightsRows = !card;
+            this.padTop = padTop;
+            this.padBottom = padBottom;
+            view = new GameObject("View", typeof(RectTransform), typeof(RectMask2D)).GetComponent<RectTransform>();
+            view.SetParent(Root, false);
+            Corner(view);
+            content = new GameObject("Lines", typeof(RectTransform)).GetComponent<RectTransform>();
+            content.SetParent(view, false);
+            Corner(content);
+            lit = UiKit.Img("Lit", content, UiKit.Hover);
+            lit.raycastTarget = false;
+            Corner(lit.rectTransform);
+            lit.gameObject.SetActive(false);
         }
 
-        public void SetVisible(bool on)
+        /// <summary>True when <paramref name="screenPoint"/> is over the card while it is shown.</summary>
+        public bool Contains(Vector2 screenPoint) =>
+            Root.gameObject.activeInHierarchy && RectTransformUtility.RectangleContainsScreenPoint(Root, screenPoint, null);
+
+        /// <summary>Nothing to list.</summary>
+        public void Clear(float maxHeight, float width)
         {
-            bool want = on && HasPeople;
-            if (Root.gameObject.activeSelf != want) Root.gameObject.SetActive(want);
+            Begin(null, int.MaxValue, maxHeight);
+            Finish(width, width, maxHeight);
         }
 
-        /// <summary>Lay out who lives in <paramref name="map"/> under <paramref name="heading"/> (none when null),
-        /// at most <paramref name="maxHeight"/> tall, and show it when anybody lives there.</summary>
-        public void Show(string heading, string map, float maxHeight)
+        /// <summary>Only <paramref name="heading"/> and one line saying there is nobody (<paramref name="none"/>).</summary>
+        public void ShowNone(string heading, string none, float maxHeight, float width)
         {
-            LaidForHeight = maxHeight;
-            WorldSpawns.CreaturesIn(map, mobs);
-            WorldTownsfolk.PeopleIn(map, people);
-            HasPeople = mobs.Count > 0 || people.Count > 0;
-            if (!HasPeople) { shownColumns = 0; SetVisible(false); return; }
+            Begin(null, -1, maxHeight);
+            Head(heading);
+            Row(none, "", "", null, UiKit.TextDim);
+            Finish(width, width, maxHeight);
+        }
 
-            lines.Clear();
-            heads.Clear();
-            lineMobs.Clear();
-            columnStarts.Clear();
-            if (mobs.Count > 0)
-            {
-                Add("Mobs", true);
-                // How many are alive there right now over how many the map keeps, as the server last said
-                // (MapCreatureCounts) — alive alone for a creature only a random mix puts there; no number until it has.
-                foreach (var m in mobs)
-                    Add(UnitLabel.WithLevel(m.displayName, m.level) + (m.kind == CreatureKind.Elite ? " (Elite)" : "")
-                        + (!MapCreatureCounts.TryGet(map, m.id, out int alive, out int kept) ? ""
-                           : kept > 0 ? "  " + alive + "/" + kept : "  " + alive), false, m);
-            }
+        /// <summary>Lay out who lives in <paramref name="map"/> — the whole of it (<see cref="WholeMap"/>), or only its
+        /// patch <paramref name="area"/> — under <paramref name="heading"/> (none when null), at most
+        /// <paramref name="maxHeight"/> tall and between <paramref name="minWidth"/> and <paramref name="maxWidth"/>
+        /// wide.</summary>
+        public void Show(string heading, string map, int area, float maxHeight, float minWidth, float maxWidth)
+        {
+            Begin(map, area, maxHeight);
+            bool wholeMap = area == WholeMap;
+            mobs.Clear();
+            rows.Clear();
+            people.Clear();
+            if (wholeMap) { WorldSpawns.CreaturesIn(map, mobs); WorldTownsfolk.PeopleIn(map, people); }
+            else WorldSpawns.RowsOn(map, area, rows);
+            HasPeople = mobs.Count > 0 || rows.Count > 0 || people.Count > 0;
+            // A whole map names its mobs with no number: how many it keeps is a sum of its rows, which is the server's to
+            // work out. A patch lists its rows, each with the number it keeps; none for a creature only a random mix puts
+            // there, whose count belongs to the whole mix.
+            if (wholeMap && mobs.Count > 0) heading = "Mobs";
+            if (HasPeople && !string.IsNullOrEmpty(heading)) Head(heading);
+            foreach (var m in mobs) Row(MobName(m), LevelOf(m.level), "", m, UiKit.TextMain);
+            foreach (var (m, n) in rows) Row(MobName(m), LevelOf(m.level), n > 0 ? "×" + n : "", m, UiKit.TextMain);
             if (people.Count > 0)
             {
-                if (lines.Count > 0) Add("", false);
-                Add("NPCs", true);
+                Head("NPCs");
                 foreach (var p in people)
-                    Add(UnitLabel.WithLevel(p.name, p.level) + (string.IsNullOrEmpty(p.description) ? "" : "  · " + p.description), false);
+                    Row(p.name + (string.IsNullOrEmpty(p.description) ? "" : "  · " + p.description), LevelOf(p.level), "", null, UiKit.TextMain);
             }
-
-            bool titled = !string.IsNullOrEmpty(heading);
-            title.gameObject.SetActive(titled);
-            float top = Pad;
-            if (titled)
-            {
-                title.text = heading;
-                Vector2 t = title.GetPreferredValues(heading);
-                title.rectTransform.anchoredPosition = new Vector2(Pad, -Pad);
-                title.rectTransform.sizeDelta = t;
-                top += t.y + 4f;
-            }
-
-            float lineHeight = Column(0).GetPreferredValues("Ag").y;
-            int perColumn = Mathf.Max(2, Mathf.FloorToInt((maxHeight - top - Pad) / Mathf.Max(1f, lineHeight)));
-
-            int used = 0, at = 0;
-            float x = Pad, tallest = 0f, widest = titled ? title.rectTransform.sizeDelta.x : 0f;
-            while (at < lines.Count)
-            {
-                // A blank line never opens a column, and a heading never closes one.
-                if (lines[at].Length == 0) { at++; continue; }
-                int end = Mathf.Min(lines.Count, at + perColumn);
-                if (end < lines.Count && end - at > 1 && heads[end - 1]) end--;
-                if (end < lines.Count && end - at > 2 && lines[end - 1].Length == 0) end--;
-
-                sb.Clear();
-                for (int i = at; i < end; i++)
-                {
-                    if (i > at) sb.Append('\n');
-                    if (heads[i]) sb.Append(headOpen).Append(lines[i]).Append("</color></b>");
-                    else sb.Append(lines[i]);
-                }
-                columnStarts.Add(at);
-                var col = Column(used++);
-                col.gameObject.SetActive(true);
-                col.text = sb.ToString();
-                Vector2 size = col.GetPreferredValues(col.text);
-                col.rectTransform.anchoredPosition = new Vector2(x, -top);
-                col.rectTransform.sizeDelta = size;
-                x += size.x + ColumnGap;
-                tallest = Mathf.Max(tallest, size.y);
-                at = end;
-            }
-            for (int i = used; i < columns.Count; i++) columns[i].gameObject.SetActive(false);
-            shownColumns = used;
-
-            float width = Mathf.Max(x - ColumnGap + Pad, widest + 2f * Pad);
-            Root.sizeDelta = new Vector2(width, top + tallest + Pad);
-            SetVisible(true);
+            Finish(minWidth, maxWidth, maxHeight);
         }
 
-        void Add(string line, bool head, MonsterDef mob = null) { lines.Add(line); heads.Add(head); lineMobs.Add(mob); }
+        static string MobName(MonsterDef m) => m.displayName + (m.kind == CreatureKind.Elite ? " (Elite)" : "");
+        static string LevelOf(int level) => "Lv " + level;
 
-        /// <summary>The creature whose line of the list is under <paramref name="screenPoint"/>; null over anything else.</summary>
-        public MonsterDef MobUnder(Vector2 screenPoint)
+        void Begin(string map, int area, float maxHeight)
         {
-            if (!Root.gameObject.activeSelf) return null;
-            for (int i = 0; i < shownColumns; i++)
+            LaidForHeight = maxHeight;
+            entering = map != laidMap || area != laidArea;
+            if (entering) scrolled = 0f;
+            laidMap = map;
+            laidArea = area;
+            HasPeople = false;
+            used = 0;
+            lit.gameObject.SetActive(false);
+            if (rowHeight <= 0f)
             {
-                var col = columns[i];
-                if (!RectTransformUtility.RectangleContainsScreenPoint(col.rectTransform, screenPoint, null)) continue;
-                int line = TMP_TextUtilities.FindIntersectingLine(col, screenPoint, null);
-                int at = line >= 0 ? columnStarts[i] + line : -1;
-                return at >= 0 && at < lineMobs.Count ? lineMobs[at] : null;
+                // From the face's own line height: a card still hidden measures its words as nothing.
+                var face = Take().name.font.faceInfo;
+                float line = face.lineHeight / Mathf.Max(1f, face.pointSize);
+                rowHeight = line * RowSize + 2f * RowPadY;
+                headHeight = line * HeadSize + HeadPadTop + HeadPadBottom;
+                used = 0;
             }
+        }
+
+        void Head(string text)
+        {
+            var l = Take();
+            l.name.fontSize = HeadSize;
+            UiKit.Paint(l.name, UiKit.TitleText);
+            l.name.text = text;
+            l.level.text = l.count.text = "";
+            l.mob = null;
+            l.height = headHeight;
+            l.name.rectTransform.offsetMin = new Vector2(PadX, HeadPadBottom);
+            l.name.rectTransform.offsetMax = new Vector2(-PadX, -HeadPadTop);
+            l.delay = -1f;
+        }
+
+        int rowIndex;
+        void Row(string name, string level, string count, MonsterDef mob, ThemeColor colour)
+        {
+            var l = Take();
+            l.name.fontSize = RowSize;
+            UiKit.Paint(l.name, colour);
+            l.name.text = name;
+            l.level.text = level;
+            l.count.text = count;
+            l.mob = mob;
+            l.height = rowHeight;
+            l.name.rectTransform.offsetMin = new Vector2(PadX, RowPadY);
+            l.name.rectTransform.offsetMax = new Vector2(-(PadX + LevelColumn + CountColumn + 2f * ColumnGap), -RowPadY);
+            l.delay = rowIndex++ * RowStagger;
+        }
+
+        void Finish(float minWidth, float maxWidth, float maxHeight)
+        {
+            rowIndex = 0;
+            float widest = 0f, y = padTop;
+            for (int i = 0; i < used; i++)
+            {
+                var l = lines[i];
+                l.top = y;
+                y += l.height;
+                widest = Mathf.Max(widest, l.name.GetPreferredValues(l.name.text).x
+                                   + (l.delay >= 0f ? LevelColumn + CountColumn + 2f * ColumnGap : 0f));
+            }
+            for (int i = used; i < lines.Count; i++) lines[i].rt.gameObject.SetActive(false);
+            float width = Mathf.Clamp(widest + 2f * PadX, minWidth, maxWidth);
+            float listHeight = y + padBottom;
+            float shown = Mathf.Min(listHeight, Mathf.Max(0f, maxHeight));
+            for (int i = 0; i < used; i++)
+            {
+                var l = lines[i];
+                l.rt.sizeDelta = new Vector2(width, l.height);
+                // A new list slides in; the same one laid out again stands still.
+                l.age = entering && l.delay >= 0f ? 0f : -1f;
+                Place(l);
+            }
+            view.sizeDelta = new Vector2(width, shown);
+            content.sizeDelta = new Vector2(width, listHeight);
+            scrollMax = listHeight - shown;
+            ScrollBy(0f);
+            Root.sizeDelta = new Vector2(width, shown);
+        }
+
+        Line Take()
+        {
+            if (used == lines.Count)
+            {
+                var rt = new GameObject("Row", typeof(RectTransform), typeof(CanvasGroup)).GetComponent<RectTransform>();
+                rt.SetParent(content, false);
+                Corner(rt);
+                var l = new Line { rt = rt, fade = rt.GetComponent<CanvasGroup>() };
+                l.fade.blocksRaycasts = false;
+                l.name = Column(rt, "Name", TextAlignmentOptions.BaselineLeft, UiKit.TextMain);
+                l.name.overflowMode = TextOverflowModes.Ellipsis;
+                l.level = Column(rt, "Level", TextAlignmentOptions.BaselineRight, UiKit.TextDim);
+                SetColumn(l.level.rectTransform, PadX + CountColumn + ColumnGap, LevelColumn);
+                l.count = Column(rt, "Count", TextAlignmentOptions.BaselineRight, UiKit.TextDim);
+                SetColumn(l.count.rectTransform, PadX, CountColumn);
+                lines.Add(l);
+            }
+            var line = lines[used++];
+            if (!line.rt.gameObject.activeSelf) line.rt.gameObject.SetActive(true);
+            return line;
+        }
+
+        static TMP_Text Column(RectTransform row, string name, TextAlignmentOptions align, ThemeColor colour)
+        {
+            var t = UiKit.MakeText(name, row, "", RowSize, FontStyle.Normal, TextAnchor.MiddleLeft);
+            UiKit.Paint(t, colour);
+            t.raycastTarget = false;
+            t.richText = false;
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            t.alignment = align;
+            var rt = t.rectTransform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            return t;
+        }
+
+        // A column of `width` standing `fromRight` in from the row's right edge.
+        static void SetColumn(RectTransform rt, float fromRight, float width)
+        {
+            rt.anchorMin = new Vector2(1f, 0f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 0.5f);
+            rt.sizeDelta = new Vector2(width, -2f * RowPadY);
+            rt.anchoredPosition = new Vector2(-fromRight, 0f);
+        }
+
+        /// <summary>Move the rows still sliding in; nothing to do once they all stand.</summary>
+        public void StepRows(float dt)
+        {
+            for (int i = 0; i < used; i++)
+            {
+                var l = lines[i];
+                if (l.age < 0f) continue;
+                l.age += dt;
+                if (l.age >= l.delay + RowInSeconds) l.age = -1f;
+                Place(l);
+            }
+        }
+
+        void Place(Line l)
+        {
+            float e = 1f;
+            if (l.age >= 0f)
+            {
+                float t = Mathf.Clamp01((l.age - l.delay) / RowInSeconds);
+                e = t * t * (3f - 2f * t);
+            }
+            l.fade.alpha = e;
+            l.rt.anchoredPosition = new Vector2(0f, -l.top - (1f - e) * RowRise);
+        }
+
+        /// <summary>Light the row under <paramref name="screenPoint"/> (none when <paramref name="over"/> is false) — a
+        /// panel list's rows only.</summary>
+        public void LightRow(Vector2 screenPoint, bool over)
+        {
+            if (!lightsRows) return;
+            Line hit = over ? LineUnder(screenPoint) : null;
+            bool on = hit != null && hit.level.text.Length > 0;
+            if (lit.gameObject.activeSelf != on) lit.gameObject.SetActive(on);
+            if (!on) return;
+            lit.rectTransform.SetAsFirstSibling();
+            lit.rectTransform.sizeDelta = hit.rt.sizeDelta;
+            lit.rectTransform.anchoredPosition = new Vector2(0f, -hit.top);
+        }
+
+        /// <summary>Scroll the list by <paramref name="notches"/> of the wheel when <paramref name="screenPoint"/> is over
+        /// the card and the list is longer than its room; false, with nothing moved, otherwise.</summary>
+        public bool ScrollAt(Vector2 screenPoint, float notches)
+        {
+            if (!Contains(screenPoint) || scrollMax <= 0f) return false;
+            ScrollBy(-notches * UiKit.ScrollStep);
+            return true;
+        }
+
+        void ScrollBy(float distance)
+        {
+            scrolled = Mathf.Clamp(scrolled + distance, 0f, Mathf.Max(0f, scrollMax));
+            content.anchoredPosition = new Vector2(0f, scrolled);
+        }
+
+        /// <summary>The creature whose row is under <paramref name="screenPoint"/>; null over anything else, a row
+        /// scrolled out of view included.</summary>
+        public MonsterDef MobUnder(Vector2 screenPoint) => LineUnder(screenPoint)?.mob;
+
+        Line LineUnder(Vector2 screenPoint)
+        {
+            if (!Root.gameObject.activeInHierarchy || !RectTransformUtility.RectangleContainsScreenPoint(view, screenPoint, null))
+                return null;
+            for (int i = 0; i < used; i++)
+                if (RectTransformUtility.RectangleContainsScreenPoint(lines[i].rt, screenPoint, null)) return lines[i];
             return null;
-        }
-
-        TMP_Text Column(int i)
-        {
-            while (columns.Count <= i)
-            {
-                var t = UiKit.MakeText("Column", Root, "", EntrySize, FontStyle.Normal, TextAnchor.UpperLeft);
-                UiKit.Paint(t, UiKit.TextMain);
-                t.raycastTarget = false;
-                t.richText = true;
-                t.textWrappingMode = TextWrappingModes.NoWrap;
-                Corner(t.rectTransform);
-                columns.Add(t);
-            }
-            return columns[i];
         }
 
         static void Corner(RectTransform rt) => rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
@@ -1404,15 +2375,5 @@ public class MapWindow : MonoBehaviour
     {
         rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
         rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
-    }
-    static void Top(RectTransform rt, float fromTop, float width)
-    {
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f); rt.pivot = new Vector2(0.5f, 1f);
-        rt.sizeDelta = new Vector2(width, 34f); rt.anchoredPosition = new Vector2(0f, -fromTop);
-    }
-    static void Bottom(RectTransform rt, float fromBottom, float width)
-    {
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f); rt.pivot = new Vector2(0.5f, 0f);
-        rt.sizeDelta = new Vector2(width, 20f); rt.anchoredPosition = new Vector2(0f, fromBottom);
     }
 }

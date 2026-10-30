@@ -260,7 +260,7 @@ public class QuestArrows : MonoBehaviour
         // The pin stands on the ground where the route ends. A spot picked on the map has no height of its own, so the
         // ground is looked for well above and below the player's.
         var pinAt = new Vector3(goal.x, from.y, goal.z);
-        if (GroundSnap.TryGroundY(pinAt, GroundSnap.GroundMask, PinGroundSearch, 2f * PinGroundSearch, out float groundY)) pinAt.y = groundY;
+        if (GroundSnap.SurfaceNearestY(pinAt, out float groundY)) pinAt.y = groundY;
         pin.transform.SetPositionAndRotation(pinAt, Quaternion.LookRotation(CameraRig.ForwardXZ));
         if (!pin.gameObject.activeSelf) pin.gameObject.SetActive(true);
 
@@ -278,7 +278,7 @@ public class QuestArrows : MonoBehaviour
             {
                 Vector2 at = prev + dir * along;
                 var pos = new Vector3(at.x, from.y, at.y);
-                if (GroundSnap.TryGroundY(pos, GroundSnap.GroundMask, out float y)) pos.y = y;
+                if (GroundSnap.SurfaceNearestY(pos, out float y)) pos.y = y;
                 pos.y += LiftAboveGround;
                 var tr = arrows[placed].transform;
                 tr.SetPositionAndRotation(pos, Quaternion.Euler(90f, Mathf.Atan2(dir.x, dir.y) * Mathf.Rad2Deg, 0f));

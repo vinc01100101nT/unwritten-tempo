@@ -20,6 +20,9 @@ public static class Coords
     /// <summary>A spot on the ground a person named by x and y, at the given height.</summary>
     public static Vector3 FromShown(float x, float y, float height) => new Vector3(x, height, y);
 
+    /// <summary>"X 12  Y -58  Z 0" — where you stand, in whole units, as the minimap and the map window write it.</summary>
+    public static string Shown(int x, int y, int z) => "X " + x + "  Y " + y + "  Z " + z;
+
     /// <summary>"x 1.2, y 3.4, z 0" — an engine position written for a person.</summary>
     public static string Text(Vector3 engine, string format = "0.#")
     {

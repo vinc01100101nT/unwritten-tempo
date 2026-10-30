@@ -110,30 +110,163 @@
       "alpha": 1.0
     }
   },
+  "palette_dark": {
+    "PanelFill": {
+      "hex": "#1E232C",
+      "alpha": 1.0
+    },
+    "PanelRaise": {
+      "hex": "#262C37",
+      "alpha": 1.0
+    },
+    "SlotFill": {
+      "hex": "#2C3340",
+      "alpha": 1.0
+    },
+    "SlotEmpty": {
+      "hex": "#0A0C10",
+      "alpha": 0.6
+    },
+    "WindowEdge": {
+      "hex": "#4A5D7C",
+      "alpha": 1.0
+    },
+    "TitleBarTop": {
+      "hex": "#34405A",
+      "alpha": 1.0
+    },
+    "TitleBarBottom": {
+      "hex": "#232C3E",
+      "alpha": 1.0
+    },
+    "TitleText": {
+      "hex": "#DBE5F5",
+      "alpha": 1.0
+    },
+    "ButtonFill": {
+      "hex": "#313949",
+      "alpha": 1.0
+    },
+    "ButtonEdge": {
+      "hex": "#4C5668",
+      "alpha": 1.0
+    },
+    "ButtonText": {
+      "hex": "#E4E8EF",
+      "alpha": 1.0
+    },
+    "Rule": {
+      "hex": "#3A4352",
+      "alpha": 1.0
+    },
+    "Hover": {
+      "hex": "#2F4466",
+      "alpha": 1.0
+    },
+    "Accent": {
+      "hex": "#4F7CC4",
+      "alpha": 1.0
+    },
+    "CloseFill": {
+      "hex": "#3A4456",
+      "alpha": 1.0
+    },
+    "TextMain": {
+      "hex": "#E6E9EE",
+      "alpha": 1.0
+    },
+    "TextDim": {
+      "hex": "#9AA3B2",
+      "alpha": 1.0
+    },
+    "Bad": {
+      "hex": "#EF6B6B",
+      "alpha": 1.0
+    },
+    "TextOnDim": {
+      "hex": "#FFFFFF",
+      "alpha": 1.0
+    },
+    "Good": {
+      "hex": "#5CC97A",
+      "alpha": 1.0
+    },
+    "PmText": {
+      "hex": "#D9C04A",
+      "alpha": 1.0
+    },
+    "NoticeSuccess": {
+      "hex": "#66E673",
+      "alpha": 1.0
+    },
+    "NoticeFailure": {
+      "hex": "#FF5F5F",
+      "alpha": 1.0
+    },
+    "NoticeWarning": {
+      "hex": "#FFD940",
+      "alpha": 1.0
+    },
+    "RarityRare": {
+      "hex": "#6AA0FF",
+      "alpha": 1.0
+    },
+    "RarityEpic": {
+      "hex": "#B98AF0",
+      "alpha": 1.0
+    },
+    "RarityLegendary": {
+      "hex": "#F0A040",
+      "alpha": 1.0
+    }
+  },
   "rarity": {},
   "shared_hexes": [
+    "#0A0C10",
     "#1B1B1B",
+    "#1E232C",
     "#222222",
     "#22324D",
+    "#232C3E",
+    "#262C37",
     "#2A62B8",
+    "#2C3340",
     "#2E7D41",
+    "#2F4466",
+    "#313949",
+    "#34405A",
+    "#3A4352",
+    "#3A4456",
+    "#4A5D7C",
+    "#4C5668",
+    "#4F7CC4",
     "#52525E",
     "#5B86C9",
+    "#5CC97A",
     "#66E673",
+    "#6AA0FF",
     "#6C7380",
     "#7F97BD",
     "#867200",
     "#8A3FB8",
+    "#9AA3B2",
     "#A85400",
     "#B5BDC9",
     "#B83A3A",
+    "#B98AF0",
     "#B9CCE9",
     "#C9D3E2",
     "#D6E5FB",
+    "#D9C04A",
     "#D9DFE8",
+    "#DBE5F5",
+    "#E4E8EF",
+    "#E6E9EE",
     "#E6EEFA",
     "#E9EBEF",
     "#EDF1F7",
+    "#EF6B6B",
+    "#F0A040",
     "#F7F8FA",
     "#FF5F5F",
     "#FFD940",
@@ -150,6 +283,11 @@
       "var": "pixel",
       "family": "PixelFont",
       "file": "PixelFont.ttf"
+    },
+    {
+      "var": "label",
+      "family": "Selawik",
+      "file": "Selawik.ttf"
     }
   ],
   "screens": {
@@ -294,19 +432,16 @@
       ]
     },
     "DayNightLight": {
-      "#0A0D1A": [
+      "#10B13D180": [
         1.0
       ],
-      "#1A1F38": [
+      "#11A14318A": [
+        1.0
+      ],
+      "#14515E1AA": [
         1.0
       ],
       "#576B99": [
-        1.0
-      ],
-      "#8099F2": [
-        1.0
-      ],
-      "#8C8F99": [
         1.0
       ],
       "#8CB2D9": [
@@ -364,14 +499,6 @@
         0.5
       ]
     },
-    "FogOverlay": {
-      "#575E75": [
-        1.0
-      ],
-      "#CCD1D9": [
-        1.0
-      ]
-    },
     "GradeLookFilm": {
       "#000000": [
         0.0
@@ -419,7 +546,37 @@
       ]
     },
     "Map": {
+      "#000000": [
+        1.0
+      ],
+      "#111111": [
+        1.0
+      ],
+      "#1D1712": [
+        1.0
+      ],
+      "#1D1D1D": [
+        1.0
+      ],
+      "#222222": [
+        1.0
+      ],
+      "#2A1A0A": [
+        1.0
+      ],
+      "#5A3D00": [
+        1.0
+      ],
+      "#E8E0D0": [
+        1.0
+      ],
+      "#FFD34D": [
+        1.0
+      ],
       "#FFEB40": [
+        1.0
+      ],
+      "#FFFFFF": [
         1.0
       ]
     },
@@ -477,12 +634,6 @@
     "PerfHud": {
       "#000000": [
         0.6
-      ],
-      "#99FF99": [
-        1.0
-      ],
-      "#FFCC4C": [
-        1.0
       ]
     },
     "Player3DAttacker": {
@@ -521,11 +672,6 @@
     "QuestsWindow": {
       "#000000": [
         0.0
-      ]
-    },
-    "RainOverlay": {
-      "#D9E6FF": [
-        0.85
       ]
     },
     "Reconnect Notice": {
@@ -658,9 +804,6 @@
     "SnowOverlay": {
       "#4C577A": [
         1.0
-      ],
-      "#F5FAFF": [
-        0.9
       ]
     },
     "SpawnPoint": {

@@ -2,7 +2,7 @@
 name: sprint-manager
 description: Does ALL of the project's task tracking — ticks tasks done in the action plan, and keeps the wiki Roadmap timeline moving (a goal whose tasks are all ticked moves below "Now", dated). It may write exactly two files, the action plan and the Roadmap page. Spawned WITHOUT asking whenever a task is to be ticked or the Roadmap is to move, and when the user asks what is done or what is Now.
 tools: Read, Edit, Write
-model: opus
+model: sonnet
 effort: medium
 color: blue
 permissionMode: default

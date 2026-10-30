@@ -74,3 +74,6 @@
 - [Deliver first, then work while waiting](../deliver-first-then-work-while-waiting.md) — "give me X, and while waiting do Y": X goes out in a reply BEFORE starting Y.
 - [Say where and how to reach it](say-where-and-how-to-reach-it.md) — every play-test hand-over names the map id and the exact /tp or route to get there.
 - [No script edits during the user's Play](no-script-edits-during-users-play.md) — saving a .cs while they play recompiles mid-play; check editor_status and stop Play before the first edit.
+- [List<int>.Find answers 0, not -1](../list-find-returns-zero.md) — an index walk built on it never ends; froze the editor twice (2026-10-28).
+- [Fix related problems without asking](fix-related-problems-without-asking.md) — same-cause problems found while fixing get fixed generally in the same turn, never offered
+- [Small feature, no rebuild](small-feature-no-rebuild.md) — a dev convenience (a /tp) never gets a world rebuild or saved data; propose the smallest shape with its cost, never hard-code a table.

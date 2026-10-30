@@ -164,6 +164,23 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    # The world layout and its map are written together by one tool, so editing the tool re-runs it: the file every
+    # world build reads and the picture of it (data/world-layout.html) never fall behind the places it decides. A
+    # layout that breaks its own rules (a river climbing, a town in the sea, a pit nobody can leave) fails here.
+    "world-layout": {
+        "files": [os.path.join(TOOLS, "world-layout", "build_world_layout.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "world-layout", "build_world_layout.py")],
+        "headline": "The world layout broke one of its own rules, so its file and map were not rewritten:",
+        "mine_by_construction": True,
+    },
+    # Each town's plan and its picture (data/towns/<town>.json and .html) are written together by one tool, the same way.
+    "town-plans": {
+        "files": [os.path.join(TOOLS, "town-plan", "build_town_plan.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "town-plan", "build_town_plan.py")],
+        "headline": "A town plan broke one of its own rules (a piece in the wall, on a street, or over another), "
+                    "so its file and picture were not rewritten:",
+        "mine_by_construction": True,
+    },
     # Every map id comes from the world layout; the scenes, doors, world map, Map Painter files, the starting map
     # and the music table are copies of it, and a copy that drifts sends a player (or /tp) to a map that isn't there.
     "map-ids": {

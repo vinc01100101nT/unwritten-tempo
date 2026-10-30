@@ -89,7 +89,7 @@ public class Character3DVisual : MonoBehaviour
     Vector3 GroundedPos(Vector3 p)
     {
         if (cc == null) return p;
-        if (GroundSnap.TryGroundY(p, groundMask, out float groundY))
+        if (GroundSnap.TryFeetY(p, groundMask, out float groundY))
         {
             float lossy = player != null ? player.transform.lossyScale.y : 1f;
             float restingRootY = groundY + cc.skinWidth - (cc.center.y - cc.height * 0.5f) * lossy;

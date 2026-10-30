@@ -226,7 +226,7 @@ public class WeaponSocket : MonoBehaviour
     }
 
     float GroundUnder(Vector3 p) =>
-        GroundSnap.TryGroundY(p, GroundSnap.GroundMask, out float y) ? y : transform.position.y;
+        GroundSnap.SurfaceNearestY(p, out float y) ? y : transform.position.y;
 
     // The box every mesh of the copy fills, in the copy's own space — read once when the copy is made.
     static Bounds BoxIn(Transform root)

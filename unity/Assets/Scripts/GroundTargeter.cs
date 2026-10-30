@@ -106,7 +106,12 @@ public class GroundTargeter : MonoBehaviour
     {
         Vector3 off = p - me; off.y = 0f;
         if (castRange > 0f && off.sqrMagnitude > castRange * castRange)
-            p = me + off.normalized * castRange + Vector3.up * (p.y - me.y);
+        {
+            // The pulled-in spot takes the ground's height THERE. Keeping the cursor's height put the point under a
+            // slope rising toward the caster, and a blink to it sealed the caster inside the ground.
+            p = me + off.normalized * castRange;
+            if (GroundSnap.SurfaceNearestY(p, out float y)) p.y = y;
+        }
         return p;
     }
 

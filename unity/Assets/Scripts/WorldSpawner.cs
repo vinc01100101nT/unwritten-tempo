@@ -43,11 +43,16 @@ public static class WorldSpawner
 
         int areas = 0, creatures = 0;
         bool seamless = SeamlessWorld.InScene(map) != null;
+        // Every row on one area spreads its creatures away from the others' (FieldMobSpawner.SpotInShape).
+        var mates = new Dictionary<int, List<FieldMobSpawner>>();
         for (int i = 0; i < list.rows.Count; i++)
         {
             var row = list.rows[i];
             if (row == null || row.population <= 0 || row.map != map.name) continue;
-            Build(row, map, i, seamless);
+            List<FieldMobSpawner> onArea = null;
+            if (row.area >= 0 && !mates.TryGetValue(row.area, out onArea)) mates[row.area] = onArea = new List<FieldMobSpawner>();
+            var s = Build(row, map, i, seamless, onArea);
+            onArea?.Add(s);
             areas++;
             creatures += row.population;
         }
@@ -65,7 +70,7 @@ public static class WorldSpawner
     static bool warnedNoList;
 
 
-    static void Build(WorldSpawns.Row row, Scene map, int index, bool seamless)
+    static FieldMobSpawner Build(WorldSpawns.Row row, Scene map, int index, bool seamless, List<FieldMobSpawner> areaMates)
     {
         var go = new GameObject("Spawn area " + index + (string.IsNullOrEmpty(row.creature) ? "" : " (" + row.creature + ")"));
         // Built while the game runs, so it must never be baked into a scene an editor might save.
@@ -74,11 +79,13 @@ public static class WorldSpawner
         // fill itself with the defaults.
         go.SetActive(false);
         MapManager.PutInMap(go, map);
-        go.transform.position = MapManager.InWorld(row.center, map.name);
+        var area = WorldSpawns.Instance.AreaOf(row);
+        go.transform.position = MapManager.InWorld(area?.center ?? row.center, map.name);
 
         var s = go.AddComponent<FieldMobSpawner>();
         s.population        = row.population;
-        s.radius            = row.radius;
+        s.radius            = area?.radius ?? row.radius;
+        if (area != null && area.runs.Length >= 3) s.SetShape(area.runs, MapManager.InWorld(Vector3.zero, map.name), areaMates);
         s.fixedMobId        = row.creature ?? "";
         s.biome             = row.biome;
         s.minLevel          = row.minLevel;
@@ -90,5 +97,6 @@ public static class WorldSpawner
         // A SEAMLESS WORLD WAKES ITS AREAS ITSELF, once somebody is near and the ground under the area has loaded —
         // switched on now, an area would look for its floor before any of it exists (SeamlessWorld).
         if (!seamless) go.SetActive(true);
+        return s;
     }
 }

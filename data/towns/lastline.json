@@ -1,0 +1,2047 @@
+{
+ "id": "lastline",
+ "name": "Lastline",
+ "weapon": "",
+ "theme": "green trees + green willow, mixed meadows",
+ "gates": [
+  {
+   "x": -22,
+   "z": -0.3,
+   "road": ""
+  },
+  {
+   "x": 22,
+   "z": -0.5,
+   "road": ""
+  },
+  {
+   "x": 0.6,
+   "z": -28.5,
+   "road": ""
+  },
+  {
+   "x": 0,
+   "z": 28.5,
+   "road": ""
+  }
+ ],
+ "areas": [
+  {
+   "look": "stone",
+   "label": "Streets",
+   "level": "normal",
+   "tile": "BASE_OR_SIDEWALK_plaza",
+   "rect": [
+    -22,
+    -28.5,
+    22,
+    28.5
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    1.5,
+    -28.5,
+    21,
+    -28.5,
+    22,
+    -26.5,
+    22,
+    -1.5,
+    22,
+    -2,
+    15.5,
+    -2,
+    15.5,
+    -13,
+    12.5,
+    -16,
+    12.5,
+    -16.5,
+    16.5,
+    -20.5,
+    16.5,
+    -22,
+    14.7,
+    -21.64,
+    10.73,
+    -18,
+    1.5,
+    -18
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    -22,
+    -2.5,
+    -22,
+    -27,
+    -20.5,
+    -28.5,
+    -2,
+    -28.5,
+    -1.5,
+    -28.5,
+    -1.5,
+    -18,
+    -9.23,
+    -18,
+    -13.17,
+    -21.61,
+    -15.5,
+    -22,
+    -15.19,
+    -20.75,
+    -11.54,
+    -16.78,
+    -11.86,
+    -15.2,
+    -15.5,
+    -11.23,
+    -15.5,
+    -2,
+    -22,
+    -2
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    0.5,
+    21,
+    7.5,
+    21,
+    7.5,
+    16,
+    11,
+    16,
+    15.5,
+    11.5,
+    15.5,
+    1,
+    22,
+    1,
+    22,
+    1.5,
+    22,
+    1,
+    22,
+    27.5,
+    22,
+    28.5,
+    21,
+    28.5,
+    17,
+    28.5,
+    11.5,
+    23.5,
+    0.5,
+    23.5,
+    1,
+    23
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    -22,
+    1,
+    -15.5,
+    1,
+    -15.5,
+    11,
+    -11.5,
+    15,
+    -11.75,
+    15.75,
+    -20.12,
+    24.13,
+    -20.5,
+    26,
+    -19,
+    26,
+    -9,
+    16,
+    -7.5,
+    16,
+    -7.5,
+    21,
+    -0.5,
+    21,
+    -0.5,
+    23,
+    0,
+    23.5,
+    -9.5,
+    23.5,
+    -14.5,
+    28.5,
+    -20,
+    28.5,
+    -22,
+    27.5
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    1.5,
+    -16,
+    9.54,
+    -16,
+    13.5,
+    -11.73,
+    13.5,
+    -2,
+    3.8,
+    -2,
+    1.5,
+    -3.92
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    1.5,
+    3.5,
+    4,
+    1,
+    13.5,
+    1,
+    13.5,
+    10.5,
+    10,
+    14,
+    5.5,
+    14,
+    5.5,
+    19,
+    1.5,
+    19,
+    1.5,
+    17,
+    3.5,
+    17,
+    3.5,
+    10,
+    1.5,
+    10
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    -13.5,
+    1,
+    -3.42,
+    1,
+    -1.5,
+    3.3,
+    -1.5,
+    10,
+    -3.5,
+    10,
+    -3.5,
+    17,
+    -1.5,
+    17,
+    -1.5,
+    19,
+    -5.5,
+    19,
+    -5.5,
+    14,
+    -9.23,
+    14,
+    -13.5,
+    10.04
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "look": "stone",
+   "label": "",
+   "level": "high",
+   "tile": "PATH_OR_SIDEWALK_flagstone",
+   "poly": [
+    -13.5,
+    -10.5,
+    -8,
+    -16,
+    -1.5,
+    -16,
+    -1.5,
+    -3.75,
+    -3.25,
+    -2,
+    -13.5,
+    -2
+   ],
+   "smooth": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "streets": [],
+ "canals": [],
+ "bridges": [],
+ "mounds": [],
+ "pieces": [
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -2.04,
+   "z": 9.51,
+   "rot": 270
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -1.99,
+   "z": 7.54,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -1.96,
+   "z": 5.49,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -2.01,
+   "z": 3.46,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 1.96,
+   "z": 3.51,
+   "rot": 270
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 2.01,
+   "z": 5.54,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 2.04,
+   "z": 7.49,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 1.99,
+   "z": 9.46,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree1",
+   "variant": 1,
+   "x": -2.99,
+   "z": 18.43,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree1",
+   "variant": 1,
+   "x": -5.08,
+   "z": 15.49,
+   "rot": 270
+  },
+  {
+   "kind": "Pine_tree1",
+   "variant": 1,
+   "x": 2.99,
+   "z": 18.57,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree1",
+   "variant": 1,
+   "x": 5.08,
+   "z": 15.51,
+   "rot": 90
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": 3.46,
+   "z": 2.7,
+   "rot": 220.7
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 6.4,
+   "z": 1.98,
+   "rot": 180.6
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 6.43,
+   "z": -3.01,
+   "rot": 0.3
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": 3.79,
+   "z": -4.2,
+   "rot": 318.9
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -6.51,
+   "z": 2,
+   "rot": 180
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -6.51,
+   "z": -2.97,
+   "rot": 0
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": -3.35,
+   "z": -3.66,
+   "rot": 41
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -3.62,
+   "z": 2.7,
+   "rot": 137
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -1.99,
+   "z": -14.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -1.96,
+   "z": -12.51,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -2.01,
+   "z": -10.54,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -2.57,
+   "z": -8.87,
+   "rot": 270
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 2.01,
+   "z": -8.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 2.04,
+   "z": -10.51,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 1.99,
+   "z": -12.54,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 1.96,
+   "z": -14.49,
+   "rot": 270
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -5,
+   "z": -9.5,
+   "rot": 270
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": 8.68,
+   "z": -12.19,
+   "rot": 317.1
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -11.47,
+   "z": -4.21,
+   "rot": 90
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": 4.38,
+   "z": -14.05,
+   "rot": 270
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": 4.33,
+   "z": -12.28,
+   "rot": 270
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": -5.65,
+   "z": -13.76,
+   "rot": 1.6
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": 11.11,
+   "z": -6.74,
+   "rot": 270
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 11.96,
+   "z": -2.49,
+   "rot": 270
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 10.01,
+   "z": -2.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 8.04,
+   "z": -2.51,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -12.01,
+   "z": -2.54,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -10.04,
+   "z": -2.49,
+   "rot": 270
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -7.99,
+   "z": -2.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -7.96,
+   "z": 1.49,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -10.01,
+   "z": 1.46,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -12.04,
+   "z": 1.51,
+   "rot": 270
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -10.47,
+   "z": 4.07,
+   "rot": 90
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": -9.72,
+   "z": 10.63,
+   "rot": 135.6
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": 6.82,
+   "z": 11.39,
+   "rot": 180
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": 10.69,
+   "z": 5.55,
+   "rot": 270
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -10.47,
+   "z": -8.03,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -11.96,
+   "z": 6.48,
+   "rot": 105
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -12.02,
+   "z": 8.46,
+   "rot": 195
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 11.98,
+   "z": 8.46,
+   "rot": 195
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 9.96,
+   "z": 10.52,
+   "rot": 285
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 11.96,
+   "z": 1.52,
+   "rot": 285
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 10.02,
+   "z": 1.53,
+   "rot": 15
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 8.04,
+   "z": 1.48,
+   "rot": 105
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 3.98,
+   "z": 12.46,
+   "rot": 195
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": 3.96,
+   "z": 10.52,
+   "rot": 285
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -4.04,
+   "z": 12.52,
+   "rot": 285
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -3.98,
+   "z": 10.54,
+   "rot": 15
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -5.98,
+   "z": 12.54,
+   "rot": 15
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -7.96,
+   "z": 12.48,
+   "rot": 105
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -6.02,
+   "z": 10.46,
+   "rot": 195
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -2.42,
+   "z": -6.64,
+   "rot": 91.8
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": 2.4,
+   "z": -6.57,
+   "rot": 270.9
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -19.37,
+   "z": 24.79,
+   "rot": 135
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": -16.58,
+   "z": 4.06,
+   "rot": 91.3
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": -15.23,
+   "z": -22.5,
+   "rot": 46.2
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -12.27,
+   "z": 22.25,
+   "rot": 180
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -20.05,
+   "z": -7.53,
+   "rot": 90.7
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -19.63,
+   "z": -4.14,
+   "rot": 90
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -14.21,
+   "z": -16.5,
+   "rot": 43.6
+  },
+  {
+   "kind": "House_D",
+   "variant": 1,
+   "x": -20.39,
+   "z": -12.94,
+   "rot": 90
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -20.22,
+   "z": -16.58,
+   "rot": 90
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -19.92,
+   "z": -26.1,
+   "rot": 47
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -20.2,
+   "z": -23.66,
+   "rot": 90
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -19.78,
+   "z": -20.02,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -20.96,
+   "z": -25.51,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -18.96,
+   "z": -27.51,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -19.96,
+   "z": -24.51,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -21.01,
+   "z": -22.54,
+   "rot": 180
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -21.04,
+   "z": -17.49,
+   "rot": 270
+  },
+  {
+   "kind": "Willow_tree2",
+   "variant": 1,
+   "x": -16.09,
+   "z": -26.48,
+   "rot": 270
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -12,
+   "z": -26.5,
+   "rot": 0
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -9.08,
+   "z": -26.94,
+   "rot": 0
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -5.59,
+   "z": -26.87,
+   "rot": 0
+  },
+  {
+   "kind": "House_B",
+   "variant": 1,
+   "x": -7.33,
+   "z": -27.08,
+   "rot": 0
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -3.28,
+   "z": -26.38,
+   "rot": 90
+  },
+  {
+   "kind": "House_C",
+   "variant": 1,
+   "x": -3.84,
+   "z": -20.37,
+   "rot": 90
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -1.99,
+   "z": -27.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -1.99,
+   "z": -24.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -1.99,
+   "z": -22.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -9.99,
+   "z": -27.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -9.99,
+   "z": -26.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -13.99,
+   "z": -27.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -11.99,
+   "z": -21.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -10.99,
+   "z": -20.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -9.99,
+   "z": -19.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -6.99,
+   "z": -18.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -4.99,
+   "z": -18.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -11.99,
+   "z": -16.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -12.99,
+   "z": -17.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -13.99,
+   "z": -18.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -14.99,
+   "z": -19.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -15.99,
+   "z": -17.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -18.99,
+   "z": -17.46,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -20.89,
+   "z": -15.3,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -20.68,
+   "z": -10.4,
+   "rot": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "variant": 1,
+   "x": -20.39,
+   "z": -9.08,
+   "rot": 15
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -16.56,
+   "z": -9.11,
+   "rot": 2.3
+  },
+  {
+   "kind": "House_A",
+   "variant": 1,
+   "x": -16.98,
+   "z": -13.24,
+   "rot": 47.3
+  }
+ ],
+ "arrival": [
+  -0.05,
+  -4
+ ],
+ "kit": [
+  {
+   "kind": "House_A",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_A.prefab",
+   "footprint": [
+    1.49,
+    2
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House_B",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_B.prefab",
+   "footprint": [
+    1.66,
+    1.71
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House_C",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_C.prefab",
+   "footprint": [
+    2.97,
+    2.99
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House_D",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House_D.prefab",
+   "footprint": [
+    3.4,
+    1.84
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House1",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House1.prefab",
+   "footprint": [
+    2.46,
+    2.25
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House2",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House2.prefab",
+   "footprint": [
+    2.75,
+    2.3
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "House3",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/House3.prefab",
+   "footprint": [
+    1.17,
+    2.31
+   ],
+   "role": "house",
+   "scale": 0
+  },
+  {
+   "kind": "Tavern",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Tavern_LOD0.prefab",
+   "footprint": [
+    9.5,
+    7.1
+   ],
+   "role": "landmark",
+   "scale": 0
+  },
+  {
+   "kind": "Fountain",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Central_Fountain.prefab",
+   "footprint": [
+    2,
+    2
+   ],
+   "role": "landmark",
+   "scale": 0
+  },
+  {
+   "kind": "Statue",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/Hero_Statue.prefab",
+   "footprint": [
+    1.44,
+    1.3
+   ],
+   "role": "landmark",
+   "scale": 0
+  },
+  {
+   "kind": "Cart",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/cart4_LOD0.prefab",
+   "footprint": [
+    0.84,
+    2.16
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Handcart",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/cart2_LOD0.prefab",
+   "footprint": [
+    0.61,
+    1.57
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Barrel",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_barrel.prefab",
+   "footprint": [
+    0.29,
+    0.29
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Basket",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_basket.prefab",
+   "footprint": [
+    0.26,
+    0.24
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Sack",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Outdoor/storage_bag.prefab",
+   "footprint": [
+    0.29,
+    0.19
+   ],
+   "role": "market",
+   "scale": 0
+  },
+  {
+   "kind": "Blossom",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BlossomTree_0{n}.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "PinkWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Pink.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "BlueBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Blue.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "GreenBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Green.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "PurpleBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Purple.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "RedBroadleaf",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/BroadleafTree_0{n}_Red.prefab",
+   "footprint": [
+    1.1,
+    1.1
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "BlueWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Blue.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "GreenWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Green.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "PurpleWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Purple.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "RedWillow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/WillowTree_0{n}_Red.prefab",
+   "footprint": [
+    0.95,
+    0.95
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "Fir",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Fir_0{n}.prefab",
+   "footprint": [
+    0.6,
+    0.6
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "Pine_tree1",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Trees/Pine_tree1.prefab",
+   "footprint": [
+    3.52,
+    3.52
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "Pine_tree3",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Trees/Pine_tree3.prefab",
+   "footprint": [
+    1.52,
+    1.52
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "Willow_tree2",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Trees/Willow_tree2.prefab",
+   "footprint": [
+    3.8,
+    3.8
+   ],
+   "role": "tree",
+   "scale": 0
+  },
+  {
+   "kind": "RoseBush",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_0{n}.prefab",
+   "footprint": [
+    0.36,
+    0.36
+   ],
+   "role": "bush",
+   "scale": 0
+  },
+  {
+   "kind": "FloatingLeaves",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FloatingLeafs_Green.prefab",
+   "footprint": [
+    17.2,
+    17.2
+   ],
+   "role": "effect",
+   "scale": 0
+  },
+  {
+   "kind": "Table",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Indoor/Furniture_table_round.prefab",
+   "footprint": [
+    0.38,
+    0.39
+   ],
+   "role": "market",
+   "scale": 0.3
+  },
+  {
+   "kind": "Chair",
+   "prefab": "Assets/1_Authored/Prefabs/Props/Indoor/Furniture_chair1.prefab",
+   "footprint": [
+    0.16,
+    0.17
+   ],
+   "role": "market",
+   "scale": 0.3
+  }
+ ],
+ "wall": {
+  "line": 2.5,
+  "gate": 3.4
+ },
+ "walls": [
+  {
+   "xz": [
+    -2,
+    -28.5,
+    -20,
+    -28.5,
+    -22,
+    -26.5,
+    -22,
+    -2.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2"
+   ]
+  },
+  {
+   "xz": [
+    2,
+    -28.5,
+    20,
+    -28.5,
+    22,
+    -26.5,
+    22,
+    -2.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2"
+   ]
+  },
+  {
+   "xz": [
+    22,
+    1.5,
+    22,
+    26.5,
+    20,
+    28.5,
+    17,
+    28.5,
+    11,
+    22.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2"
+   ]
+  },
+  {
+   "xz": [
+    -22,
+    1.5,
+    -22,
+    26.5,
+    -20,
+    28.5,
+    -16,
+    28.5,
+    -10,
+    22.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2"
+   ]
+  },
+  {
+   "xz": [
+    -2,
+    -15.5,
+    -8,
+    -15.5,
+    -13,
+    -10.5,
+    -13,
+    -2.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2",
+    "Wall_tower2"
+   ]
+  },
+  {
+   "xz": [
+    2,
+    -15.5,
+    9,
+    -15.5,
+    13,
+    -11.5,
+    13,
+    -2.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1"
+   ]
+  },
+  {
+   "xz": [
+    13,
+    1.5,
+    13,
+    9.5,
+    9,
+    13.5,
+    3,
+    13.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1"
+   ]
+  },
+  {
+   "xz": [
+    2,
+    16.5,
+    3,
+    16.5,
+    3,
+    10.5,
+    2,
+    10.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1"
+   ]
+  },
+  {
+   "xz": [
+    -13,
+    1.5,
+    -13,
+    9.5,
+    -9,
+    13.5,
+    -3,
+    13.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1"
+   ]
+  },
+  {
+   "xz": [
+    -2,
+    16.5,
+    -3,
+    16.5,
+    -3,
+    10.5,
+    -2,
+    10.5
+   ],
+   "closed": false,
+   "towers": [
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1",
+    "Wall_tower1"
+   ]
+  }
+ ],
+ "lawnTile": "BASE_OR_PATCH_painted_grass",
+ "soilTile": "BASE_OR_PATCH_OR_PATH_soil",
+ "tiles": [
+  {
+   "name": "BASE_OR_PATCH_painted_grass",
+   "tiling": 1.4525994
+  },
+  {
+   "name": "BASE_OR_PATCH_OR_PATH_soil",
+   "tiling": 0.4
+  },
+  {
+   "name": "BASE_OR_SIDEWALK_plaza",
+   "tiling": 0.4
+  },
+  {
+   "name": "PATH_OR_SIDEWALK_flagstone",
+   "tiling": 0.4
+  }
+ ],
+ "plants": [
+  {
+   "kind": "Grass_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_01.prefab"
+  },
+  {
+   "kind": "Grass_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_02.prefab"
+  },
+  {
+   "kind": "Grass_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Grass_03.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Blue",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Blue.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_BluePurple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_BluePurple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Orange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Orange.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_OrangePinkRedPurpleBlue",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_OrangePinkRedPurpleBlue.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Pink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Pink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Purple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Purple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_PurpleRedPink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_PurpleRedPink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_Red",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_Red.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedOrange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedOrange.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedPink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedPink.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_RedPurple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_RedPurple.prefab"
+  },
+  {
+   "kind": "FlowerMeadow_White",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/FlowerMeadow_White.prefab"
+  },
+  {
+   "kind": "Flower_Blue_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Blue_01.prefab"
+  },
+  {
+   "kind": "Flower_Blue_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Blue_02.prefab"
+  },
+  {
+   "kind": "Flower_Orange",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Orange.prefab"
+  },
+  {
+   "kind": "Flower_Pink",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Pink.prefab"
+  },
+  {
+   "kind": "Flower_Purple",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Purple.prefab"
+  },
+  {
+   "kind": "Flower_Red",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Red.prefab"
+  },
+  {
+   "kind": "Flower_White",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_White.prefab"
+  },
+  {
+   "kind": "Flower_Yellow",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_Yellow.prefab"
+  },
+  {
+   "kind": "Flower_YellowRed",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Flower_YellowRed.prefab"
+  },
+  {
+   "kind": "Bush_01_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_01_01.prefab"
+  },
+  {
+   "kind": "Bush_01_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_01_02.prefab"
+  },
+  {
+   "kind": "Bush_02_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_02_01.prefab"
+  },
+  {
+   "kind": "Bush_02_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_02_02.prefab"
+  },
+  {
+   "kind": "Bush_03_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_01.prefab"
+  },
+  {
+   "kind": "Bush_03_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Bush_03_02.prefab"
+  },
+  {
+   "kind": "Plant_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_01.prefab"
+  },
+  {
+   "kind": "Plant_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_02.prefab"
+  },
+  {
+   "kind": "Plant_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_03.prefab"
+  },
+  {
+   "kind": "Plant_04",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_04.prefab"
+  },
+  {
+   "kind": "Plant_05",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_05.prefab"
+  },
+  {
+   "kind": "Plant_06",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_06.prefab"
+  },
+  {
+   "kind": "Plant_07",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_07.prefab"
+  },
+  {
+   "kind": "Plant_08",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plant_08.prefab"
+  },
+  {
+   "kind": "Plants",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Plants.prefab"
+  },
+  {
+   "kind": "Reeds_01",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_01.prefab"
+  },
+  {
+   "kind": "Reeds_02",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_02.prefab"
+  },
+  {
+   "kind": "Reeds_03",
+   "prefab": "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Reeds_03.prefab"
+  }
+ ]
+}

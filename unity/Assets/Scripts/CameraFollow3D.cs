@@ -152,8 +152,8 @@ public class CameraFollow3D : MonoBehaviour
         // arrives late, and the player drifts off centre while moving and slides back when you stop.
         // (Lagging the camera position instead makes it swivel, because it keeps aiming at the real player.)
         Vector3 anchor = FollowAnchor(target.position);
-        Vector3 followPos = anchor + offset;
         Vector3 followLook = anchor + Vector3.up * lookAtHeight;
+        Vector3 followPos = ClearOfGround(followLook, anchor + offset);
 
         float targetBlend = cineWant ? 1f : 0f;
         cineBlend = Mathf.MoveTowards(cineBlend, targetBlend, Time.deltaTime / Mathf.Max(0.01f, cineTime));
@@ -176,6 +176,22 @@ public class CameraFollow3D : MonoBehaviour
         transform.position += shakeOffset;
 
         SyncSortAxis();
+    }
+
+    // THE CAMERA NEVER GOES INTO THE GROUND. Swung low behind a body standing in a river, or under a bridge, the camera
+    // sat inside the bank or the bridge, and every ground face, seen from behind, was not drawn: the whole town looked
+    // see-through. A ray goes from the point being framed out to where the camera wants to be; where it meets the
+    // ground the camera stops the near clipping distance in front of it. (A swept sphere would start inside the one
+    // ground body it rests on, and a sweep ignores whatever it starts inside.) One ray a frame, no allocation.
+    Vector3 ClearOfGround(Vector3 from, Vector3 to)
+    {
+        Vector3 d = to - from;
+        float len = d.magnitude;
+        int mask = GroundSnap.GroundMask;
+        if (len < 1e-4f || mask == 0 || cam == null) return to;
+        if (Physics.Raycast(from, d / len, out var hit, len + cam.nearClipPlane, mask, QueryTriggerInteraction.Ignore))
+            return from + d / len * Mathf.Min(len, Mathf.Max(0f, hit.distance - cam.nearClipPlane));
+        return to;
     }
 
     // Keep the transparency tie-breaker aligned with the view's horizontal forward (matches

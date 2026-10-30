@@ -952,7 +952,7 @@ public sealed class QuestLog
             if (!string.IsNullOrEmpty(huntIn) && row.map != huntIn) continue;
             WorldRoutes.NextMap(map, row.map, out int doors);
             if (doors < 0 || doors >= best) continue;
-            best = doors; spawnMap = row.map; center = row.center;
+            best = doors; spawnMap = row.map; center = spawns.CenterOf(row);
         }
         return spawnMap != null;
     }

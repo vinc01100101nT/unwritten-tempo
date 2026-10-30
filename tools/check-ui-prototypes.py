@@ -282,7 +282,7 @@ def main():
 
     # A colour written fully see-through paints nothing, so it is not part of the palette a page can
     # be right or wrong about — the rarity table's empty Common glow is exactly that.
-    shared = {c["hex"] for c in data["palette"].values() if c["alpha"] > 0}
+    shared = {c["hex"] for c in list(data["palette"].values()) + list(data.get("palette_dark", {}).values()) if c["alpha"] > 0}
     for tier in data["rarity"].values():
         for chan in tier.values():
             if chan["alpha"] > 0:

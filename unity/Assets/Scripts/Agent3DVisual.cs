@@ -425,7 +425,7 @@ public abstract class Agent3DVisual : MonoBehaviour
             // Stamped on the attempt, hit or miss: a standing body over no ground at all (a townsperson while its
             // town is not loaded) must not cast every frame; the next map change gives it another try.
             seatedOnVersion = groundVersion;
-            if (GroundSnap.TryGroundY(transform.position, groundMask, out float groundY))
+            if (GroundSnap.TryFeetY(transform.position, groundMask, out float groundY))
             {
                 model.position = new Vector3(model.position.x, groundY + toldAbove, model.position.z);
                 seated = true;

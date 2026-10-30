@@ -88,17 +88,14 @@ public static class MinimapBaker
             PrepareForDrawing(scene);
             if (!TryComputeBounds(scene, out Bounds b)) return false;
             if (seamless)
-            {
                 // The world's own corners, never how far a prop at its edge happens to reach.
                 b = new Bounds(new Vector3((world.worldMin.x + world.worldMax.x) * 0.5f, b.center.y, (world.worldMin.y + world.worldMax.y) * 0.5f),
                                new Vector3(world.worldMax.x - world.worldMin.x, b.size.y, world.worldMax.y - world.worldMin.y));
-                BakeTiles(map, world, b, scene);
-            }
             float extent = Mathf.Max(b.size.x, b.size.z) * 0.5f * (1f + MarginFrac);
             worldSize = extent * 2f;
             worldMin = new Vector2(b.center.x - extent, b.center.z - extent);
             px = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(worldSize * PixelsPerUnit)), MinPx, seamless ? OverviewMaxPx : MaxPx);
-            var tex = Snapshot(b, extent, px, scene);
+            var tex = seamless ? BakeTiles(map, world, b, scene, worldMin, worldSize, px) : Snapshot(b, extent, px, scene);
             png = tex.EncodeToPNG();
             // editor-write-ok: destroys the throwaway picture this bake just made in memory; nothing saved is touched.
             Object.DestroyImmediate(tex);
@@ -106,7 +103,7 @@ public static class MinimapBaker
         finally { EditorSceneManager.ClosePreviewScene(scene); }
 
         SavePicture(map, png, px);
-        SaveEntry(map, worldMin, worldSize, seamless ? TileUnits : 0f);
+        SaveEntry(map, worldMin, worldSize, seamless ? TileUnits : 0f, seamless ? TilePx : 0);
         WorldMapExport.WritePreview(map, png);
         return true;
     }
@@ -155,9 +152,15 @@ public static class MinimapBaker
 
     // The minimap's square pictures of a seamless world: one per TileUnits square that holds any of its ground, under
     // Minimaps/<map>/. A square that no longer holds ground loses its picture.
-    static void BakeTiles(string map, SeamlessWorld world, Bounds b, Scene scene)
+    // THE WHOLE-MAP PICTURE (px across, from worldMin, worldSize wide) IS MADE FROM THE SQUARES, each output pixel the
+    // average of the square pictures' pixels inside it. Drawn in one go instead, every grass and flower carpet of the
+    // world would have to be laid at once (a few hundred thousand plants a square), and its trees would be a pixel across.
+    static Texture2D BakeTiles(string map, SeamlessWorld world, Bounds b, Scene scene, Vector2 worldMin, float worldSize, int px)
     {
         var made = new HashSet<string>();
+        var sum = new Vector3[px * px];
+        var count = new int[px * px];
+        float toPx = px / worldSize, step = TileUnits / TilePx;
         int gx0 = Mathf.FloorToInt(world.worldMin.x / TileUnits), gx1 = Mathf.CeilToInt(world.worldMax.x / TileUnits) - 1;
         int gy0 = Mathf.FloorToInt(world.worldMin.y / TileUnits), gy1 = Mathf.CeilToInt(world.worldMax.y / TileUnits) - 1;
         for (int gy = gy0; gy <= gy1; gy++)
@@ -169,18 +172,41 @@ public static class MinimapBaker
                 var tex = Snapshot(tb, TileUnits * 0.5f, TilePx, scene);
                 string name = MinimapCatalog.TilePicture(map, gx, gy);
                 SavePicture(name, tex.EncodeToPNG(), TilePx);
+                var pixels = tex.GetPixels32();
+                for (int sy = 0; sy < TilePx; sy++)
+                {
+                    int oy = Mathf.FloorToInt((square.yMin + (sy + 0.5f) * step - worldMin.y) * toPx);
+                    if (oy < 0 || oy >= px) continue;
+                    for (int sx = 0; sx < TilePx; sx++)
+                    {
+                        int ox = Mathf.FloorToInt((square.xMin + (sx + 0.5f) * step - worldMin.x) * toPx);
+                        if (ox < 0 || ox >= px) continue;
+                        var c = pixels[sy * TilePx + sx];
+                        sum[oy * px + ox] += new Vector3(c.r, c.g, c.b);
+                        count[oy * px + ox]++;
+                    }
+                }
                 // editor-write-ok: destroys the throwaway picture this bake just made in memory; nothing saved is touched.
                 Object.DestroyImmediate(tex);
                 made.Add(PictureDir + "/" + name + ".png");
             }
+        var all = new Color32[px * px];
+        Color32 none = Background;
+        for (int i = 0; i < all.Length; i++)
+            all[i] = count[i] == 0 ? none
+                   : new Color32((byte)Mathf.RoundToInt(sum[i].x / count[i]), (byte)Mathf.RoundToInt(sum[i].y / count[i]), (byte)Mathf.RoundToInt(sum[i].z / count[i]), 255);
+        var overview = new Texture2D(px, px, TextureFormat.RGB24, false);
+        overview.SetPixels32(all);
+        overview.Apply();
         string dir = PictureDir + "/" + map;
-        if (!Directory.Exists(dir)) return;
+        if (!Directory.Exists(dir)) return overview;
         foreach (var f in Directory.GetFiles(dir, "*.png"))
         {
             string path = f.Replace('\\', '/');
             // editor-write-ok: removes a square picture whose square no longer holds ground, during the user's bake.
             if (!made.Contains(path)) AssetDatabase.DeleteAsset(path);
         }
+        return overview;
     }
 
     static void SavePicture(string map, byte[] png, int px)
@@ -215,7 +241,7 @@ public static class MinimapBaker
         return true;
     }
 
-    static void SaveEntry(string map, Vector2 worldMin, float worldSize, float tileSize)
+    static void SaveEntry(string map, Vector2 worldMin, float worldSize, float tileSize, int tilePixels)
     {
         var catalog = AssetDatabase.LoadAssetAtPath<MinimapCatalog>(CatalogPath);
         if (catalog == null)
@@ -226,11 +252,12 @@ public static class MinimapBaker
         }
         var entry = catalog.Find(map);
         if (entry != null && entry.worldMin == worldMin && Mathf.Approximately(entry.worldSize, worldSize)
-            && Mathf.Approximately(entry.tileSize, tileSize)) return;
+            && Mathf.Approximately(entry.tileSize, tileSize) && entry.tilePixels == tilePixels) return;
         if (entry == null) { entry = new MinimapCatalog.Entry { map = map }; catalog.maps.Add(entry); }
         entry.worldMin = worldMin;
         entry.worldSize = worldSize;
         entry.tileSize = tileSize;
+        entry.tilePixels = tilePixels;
         catalog.maps.Sort((a, b) => string.CompareOrdinal(a.map, b.map));
         // editor-write-ok: records where the map's new picture sits, because the user saved the map or ran the bake.
         EditorUtility.SetDirty(catalog);
@@ -255,9 +282,17 @@ public static class MinimapBaker
 
     // Render the map straight down into a Texture2D. The camera lives in the hidden copy and sees only it, so the
     // scene open in the editor is never touched. UI and the weather quads (TransparentFX) are left out.
+    // DRAWN AT Supersample TIMES ITS SIZE, then halved until it fits, each halving the average of four pixels. Drawn at its
+    // own size, every tree, bush and flower vanished and only solid models (rocks) showed: a leaf is cut out of its
+    // texture where the texture is solid enough, and a plant a few pixels across reads that texture's blurred small copy,
+    // which is solid nowhere (measured 2026-10-30, square 20,15: no tree at 8 pixels a unit, every one at 32).
+    const int Supersample = 4;
+    static readonly Color Background = new Color(0.08f, 0.10f, 0.09f, 1f);   // dark where there's no terrain
+
     static Texture2D Snapshot(Bounds b, float extent, int resolution, Scene inScene)
     {
-        var rt = new RenderTexture(resolution, resolution, 24, RenderTextureFormat.ARGB32) { name = "MinimapBakeRT" };
+        int big = resolution * Supersample;
+        var rt = new RenderTexture(big, big, 24, RenderTextureFormat.ARGB32) { name = "MinimapBakeRT" };
         rt.Create();
 
         var camGo = new GameObject("~MinimapBakeCam") { hideFlags = HideFlags.HideAndDontSave };
@@ -267,7 +302,7 @@ public static class MinimapBaker
         cam.orthographic = true;
         cam.orthographicSize = extent;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.08f, 0.10f, 0.09f, 1f);   // dark where there's no terrain
+        cam.backgroundColor = Background;
         cam.cullingMask = ~((1 << LayerMask.NameToLayer("UI")) | (1 << LayerMask.NameToLayer("TransparentFX")));
         cam.allowMSAA = false;
         cam.nearClipPlane = 0.3f;
@@ -278,16 +313,35 @@ public static class MinimapBaker
         cam.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         cam.targetTexture = rt;
 
+        // Grass and flower carpets draw only when handed to a camera: every one reaching into the view is handed to this one.
+        var view = Rect.MinMaxRect(b.center.x - extent, b.center.z - extent, b.center.x + extent, b.center.z + extent);
+        var carpets = new List<FlowerCarpet>();
+        foreach (var root in inScene.GetRootGameObjects())
+            foreach (var carpet in root.GetComponentsInChildren<FlowerCarpet>(false))
+                if (carpet.patches.Exists(p => p.clip.Overlaps(view))) { carpet.DrawAllInto(cam); carpets.Add(carpet); }
+
         var req = new RenderPipeline.StandardRequest();
         if (RenderPipeline.SupportsRenderRequest(cam, req)) { req.destination = rt; RenderPipeline.SubmitRenderRequest(cam, req); }
         else cam.Render();
+        foreach (var carpet in carpets) carpet.ForgetLaid();
+
+        var shrunk = rt;
+        for (int size = big / 2; size >= resolution; size /= 2)
+        {
+            var half = RenderTexture.GetTemporary(size, size, 0, RenderTextureFormat.ARGB32);
+            half.filterMode = FilterMode.Bilinear;
+            Graphics.Blit(shrunk, half);
+            if (shrunk != rt) RenderTexture.ReleaseTemporary(shrunk);
+            shrunk = half;
+        }
 
         var prev = RenderTexture.active;
-        RenderTexture.active = rt;
+        RenderTexture.active = shrunk;
         var tex = new Texture2D(resolution, resolution, TextureFormat.RGB24, false);
         tex.ReadPixels(new Rect(0, 0, resolution, resolution), 0, 0);
         tex.Apply();
         RenderTexture.active = prev;
+        if (shrunk != rt) RenderTexture.ReleaseTemporary(shrunk);
 
         cam.targetTexture = null;
         // editor-write-ok: destroys the throwaway camera this bake made inside the hidden copy of the map.

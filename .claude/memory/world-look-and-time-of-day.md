@@ -14,4 +14,4 @@ Settled with the user 2026-10-28, each measured in Play:
 - **Meadow flowers are flat cards** of side-view bunches (8 triangles); only 26% of a card is petals, so from the top-down camera a pink card averages peach (166, 129, 69) vs petals (222, 100, 160). The pack's single flowers face up but are 60 triangles; at equal cost they are 13% as many (sparse). The user kept the cards (2026-10-28). Grass no longer grows inside meadow patches.
 - Each meadow patch is ONE colour — a yellow meadow is yellow, not pink gone wrong.
 
-Related: [[world-builder]], [[seamless-world-ground-on-server]].
+Related: the world-authoring skill.

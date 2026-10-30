@@ -1,0 +1,1279 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Town Editor</title>
+<style>
+:root{--bg:#1d2024;--panel:#262a30;--line:#3a4048;--text:#e6e8eb;--dim:#9aa3ad;--accent:#e79bc0;--warn:#f0b24a;--bad:#e5534b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.4 system-ui,sans-serif}
+#app{display:grid;grid-template-columns:150px 1fr 290px;grid-template-rows:auto 1fr auto;height:100%}
+header{grid-column:1/4;display:flex;gap:8px;align-items:center;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header .grow{flex:1}
+#tools{background:var(--panel);border-right:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:3px;overflow:auto}
+#tools button{text-align:left}
+#tools button.on{background:var(--accent);color:#222;border-color:var(--accent)}
+#stage{position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#side{background:var(--panel);border-left:1px solid var(--line);padding:8px;overflow:auto}
+footer{grid-column:1/4;padding:3px 10px;background:var(--panel);border-top:1px solid var(--line);color:var(--dim);display:flex;gap:16px;flex-wrap:wrap}
+button,select,input{font:inherit;color:var(--text);background:#30353c;border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+button:hover{border-color:var(--accent)}
+button:disabled{opacity:.5}
+input[type=number]{width:72px}
+input[type=text]{width:100%}
+label{display:flex;gap:6px;align-items:center}
+h3{margin:10px 0 4px;font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.row{display:flex;gap:6px;align-items:center;margin:3px 0;flex-wrap:wrap}
+.row>span:first-child{min-width:70px;color:var(--dim)}
+#opts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#warnings div{padding:2px 4px;border-radius:3px;cursor:pointer;color:var(--warn)}
+#warnings div:hover{background:#333a42}
+#report{white-space:pre-wrap;font:11px/1.35 ui-monospace,monospace;max-height:240px;overflow:auto;background:#1a1d21;padding:6px;border-radius:4px;display:none}
+.dirty{color:var(--warn)}
+.ok{color:#8fd18f}
+.bad{color:var(--bad)}
+[hidden]{display:none!important}
+#stage.split{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+header button.on{background:var(--accent);color:#222;border-color:var(--accent)}
+kbd{background:#30353c;border:1px solid var(--line);border-radius:3px;padding:0 4px;font-size:11px}
+</style></head>
+<body><div id="app">
+<header>
+  <select id="town"></select>
+  <select id="newTown" title="Start a plan for a town on the world map that has none yet"></select>
+  <span id="townInfo"></span>
+  <span class="grow"></span>
+  <span id="state"></span>
+  <button id="undo" title="Ctrl+Z">Undo</button><button id="redo" title="Ctrl+Y">Redo</button>
+  <button id="save" title="Ctrl+S">Save</button><button id="view3d" title="The town from the game camera's angle, beside the top-down view">3D view</button><button id="pictures">Take pictures</button><button id="rebuild">Rebuild in Unity</button>
+</header>
+<div id="tools">
+  <button data-tool="select">Select / move <kbd>V</kbd></button>
+  <button data-tool="height">Ground height <kbd>H</kbd></button>
+  <button data-tool="street">Draw street <kbd>S</kbd></button>
+  <button data-tool="canal">Draw canal <kbd>C</kbd></button>
+  <button data-tool="wall">Draw wall <kbd>W</kbd></button>
+  <button data-tool="area">Draw area <kbd>A</kbd></button>
+  <button data-tool="bridge">Add bridge <kbd>B</kbd></button>
+  <button data-tool="gate">Add gate <kbd>G</kbd></button>
+  <button data-tool="place">Place piece <kbd>P</kbd></button>
+  <button data-tool="plants">Paint plants <kbd>N</kbd></button>
+  <h3>Show</h3>
+  <label><input type="checkbox" id="showPictures" checked>Pictures</label>
+  <label><input type="checkbox" id="showThrough">See-through pieces</label>
+  <label><input type="checkbox" id="showPlants" checked>Plants</label>
+  <label><input type="checkbox" id="showHeights" checked>Heights</label>
+  <label><input type="checkbox" id="showCurbs" checked>Curbs</label>
+  <label><input type="checkbox" id="showLabels" checked>Names</label>
+  <label><input type="checkbox" id="showPieces" checked>Pieces</label>
+  <label><input type="checkbox" id="showLeaves">Floating leaves</label>
+  <h3>Keys</h3>
+  <div style="color:var(--dim);font-size:12px">
+  Drag: move · <kbd>Shift</kbd>: add to selection · drag empty: box select · right-drag or <kbd>Space</kbd>: pan · wheel: zoom ·
+  double-click a line: add a point · <kbd>Del</kbd>: delete · <kbd>R</kbd>/<kbd>E</kbd>: turn (Shift: 1°) · <kbd>Ctrl+D</kbd>: duplicate ·
+  <kbd>Enter</kbd>: finish a line · <kbd>Esc</kbd>: cancel · <kbd>F</kbd>: fit
+  </div>
+</div>
+<div id="stage"><canvas id="cv"></canvas><canvas id="cv3" hidden></canvas></div>
+<div id="side">
+  <div id="opts"></div>
+  <h3>Selected</h3><div id="inspector"></div>
+  <h3>Problems <span id="nWarn"></span></h3><div id="warnings"></div>
+  <h3>Last rebuild</h3><div id="report"></div>
+</div>
+<footer><span id="cursor"></span><span id="hint"></span></footer>
+</div>
+<script src="/view3d.js"></script>
+<script>
+"use strict";
+// ---- the town's frame, as the town tools and the town builder have it ------------------------------------------------
+const HALF_X = 24.5, HALF_Z = 31.0, WALL_DEEP = 0.61, BRIDGE_LAND = 1.0, ROCK_L = 12.31, ROCK_W = 6.54, LIFT_STEP = 0.5;
+const LOOKS = {pit: "#6b4a2b", planter: "#6b4a2b", water: "#5aa7d6", stone: "#c9c3b8", street: "#ecdcbc", court: "#e6cfd3",
+               grass: "#86b45a", meadow: "#f0a8c4", dirt: "#b98d5c"};
+const AREA_LOOKS = ["stone", "grass", "meadow", "dirt", "court", "street"];
+const ROLE_COLOURS = {house: "#b07a4a", landmark: "#8a62c4", market: "#c9a24a", tree: "#e79bc0", bush: "#c4507a", effect: "#ffffff"};
+
+const $ = id => document.getElementById(id);
+const cv = $("cv");
+let ctx = cv.getContext("2d");   // the ground is drawn through it into a picture of its own (drawGroundCached)
+const LEVELS = ["high", "normal", "low"], REL = {high: 1, normal: 0, low: -1};
+let town = null, plan = null, variants = {}, kit = {}, pictures = {}, tileNames = [];
+let undoStack = [], redoStack = [], dirty = false, version = 0;
+let view = {cx: 0, cz: 0, s: 12};
+let tool = "select", sel = [], drawing = null, pointer = null, ghostRot = 0, cursor = {x: 0, z: 0}, space = false;
+const opts = {streetWidth: 2.0, canalWidth: 2.4, areaShape: "rect", areaLook: "grass", kind: null, variant: 1,
+              brush: "raise", radius: 2.0, strength: 0.6, plant: 0, plantMode: "paint", plantRadius: 1.0, density: 0.5};
+
+// ---- pictures: the pieces as Unity photographed them from above, and the ground's own tile pictures ------------------
+const images = {};
+let imagesLoaded = 0;
+// `loaded` runs when it arrives: by default the top-down view is redrawn, its ground picture included.
+function image(url, loaded = () => { imagesLoaded++; draw(); }) {
+  let img = images[url];
+  if (!img) { img = images[url] = new Image(); img.onload = loaded; img.src = url; }
+  return img.complete && img.naturalWidth ? img : null;
+}
+const patterns = new Map();
+function tileOf(name) { return (plan.tiles || []).find(t => t.name === name); }
+// A tile's picture repeated at its own size on the ground, as the game lays it; its look's colour until it has loaded.
+function tileFill(name, look, on = ctx) {
+  const t = tileOf(name), img = t && $("showPictures").checked ? image("/tiles/" + encodeURIComponent(name) + ".png") : null;
+  if (!img) return LOOKS[look] || "#888";
+  // each canvas its own pattern: one made for another canvas is copied over again every time it is used
+  const mine = patterns.get(on) || (patterns.set(on, {}), patterns.get(on));
+  const p = mine[name] || (mine[name] = on.createPattern(img, "repeat")), k = view.s / (t.tiling * img.naturalWidth);
+  p.setTransform(new DOMMatrix([k, 0, 0, -k, X(0), Y(0)]));
+  return p;
+}
+// A photographed piece at its point, turned as Unity turns it (clockwise seen from above) and scaled by `scale`.
+function drawPicture(e, x, z, rot, scale = 1) {
+  if (!e || !$("showPictures").checked) return false;
+  const img = image(`/pictures/${town}/${e.file}`); if (!img) return false;
+  ctx.save(); ctx.translate(X(x), Y(z)); ctx.rotate(rot * Math.PI / 180);
+  const s = view.s * scale; ctx.drawImage(img, e.x0 * s, -e.z1 * s, (e.x1 - e.x0) * s, (e.z1 - e.z0) * s);
+  ctx.restore(); return true;
+}
+// A tree, bush or plant as the game camera sees it (its leaves hang as upright cards, which straight down shows edge-on):
+// the picture Unity took from the game camera's tilt at its turn, standing up from its point, north up the screen.
+function drawStanding(views, x, z, rot) {
+  if (!views || !$("showPictures").checked) return false;
+  const e = views[((Math.round(-(rot || 0) / 45) % 8) + 8) % 8]; if (!e) return false;
+  const img = image(`/pictures/${town}/${e.file}`); if (!img) return false;
+  const s = view.s; ctx.drawImage(img, X(x) - e.px * s, Y(z) - (e.h - e.py) * s, e.w * s, e.h * s);
+  return true;
+}
+
+// ---- small geometry -------------------------------------------------------------------------------------------------
+const r2 = v => Math.round(v * 100) / 100, r1 = v => Math.round(v * 10) / 10, r3 = v => Math.round(v * 1000) / 1000;
+const bearing = (dx, dz) => ((Math.atan2(dx, dz) * 180 / Math.PI) % 360 + 360) % 360;
+function nearestOnLine(xz, px, pz) {
+  let best = null;
+  for (let k = 0; k + 3 < xz.length; k += 2) {
+    const ax = xz[k], az = xz[k + 1], dx = xz[k + 2] - ax, dz = xz[k + 3] - az, L2 = dx * dx + dz * dz;
+    const t = L2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2));
+    const qx = ax + dx * t, qz = az + dz * t, d = Math.hypot(px - qx, pz - qz);
+    if (!best || d < best.d) best = {d, seg: k / 2, t, qx, qz, tx: dx, tz: dz};
+  }
+  return best || {d: Infinity};
+}
+const lineDist = (xz, x, z) => nearestOnLine(xz, x, z).d;
+// A wall line's points as it runs: a closed one comes back to its first point.
+const wallPath = w => w.closed && w.xz.length >= 6 ? w.xz.concat(w.xz.slice(0, 2)) : w.xz;
+// THE WALL LINE NEAREST A POINT, and the nearest point on it ({w, i, n}), when one is within `reach`.
+function nearestWall(x, z, reach) {
+  let best = null;
+  (plan.walls || []).forEach((w, i) => { const n = nearestOnLine(wallPath(w), x, z); if (n.d <= reach && (!best || n.d < best.n.d)) best = {w, i, n}; });
+  return best;
+}
+// A gate this close to a wall line opens it (the town builder's GateOnLine).
+const GATE_ON_LINE = 0.25;
+// The towers a wall point can stand, as their kit pieces are named; the footprint of each, measured from its model.
+const TOWERS = {Wall_tower1: [0.6, 0.82], Wall_tower2: [0.86, 0.86]};
+function corners(x, z, w, d, rot) {   // Unity's turn about y: clockwise seen from above
+  const c = Math.cos(rot * Math.PI / 180), s = Math.sin(rot * Math.PI / 180);
+  return [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]].map(([ox, oz]) => [x + ox * c + oz * s, z - ox * s + oz * c]);
+}
+function overlap(pa, pb) {
+  for (const poly of [pa, pb]) for (let i = 0; i < poly.length; i++) {
+    const [x1, z1] = poly[i], [x2, z2] = poly[(i + 1) % poly.length], nx = z1 - z2, nz = x2 - x1;
+    const a = pa.map(([x, z]) => nx * x + nz * z), b = pb.map(([x, z]) => nx * x + nz * z);
+    if (Math.max(...a) <= Math.min(...b) || Math.max(...b) <= Math.min(...a)) return false;
+  }
+  return true;
+}
+function inPoly(pts, x, z) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, zi] = pts[i], [xj, zj] = pts[j];
+    if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+}
+const pairs = xz => { const out = []; for (let k = 0; k + 1 < xz.length; k += 2) out.push([xz[k], xz[k + 1]]); return out; };
+// AN AREA'S OUTLINE, the town builder's Outline: straight from point to point, curving through every point marked smooth
+// (Shift held while dragging it) — a smooth point is left along the line through its two neighbours, a sharp one straight
+// at the next point, each curved side in CURVE_STEPS runs.
+const CURVE_STEPS = 16, outlines = new WeakMap();
+function outlineOf(a) {
+  const key = a.poly.join() + "|" + (a.smooth || []).join(), had = outlines.get(a);
+  if (had && had.key === key) return had;
+  const p = a.poly, n = p.length / 2, sm = a.smooth || [];
+  const P = i => { i = (i % n + n) % n; return [p[2 * i], p[2 * i + 1]]; }, S = i => sm[(i % n + n) % n] === 1;
+  let xz = p;
+  if (sm.includes(1)) {
+    xz = [];
+    for (let i = 0; i < n; i++) {
+      const a0 = P(i), b0 = P(i + 1); xz.push(a0[0], a0[1]);
+      if (!S(i) && !S(i + 1)) continue;
+      const ma = S(i) ? [(P(i + 1)[0] - P(i - 1)[0]) / 2, (P(i + 1)[1] - P(i - 1)[1]) / 2] : [b0[0] - a0[0], b0[1] - a0[1]];
+      const mb = S(i + 1) ? [(P(i + 2)[0] - P(i)[0]) / 2, (P(i + 2)[1] - P(i)[1]) / 2] : [b0[0] - a0[0], b0[1] - a0[1]];
+      for (let k = 1; k < CURVE_STEPS; k++) {
+        const t = k / CURVE_STEPS, t2 = t * t, t3 = t2 * t, h00 = 2 * t3 - 3 * t2 + 1, h10 = t3 - 2 * t2 + t, h01 = -2 * t3 + 3 * t2, h11 = t3 - t2;
+        xz.push(h00 * a0[0] + h10 * ma[0] + h01 * b0[0] + h11 * mb[0], h00 * a0[1] + h10 * ma[1] + h01 * b0[1] + h11 * mb[1]);
+      }
+    }
+  }
+  const out = {key, xz, pts: pairs(xz), closed: xz.concat(xz.slice(0, 2))};
+  outlines.set(a, out); return out;
+}
+function inArea(a, x, z) {
+  if (a.rect && a.rect.length === 4) return x >= a.rect[0] && z >= a.rect[1] && x <= a.rect[2] && z <= a.rect[3];
+  if (a.circle && a.circle.length === 3) return (x - a.circle[0]) ** 2 + (z - a.circle[1]) ** 2 <= a.circle[2] ** 2;
+  if (a.poly && a.poly.length >= 6) return inPoly(outlineOf(a).pts, x, z);
+  return false;
+}
+const wallLine = () => plan.wall.line;
+
+// The look under a point as the plan lays it (the town builder's own order): lawn past the wall, then the areas, then the
+// streets, the court over them. Used to work out the trees' soil beds, exactly as the town builder does.
+function lookAt(areas, x, z) {
+  const line = wallLine();
+  let c = "grass";
+  if (!(Math.abs(x) > HALF_X - line || Math.abs(z) > HALF_Z - line)) for (const a of areas) if (inArea(a, x, z)) c = a.look;
+  for (const s of plan.streets) if (lineDist(s.xz, x, z) <= s.width / 2) c = "street";
+  for (const a of areas) if (a.look === "court" && inArea(a, x, z)) c = "court";
+  return c;
+}
+// How far a point is from the nearest curb, raised side positive: the town builder's own rule. Every street and area
+// says its level, painted in the looks' order (areas, streets over them, the court over the streets, the beds over all).
+function outsideArea(a, x, z) {
+  if (a.circle && a.circle.length === 3) return Math.hypot(x - a.circle[0], z - a.circle[1]) - a.circle[2];
+  if (a.rect && a.rect.length === 4) {
+    const dx = Math.max(a.rect[0] - x, x - a.rect[2]), dz = Math.max(a.rect[1] - z, z - a.rect[3]);
+    return Math.hypot(Math.max(dx, 0), Math.max(dz, 0)) + Math.min(Math.max(dx, dz), 0);
+  }
+  if (a.poly && a.poly.length >= 6) { const d = lineDist(outlineOf(a).closed, x, z); return inArea(a, x, z) ? -d : d; }
+  return Infinity;
+}
+// THE LEVELS, the town builder's own rule: every street and area is high, normal or low — a curb above, level with, or a
+// curb below what it is laid on. Inside the wall the ground starts a curb above the lawn. Areas stack on each other in
+// their order; streets and courts are paths, each measured from the areas' ground under it (past the wall from the town
+// ground's height, so a low street leaves a gate level with the lawn); trees' beds stack on all.
+const isBed = a => a.look === "pit" || a.look === "planter", isPath = a => a.look === "court";
+const rel = l => REL[l] || 0;
+function levelAt(areas, x, z) {
+  const line = wallLine();
+  let stacked = 0;
+  for (const a of areas) if (!isBed(a) && !isPath(a) && inArea(a, x, z)) stacked += rel(a.level);
+  let level = (Math.abs(x) < HALF_X - line && Math.abs(z) < HALF_Z - line ? 1 : 0) + stacked;
+  const under = 1 + stacked;
+  for (const s of plan.streets) if (lineDist(s.xz, x, z) <= s.width / 2) level = under + rel(s.level);
+  for (const a of areas) if (isPath(a) && inArea(a, x, z)) level = under + rel(a.level);
+  for (const a of areas) if (isBed(a) && inArea(a, x, z)) level = a.stand + rel(a.level);
+  return level;
+}
+// For each step of height, how far a point is inside the ground standing above it (its curb where it is 0).
+function levelsAt(areas, st, x, z) {
+  const FAR = 1000, line = wallLine(), inside = Math.min(HALF_X - line - Math.abs(x), HALF_Z - line - Math.abs(z));
+  const g = new Float32Array(st.steps);
+  const lay = (from, r, outside) => {
+    if (outside > 1) return;
+    const src = from.slice(), was = g.slice();
+    for (let t = 0; t < st.steps; t++) { const u = t - r; g[t] = combine(was[t], u < 0 ? FAR : u >= st.steps ? -FAR : src[u], outside); }
+  };
+  const flat = level => { const f = new Float32Array(st.steps); for (let t = 0; t < st.steps; t++) f[t] = st.lowest + t + 1 <= level ? FAR : -FAR; return f; };
+  for (let t = 0; t < st.steps; t++) g[t] = st.lowest + t + 1 <= 1 ? FAR : -FAR;
+  for (const a of areas) if (!isBed(a) && !isPath(a) && rel(a.level)) lay(g, rel(a.level), outsideArea(a, x, z));
+  const base = g.slice();
+  for (let t = 0; t < st.steps; t++) { const m = st.lowest + t + 1; g[t] = m <= 0 ? FAR : m === 1 ? inside : -FAR; }
+  for (const a of areas) if (!isBed(a) && !isPath(a) && rel(a.level)) lay(g, rel(a.level), outsideArea(a, x, z));
+  for (const s of plan.streets) lay(base, rel(s.level), lineDist(s.xz, x, z) - s.width / 2);
+  for (const a of areas) if (isPath(a)) lay(base, rel(a.level), outsideArea(a, x, z));
+  for (const a of areas) if (isBed(a)) lay(flat(a.stand), rel(a.level), outsideArea(a, x, z));
+  return g;
+}
+// One step's value where a shape is laid — the town builder's Combine: the shape's edge counts only where the two sides
+// really differ, so two grounds of one height meet with no curb between them.
+function combine(A, B, o) {
+  if (o < 0) return B > 0 ? (A > 0 ? Math.min(B, Math.max(-o, A)) : Math.min(B, -o)) : (A > 0 ? Math.max(B, o) : Math.max(Math.min(A, o), B));
+  return A > 0 ? (B > 0 ? Math.min(A, Math.max(o, B)) : Math.min(A, o)) : (B > 0 ? Math.max(A, -o) : Math.max(A, Math.min(-o, B)));
+}
+// The look under a point as the town builder paints the built ground: lawn past the wall, the areas, a mound's grass, the
+// streets, the court, a tree's bed. Plants are painted only where it is grass or meadow.
+function builtLook(areas, x, z) {
+  const line = wallLine();
+  let c = "grass";
+  if (!(Math.abs(x) > HALF_X - line || Math.abs(z) > HALF_Z - line)) for (const a of areas) if (!isBed(a) && inArea(a, x, z)) c = a.look;
+  for (const m of plan.mounds) if (inPoly(moundBox(m), x, z)) c = "grass";
+  for (const s of plan.streets) if (lineDist(s.xz, x, z) <= s.width / 2) c = "street";
+  for (const a of areas) if (a.look === "court" && inArea(a, x, z)) c = "court";
+  for (const a of areas) if (isBed(a) && inArea(a, x, z)) c = a.look;
+  return c;
+}
+let bedsCache = {v: -1, beds: [], areas: []};
+function bedsAndAreas() {
+  if (bedsCache.v === version) return bedsCache;
+  const areas = plan.areas.slice(), out = [];
+  for (const p of plan.pieces) {
+    const role = (kit[p.kind] || {}).role;
+    if (role !== "tree" && role !== "bush") continue;
+    // Only paving needs a bed: it sinks into raised paving and stands up out of low paving.
+    const size = role === "tree" ? 0.5 : 0.3, look = lookAt(areas, p.x, p.z);
+    if (look !== "stone" && look !== "court" && look !== "street") continue;
+    const stand = levelAt(areas, p.x, p.z), raised = stand >= 1;
+    const bed = {look: raised ? "pit" : "planter", level: raised ? "low" : "high", stand, circle: [p.x, p.z, size]};
+    areas.push(bed); out.push(bed);
+  }
+  return (bedsCache = {v: version, beds: out, areas});
+}
+const beds = () => bedsAndAreas().beds;
+
+// The curbs the build will lay: the zero line of that field, traced on the ground's own quarter-unit grid. Worked out a
+// moment after the last change, so dragging stays smooth.
+let curbCache = {v: -1, segs: []}, curbTimer = 0, traceJob = null;
+// Worked out in slices of about 15 ms, and only once nothing is being dragged or painted, so the page never stalls; a
+// change while it runs starts it again.
+function curbs() {
+  if (curbCache.v !== version && !curbTimer && !traceJob) curbTimer = setTimeout(startTrace, 120);
+  return curbCache.segs;
+}
+function startTrace() {
+  curbTimer = 0;
+  if (pointer) { curbTimer = setTimeout(startTrace, 120); return; }
+  const v = version, job = traceCurbs();
+  traceJob = job;
+  const slice = () => {
+    if (traceJob !== job) return;
+    if (version !== v) { traceJob = null; curbs(); return; }
+    const until = performance.now() + 15;
+    while (performance.now() < until) if (job.next().done) { traceJob = null; draw(); return; }
+    setTimeout(slice, 0);
+  };
+  slice();
+}
+function* traceCurbs() {
+  const v = version, areas = bedsAndAreas().areas, step = 0.25, nx = Math.round(2 * HALF_X / step), nz = Math.round(2 * HALF_Z / step);
+  let lo = 0, hi = 1;
+  const levels = new Int16Array((nx + 1) * (nz + 1)), tiles = [];
+  for (let j = 0; j <= nz; j++, yield) for (let i = 0; i <= nx; i++) {
+    const x = -HALF_X + i * step, z = -HALF_Z + j * step, l = levelAt(areas, x, z);
+    levels[j * (nx + 1) + i] = l; tiles.push(tileAt(areas, x, z)); lo = Math.min(lo, l); hi = Math.max(hi, l);
+  }
+  const st = {lowest: lo, steps: hi - lo}, fs = [];
+  for (let j = 0; j <= nz; j++, yield) for (let i = 0; i <= nx; i++) fs.push(levelsAt(areas, st, -HALF_X + i * step, -HALF_Z + j * step));
+  const segs = [], P = (i, j) => [-HALF_X + i * step, -HALF_Z + j * step];
+  const cross = (a, fa, b, fb) => { const t = fa / (fa - fb); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; };
+  for (let t = 0; t < st.steps; t++) for (let j = 0; j < nz; j++, yield) for (let i = 0; i < nx; i++) {
+    const at = (i, j) => fs[j * (nx + 1) + i][t];
+    const c = [[P(i, j), at(i, j)], [P(i + 1, j), at(i + 1, j)], [P(i + 1, j + 1), at(i + 1, j + 1)], [P(i, j + 1), at(i, j + 1)]], pts = [];
+    for (let k = 0; k < 4; k++) { const [a, fa] = c[k], [b, fb] = c[(k + 1) % 4]; if ((fa > 0) !== (fb > 0)) pts.push(cross(a, fa, b, fb)); }
+    for (let k = 0; k + 1 < pts.length; k += 2) segs.push(pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1]);
+  }
+  // the fields and tiles are kept for the 3D view, which lays its ground from them
+  curbCache = {v, segs, blend: blendMasks(levels, tiles, nx, nz), fs, tiles, st, nx, nz};
+}
+
+// The tile a ground point wears, the town builder's TileName: the lawn, the areas, a mound's grass, the streets, the court,
+// a tree's bed of soil.
+function tileAt(areas, x, z) {
+  const line = wallLine();
+  let t = plan.lawnTile;
+  if (!(Math.abs(x) > HALF_X - line || Math.abs(z) > HALF_Z - line)) for (const a of areas) if (!isBed(a) && inArea(a, x, z)) t = a.tile;
+  for (const m of plan.mounds) if (inPoly(moundBox(m), x, z)) t = plan.lawnTile;
+  for (const s of plan.streets) if (lineDist(s.xz, x, z) <= s.width / 2) t = s.tile;
+  for (const a of areas) if (a.look === "court" && inArea(a, x, z)) t = a.tile;
+  for (const a of areas) if (isBed(a) && inArea(a, x, z)) t = plan.soilTile;
+  return t;
+}
+// WHERE TWO TILES BLEND, as the game draws it: the ground's points are a quarter unit apart, and across a triangle whose
+// corners wear different tiles the tiles fade into each other — unless a curb lies between, which splits the ground. So
+// every point next to a point of the same height wearing another tile is marked in its own tile's mask; each mask, drawn
+// smoothed over the ground, fades its tile in across that quarter unit.
+function blendMasks(levels, tiles, nx, nz) {
+  const w = nx + 1, marks = {};
+  const mark = (n, t) => { (marks[t] = marks[t] || new Uint8Array(w * (nz + 1)))[n] = 1; };
+  for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
+    const n = j * w + i;
+    for (const [di, dj] of [[1, 0], [0, 1]]) {
+      if (i + di > nx || j + dj > nz) continue;
+      const m = (j + dj) * w + i + di;
+      if (levels[m] === levels[n] && tiles[m] !== tiles[n]) { mark(n, tiles[n]); mark(m, tiles[m]); }
+    }
+  }
+  return Object.keys(marks).map(tile => {
+    const c = Object.assign(document.createElement("canvas"), {width: w, height: nz + 1}), g = c.getContext("2d"), img = g.createImageData(w, nz + 1);
+    for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) if (marks[tile][j * w + i]) img.data[((nz - j) * w + i) * 4 + 3] = 255;
+    g.putImageData(img, 0, 0);
+    return {tile, mask: c};
+  });
+}
+let blendCanvas = null;
+function drawBlends() {
+  if (curbCache.v !== version) return;
+  const layers = curbs() && curbCache.blend || [], step = 0.25, nx = Math.round(2 * HALF_X / step), nz = Math.round(2 * HALF_Z / step);
+  if (!layers.length) return;
+  blendCanvas = blendCanvas || document.createElement("canvas");
+  // at half the screen's resolution — a quarter of the pixels, measured about four times faster — then stretched over the
+  // ground: the blend is a soft fade a quarter unit wide, so the halving does not show in it
+  const bw = Math.ceil(cv.width / 2), bh = Math.ceil(cv.height / 2), half = dpr / 2;
+  if (blendCanvas.width !== bw || blendCanvas.height !== bh) { blendCanvas.width = bw; blendCanvas.height = bh; }
+  const g = blendCanvas.getContext("2d");
+  for (const L of layers) {
+    const fill = tileFill(L.tile, "grass", g); if (typeof fill === "string") continue;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, blendCanvas.width, blendCanvas.height);
+    g.save();
+    g.setTransform(half, 0, 0, half, 0, 0);
+    g.fillStyle = fill; g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = "destination-in"; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+    g.drawImage(L.mask, X(-HALF_X - step / 2), Y(-HALF_Z + nz * step + step / 2), (nx + 1) * step * view.s, (nz + 1) * step * view.s);
+    g.restore();
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(blendCanvas, 0, 0, cv.width, cv.height); ctx.restore();
+  }
+}
+
+// ---- the hand-raised ground: a grid of heights over the whole piece -------------------------------------------------
+function ensureLift() {
+  const nx = Math.round(2 * HALF_X / LIFT_STEP) + 1, nz = Math.round(2 * HALF_Z / LIFT_STEP) + 1;
+  const l = plan.lift;
+  if (l && l.h && l.h.length === l.nx * l.nz && l.nx >= 2) return l;
+  plan.lift = {x0: -HALF_X, z0: -HALF_Z, step: LIFT_STEP, nx, nz, h: new Array(nx * nz).fill(0)};
+  return plan.lift;
+}
+function liftAt(x, z) {
+  const l = plan.lift;
+  if (!l || !l.h || l.h.length !== l.nx * l.nz) return 0;
+  const fx = Math.max(0, Math.min((x - l.x0) / l.step, l.nx - 1.001)), fz = Math.max(0, Math.min((z - l.z0) / l.step, l.nz - 1.001));
+  const i = fx | 0, j = fz | 0, u = fx - i, v = fz - j, h = l.h;
+  const a = h[j * l.nx + i], b = h[j * l.nx + i + 1], c = h[(j + 1) * l.nx + i], d = h[(j + 1) * l.nx + i + 1];
+  return (a + (b - a) * u) * (1 - v) + (c + (d - c) * u) * v;
+}
+
+// ---- bridges: fitted straight across their canal, as the town plan tool fits them ------------------------------------
+function moundsOf(b) { return plan.mounds.filter(m => Math.abs(m.x - b.x) < 0.011 && Math.abs(m.z - b.z) < 0.011); }
+function fitBridge(b, nearX, nearZ) {
+  const c = plan.canals[b.canal]; if (!c) return;
+  const mine = moundsOf(b), n = nearestOnLine(c.xz, nearX, nearZ);
+  if (!isFinite(n.d)) return;
+  const length = c.width + 2 * BRIDGE_LAND, scale = length / ROCK_L;
+  Object.assign(b, {kind: "BridgeRock", x: r2(n.qx), z: r2(n.qz), bearing: r1((bearing(n.tx, n.tz) + 90) % 360),
+                    length: r2(length), width: r2(ROCK_W * scale), scale: r3(scale)});
+  for (const m of mine) { m.x = b.x; m.z = b.z; }
+}
+function refitCanal(ci) { for (const b of plan.bridges) if (b.canal === ci) fitBridge(b, b.x, b.z); }
+
+// ---- the view ---------------------------------------------------------------------------------------------------------
+let W = 0, H = 0, dpr = 1;
+const X = x => W / 2 + (x - view.cx) * view.s, Y = z => H / 2 - (z - view.cz) * view.s;
+const toWorld = (sx, sy) => ({x: (sx - W / 2) / view.s + view.cx, z: view.cz - (sy - H / 2) / view.s});
+function resize() {
+  const r = cv.getBoundingClientRect(); dpr = window.devicePixelRatio || 1;
+  W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); draw();
+}
+function fit() { view.cx = 0; view.cz = 0; view.s = Math.min(W / (2 * HALF_X + 4), H / (2 * HALF_Z + 4)); draw(); }
+
+// ---- drawing ----------------------------------------------------------------------------------------------------------
+function pathPoly(pts) { ctx.beginPath(); pts.forEach(([x, z], i) => i ? ctx.lineTo(X(x), Y(z)) : ctx.moveTo(X(x), Y(z))); ctx.closePath(); }
+function pathLine(xz) { ctx.beginPath(); for (let k = 0; k + 1 < xz.length; k += 2) k ? ctx.lineTo(X(xz[k]), Y(xz[k + 1])) : ctx.moveTo(X(xz[k]), Y(xz[k + 1])); }
+function pathArea(a) {
+  if (a.rect && a.rect.length === 4) { ctx.beginPath(); ctx.rect(X(a.rect[0]), Y(a.rect[3]), (a.rect[2] - a.rect[0]) * view.s, (a.rect[3] - a.rect[1]) * view.s); }
+  else if (a.circle && a.circle.length === 3) { ctx.beginPath(); ctx.arc(X(a.circle[0]), Y(a.circle[1]), a.circle[2] * view.s, 0, 2 * Math.PI); }
+  else if (a.poly && a.poly.length >= 6) pathPoly(outlineOf(a).pts);
+}
+function moundBox(m) {   // where a mound grasses the ground: from just behind its bridge to where it has eased down
+  const L = Math.hypot(m.dir[0], m.dir[1]) || 1, d = [m.dir[0] / L, m.dir[1] / L], n = [d[1], -d[0]];
+  const p = (v, u) => [m.x + d[0] * v + n[0] * u, m.z + d[1] * v + n[1] * u];
+  return [p(0.6, -m.width / 2), p(m.length + 1.2, -m.width / 2), p(m.length + 1.2, m.width / 2), p(0.6, m.width / 2)];
+}
+function bridgeFor(m) { return plan.bridges.find(b => Math.abs(m.x - b.x) < 0.011 && Math.abs(m.z - b.z) < 0.011); }
+function moundHandle(m) {
+  const b = bridgeFor(m), back = b ? b.width / 2 : 0, L = Math.hypot(m.dir[0], m.dir[1]) || 1;
+  return [m.x + m.dir[0] / L * (back + m.length), m.z + m.dir[1] / L * (back + m.length)];
+}
+const kitOf = p => kit[p.kind] || {footprint: [0.5, 0.5], role: "market"};
+function pieceShape(p) {
+  const k = kitOf(p);
+  return k.role === "tree" || k.role === "bush" ? corners(p.x, p.z, 0.3, 0.3, 0) : corners(p.x, p.z, k.footprint[0], k.footprint[1], p.rot);
+}
+
+let heightCanvas = null, heightVersion = -1;
+function heightImage() {
+  const l = plan.lift;
+  if (!l || !l.h || l.h.length !== l.nx * l.nz) return null;
+  if (heightVersion === version && heightCanvas) return heightCanvas;
+  heightCanvas = heightCanvas && heightCanvas.width === l.nx && heightCanvas.height === l.nz ? heightCanvas : Object.assign(document.createElement("canvas"), {width: l.nx, height: l.nz});
+  const g = heightCanvas.getContext("2d"), img = g.createImageData(l.nx, l.nz), h = l.h, at = (i, j) => h[Math.max(0, Math.min(l.nz - 1, j)) * l.nx + Math.max(0, Math.min(l.nx - 1, i))];
+  for (let j = 0; j < l.nz; j++) for (let i = 0; i < l.nx; i++) {
+    const v = at(i, j), gx = (at(i + 1, j) - at(i - 1, j)) / (2 * l.step), gz = (at(i, j + 1) - at(i, j - 1)) / (2 * l.step);
+    const o = ((l.nz - 1 - j) * l.nx + i) * 4, steep = Math.hypot(gx, gz) > 1.0;   // over 45 degrees: nobody walks up it
+    let r = 0, gr = 0, b = 0, a = 0;
+    if (steep) { r = 230; gr = 60; b = 50; a = 150; }
+    else if (v > 0.005) { const shade = Math.max(0, Math.min(1, 0.5 + (-gx + gz) * 0.6)); r = 255 * shade; gr = 235 * shade; b = 170 * shade; a = Math.min(170, 50 + v * 70); }
+    else if (v < -0.005) { r = 30; gr = 50; b = 120; a = Math.min(170, 50 - v * 70); }
+    img.data[o] = r; img.data[o + 1] = gr; img.data[o + 2] = b; img.data[o + 3] = a;
+  }
+  g.putImageData(img, 0, 0); heightVersion = version;
+  return heightCanvas;
+}
+
+// THE GROUND (tiles, blends, water, heights, curbs) is drawn into a picture of its own and redrawn only when something on
+// it changes; moving the mouse draws that picture and the pieces over it, and panning or zooming slides and scales it
+// until the view has been still for a moment.
+const groundCv = document.createElement("canvas");
+let groundKey = "", groundView = null, groundTimer = 0;
+function drawGroundCached() {
+  const show = id => $(id).checked;
+  const data = [version, curbCache.v, imagesLoaded, show("showHeights"), show("showCurbs"), show("showPictures"), W, H, dpr].join("|");
+  const g = groundView;
+  if (data === groundKey && g && (g.cx !== view.cx || g.cz !== view.cz || g.s !== view.s)) {
+    const k = view.s / g.s, ox = W / 2 * (1 - k) + (g.cx - view.cx) * view.s, oy = H / 2 * (1 - k) - (g.cz - view.cz) * view.s;
+    ctx.save(); ctx.setTransform(dpr * k, 0, 0, dpr * k, ox * dpr, oy * dpr); ctx.drawImage(groundCv, 0, 0, W, H); ctx.restore();
+    clearTimeout(groundTimer); groundTimer = setTimeout(() => { groundView = null; draw(); }, 150);
+    return;
+  }
+  if (data !== groundKey || !g) {
+    if (groundCv.width !== cv.width || groundCv.height !== cv.height) { groundCv.width = cv.width; groundCv.height = cv.height; }
+    const keep = ctx; ctx = groundCv.getContext("2d");
+    try { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); drawGround(); } finally { ctx = keep; }
+    groundKey = data; groundView = {cx: view.cx, cz: view.cz, s: view.s};
+  }
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(groundCv, 0, 0); ctx.restore();
+}
+function drawGround() {
+  const line = wallLine(), show = id => $(id).checked;
+  // the ground's tiles, in the town builder's order
+  ctx.fillStyle = tileFill(plan.lawnTile, "grass"); ctx.fillRect(X(-HALF_X), Y(HALF_Z), 2 * HALF_X * view.s, 2 * HALF_Z * view.s);
+  ctx.save(); ctx.beginPath(); ctx.rect(X(-HALF_X + line), Y(HALF_Z - line), 2 * (HALF_X - line) * view.s, 2 * (HALF_Z - line) * view.s); ctx.clip();
+  for (const a of plan.areas) { ctx.fillStyle = tileFill(a.tile, a.look); pathArea(a); ctx.fill(); }
+  ctx.restore();
+  ctx.fillStyle = tileFill(plan.lawnTile, "grass"); for (const m of plan.mounds) { pathPoly(moundBox(m)); ctx.fill(); }
+  ctx.lineCap = ctx.lineJoin = "round";
+  for (const s of plan.streets) { ctx.strokeStyle = tileFill(s.tile, "street"); ctx.lineWidth = s.width * view.s; pathLine(s.xz); ctx.stroke(); }
+  for (const a of plan.areas) if (a.look === "court") { ctx.fillStyle = tileFill(a.tile, "court"); pathArea(a); ctx.fill(); }
+  ctx.fillStyle = tileFill(plan.soilTile, "pit"); for (const a of beds()) { pathArea(a); ctx.fill(); }
+  if (show("showPictures")) drawBlends();
+  // the water, gone past the middle of each mound's bridge, where it runs on under the mound
+  ctx.save();
+  for (const m of plan.mounds) {
+    const L = Math.hypot(m.dir[0], m.dir[1]) || 1, d = [m.dir[0] / L, m.dir[1] / L], n = [d[1], -d[0]], F = 400;
+    pathPoly([[m.x + n[0] * F, m.z + n[1] * F], [m.x + n[0] * F - d[0] * F, m.z + n[1] * F - d[1] * F],
+              [m.x - n[0] * F - d[0] * F, m.z - n[1] * F - d[1] * F], [m.x - n[0] * F, m.z - n[1] * F]]); ctx.clip();
+  }
+  for (const c of plan.canals) { ctx.strokeStyle = LOOKS.water; ctx.lineWidth = c.width * view.s; pathLine(c.xz); ctx.stroke(); }
+  ctx.restore();
+  if (show("showHeights")) {
+    const img = heightImage(), l = plan.lift;
+    if (img) { ctx.imageSmoothingEnabled = true; ctx.drawImage(img, X(l.x0 - l.step / 2), Y(l.z0 + (l.nz - 0.5) * l.step), l.nx * l.step * view.s, l.nz * l.step * view.s); }
+  }
+  if (show("showCurbs")) {
+    const segs = curbs(); ctx.strokeStyle = "#2b211a"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.beginPath();
+    for (let k = 0; k + 3 < segs.length; k += 4) { ctx.moveTo(X(segs[k]), Y(segs[k + 1])); ctx.lineTo(X(segs[k + 2]), Y(segs[k + 3])); }
+    ctx.stroke();
+  }
+}
+
+function draw() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#14171a"; ctx.fillRect(0, 0, W, H);
+  if (!plan) return;
+  const line = wallLine(), show = id => $(id).checked;
+  drawGroundCached();
+  // the wall, with its towers and its gates
+  ctx.strokeStyle = "#5b4636"; ctx.lineWidth = Math.max(2, WALL_DEEP * view.s); ctx.lineCap = "butt"; ctx.lineJoin = "miter";
+  for (const w of plan.walls) { pathLine(wallPath(w)); ctx.stroke(); }
+  ctx.fillStyle = "#6a5848"; ctx.strokeStyle = "#2a2018"; ctx.lineWidth = 1;
+  for (const w of plan.walls) pairs(w.xz).forEach(([x, z], k) => {
+    const t = TOWERS[(w.towers || [])[k]]; if (!t) return;
+    pathPoly(corners(x, z, t[0], t[1], 0)); ctx.fill(); ctx.stroke();
+  });
+  for (const g of plan.gates) {
+    const on = nearestWall(g.x, g.z, GATE_ON_LINE);
+    if (on) {
+      const L = Math.hypot(on.n.tx, on.n.tz) || 1, dx = on.n.tx / L * plan.wall.gate / 2, dz = on.n.tz / L * plan.wall.gate / 2;
+      ctx.strokeStyle = LOOKS.street; ctx.lineWidth = Math.max(3, WALL_DEEP * view.s + 2); ctx.lineCap = "butt";
+      ctx.beginPath(); ctx.moveTo(X(g.x - dx), Y(g.z - dz)); ctx.lineTo(X(g.x + dx), Y(g.z + dz)); ctx.stroke();
+    }
+    ctx.fillStyle = "#6a4a8c"; ctx.beginPath(); ctx.arc(X(g.x), Y(g.z), 5, 0, 7); ctx.fill();
+  }
+  // bridges and mounds
+  for (const m of plan.mounds) { ctx.setLineDash([4, 3]); ctx.strokeStyle = "#2f5a1d"; ctx.lineWidth = 1; pathPoly(moundBox(m)); ctx.stroke(); ctx.setLineDash([]); }
+  for (const b of plan.bridges) {
+    if (drawPicture(pictures.bridge, b.x, b.z, b.bearing, b.scale)) continue;
+    const pts = corners(b.x, b.z, b.width, b.length, b.bearing);
+    ctx.fillStyle = "#8d8780"; pathPoly(pts); ctx.fill(); ctx.strokeStyle = "#4b4640"; ctx.lineWidth = 1; ctx.stroke();
+  }
+  if (show("showPlants")) drawPlants();
+  // pieces
+  // the trees and bushes after the rest, north first, so each stands in front of what is behind it
+  const standing = k => k.role === "tree" || k.role === "bush";
+  const order = show("showPieces") ? plan.pieces.filter(p => !standing(kitOf(p))).concat(plan.pieces.filter(p => standing(kitOf(p))).sort((a, b) => b.z - a.z)) : [];
+  for (const p of order) {
+    const k = kitOf(p);
+    if (k.role === "effect") {
+      if (!show("showLeaves")) continue;
+      ctx.setLineDash([6, 4]); ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1;
+      pathPoly(corners(p.x, p.z, k.footprint[0], k.footprint[1], 0)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(X(p.x), Y(p.z), 4, 0, 7); ctx.fill(); continue;
+    }
+    ctx.globalAlpha = show("showThrough") ? 0.45 : 1;
+    const drawn = standing(k) ? drawStanding(((pictures.kitTurned || {})[p.kind] || [])[(p.variant || 1) - 1], p.x, p.z, p.rot)
+                              : drawPicture(((pictures.kit || {})[p.kind] || [])[(p.variant || 1) - 1], p.x, p.z, p.rot);
+    ctx.globalAlpha = 1;
+    if (drawn) continue;
+    ctx.fillStyle = ROLE_COLOURS[k.role] || "#ccc";
+    if (k.role === "tree" || k.role === "bush") {
+      ctx.globalAlpha = .85; ctx.beginPath(); ctx.arc(X(p.x), Y(p.z), Math.max(2, k.footprint[0] / 2 * view.s), 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    } else {
+      pathPoly(corners(p.x, p.z, k.footprint[0], k.footprint[1], p.rot)); ctx.fill(); ctx.strokeStyle = "#2a2018"; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
+  if (show("showLabels")) {
+    ctx.font = "12px system-ui"; ctx.textAlign = "center"; ctx.fillStyle = "#1c1c1c";
+    for (const s of plan.streets.concat(plan.canals)) if (s.name) {
+      const pts = pairs(s.xz), mid = pts[Math.floor((pts.length - 1) / 2)], nxt = pts[Math.min(pts.length - 1, Math.floor((pts.length - 1) / 2) + 1)];
+      ctx.fillText(s.name, X((mid[0] + nxt[0]) / 2), Y((mid[1] + nxt[1]) / 2) + 4);
+    }
+    for (const a of plan.areas) if (a.label) { const c = areaCentre(a); ctx.fillText(a.label, X(c[0]), Y(c[1])); }
+    for (const g of plan.gates) if (g.road) { ctx.fillStyle = "#e6e8eb"; ctx.fillText(g.road, X(g.x), Y(g.z) + (g.z < 0 ? 18 : -10)); ctx.fillStyle = "#1c1c1c"; }
+  }
+  drawSelection(); drawTool();
+  view3d.changed();
+}
+// ---- painted plants: a grid of quarter-unit cells over the piece, each 0 or 1 + its plant's place in the plant list ------
+const PLANT_STEP = 0.25;
+let plantCells = new Int32Array(0);
+const plantGrid = () => ({x0: -HALF_X, z0: -HALF_Z, step: PLANT_STEP, nx: Math.round(2 * HALF_X / PLANT_STEP), nz: Math.round(2 * HALF_Z / PLANT_STEP)});
+function decodePlants() {
+  const g = plantGrid(), p = plan.plantGrid; plantCells = new Int32Array(g.nx * g.nz);
+  if (!p || p.nx !== g.nx || p.nz !== g.nz || !p.runs) return;
+  let n = 0; for (let r = 0; r + 1 < p.runs.length; r += 2) for (let c = 0; c < p.runs[r + 1] && n < plantCells.length; c++) plantCells[n++] = p.runs[r];
+}
+function encodePlants() {
+  if (!plantCells.some(v => v)) { delete plan.plantGrid; return; }
+  const runs = [];
+  for (let n = 0; n < plantCells.length; n++) { if (runs.length && runs[runs.length - 2] === plantCells[n]) runs[runs.length - 1]++; else runs.push(plantCells[n], 1); }
+  plan.plantGrid = Object.assign(plantGrid(), {runs});
+}
+// A cell's own number — the town builder's PlantHash, so a plant is drawn where the build stands it.
+function plantHash(i, j) {
+  let h = (Math.imul(i, 73856093) ^ Math.imul(j, 19349663)) >>> 0;
+  h = (h ^ (h >>> 13)) >>> 0; h = Math.imul(h, 0x5bd1e995) >>> 0; h = (h ^ (h >>> 15)) >>> 0;
+  return h;
+}
+function plantSpot(i, j) {
+  const g = plantGrid(), h = plantHash(i, j);
+  return {x: g.x0 + (i + 0.5) * g.step + ((h & 1023) / 1023 - 0.5) * g.step * 0.8, z: g.z0 + (j + 0.5) * g.step + (((h >>> 10) & 1023) / 1023 - 0.5) * g.step * 0.8,
+          rot: ((h >>> 20) & 511) / 511 * 360};
+}
+function paintPlants(x, z) {
+  const g = plantGrid(), r = opts.plantRadius, areas = bedsAndAreas().areas;
+  const i0 = Math.max(0, Math.floor((x - r - g.x0) / g.step)), i1 = Math.min(g.nx - 1, Math.floor((x + r - g.x0) / g.step));
+  const j0 = Math.max(0, Math.floor((z - r - g.z0) / g.step)), j1 = Math.min(g.nz - 1, Math.floor((z + r - g.z0) / g.step));
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    const cx = g.x0 + (i + 0.5) * g.step, cz = g.z0 + (j + 0.5) * g.step, n = j * g.nx + i;
+    if (Math.hypot(cx - x, cz - z) > r) continue;
+    if (opts.plantMode === "erase") { plantCells[n] = 0; continue; }
+    if (((plantHash(i, j) >>> 4) & 0xffff) / 65535 >= opts.density) continue;
+    const look = builtLook(areas, cx, cz);
+    if (look === "grass" || look === "meadow") plantCells[n] = opts.plant + 1;
+  }
+}
+function drawPlants() {
+  const g = plantGrid(), a = toWorld(0, H), b = toWorld(W, 0);
+  const i0 = Math.max(0, Math.floor((a.x - 1 - g.x0) / g.step)), i1 = Math.min(g.nx - 1, Math.ceil((b.x + 1 - g.x0) / g.step));
+  const j0 = Math.max(0, Math.floor((a.z - 1 - g.z0) / g.step)), j1 = Math.min(g.nz - 1, Math.ceil((b.z + 1 - g.z0) / g.step));
+  // north first, so each plant stands in front of the ones behind it
+  for (let j = j1; j >= j0; j--) for (let i = i0; i <= i1; i++) {
+    const v = plantCells[j * g.nx + i]; if (!v) continue;
+    const p = plantSpot(i, j), kind = (plan.plants[v - 1] || {}).kind;
+    if (drawStanding((pictures.plantsTurned || {})[kind], p.x, p.z, p.rot)) continue;
+    ctx.fillStyle = "#2f6b1f"; ctx.beginPath(); ctx.arc(X(p.x), Y(p.z), Math.max(1.5, 0.08 * view.s), 0, 7); ctx.fill();
+  }
+}
+const plantCount = () => plantCells.reduce((n, v) => n + (v ? 1 : 0), 0);
+
+function areaCentre(a) {
+  if (a.rect && a.rect.length === 4) return [(a.rect[0] + a.rect[2]) / 2, (a.rect[1] + a.rect[3]) / 2];
+  if (a.circle && a.circle.length === 3) return [a.circle[0], a.circle[1]];
+  const p = pairs(a.poly || []); return p.length ? [p.reduce((s, q) => s + q[0], 0) / p.length, p.reduce((s, q) => s + q[1], 0) / p.length] : [0, 0];
+}
+
+// ---- what can be selected, and its handles ----------------------------------------------------------------------------
+const listOf = t => ({piece: plan.pieces, street: plan.streets, canal: plan.canals, wall: plan.walls, area: plan.areas, bridge: plan.bridges, mound: plan.mounds, gate: plan.gates})[t];
+const objOf = s => listOf(s.t)[s.i];
+function handlesOf(s) {
+  const o = objOf(s); if (!o) return [];
+  if (s.t === "street" || s.t === "canal" || s.t === "wall") return pairs(o.xz).map(([x, z], k) => ({x, z, set: (nx, nz) => { o.xz[2 * k] = nx; o.xz[2 * k + 1] = nz; if (s.t === "canal") refitCanal(s.i); }, point: k}));
+  if (s.t === "area" && o.poly && o.poly.length >= 6) return pairs(o.poly).map(([x, z], k) => ({x, z, set: (nx, nz) => { o.poly[2 * k] = nx; o.poly[2 * k + 1] = nz; }, point: k,
+    // Every drag sets the point: smooth with Shift held, a sharp corner without.
+    smooth: on => { if (!(o.smooth && o.smooth.length === o.poly.length / 2)) o.smooth = new Array(o.poly.length / 2).fill(0); o.smooth[k] = on ? 1 : 0; }}));
+  if (s.t === "area" && o.rect && o.rect.length === 4) return [
+    {x: o.rect[0], z: o.rect[1], set: (nx, nz) => { o.rect[0] = Math.min(nx, o.rect[2] - 0.2); o.rect[1] = Math.min(nz, o.rect[3] - 0.2); }},
+    {x: o.rect[2], z: o.rect[3], set: (nx, nz) => { o.rect[2] = Math.max(nx, o.rect[0] + 0.2); o.rect[3] = Math.max(nz, o.rect[1] + 0.2); }}];
+  if (s.t === "area" && o.circle && o.circle.length === 3) return [{x: o.circle[0] + o.circle[2], z: o.circle[1], set: (nx, nz) => { o.circle[2] = Math.max(0.2, Math.hypot(nx - o.circle[0], nz - o.circle[1])); }}];
+  if (s.t === "mound") { const [hx, hz] = moundHandle(o); return [{x: hx, z: hz, set: (nx, nz) => {
+    const b = bridgeFor(o), back = b ? b.width / 2 : 0, dx = nx - o.x, dz = nz - o.z, L = Math.hypot(dx, dz);
+    if (L < 0.2) return; o.dir = [r3(dx / L), r3(dz / L)]; o.length = Math.max(0.5, L - back); }}]; }
+  return [];
+}
+// The point on a selected street, canal or outline's line nearest to x, z, when it is close enough to take a new point
+// there; a rectangle's line is its four corners.
+function onLine(s, x, z) {
+  const o = objOf(s); if (!o) return null;
+  const corners4 = s.t === "area" && o.rect && o.rect.length === 4 ? [o.rect[0], o.rect[1], o.rect[2], o.rect[1], o.rect[2], o.rect[3], o.rect[0], o.rect[3]] : null;
+  const key = s.t === "street" || s.t === "canal" || s.t === "wall" ? "xz" : s.t === "area" && (o.poly || corners4) ? "poly" : null;
+  if (!key) return null;
+  const pts = corners4 || o[key], n = nearestOnLine(key === "poly" ? pts.concat(pts.slice(0, 2)) : s.t === "wall" ? wallPath(o) : pts, x, z);
+  return n.d > Math.max(6 / view.s, (o.width || 0) / 2 + 0.3) ? null : {o, key, corners4, n};
+}
+function hit(x, z) {
+  const tol = 6 / view.s;
+  for (const s of sel) for (const h of handlesOf(s)) if (Math.hypot(h.x - x, h.z - z) < tol * 1.4) return {handle: h, of: s};
+  // The line of what is selected comes before whatever lies under it, so a double-click there adds a point to it.
+  for (const s of sel) if (onLine(s, x, z)) return s;
+  if ($("showPieces").checked) for (let i = plan.pieces.length - 1; i >= 0; i--) {
+    const p = plan.pieces[i], k = kitOf(p);
+    if (k.role === "effect") { if ($("showLeaves").checked && Math.hypot(p.x - x, p.z - z) < tol * 1.2) return {t: "piece", i}; continue; }
+    if (k.role === "tree" || k.role === "bush" ? Math.hypot(p.x - x, p.z - z) < Math.max(tol, k.footprint[0] / 2) : inPoly(corners(p.x, p.z, k.footprint[0], k.footprint[1], p.rot), x, z)) return {t: "piece", i};
+  }
+  for (let i = 0; i < plan.gates.length; i++) { const g = plan.gates[i]; if (Math.hypot(g.x - x, g.z - z) < Math.max(tol * 1.5, plan.wall.gate / 2)) return {t: "gate", i}; }
+  for (let i = 0; i < plan.mounds.length; i++) { const [hx, hz] = moundHandle(plan.mounds[i]); if (Math.hypot(hx - x, hz - z) < tol * 1.5) return {t: "mound", i}; }
+  for (let i = 0; i < plan.bridges.length; i++) { const b = plan.bridges[i]; if (inPoly(corners(b.x, b.z, b.width, b.length, b.bearing), x, z)) return {t: "bridge", i}; }
+  for (let i = 0; i < plan.mounds.length; i++) if (inPoly(moundBox(plan.mounds[i]), x, z)) return {t: "mound", i};
+  for (let i = plan.walls.length - 1; i >= 0; i--) if (lineDist(wallPath(plan.walls[i]), x, z) <= Math.max(tol, WALL_DEEP / 2)) return {t: "wall", i};
+  for (let i = plan.streets.length - 1; i >= 0; i--) if (lineDist(plan.streets[i].xz, x, z) <= Math.max(tol, plan.streets[i].width / 2)) return {t: "street", i};
+  for (let i = plan.canals.length - 1; i >= 0; i--) if (lineDist(plan.canals[i].xz, x, z) <= Math.max(tol, plan.canals[i].width / 2)) return {t: "canal", i};
+  for (let i = plan.areas.length - 1; i >= 0; i--) if (inArea(plan.areas[i], x, z)) return {t: "area", i};
+  return null;
+}
+const same = (a, b) => a && b && a.t === b.t && a.i === b.i;
+const isSel = s => sel.some(q => same(q, s));
+
+// The outline of one selectable thing, stroked in the current style.
+function strokeOutline(s) {
+  const o = objOf(s); if (!o) return;
+  if (s.t === "piece") { pathPoly(pieceShape(o).length && kitOf(o).role !== "tree" && kitOf(o).role !== "bush" ? pieceShape(o) : corners(o.x, o.z, kitOf(o).footprint[0], kitOf(o).footprint[0], 0)); ctx.stroke(); }
+  else if (s.t === "street" || s.t === "canal") { pathLine(o.xz); ctx.stroke(); }
+  else if (s.t === "wall") { pathLine(wallPath(o)); ctx.stroke(); }
+  else if (s.t === "area") { pathArea(o); ctx.stroke(); }
+  else if (s.t === "bridge") { pathPoly(corners(o.x, o.z, o.width, o.length, o.bearing)); ctx.stroke(); }
+  else if (s.t === "mound") { pathPoly(moundBox(o)); ctx.stroke(); }
+  else if (s.t === "gate") { ctx.beginPath(); ctx.arc(X(o.x), Y(o.z), 9, 0, 7); ctx.stroke(); }
+}
+function drawSelection() {
+  ctx.setLineDash([]);
+  // What a click would pick, under the mouse: a white outline, or a white ring round a point.
+  if (hover && !pointer) {
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3;
+    if (hover.handle) ctx.strokeRect(X(hover.handle.x) - 6, Y(hover.handle.z) - 6, 12, 12);
+    else if (!isSel(hover)) strokeOutline(hover);
+  }
+  ctx.lineWidth = 2; ctx.strokeStyle = "#ffe14d";
+  for (const s of sel) {
+    if (!objOf(s)) continue;
+    strokeOutline(s);
+    for (const h of handlesOf(s)) { ctx.fillStyle = "#ffe14d"; ctx.fillRect(X(h.x) - 4, Y(h.z) - 4, 8, 8); ctx.strokeStyle = "#222"; ctx.lineWidth = 1; ctx.strokeRect(X(h.x) - 4, Y(h.z) - 4, 8, 8); ctx.strokeStyle = "#ffe14d"; ctx.lineWidth = 2; }
+  }
+  if (pointer && pointer.box) {
+    const b = pointer.box; ctx.setLineDash([5, 4]); ctx.strokeStyle = "#ffe14d"; ctx.lineWidth = 1;
+    ctx.strokeRect(X(Math.min(b.x0, b.x1)), Y(Math.max(b.z0, b.z1)), Math.abs(b.x1 - b.x0) * view.s, Math.abs(b.z1 - b.z0) * view.s); ctx.setLineDash([]);
+  }
+}
+function drawTool() {
+  ctx.strokeStyle = "#ffe14d"; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+  if (drawing && (drawing.kind === "street" || drawing.kind === "canal" || drawing.kind === "wall")) {
+    const xz = drawing.xz.concat([cursor.x, cursor.z]); pathLine(xz); ctx.stroke();
+  } else if (drawing && drawing.kind === "rect") {
+    ctx.strokeRect(X(Math.min(drawing.x0, cursor.x)), Y(Math.max(drawing.z0, cursor.z)), Math.abs(cursor.x - drawing.x0) * view.s, Math.abs(cursor.z - drawing.z0) * view.s);
+  } else if (drawing && drawing.kind === "circle") {
+    ctx.beginPath(); ctx.arc(X(drawing.x0), Y(drawing.z0), Math.hypot(cursor.x - drawing.x0, cursor.z - drawing.z0) * view.s, 0, 7); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  if (tool === "height" || tool === "plants") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(cursor.x), Y(cursor.z), (tool === "plants" ? opts.plantRadius : opts.radius) * view.s, 0, 7); ctx.stroke(); }
+  if (tool === "place" && opts.kind && kit[opts.kind]) {
+    const k = kit[opts.kind]; ctx.globalAlpha = .6; ctx.fillStyle = ROLE_COLOURS[k.role] || "#ccc";
+    if (k.role === "tree" || k.role === "bush") { ctx.beginPath(); ctx.arc(X(cursor.x), Y(cursor.z), k.footprint[0] / 2 * view.s, 0, 7); ctx.fill(); }
+    else { pathPoly(corners(cursor.x, cursor.z, k.footprint[0], k.footprint[1], k.role === "effect" ? 0 : ghostRot)); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ---- edits: every change is one undo step -------------------------------------------------------------------------
+function snapshot() { encodePlants(); undoStack.push(JSON.stringify(plan)); if (undoStack.length > 100) undoStack.shift(); redoStack = []; }
+function changed() { version++; dirty = true; refreshState(); scheduleCheck(); draw(); }
+function undo() { if (!undoStack.length) return; encodePlants(); redoStack.push(JSON.stringify(plan)); plan = JSON.parse(undoStack.pop()); decodePlants(); sel = []; changed(); inspect(); }
+function redo() { if (!redoStack.length) return; encodePlants(); undoStack.push(JSON.stringify(plan)); plan = JSON.parse(redoStack.pop()); decodePlants(); sel = []; changed(); inspect(); }
+function tidy() {   // positions kept to the hundredth, as the plan tool writes them
+  for (const p of plan.pieces) { p.x = r2(p.x); p.z = r2(p.z); p.rot = r1(((p.rot % 360) + 360) % 360); }
+  for (const s of plan.streets.concat(plan.canals, plan.walls)) s.xz = s.xz.map(r2);
+  for (const a of plan.areas) for (const k of ["rect", "circle", "poly"]) if (a[k]) a[k] = a[k].map(r2);
+  for (const g of plan.gates) { g.x = r2(g.x); g.z = r2(g.z); }
+  for (const m of plan.mounds) { m.length = r2(m.length); m.width = r2(m.width); }
+}
+function translate(s, dx, dz) {
+  const o = objOf(s); if (!o) return;
+  if (s.t === "piece") { o.x += dx; o.z += dz; }
+  else if (s.t === "street" || s.t === "canal" || s.t === "wall") { for (let k = 0; k + 1 < o.xz.length; k += 2) { o.xz[k] += dx; o.xz[k + 1] += dz; } if (s.t === "canal") refitCanal(s.i); }
+  else if (s.t === "area") {
+    if (o.rect && o.rect.length === 4) { o.rect[0] += dx; o.rect[2] += dx; o.rect[1] += dz; o.rect[3] += dz; }
+    else if (o.circle && o.circle.length === 3) { o.circle[0] += dx; o.circle[1] += dz; }
+    else if (o.poly) for (let k = 0; k + 1 < o.poly.length; k += 2) { o.poly[k] += dx; o.poly[k + 1] += dz; }
+  }
+  else if (s.t === "bridge") { o._near = o._near || [o.x, o.z]; o._near[0] += dx; o._near[1] += dz; fitBridge(o, o._near[0], o._near[1]); }
+  else if (s.t === "gate") {
+    // Dragged freely, and onto a wall line when it comes near one.
+    o._at = o._at || [o.x, o.z]; o._at[0] += dx; o._at[1] += dz;
+    const on = nearestWall(o._at[0], o._at[1], 0.8);
+    [o.x, o.z] = on ? [on.n.qx, on.n.qz] : o._at;
+  }
+}
+function deleteSelected() {
+  if (!sel.length) return;
+  snapshot();
+  if (pointer === null && activePoint) {
+    const o = objOf(activePoint.of), key = activePoint.of.t === "area" ? "poly" : "xz", min = key === "poly" ? 3 : 2;
+    if (o && o[key] && o[key].length / 2 > min) { o[key].splice(2 * activePoint.point, 2); if (key === "poly" && o.smooth) o.smooth.splice(activePoint.point, 1); if (activePoint.of.t === "wall" && o.towers) o.towers.splice(activePoint.point, 1); if (activePoint.of.t === "canal") refitCanal(activePoint.of.i); activePoint = null; changed(); inspect(); return; }
+  }
+  const byType = {};
+  for (const s of sel) (byType[s.t] = byType[s.t] || []).push(s.i);
+  for (const t in byType) byType[t].sort((a, b) => b - a);
+  for (const i of byType.canal || []) {   // a canal takes its bridges (and their mounds) with it
+    for (let b = plan.bridges.length - 1; b >= 0; b--) if (plan.bridges[b].canal === i) (byType.bridge = byType.bridge || []).push(b);
+  }
+  if (byType.bridge) {
+    byType.bridge = [...new Set(byType.bridge)].sort((a, b) => b - a);
+    for (const i of byType.bridge) { const b = plan.bridges[i]; plan.mounds = plan.mounds.filter(m => !moundsOf(b).includes(m)); plan.bridges.splice(i, 1); }
+  }
+  for (const i of byType.canal || []) { plan.canals.splice(i, 1); for (const b of plan.bridges) if (b.canal > i) b.canal--; }
+  for (const t of ["piece", "street", "wall", "area", "gate", "mound"]) for (const i of byType[t] || []) listOf(t).splice(i, 1);
+  sel = []; activePoint = null; changed(); inspect();
+}
+function duplicateSelected() {
+  const pieces = sel.filter(s => s.t === "piece"); if (!pieces.length) return;
+  snapshot();
+  sel = pieces.map(s => { const c = JSON.parse(JSON.stringify(objOf(s))); c.x += 0.5; c.z -= 0.5; plan.pieces.push(c); return {t: "piece", i: plan.pieces.length - 1}; });
+  tidy(); changed(); inspect();
+}
+function turnSelected(deg) {
+  const pieces = sel.filter(s => s.t === "piece"); if (!pieces.length) { ghostRot = ((ghostRot + deg) % 360 + 360) % 360; draw(); return; }
+  snapshot(); for (const s of pieces) objOf(s).rot += deg; tidy(); changed(); inspect();
+}
+
+// ---- the ground-height brush ------------------------------------------------------------------------------------------
+let brushTarget = 0, brushLast = 0;
+function brushAt(x, z, dt) {
+  const l = ensureLift(), r = opts.radius, k = Math.min(1, opts.strength * dt * 4);
+  const i0 = Math.max(0, Math.floor((x - r - l.x0) / l.step)), i1 = Math.min(l.nx - 1, Math.ceil((x + r - l.x0) / l.step));
+  const j0 = Math.max(0, Math.floor((z - r - l.z0) / l.step)), j1 = Math.min(l.nz - 1, Math.ceil((z + r - l.z0) / l.step));
+  const h = l.h, old = opts.brush === "smooth" ? h.slice() : null;
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    const d = Math.hypot(l.x0 + i * l.step - x, l.z0 + j * l.step - z) / r; if (d >= 1) continue;
+    const w = (1 - d * d) ** 2, n = j * l.nx + i;
+    if (opts.brush === "raise") h[n] += opts.strength * w * dt;
+    else if (opts.brush === "lower") h[n] -= opts.strength * w * dt;
+    else if (opts.brush === "flatten") h[n] += (brushTarget - h[n]) * w * k;
+    else if (opts.brush === "reset") h[n] += (0 - h[n]) * w * k;
+    else if (opts.brush === "smooth") {
+      let sum = 0, c = 0;
+      for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) { const ii = i + a, jj = j + b; if (ii >= 0 && jj >= 0 && ii < l.nx && jj < l.nz) { sum += old[jj * l.nx + ii]; c++; } }
+      h[n] += (sum / c - h[n]) * w * k;
+    }
+  }
+  version++;
+}
+function brushLoop(t) {
+  if (!pointer || !pointer.brush) return;
+  const dt = Math.min(0.1, (t - brushLast) / 1000); brushLast = t;
+  brushAt(cursor.x, cursor.z, dt); draw(); requestAnimationFrame(brushLoop);
+}
+
+// ---- pointer --------------------------------------------------------------------------------------------------------
+let activePoint = null, hover = null;
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("pointerdown", e => {
+  if (!plan) return;
+  hover = null;
+  cv.setPointerCapture(e.pointerId);
+  const w = toWorld(e.offsetX, e.offsetY);
+  if (e.button === 1 || e.button === 2 || space) { pointer = {pan: true, sx: e.offsetX, sy: e.offsetY, cx: view.cx, cz: view.cz}; return; }
+  if (tool === "height") {
+    snapshot(); ensureLift(); brushTarget = liftAt(w.x, w.z); pointer = {brush: true}; brushLast = performance.now();
+    requestAnimationFrame(brushLoop); return;
+  }
+  if (tool === "plants") { snapshot(); pointer = {plants: true}; paintPlants(w.x, w.z); version++; draw(); return; }
+  if (tool === "street" || tool === "canal" || tool === "wall") {
+    if (!drawing) drawing = {kind: tool, xz: []};
+    drawing.xz.push(r2(w.x), r2(w.z)); draw(); return;
+  }
+  if (tool === "area") {
+    drawing = {kind: opts.areaShape, x0: w.x, z0: w.z}; pointer = {shape: true}; return;
+  }
+  if (tool === "bridge") {
+    let best = null;
+    plan.canals.forEach((c, ci) => { const n = nearestOnLine(c.xz, w.x, w.z); if (n.d < c.width / 2 + 2 && (!best || n.d < best.d)) best = {d: n.d, ci}; });
+    if (!best) { hint("Click on or next to a canal to put a bridge across it."); return; }
+    snapshot(); const b = {canal: best.ci}; fitBridge(b, w.x, w.z); plan.bridges.push(b);
+    sel = [{t: "bridge", i: plan.bridges.length - 1}]; changed(); inspect(); return;
+  }
+  if (tool === "gate") {
+    const on = nearestWall(w.x, w.z, 3);
+    if (!on) { hint("Click on a wall to put a gate in it."); return; }
+    snapshot(); plan.gates.push({x: r2(on.n.qx), z: r2(on.n.qz), road: ""});
+    sel = [{t: "gate", i: plan.gates.length - 1}]; changed(); inspect(); return;
+  }
+  if (tool === "place") {
+    if (!opts.kind) return;
+    snapshot(); plan.pieces.push({kind: opts.kind, variant: kit[opts.kind] && kit[opts.kind].prefab.includes("{n}") ? opts.variant : 1, x: r2(w.x), z: r2(w.z), rot: kit[opts.kind].role === "effect" ? 0 : ghostRot});
+    sel = [{t: "piece", i: plan.pieces.length - 1}]; changed(); inspect(); return;
+  }
+  // select / move
+  const h = hit(w.x, w.z);
+  if (h && h.handle) { snapshot(); activePoint = h.handle.point !== undefined ? {of: h.of, point: h.handle.point} : null; pointer = {handle: h.handle, moved: false}; inspect(); return; }
+  activePoint = null;
+  if (!h) { if (!e.shiftKey) sel = []; pointer = {box: {x0: w.x, z0: w.z, x1: w.x, z1: w.z}, add: e.shiftKey}; inspect(); draw(); return; }
+  if (e.shiftKey) { sel = isSel(h) ? sel.filter(s => !same(s, h)) : sel.concat([h]); inspect(); draw(); return; }
+  if (!isSel(h)) sel = [h];
+  snapshot(); pointer = {move: true, x: w.x, z: w.z, moved: false};
+  for (const s of sel) if (s.t === "bridge") objOf(s)._near = [objOf(s).x, objOf(s).z];
+  inspect(); draw();
+});
+cv.addEventListener("pointermove", e => {
+  if (!plan) return;
+  const w = toWorld(e.offsetX, e.offsetY); cursor = w;
+  $("cursor").textContent = `x ${w.x.toFixed(2)}  z ${w.z.toFixed(2)}  ground raised by hand ${liftAt(w.x, w.z) >= 0 ? "+" : ""}${liftAt(w.x, w.z).toFixed(2)}`;
+  if (!pointer) { hover = tool === "select" && !space ? hit(w.x, w.z) : null; draw(); return; }
+  if (pointer.plants) { paintPlants(w.x, w.z); draw(); return; }
+  if (pointer.pan) { view.cx = pointer.cx - (e.offsetX - pointer.sx) / view.s; view.cz = pointer.cz + (e.offsetY - pointer.sy) / view.s; draw(); return; }
+  if (pointer.handle) { pointer.handle.set(w.x, w.z); if (pointer.handle.smooth) pointer.handle.smooth(e.shiftKey); pointer.moved = true; version++; draw(); return; }
+  if (pointer.box) { pointer.box.x1 = w.x; pointer.box.z1 = w.z; draw(); return; }
+  if (pointer.move) { const dx = w.x - pointer.x, dz = w.z - pointer.z; pointer.x = w.x; pointer.z = w.z; for (const s of sel) translate(s, dx, dz); pointer.moved = true; version++; draw(); return; }
+  draw();
+});
+cv.addEventListener("pointerup", e => {
+  if (!pointer) return;
+  const w = toWorld(e.offsetX, e.offsetY), p = pointer; pointer = null;
+  if (p.pan) return;
+  if (p.brush) { changed(); return; }
+  if (p.plants) { changed(); setTool("plants"); return; }
+  if (p.shape) {
+    const d = drawing; drawing = null;
+    if (d.kind === "rect" && Math.abs(w.x - d.x0) > 0.2 && Math.abs(w.z - d.z0) > 0.2) { snapshot(); plan.areas.push({look: opts.areaLook, level: "normal", tile: tileForLook(opts.areaLook), label: "", rect: [Math.min(d.x0, w.x), Math.min(d.z0, w.z), Math.max(d.x0, w.x), Math.max(d.z0, w.z)].map(r2)}); }
+    else if (d.kind === "circle" && Math.hypot(w.x - d.x0, w.z - d.z0) > 0.2) { snapshot(); plan.areas.push({look: opts.areaLook, level: "normal", tile: tileForLook(opts.areaLook), label: "", circle: [d.x0, d.z0, Math.hypot(w.x - d.x0, w.z - d.z0)].map(r2)}); }
+    else { draw(); return; }
+    sel = [{t: "area", i: plan.areas.length - 1}]; changed(); inspect(); return;
+  }
+  if (p.box) {
+    const b = p.box, x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1), z0 = Math.min(b.z0, b.z1), z1 = Math.max(b.z0, b.z1);
+    if (x1 - x0 > 0.1 || z1 - z0 > 0.1) plan.pieces.forEach((q, i) => {
+      if (kitOf(q).role === "effect" && !$("showLeaves").checked) return;
+      if (q.x >= x0 && q.x <= x1 && q.z >= z0 && q.z <= z1 && !isSel({t: "piece", i})) sel.push({t: "piece", i});
+    });
+    inspect(); draw(); return;
+  }
+  for (const s of sel) if (s.t === "bridge") delete objOf(s)._near; else if (s.t === "gate") delete objOf(s)._at;
+  if (p.handle && p.handle.smooth && p.moved) p.handle.smooth(e.shiftKey);
+  if (p.moved) { tidy(); changed(); inspect(); } else undoStack.pop();
+});
+cv.addEventListener("pointerleave", () => { if (hover) { hover = null; draw(); } });
+cv.addEventListener("dblclick", e => {
+  if (!plan) return;
+  const w = toWorld(e.offsetX, e.offsetY);
+  if (drawing && drawing.xz) { finishDrawing(); return; }
+  if (tool !== "select") return;
+  for (const s of sel) {
+    const on = onLine(s, w.x, w.z); if (!on) continue;
+    const {o, key, corners4, n} = on;
+    snapshot();
+    // A rectangle takes points by becoming an outline of its four corners first.
+    if (corners4) { delete o.rect; o.poly = corners4; o.smooth = [0, 0, 0, 0]; }
+    if (key === "poly" && !(o.smooth && o.smooth.length === o.poly.length / 2)) o.smooth = new Array(o.poly.length / 2).fill(0);
+    o[key].splice(2 * (n.seg + 1), 0, r2(n.qx), r2(n.qz));
+    if (key === "poly") o.smooth.splice(n.seg + 1, 0, 0);
+    if (s.t === "wall") { o.towers = o.towers || []; o.towers.splice(n.seg + 1, 0, "Wall_tower2"); }
+    if (s.t === "canal") refitCanal(s.i); changed(); inspect(); return;
+  }
+});
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  const before = toWorld(e.offsetX, e.offsetY);
+  view.s = Math.max(2, Math.min(200, view.s * Math.pow(1.0015, -e.deltaY)));
+  const after = toWorld(e.offsetX, e.offsetY); view.cx += before.x - after.x; view.cz += before.z - after.z; draw();
+}, {passive: false});
+function finishDrawing() {
+  const d = drawing; drawing = null;
+  if (!d || !d.xz) { draw(); return; }
+  // a double-click adds the same point twice; one is enough
+  const xz = []; for (let k = 0; k + 1 < d.xz.length; k += 2) if (!xz.length || Math.hypot(d.xz[k] - xz[xz.length - 2], d.xz[k + 1] - xz[xz.length - 1]) > 0.05) xz.push(d.xz[k], d.xz[k + 1]);
+  { if (xz.length < 4) { draw(); return; } snapshot(); const list = listOf(d.kind);
+         list.push(d.kind === "street" ? {name: "", level: "low", tile: tileForLook("street"), width: opts.streetWidth, xz}
+                   : d.kind === "wall" ? {xz, closed: false, towers: new Array(xz.length / 2).fill("Wall_tower2")} : {name: "", width: opts.canalWidth, xz});
+         sel = [{t: d.kind, i: list.length - 1}]; }
+  changed(); inspect();
+}
+
+// ---- keys -----------------------------------------------------------------------------------------------------------
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === "y") { e.preventDefault(); redo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === "s") { e.preventDefault(); save(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === "d") { e.preventDefault(); duplicateSelected(); return; }
+  if (e.ctrlKey || e.metaKey) return;
+  if (k === " ") { space = true; e.preventDefault(); return; }
+  if (k === "enter") { finishDrawing(); return; }
+  if (k === "escape") { drawing = null; sel = []; activePoint = null; inspect(); draw(); return; }
+  if (k === "delete" || k === "backspace") { e.preventDefault(); deleteSelected(); return; }
+  if (k === "r") { turnSelected(e.shiftKey ? 1 : 15); return; }
+  if (k === "e") { turnSelected(e.shiftKey ? -1 : -15); return; }
+  if (k === "f") { fit(); return; }
+  const tools = {v: "select", h: "height", s: "street", c: "canal", w: "wall", a: "area", b: "bridge", g: "gate", p: "place", n: "plants"};
+  if (tools[k]) setTool(tools[k]);
+});
+addEventListener("keyup", e => { if (e.key === " ") space = false; });
+
+// ---- panels -----------------------------------------------------------------------------------------------------------
+function el(tag, attrs = {}, kids = []) { const n = Object.assign(document.createElement(tag), attrs); for (const c of [].concat(kids)) n.append(c); return n; }
+function field(label, input) { return el("div", {className: "row"}, [el("span", {textContent: label}), input]); }
+function num(value, onSet, step = 0.1) {
+  const i = el("input", {type: "number", value: +(+value).toFixed(3), step});
+  i.onchange = () => { const v = parseFloat(i.value); if (!isFinite(v)) return; snapshot(); onSet(v); tidy(); changed(); inspect(); };
+  return i;
+}
+function text(value, onSet) { const i = el("input", {type: "text", value: value || ""}); i.onchange = () => { snapshot(); onSet(i.value); changed(); }; return i; }
+function choice(value, options, onSet) {
+  const s = el("select"); for (const o of options) s.append(el("option", {value: o, textContent: o, selected: o === value}));
+  s.onchange = () => { snapshot(); onSet(s.value); changed(); inspect(); }; return s;
+}
+function button(label, onClick) { return el("button", {textContent: label, onclick: onClick}); }
+
+// The tile of the first street or area already wearing this look, else the first tile in the list.
+function tileForLook(look) {
+  const same = look === "street" ? plan.streets[0] : plan.areas.find(a => a.look === look);
+  return same && same.tile ? same.tile : (plan.tiles[0] || {}).name;
+}
+function tileChoice(value, onSet) { return choice(value, plan.tiles.map(t => t.name), onSet); }
+// THE TOWN'S TILES: every tile its ground may wear, each repeating at its own size; the lawn's and the soil's tile.
+function tilePanel(box) {
+  box.append(el("h3", {textContent: "Tiles"}));
+  const used = new Set([plan.lawnTile, plan.soilTile].concat(plan.streets.map(s => s.tile), plan.areas.map(a => a.tile)));
+  plan.tiles.forEach((t, i) => {
+    const row = el("div", {className: "row"}, [el("img", {src: "/tiles/" + encodeURIComponent(t.name) + ".png", style: "width:28px;height:28px;border-radius:3px"}),
+                                               el("span", {textContent: t.name, title: t.name, style: "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis"})]);
+    row.append(num(t.tiling, v => t.tiling = Math.max(0.01, v), 0.05));
+    if (!used.has(t.name)) row.append(button("Remove", () => { snapshot(); plan.tiles.splice(i, 1); changed(); inspect(); }));
+    box.append(row);
+  });
+  const add = el("select"); for (const n of tileNames) if (!tileOf(n)) add.append(el("option", {value: n, textContent: n}));
+  box.append(el("div", {className: "row"}, [add, button("Add tile", () => { if (!add.value) return; snapshot(); plan.tiles.push({name: add.value, tiling: 0.4}); changed(); inspect(); })]));
+  box.append(field("Lawn tile", tileChoice(plan.lawnTile, v => plan.lawnTile = v)), field("Soil tile", tileChoice(plan.soilTile, v => plan.soilTile = v)));
+}
+
+function setTool(t) {
+  tool = t; drawing = null;
+  for (const b of document.querySelectorAll("#tools [data-tool]")) b.classList.toggle("on", b.dataset.tool === t);
+  const o = $("opts"); o.innerHTML = "";
+  const hints = {select: "Click to select, drag to move. Drag a yellow square to reshape. Double-click a selected line to add a point.",
+                 height: "Hold the left button to paint. Red marks ground too steep to walk up (over 45°). The water always stays flat.",
+                 street: "Click to add points; double-click or Enter to finish.", canal: "Click to add points; double-click or Enter to finish.",
+                 wall: "Click to add points; double-click or Enter to finish. A tower stands at every point.",
+                 area: "Drag a rectangle or circle. To reshape a rectangle, select it and double-click its edge to add a point; drag a point to move it (hold Shift while dragging for a smooth curve through it).", bridge: "Click a canal where the bridge should cross.",
+                 gate: "Click on a wall.", place: "Click to place. R / E turn it before placing.",
+                 plants: "Hold the left button to paint. Plants grow only on grass and meadow."};
+  hint(hints[t] || "");
+  const set = (k, v) => { opts[k] = v; draw(); };
+  const optNum = (label, k, step, min) => { const i = el("input", {type: "number", value: opts[k], step, min}); i.onchange = () => set(k, Math.max(min, parseFloat(i.value) || opts[k])); return field(label, i); };
+  const optChoice = (label, k, list) => { const s = el("select"); for (const v of list) s.append(el("option", {value: v, textContent: v, selected: v === opts[k]})); s.onchange = () => set(k, s.value); return field(label, s); };
+  if (t === "height") { o.append(optChoice("Brush", "brush", ["raise", "lower", "smooth", "flatten", "reset"]), optNum("Size", "radius", 0.25, 0.25), optNum("Strength", "strength", 0.1, 0.05)); }
+  if (t === "street") o.append(optNum("Width", "streetWidth", 0.1, 0.4));
+  if (t === "canal") o.append(optNum("Width", "canalWidth", 0.1, 0.6));
+  if (t === "area") o.append(optChoice("Shape", "areaShape", ["rect", "circle"]), optChoice("Look", "areaLook", AREA_LOOKS));
+  if (t === "plants") {
+    const s = el("select"); (plan.plants || []).forEach((p, i) => s.append(el("option", {value: i, textContent: p.kind, selected: i === opts.plant})));
+    s.onchange = () => { opts.plant = +s.value; setTool("plants"); };
+    o.append(field("Plant", s), optChoice("Brush", "plantMode", ["paint", "erase"]), optNum("Size", "plantRadius", 0.25, 0.25));
+    const d = el("input", {type: "number", value: opts.density, step: 0.1, min: 0.05, max: 1}); d.onchange = () => set("density", Math.max(0.05, Math.min(1, parseFloat(d.value) || opts.density)));
+    o.append(field("Density", d));
+    const e = ((pictures.plantsTurned || {})[(plan.plants[opts.plant] || {}).kind] || [])[0];
+    if (e) o.append(el("img", {src: `/pictures/${town}/${e.file}`, style: "max-width:96px;max-height:96px;background:#86b45a;border-radius:4px"}));
+    o.append(el("div", {textContent: `${plantCount()} plants painted`, style: "color:var(--dim)"}));
+  }
+  if (t === "place") {
+    if (!opts.kind) opts.kind = Object.keys(kit)[0];
+    const kinds = Object.keys(kit); const s = el("select");
+    for (const v of kinds) s.append(el("option", {value: v, textContent: `${v} (${kit[v].role})`, selected: v === opts.kind}));
+    s.onchange = () => { opts.kind = s.value; opts.variant = 1; setTool("place"); };
+    o.append(field("Piece", s));
+    if (kit[opts.kind].prefab.includes("{n}")) { const i = el("input", {type: "number", value: opts.variant, min: 1, max: variants[opts.kind] || 1, step: 1}); i.onchange = () => { opts.variant = Math.max(1, Math.min(variants[opts.kind] || 1, parseInt(i.value) || 1)); }; o.append(field(`Model 1–${variants[opts.kind] || 1}`, i)); }
+  }
+  draw();
+}
+
+function inspect() {
+  const box = $("inspector"); box.innerHTML = "";
+  if (!plan) return;
+  if (!sel.length) { box.append(el("div", {textContent: `${plan.name} — ${plan.weapon}, ${plan.theme}`, style: "color:var(--dim)"})); tilePanel(box); return; }
+  if (sel.length > 1) {
+    box.append(el("div", {textContent: `${sel.length} selected. Drag to move them together, R / E to turn the pieces, Delete to remove.`}));
+    return;
+  }
+  const s = sel[0], o = objOf(s); if (!o) return;
+  if (s.t === "piece") {
+    const k = kitOf(o);
+    box.append(field("Piece", choice(o.kind, Object.keys(kit), v => { o.kind = v; o.variant = 1; })));
+    if (kit[o.kind] && kit[o.kind].prefab.includes("{n}")) box.append(field(`Model 1–${variants[o.kind] || 1}`, num(o.variant, v => o.variant = Math.max(1, Math.min(variants[o.kind] || 1, Math.round(v))), 1)));
+    box.append(field("x", num(o.x, v => o.x = v)), field("z", num(o.z, v => o.z = v)));
+    if (k.role !== "effect") box.append(field("Turn °", num(o.rot, v => o.rot = v, 5)));
+  } else if (s.t === "street" || s.t === "canal") {
+    if (s.t === "street") box.append(field("Level", choice(o.level, LEVELS, v => o.level = v)), field("Tile", tileChoice(o.tile, v => o.tile = v)));
+    box.append(field("Name", text(o.name, v => o.name = v)), field("Width", num(o.width, v => { o.width = Math.max(0.4, v); if (s.t === "canal") refitCanal(s.i); })),
+               el("div", {textContent: `${o.xz.length / 2} points`, style: "color:var(--dim)"}));
+  } else if (s.t === "wall") {
+    const closed = el("input", {type: "checkbox", checked: !!o.closed});
+    closed.onchange = () => { snapshot(); o.closed = closed.checked; changed(); inspect(); };
+    box.append(field("Closed loop", closed), el("div", {textContent: `${o.xz.length / 2} points`, style: "color:var(--dim)"}));
+    const k = activePoint && same(activePoint.of, s) ? activePoint.point : -1;
+    if (k >= 0) box.append(field(`Tower at point ${k + 1}`, choice((o.towers || [])[k] || "none", Object.keys(TOWERS).concat(["none"]),
+      v => { o.towers = o.towers || []; while (o.towers.length < o.xz.length / 2) o.towers.push(""); o.towers[k] = v === "none" ? "" : v; })));
+    else box.append(el("div", {textContent: "Click a yellow square to choose the tower at that point.", style: "color:var(--dim)"}));
+  } else if (s.t === "area") {
+    box.append(field("Look", choice(o.look, AREA_LOOKS, v => o.look = v)), field("Level", choice(o.level, LEVELS, v => o.level = v)),
+               field("Tile", tileChoice(o.tile, v => o.tile = v)), field("Name", text(o.label, v => o.label = v)));
+    if (o.rect && o.rect.length === 4) ["west", "south", "east", "north"].forEach((n, k) => box.append(field(n, num(o.rect[k], v => o.rect[k] = v))));
+    if (o.circle && o.circle.length === 3) ["x", "z", "radius"].forEach((n, k) => box.append(field(n, num(o.circle[k], v => o.circle[k] = k === 2 ? Math.max(0.2, v) : v))));
+    box.append(el("div", {className: "row"}, [
+      button("Paint under the others", () => { snapshot(); plan.areas.splice(s.i, 1); plan.areas.unshift(o); sel = [{t: "area", i: 0}]; changed(); inspect(); }),
+      button("Paint over the others", () => { snapshot(); plan.areas.splice(s.i, 1); plan.areas.push(o); sel = [{t: "area", i: plan.areas.length - 1}]; changed(); inspect(); })]));
+  } else if (s.t === "bridge") {
+    box.append(el("div", {textContent: `Across ${plan.canals[o.canal] && plan.canals[o.canal].name || "canal " + (o.canal + 1)}, ${o.length} long, turned ${o.bearing}°. Drag it along the water.`}));
+    const mine = moundsOf(o);
+    if (!mine.length) box.append(button("Raise a mound behind it", () => {
+      snapshot(); const c = plan.canals[o.canal], n = nearestOnLine(c.xz, o.x, o.z), L = Math.hypot(n.tx, n.tz) || 1;
+      plan.mounds.push({x: o.x, z: o.z, dir: [r3(n.tx / L), r3(n.tz / L)], length: 5, width: 6}); sel = [{t: "mound", i: plan.mounds.length - 1}]; changed(); inspect(); }));
+  } else if (s.t === "mound") {
+    box.append(el("div", {textContent: "The ground rising behind its bridge over the water. Drag its yellow square to turn it and set its length."}),
+               field("Length", num(o.length, v => o.length = Math.max(0.5, v))), field("Width", num(o.width, v => o.width = Math.max(0.5, v))));
+  } else if (s.t === "gate") {
+    box.append(field("Road to", text(o.road, v => o.road = v)),
+               el("div", {textContent: "The world's road runs to this gate after a rebuild.", style: "color:var(--dim)"}));
+  }
+}
+
+// ---- problems: the plan tool's own checks, run on every change -----------------------------------------------------
+let checkTimer = 0;
+function scheduleCheck() { clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 250); }
+function runCheck() {
+  const problems = [], foot = [];
+  // The wall as points a quarter unit apart along its lines, leaving out the gaps of the gates in them; a piece stands in
+  // the wall where one of them is inside its outline or within the wall's half depth of it.
+  const wallPts = [];
+  for (const w of plan.walls) {
+    const q = wallPath(w);
+    for (let k = 0; k + 3 < q.length; k += 2) {
+      const n = Math.max(1, Math.ceil(Math.hypot(q[k + 2] - q[k], q[k + 3] - q[k + 1]) / 0.25));
+      for (let j = 0; j <= n; j++) {
+        const x = q[k] + (q[k + 2] - q[k]) * j / n, z = q[k + 1] + (q[k + 3] - q[k + 1]) * j / n;
+        if (!plan.gates.some(g => Math.hypot(g.x - x, g.z - z) < plan.wall.gate / 2)) wallPts.push([x, z]);
+      }
+    }
+  }
+  const inWall = poly => {
+    const ring = poly.concat([poly[0]]).flat(), r = WALL_DEEP / 2, xs = poly.map(q => q[0]), zs = poly.map(q => q[1]);
+    const x0 = Math.min(...xs) - r, x1 = Math.max(...xs) + r, z0 = Math.min(...zs) - r, z1 = Math.max(...zs) + r;
+    return wallPts.some(([x, z]) => x >= x0 && x <= x1 && z >= z0 && z <= z1 && (inPoly(poly, x, z) || lineDist(ring, x, z) < r));
+  };
+  plan.pieces.forEach((p, i) => {
+    const k = kitOf(p); if (k.role === "effect") return;
+    const poly = pieceShape(p); foot.push({p, i, poly, role: k.role});
+    if (inWall(poly)) problems.push({text: `${p.kind} stands in the wall`, at: {t: "piece", i}});
+    for (const s of plan.streets) if (poly.concat([[p.x, p.z]]).some(([x, z]) => lineDist(s.xz, x, z) < s.width / 2)) { problems.push({text: `${p.kind} stands on ${s.name || "a street"}`, at: {t: "piece", i}}); break; }
+  });
+  plan.bridges.forEach((b, i) => {
+    const r = b.bearing * Math.PI / 180;
+    for (const end of [-1, 1]) {
+      const ex = b.x + Math.sin(r) * b.length / 2 * end, ez = b.z + Math.cos(r) * b.length / 2 * end;
+      if (plan.canals.some(c => lineDist(c.xz, ex, ez) < c.width / 2 + 0.2)) { problems.push({text: "A bridge has an end in the water", at: {t: "bridge", i}}); break; }
+    }
+  });
+  for (let a = 0; a < foot.length; a++) for (let b = a + 1; b < foot.length; b++) {
+    const A = foot[a], B = foot[b];
+    if ((A.role === "tree" || A.role === "bush") && (B.role === "tree" || B.role === "bush")) continue;
+    if (overlap(A.poly, B.poly)) problems.push({text: `${A.p.kind} overlaps ${B.p.kind}`, at: {t: "piece", i: A.i}});
+  }
+  const box = $("warnings"); box.innerHTML = ""; $("nWarn").textContent = problems.length ? `(${problems.length})` : "";
+  if (!problems.length) box.append(el("div", {textContent: "None.", style: "color:#8fd18f;cursor:default"}));
+  for (const q of problems.slice(0, 200)) box.append(el("div", {textContent: q.text, onclick: () => {
+    sel = [q.at]; const o = objOf(q.at); view.cx = o.x; view.cz = o.z; view.s = Math.max(view.s, 30); inspect(); draw(); }}));
+}
+
+// ---- loading, saving, rebuilding ------------------------------------------------------------------------------------
+function hint(t) { $("hint").textContent = t; }
+function refreshState() {
+  $("state").textContent = dirty ? "Not saved" : "Saved"; $("state").className = dirty ? "dirty" : "ok";
+  $("undo").disabled = !undoStack.length; $("redo").disabled = !redoStack.length;
+}
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || r.statusText); return j;
+}
+async function load(id) {
+  if (dirty && !confirm("This town has changes that are not saved. Leave them?")) { $("town").value = town; return; }
+  const j = await api("/api/plan?id=" + encodeURIComponent(id));
+  town = id; plan = j.plan; variants = j.variants;
+  pictures = await api("/api/pictures?id=" + encodeURIComponent(id));
+  patterns.clear();
+  for (const key of ["areas", "streets", "canals", "walls", "bridges", "mounds", "gates", "pieces"]) plan[key] = plan[key] || [];
+  kit = {}; for (const k of plan.kit) kit[k.kind] = k;
+  plan.tiles = plan.tiles || []; plan.plants = plan.plants || []; decodePlants();
+  undoStack = []; redoStack = []; sel = []; dirty = false; version++;
+  $("townInfo").textContent = `${plan.name} — ${plan.weapon}, ${plan.theme}`;
+  refreshState(); setTool(tool); fit(); inspect(); runCheck();
+  // pictures missing, or taken of other pieces than the plan places: Unity photographs them now
+  if (!pictures.current) takePictures();
+}
+async function save() {
+  if (!plan) return;
+  try { tidy(); encodePlants(); await api("/api/plan?id=" + encodeURIComponent(town), plan); dirty = false; refreshState(); hint("Saved."); }
+  catch (err) { alert("Not saved: " + err.message); }
+}
+async function rebuild() {
+  if (!plan) return;
+  if (dirty) await save(); if (dirty) return;
+  if (!confirm(`Rebuild ${plan.name} and the world around it in the open Unity editor?\n\nIt takes a few minutes, and Unity must not be in Play mode. ${plan.name}'s piece is replaced by what the plan says. Afterwards the game server must be rebuilt and restarted before players see it.`)) return;
+  const btn = $("rebuild"), rep = $("report"); btn.disabled = true; btn.textContent = "Rebuilding…";
+  rep.style.display = "block"; rep.className = ""; rep.textContent = "Building — this takes a few minutes…";
+  try { const j = await api("/api/rebuild?id=" + encodeURIComponent(town), {}); rep.textContent = j.report; rep.className = /FAIL/.test(j.report) ? "bad" : ""; }
+  catch (err) { rep.textContent = "Not rebuilt: " + err.message; rep.className = "bad"; }
+  btn.disabled = false; btn.textContent = "Rebuild in Unity";
+}
+async function takePictures() {
+  if (!plan) return;
+  const btn = $("pictures"), rep = $("report"); btn.disabled = true; btn.textContent = "Taking pictures…";
+  rep.style.display = "block"; rep.className = ""; rep.textContent = "Unity is photographing the pieces…";
+  const id = town;
+  try {
+    const j = await api("/api/pictures?id=" + encodeURIComponent(id), {}); rep.textContent = j.report; rep.className = /FAIL/.test(j.report) ? "bad" : "";
+    const got = await api("/api/pictures?id=" + encodeURIComponent(id));
+    if (town === id) { pictures = got; for (const u in images) if (u.startsWith("/pictures/")) delete images[u]; draw(); view3d.changed(); }
+  } catch (err) { rep.textContent = "No pictures: " + err.message; rep.className = "bad"; }
+  btn.disabled = false; btn.textContent = "Take pictures";
+}
+$("pictures").onclick = takePictures; $("view3d").onclick = view3d.toggle;
+$("undo").onclick = undo; $("redo").onclick = redo; $("save").onclick = save; $("rebuild").onclick = rebuild;
+for (const b of document.querySelectorAll("#tools [data-tool]")) b.onclick = () => setTool(b.dataset.tool);
+for (const id of ["showHeights", "showCurbs", "showLabels", "showPieces", "showLeaves", "showPictures", "showThrough", "showPlants"]) $(id).onchange = draw;
+$("town").onchange = () => load($("town").value);
+async function listTowns() {
+  const towns = await api("/api/towns"), fresh = await api("/api/new-towns");
+  $("town").replaceChildren(...towns.map(t => el("option", {value: t, textContent: t})));
+  if (town) $("town").value = town;
+  $("newTown").replaceChildren(el("option", {value: "", textContent: "New town…"}), ...fresh.map(t => el("option", {value: t.id, textContent: t.name})));
+  $("newTown").hidden = !fresh.length;
+  return towns;
+}
+$("newTown").onchange = async () => {
+  const id = $("newTown").value; $("newTown").value = ""; if (!id) return;
+  if (dirty && !confirm("This town has changes that are not saved. Leave them?")) return;
+  try { await api("/api/new-town?id=" + encodeURIComponent(id), {}); dirty = false; await listTowns(); $("town").value = id; await load(id); hint("A blank plan for " + plan.name + ": paving inside its wall. Draw it, then Save."); }
+  catch (err) { alert("No new town: " + err.message); }
+};
+addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+addEventListener("resize", resize);
+(async () => {
+  resize();
+  try {
+    const towns = await listTowns();
+    tileNames = await api("/api/tiles");
+    if (towns.length) await load(towns[0]);
+  } catch (err) { hint("Could not reach the town editor's server: " + err.message); }
+})();
+</script>
+</body></html>

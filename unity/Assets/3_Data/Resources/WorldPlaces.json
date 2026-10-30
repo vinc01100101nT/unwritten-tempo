@@ -1,0 +1,440 @@
+{
+ "about": "Written by tools/world-layout/build_world_layout.py from the world layout; never edit by hand.",
+ "origin": {
+  "x": 640,
+  "y": 640,
+  "height": 12.19
+ },
+ "places": [
+  {
+   "id": "lastline",
+   "name": "Lastline",
+   "kind": "town",
+   "x": 640,
+   "y": 640,
+   "height": 12.19,
+   "mark_x": 640,
+   "mark_y": 640
+  },
+  {
+   "id": "old_oak",
+   "name": "Old Oak",
+   "kind": "town",
+   "x": 900,
+   "y": 560,
+   "height": 11.13,
+   "mark_x": 900,
+   "mark_y": 560
+  },
+  {
+   "id": "parley",
+   "name": "Parley",
+   "kind": "town",
+   "x": 620,
+   "y": 470,
+   "height": 19.96,
+   "mark_x": 620,
+   "mark_y": 470
+  },
+  {
+   "id": "harrowen",
+   "name": "Harrowen",
+   "kind": "town",
+   "x": 470,
+   "y": 700,
+   "height": 11.97,
+   "mark_x": 470,
+   "mark_y": 700
+  },
+  {
+   "id": "pennaryl",
+   "name": "Pennaryl",
+   "kind": "town",
+   "x": 300,
+   "y": 560,
+   "height": 5.6,
+   "mark_x": 300,
+   "mark_y": 560
+  },
+  {
+   "id": "gemmara",
+   "name": "Gemmara",
+   "kind": "town",
+   "x": 660,
+   "y": 260,
+   "height": 16.02,
+   "mark_x": 660,
+   "mark_y": 260
+  },
+  {
+   "id": "hilt",
+   "name": "Hilt",
+   "kind": "town",
+   "x": 1150,
+   "y": 740,
+   "height": 9.1,
+   "mark_x": 1150,
+   "mark_y": 740
+  },
+  {
+   "id": "tornel",
+   "name": "Tornel",
+   "kind": "town",
+   "x": 430,
+   "y": 330,
+   "height": 15.32,
+   "mark_x": 430,
+   "mark_y": 330
+  },
+  {
+   "id": "hazemere",
+   "name": "Hazemere",
+   "kind": "town",
+   "x": 960,
+   "y": 800,
+   "height": 6.88,
+   "mark_x": 960,
+   "mark_y": 800
+  },
+  {
+   "id": "pluvenne",
+   "name": "Pluvenne",
+   "kind": "town",
+   "x": 1170,
+   "y": 480,
+   "height": 8.99,
+   "mark_x": 1170,
+   "mark_y": 480
+  },
+  {
+   "id": "luminhal",
+   "name": "Luminhal",
+   "kind": "town",
+   "x": 1560,
+   "y": 560,
+   "height": 9.86,
+   "mark_x": 1560,
+   "mark_y": 560
+  },
+  {
+   "id": "halcyra",
+   "name": "Halcyra",
+   "kind": "town",
+   "x": 250,
+   "y": 200,
+   "height": 28.79,
+   "mark_x": 250,
+   "mark_y": 200
+  },
+  {
+   "id": "velmora",
+   "name": "Velmora",
+   "kind": "town",
+   "x": 1000,
+   "y": 330,
+   "height": 7.57,
+   "mark_x": 1000,
+   "mark_y": 330
+  },
+  {
+   "id": "cindrel",
+   "name": "Cindrel",
+   "kind": "town",
+   "x": 560,
+   "y": 1310,
+   "height": 10.67,
+   "mark_x": 560,
+   "mark_y": 1310
+  },
+  {
+   "id": "kharnel",
+   "name": "Kharnel",
+   "kind": "town",
+   "x": 300,
+   "y": 1330,
+   "height": 9.1,
+   "mark_x": 300,
+   "mark_y": 1330
+  },
+  {
+   "id": "last_bridge",
+   "name": "Last Bridge",
+   "kind": "landmark",
+   "x": 536,
+   "y": 195,
+   "height": 2.02,
+   "mark_x": 536,
+   "mark_y": 195
+  },
+  {
+   "id": "hill_of_the_flame",
+   "name": "Hill of the Flame",
+   "kind": "landmark",
+   "x": 312,
+   "y": 112,
+   "height": 36.0,
+   "mark_x": 312,
+   "mark_y": 112
+  },
+  {
+   "id": "thousand_gates",
+   "name": "Thousand Gates",
+   "kind": "landmark",
+   "x": 440,
+   "y": 488,
+   "height": 19.38,
+   "mark_x": 440,
+   "mark_y": 488
+  },
+  {
+   "id": "narrowbend",
+   "name": "Narrowbend",
+   "kind": "landmark",
+   "x": 1252,
+   "y": 556,
+   "height": 4.27,
+   "mark_x": 1252,
+   "mark_y": 556
+  },
+  {
+   "id": "masked_ballroom",
+   "name": "Masked Ballroom",
+   "kind": "landmark",
+   "x": 1168,
+   "y": 296,
+   "height": 5.0,
+   "mark_x": 1168,
+   "mark_y": 296
+  },
+  {
+   "id": "burning_keel",
+   "name": "Burning Keel",
+   "kind": "landmark",
+   "x": 376,
+   "y": 806,
+   "height": 16.77,
+   "mark_x": 376,
+   "mark_y": 806
+  },
+  {
+   "id": "everburning_plain",
+   "name": "Everburning Plain",
+   "kind": "landmark",
+   "x": 500,
+   "y": 1400,
+   "height": 8.22,
+   "mark_x": 500,
+   "mark_y": 1400
+  },
+  {
+   "id": "sky_cairn",
+   "name": "Sky Cairn",
+   "kind": "landmark",
+   "x": 144,
+   "y": 584,
+   "height": 0.3,
+   "mark_x": 144,
+   "mark_y": 584
+  },
+  {
+   "id": "tide_temple",
+   "name": "Tide Temple",
+   "kind": "landmark",
+   "x": 1300,
+   "y": 800,
+   "height": 9.91,
+   "mark_x": 1300,
+   "mark_y": 800
+  },
+  {
+   "id": "dusk_tower",
+   "name": "Dusk Tower",
+   "kind": "landmark",
+   "x": 976,
+   "y": 584,
+   "height": 15.12,
+   "mark_x": 976,
+   "mark_y": 584
+  },
+  {
+   "id": "walking_road",
+   "name": "Walking Road",
+   "kind": "landmark",
+   "x": 984,
+   "y": 896,
+   "height": 0.3,
+   "mark_x": 984,
+   "mark_y": 896
+  },
+  {
+   "id": "drowned_chapel",
+   "name": "Drowned Chapel",
+   "kind": "landmark",
+   "x": 208,
+   "y": 1352,
+   "height": 2.8,
+   "mark_x": 208,
+   "mark_y": 1352
+  },
+  {
+   "id": "aurora_steps",
+   "name": "Aurora Steps",
+   "kind": "landmark",
+   "x": 1575,
+   "y": 455,
+   "height": 14.9,
+   "mark_x": 1575,
+   "mark_y": 455
+  },
+  {
+   "id": "unmarked_path",
+   "name": "Unmarked Path",
+   "kind": "landmark",
+   "x": 472,
+   "y": 136,
+   "height": 25.09,
+   "mark_x": 472,
+   "mark_y": 136
+  },
+  {
+   "id": "lastline_dungeon_door",
+   "name": "",
+   "kind": "dungeon_door",
+   "x": 700,
+   "y": 690,
+   "height": 5.04,
+   "mark_x": 700,
+   "mark_y": 690
+  },
+  {
+   "id": "old_oak_dungeon_door",
+   "name": "",
+   "kind": "dungeon_door",
+   "x": 940,
+   "y": 610,
+   "height": 13.0,
+   "mark_x": 940,
+   "mark_y": 610
+  },
+  {
+   "id": "hazemere_dungeon_door",
+   "name": "",
+   "kind": "dungeon_door",
+   "x": 1010,
+   "y": 850,
+   "height": 2.73,
+   "mark_x": 1010,
+   "mark_y": 850
+  },
+  {
+   "id": "hilt_dungeon_door",
+   "name": "",
+   "kind": "dungeon_door",
+   "x": 1190,
+   "y": 790,
+   "height": 7.46,
+   "mark_x": 1190,
+   "mark_y": 790
+  },
+  {
+   "id": "cindrel_dungeon_door",
+   "name": "",
+   "kind": "dungeon_door",
+   "x": 600,
+   "y": 1350,
+   "height": 9.45,
+   "mark_x": 600,
+   "mark_y": 1350
+  },
+  {
+   "id": "kharnel_dungeon_door",
+   "name": "",
+   "kind": "dungeon_door",
+   "x": 260,
+   "y": 1380,
+   "height": 5.89,
+   "mark_x": 260,
+   "mark_y": 1380
+  },
+  {
+   "id": "mountains_root",
+   "name": "",
+   "kind": "cave",
+   "x": 554,
+   "y": 195,
+   "height": 30.53,
+   "mark_x": 558,
+   "mark_y": 195
+  },
+  {
+   "id": "sea_cave",
+   "name": "",
+   "kind": "cave",
+   "x": 1222.0,
+   "y": 734.0,
+   "height": -1.12,
+   "mark_x": 1222.0,
+   "mark_y": 730.0
+  },
+  {
+   "id": "forest_cave",
+   "name": "",
+   "kind": "cave",
+   "x": 250.0,
+   "y": 598.0,
+   "height": 3.53,
+   "mark_x": 246.0,
+   "mark_y": 598.0
+  },
+  {
+   "id": "dark_cave",
+   "name": "",
+   "kind": "cave",
+   "x": 438.0,
+   "y": 1326.0,
+   "height": 7.42,
+   "mark_x": 434.0,
+   "mark_y": 1326.0
+  },
+  {
+   "id": "lastline_pond",
+   "name": "",
+   "kind": "pond",
+   "x": 654.0,
+   "y": 821.0,
+   "height": 0.62,
+   "mark_x": 654.0,
+   "mark_y": 821.0
+  },
+  {
+   "id": "pluvenne_pond",
+   "name": "",
+   "kind": "pond",
+   "x": 1110.0,
+   "y": 577.0,
+   "height": 13.56,
+   "mark_x": 1110.0,
+   "mark_y": 577.0
+  },
+  {
+   "id": "pennaryl_pond",
+   "name": "",
+   "kind": "pond",
+   "x": 408.0,
+   "y": 655.0,
+   "height": 11.37,
+   "mark_x": 408.0,
+   "mark_y": 655.0
+  },
+  {
+   "id": "hazemere_oasis",
+   "name": "",
+   "kind": "pond",
+   "x": 990.0,
+   "y": 721.0,
+   "height": 13.04,
+   "mark_x": 990.0,
+   "mark_y": 721.0
+  }
+ ]
+}

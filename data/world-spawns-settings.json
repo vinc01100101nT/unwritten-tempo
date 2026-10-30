@@ -1,0 +1,4 @@
+{
+  "mob_density": 1.5,
+  "about": "mob_density: how many creatures each respawn patch keeps. 1 = one creature for every 49 square units of the patch's ground; 1.5 = half as many again. Every patch keeps at least 3. Takes effect when tools/world-spawns/build_world_spawns.py is run, then the game server is rebuilt."
+}

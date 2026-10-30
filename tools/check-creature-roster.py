@@ -6,16 +6,13 @@ checks, never typed):
   · every creature has its multiplier written, 1 or more — a file without one was never given one;
   · 14 C elites: level 50-70, gear typed (not rolled), one per weapon type — every weapon type covered once;
   · 4 B elites: all at one level, rolling weapon and armour each life.
-DUNGEONS AND FIELDS (decided 2026-10-20):
-  · a dungeon floor's normal creatures are all Tainted or Blighted versions (versionOf set), and every deepest floor's
-    are x10 or more;
-  · a field never holds a version of x10 or more, and a newbie map holds only x1 originals;
-  · every original normal lives in at least one field.
+DUNGEONS AND FIELDS:
+  · a dungeon floor's (a map whose id holds "_dun") normal creatures are all Tainted or Blighted versions (versionOf set);
+  · every original normal lives in at least one field (decided 2026-10-29: the world's field patches hold originals
+    near towns and Tainted and Blighted farther out — tools/world-spawns/build_world_spawns.py writes them).
 PLACEMENT (WorldSpawns, SummonRecipes, WorldTownsfolk):
-  · every C elite has exactly one spawn row, population 1;
-  · at most one C elite per zone — a field zone is the map-id prefix (lst_fild01 and lst_fild03 are one zone), a
-    dungeon floor is its own;
-  · every dungeon's deepest floor has a C elite;
+  · every C elite has exactly two field spawn rows, population 1 each, on two different areas;
+  · at most one C elite per area;
   · no B elite and no shadow has a spawn row: each is summoned, has exactly one recipe and exactly one summoner;
   · every recipe material is some C or B elite's own material.
 
@@ -28,8 +25,6 @@ import os
 import re
 import sys
 
-NEWBIE_MAPS = ("lst_fild01", "prl_fild01")
-DEEPEST = ["olk_dun02", "hlt_dun03", "vlm_dun03", "cdl_dun03", "khn_dun04", "khn_dun06", "khn_dun09", "lst_dun02"]
 WEAPON_TYPES = {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
 
@@ -108,45 +103,28 @@ def main():
     if len({d["level"] for d in b_elites.values()}) > 1:
         faults.append("the B elites are not all at one level")
 
-    spawns = open(os.path.join(res, "WorldSpawns.asset"), encoding="utf-8").read().split("\n  - ")[1:]
+    text = open(os.path.join(res, "WorldSpawns.asset"), encoding="utf-8").read().split("\n  areas:", 1)[0]
     rows = []
-    for r in spawns:
+    for r in re.split(r"(?m)^  - (?=map: )", text)[1:]:
         m, c, p = re.search(r"map: (\S+)", r), re.search(r"creature: (\S*)", r), re.search(r"population: (\d+)", r)
+        a = re.search(r"^    area: (-?\d+)", r, re.M)
         if m and c and c.group(1):
-            rows.append((m.group(1), c.group(1), int(p.group(1)) if p else 0))
-    zones = {}
+            rows.append((m.group(1), c.group(1), int(p.group(1)) if p else 0, int(a.group(1)) if a else -1))
+    on_area = {}
     for i in c_elites:
-        mine = [r for r in rows if r[1] == i]
-        if len(mine) != 1 or mine[0][2] != 1:
-            faults.append(f"C elite {i} has {len(mine)} spawn rows (populations {[r[2] for r in mine]}), not one of 1")
+        mine = [r for r in rows if r[1] == i and "_dun" not in r[0]]
+        if len(mine) != 2 or any(r[2] != 1 for r in mine) or any(r[3] < 0 for r in mine) or len({(r[0], r[3]) for r in mine}) != 2:
+            faults.append(f"C elite {i} has {len(mine)} field spawn rows (populations {[r[2] for r in mine]}, areas "
+                          f"{[r[3] for r in mine]}), not two of 1 on two different areas")
         for r in mine:
-            zone = r[0] if "_dun" in r[0] else r[0].split("_")[0]
-            zones.setdefault(zone, []).append(i)
-    for z, who in zones.items():
-        if len(who) > 1:
-            faults.append(f"zone {z} holds {len(who)} C elites: {', '.join(sorted(who))}")
-    for floor in DEEPEST:
-        if not any(r[0] == floor and r[1] in c_elites for r in rows):
-            faults.append(f"deepest floor {floor} has no C elite")
+            on_area.setdefault((r[0], r[3]), []).append(i)
+    for (mp, a), who in on_area.items():
+        if a >= 0 and len(who) > 1:
+            faults.append(f"area {a} of {mp} holds {len(who)} C elites: {', '.join(sorted(who))}")
 
-    def mult(i):
-        try:
-            return float(defs[i]["multiplier"])
-        except (KeyError, ValueError):
-            return 1.0
-    normal_rows = [r for r in rows if r[1] in defs and defs[r[1]]["kind"] == 0]
-    for mp, i, _ in normal_rows:
-        version = defs[i]["version"]
-        if "_dun" in mp:
-            if not version:
-                faults.append(f"dungeon floor {mp} holds the original {i}; a floor holds only Tainted or Blighted versions")
-            elif mp in DEEPEST and mult(i) < 10:
-                faults.append(f"deepest floor {mp} holds {i} at x{mult(i):g}; a deepest floor's creatures are x10 or more")
-        else:
-            if version and mult(i) >= 10:
-                faults.append(f"field {mp} holds {i} at x{mult(i):g}; a field holds nothing of x10 or more")
-            if mp in NEWBIE_MAPS and (version or mult(i) != 1):
-                faults.append(f"newbie map {mp} holds {i} at x{mult(i):g}; a newbie map holds only x1 originals")
+    for mp, i, _, _ in (r for r in rows if r[1] in defs and defs[r[1]]["kind"] == 0):
+        if "_dun" in mp and not defs[i]["version"]:
+            faults.append(f"dungeon floor {mp} holds the original {i}; a floor holds only Tainted or Blighted versions")
     for i, d in defs.items():
         if d["kind"] == 0 and not d["version"] and not any(r[1] == i and "_dun" not in r[0] for r in rows):
             faults.append(f"the original {i} lives in no field")

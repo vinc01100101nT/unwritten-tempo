@@ -309,7 +309,11 @@ public static class GmCommands
         Register(new GmCommand("where", "where", "Print the map you are in and your position in that map's own coordinates — the numbers a spawn area's Center takes in the world spawn list.", "where", CmdWhere, false, false, "pos"));
 
         // --- World & weather ---
-        Register(new GmCommand("tp", "tp <map id> [spawnId]", "Travel to another map.", "tp lst_fild01", CmdTp, false, true, "warp", "goto"));
+        Register(new GmCommand("tp", "tp <place>  ·  tp <x> <z>  ·  tp <map id> [spawnId]  ·  tp",
+                               "Travel to a named place of the world — a town, a landmark, a cave, a pond or a dungeon door, "
+                               + "by its name in any case, spaces optional, or any part of it only one place has — or to a "
+                               + "spot of the world by its x and z (the numbers /where prints), or to another map's arrival "
+                               + "point. With nothing after it, list every place.", "tp parley", CmdTp, false, true, "warp", "goto"));
         // THE SERVER'S TOO. Run on one machine these changed one person's sky and nobody else's; held on the server,
         // everybody on it — and everybody who arrives later — sees the same one.
         Register(new GmCommand("time", "time <0..1 | reset>", "Set time of day (0=sunrise 6 AM, 0.25=noon, 0.5=sunset 6 PM, 0.75=midnight), or reset it to the real server time.", "time 0.25", CmdTime, false, true) { worksWithNobody = true });
@@ -1184,8 +1188,28 @@ public static class GmCommands
 
     static void CmdTp(GmContext c)
     {
+        if (c.ArgCount == 0) { ReplyPlaces(c); c.ReplyUsage(); return; }
+
+        // A SPOT OF THE WORLD: two numbers, x and z. Landed on whatever ground is there — the arrival looks down for it.
+        if (c.ArgCount == 2 && c.TryFloat(0, out var x) && c.TryFloat(1, out var z))
+        {
+            float y = c.Player != null && c.MapName == SavePoint.DefaultMap ? MapManager.InMap(c.Player.position, c.MapName).y : 0f;
+            TravelInWorld(c, new Vector3(x, y, z), Coords.Text(new Vector3(x, y, z), "0"));
+            return;
+        }
+
+        // A NAMED PLACE — the whole line is the name, so "tp old oak" finds Old Oak rather than a map called "old".
+        var found = WorldPlaces.Named(c.Rest(0));
+        if (found.Count > 1)
+        {
+            var names = new List<string>();
+            foreach (var p in found) names.Add(p.id);
+            c.Reply($"<color={FailHex}>Several places match '{c.Rest(0)}':</color> {string.Join(", ", names)}");
+            return;
+        }
+        if (found.Count == 1) { TravelInWorld(c, found[0].inMap, found[0].id); return; }
+
         var scene = c.Arg(0);
-        if (scene == null) { c.ReplyUsage(); return; }
         // THROUGH THE DOOR EVERY PORTAL USES — the very same call a portal makes on the asker's machine, which a GM is
         // let through from anywhere. Loading the map on the asker's machine alone moved nobody: the server still had
         // them where they stood, and the map they wanted may be held by another process entirely.
@@ -1193,6 +1217,39 @@ public static class GmCommands
         if (shell == null) { c.Reply("No character."); return; }
         shell.WalkThroughDoorOnOwnersMachine(scene, c.Arg(1));
         c.Reply($"Traveling to {scene}…");
+    }
+
+    // To a spot of the world map, the way a save point takes somebody there — refused where no square is built, because
+    // a body put down there would fall through nothing.
+    static void TravelInWorld(GmContext c, Vector3 spot, string what)
+    {
+        var shell = GameNetwork.ShellFor(c.Ch);
+        if (shell == null) { c.Reply("No character."); return; }
+        var world = SeamlessWorld.ForMap(SavePoint.DefaultMap);
+        if (world == null) { c.Reply($"<color={FailHex}>This server does not hold {SavePoint.DefaultMap}.</color>"); return; }
+        if (!IsBuilt(world, spot)) { c.Reply($"<color={FailHex}>{what} is not built yet.</color>"); return; }
+        shell.MoveToMap(SavePoint.DefaultMap, null, toSpot: true, spot: spot, teleport: true);
+        c.Reply($"Traveling to {what}…");
+    }
+
+    static bool IsBuilt(SeamlessWorld world, Vector3 spot)
+    {
+        foreach (var ch in world.chunks)
+            if (spot.x >= ch.min.x && spot.x < ch.max.x && spot.z >= ch.min.y && spot.z < ch.max.y) return true;
+        return false;
+    }
+
+    // Every named place: the built ones on one line, the ones not built yet on the next.
+    static void ReplyPlaces(GmContext c)
+    {
+        var world = SeamlessWorld.ForMap(SavePoint.DefaultMap);
+        var built = new List<string>();
+        var not = new List<string>();
+        foreach (var p in WorldPlaces.All)
+            (world != null && IsBuilt(world, p.inMap) ? built : not).Add(p.id);
+        if (built.Count == 0 && not.Count == 0) { c.Reply("No places are known."); return; }
+        c.Reply($"<color={NameHex}>Places</color>: {string.Join(", ", built)}");
+        if (not.Count > 0) c.Reply($"Not built yet: {string.Join(", ", not)}");
     }
 
     static void CmdTime(GmContext c)

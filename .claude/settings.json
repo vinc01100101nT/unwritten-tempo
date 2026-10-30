@@ -51,6 +51,12 @@
             "command": "sh \"$CLAUDE_PROJECT_DIR/tools/hooks/run-hook.sh\" tools/hook-analytics/skill_router.py",
             "timeout": 10,
             "statusMessage": "skill-router"
+          },
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/tools/hooks/run-hook.sh\" tools/hook-analytics/context_watch.py",
+            "timeout": 10,
+            "statusMessage": "context-watch"
           }
         ]
       }

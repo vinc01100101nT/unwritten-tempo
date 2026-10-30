@@ -29,10 +29,11 @@ FONT_DIR_REL = "../unity/Assets/3_Data/Resources/Fonts"
 # of the shared palette — RarityRare, RarityEpic, RarityLegendary — so the json's "rarity" keys stay empty.)
 SHARED = "UiKit.cs"
 
-# The game's two faces, as the game loads them: the one interface face, and the combat numbers' face.
+# The game's faces, as the game loads them: the one interface face, the combat numbers' face, and the map's place names.
 FONTS = [
     ("ui", "DejaVu Sans Condensed", "DejaVuSansCondensed.ttf"),
     ("pixel", "PixelFont", "PixelFont.ttf"),
+    ("label", "Selawik", "Selawik.ttf"),
 ]
 
 # What each screen is CALLED, in the words a person would use. A mock page names its screen with
@@ -116,11 +117,12 @@ def theme_rows(src, set_name):
     names = [n.strip() for n in enum.group(1).split(",") if n.strip()]
     values = []
     for m in re.finditer(r"new Color(32)?\(([^)]*)\)", re.sub(r"//[^\n]*", "", body.group(1))):
-        parts = [p.strip().rstrip("f") for p in m.group(2).split(",")]
+        parts = [p.strip() for p in m.group(2).split(",")]
         if m.group(1):
             r, g, b = (int(p, 16) for p in parts[:3])
             a = int(parts[3], 16) / 255.0 if len(parts) > 3 else 1.0
         else:
+            parts = [p.rstrip("f") for p in parts]   # a float's own suffix; a hex byte like 0xff keeps its f
             r, g, b = (float(p) * 255 for p in parts[:3])
             a = float(parts[3]) if len(parts) > 3 else 1.0
         values.append({"hex": hexof(r, g, b), "alpha": round(a, 3)})
@@ -179,7 +181,9 @@ def main():
 
     screens_out = {n: {h: sorted(a) for h, a in sorted(c.items())} for n, c in sorted(screens.items())}
 
-    shared_hexes = sorted({v["hex"] for v in palette.values()})
+    # The same rows in the dark set the player can switch to — a dark mock reads them under data-theme="dark".
+    dark = theme_rows(shared_src, "DarkSet")
+    shared_hexes = sorted({v["hex"] for v in palette.values()} | {v["hex"] for v in dark.values()})
     rarity_hexes = []
 
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -187,6 +191,7 @@ def main():
     data = {
         "generated_by": "tools/ui-tokens.py — do not hand-edit; re-run it instead",
         "palette": palette,
+        "palette_dark": dark,
         "rarity": {},
         "shared_hexes": shared_hexes,
         "rarity_hexes": rarity_hexes,
@@ -226,6 +231,15 @@ def main():
     lines.append("  /* the game's own faces */")
     for v, fam, f in FONTS:
         lines.append('  --font-%s: "%s";' % (v, fam))
+    lines.append("}")
+    lines += ["", "/* the dark set, the same names: put data-theme=\"dark\" on the page's root element */", ':root[data-theme="dark"] {']
+    for name in sorted(dark):
+        c = dark[name]
+        if c["alpha"] >= 1.0:
+            lines.append("  --%s: %s;" % (kebab(name), c["hex"].lower()))
+        else:
+            r, g, b = (int(c["hex"][i:i + 2], 16) for i in (1, 3, 5))
+            lines.append("  --%s: rgba(%d, %d, %d, %s);" % (kebab(name), r, g, b, c["alpha"]))
     lines.append("}")
     lines.append("")
     css_path = os.path.join(OUT_DIR, "ui-tokens.css")

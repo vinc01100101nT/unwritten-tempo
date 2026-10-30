@@ -45,6 +45,13 @@ public static class GroundSnap
     public static bool TryGroundY(Vector3 p, int groundMask, out float y)
         => TryGroundY(p, groundMask, DefaultRayUp, DefaultMaxDistance, out y);
 
+    /// <summary>Seat a BODY standing at <paramref name="feet"/>: the ray starts one body height above the feet, never
+    /// higher. Ground a body walks under (a bridge over a river bed, measured 0.96 above it in Parley) is part of the
+    /// same ground, so a ray started above it lands on its top and lifts the drawn body there while the body itself
+    /// stays below. Nothing solid can sit inside a body, so its own height is the highest a start can safely be.</summary>
+    public static bool TryFeetY(Vector3 feet, int groundMask, out float y)
+        => TryGroundY(feet, groundMask, CharacterSpec.Active.bodyHeight, DefaultMaxDistance, out y);
+
     /// <summary>Raycast straight down for the Ground surface under <paramref name="p"/>. Returns true and the
     /// surface height in <paramref name="y"/> when a Ground-layer hit is found; false (and <paramref name="y"/> =
     /// the input height) when there's no ground (off-map) or no Ground layer in the mask — let the caller decide
@@ -62,5 +69,36 @@ public static class GroundSnap
         }
         y = p.y;
         return false;
+    }
+
+    // SurfaceNearestY reads at most this many stacked surfaces, each search starting this far under the last one.
+    const int MaxLayers = 8;
+    const float LayerGap = 0.01f;
+    const float SurfaceSearchHeight = 200f;
+
+    /// <summary>The Ground surface under <paramref name="p"/>'s spot whose height is CLOSEST to <paramref name="p"/>.y,
+    /// searched from far above — for a point that may already be BELOW the ground (a ray started inside the ground
+    /// passes through it unseen, so the short foot-seat cast above cannot recover one). Where the ground stacks
+    /// (a cliff top over its foot) the nearest layer wins, so a spot aimed at the foot stays at the foot. False, and
+    /// <paramref name="y"/> = the input height, when there is no ground under the spot.</summary>
+    public static bool SurfaceNearestY(Vector3 p, out float y)
+    {
+        y = p.y;
+        int mask = GroundMask;
+        if (mask == 0) return false;
+        // One cast reports at most one hit per collider, and the whole ground — a bridge over its river included — is
+        // one collider, so the layers are walked down one cast at a time, each starting just under the last surface.
+        float best = float.MaxValue, from = p.y + SurfaceSearchHeight, bottom = p.y - SurfaceSearchHeight;
+        bool any = false;
+        for (int layer = 0; layer < MaxLayers && from > bottom; layer++)
+        {
+            if (!Physics.Raycast(new Vector3(p.x, from, p.z), Vector3.down, out var hit, from - bottom, mask,
+                                 QueryTriggerInteraction.Ignore)) break;
+            any = true;
+            float d = Mathf.Abs(hit.point.y - p.y);
+            if (d < best) { best = d; y = hit.point.y; }
+            from = hit.point.y - LayerGap;
+        }
+        return any;
     }
 }

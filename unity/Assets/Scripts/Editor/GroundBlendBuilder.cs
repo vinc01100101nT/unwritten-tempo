@@ -39,6 +39,11 @@ public static class GroundBlendBuilder
     /// export both read it, so the map painter's preview tiles ground at the exact in-game scale.</summary>
     public const float GroundTexWorldSize = 2.5f;
 
+    // One full curb strip spans this many world units along its edge — every curb this file lays, cell-painted or curved.
+    public const float CurbWorldPerTexture = 0.5f;
+    // The ground tile the curb's face and its band of stones are drawn with.
+    public const string CurbTile = "CURB_blocks";
+
     /// <summary>Per-cell diagonal cuts painted with the map painter's 📏 line tool. <c>dir</c> names the KEPT corner
     /// in world orientation (0 none · 1 nw · 2 ne · 3 se · 4 sw; n = +Z, e = +X). The kept half sits at the cell's
     /// levels-grid notch, the cut-away half at <c>underLevel</c>; <c>keptCh</c>/<c>underCh</c> hold each half's blend
@@ -351,15 +356,12 @@ public static class GroundBlendBuilder
         var paintLevels = levels;
         var curbMat = MakeCurbMaterial();                 // null → 1-notch walls just stay in the ground-blend submesh
         var cornerMat = MakeCornerMaterial();             // single square stone dropped at every border corner (null → skip)
-        const float CurbWorldPerTexture = 0.5f;           // one full curb strip spans this many world units along the edge
 
         // BORDER-RING stones along each curb edge: a band of the raised top itself, drawn with the curb texture — part
         // of the one ground, never a strip laid over it (RULE ONEGROUND). Width = one texture-row scaled so the stones
         // stay SQUARE (read the texture's real aspect, so new art can't stretch them); BorderRows widens it in rows.
         const int   BorderRows  = 1;
-        var   curbTex   = curbMat != null ? curbMat.GetTexture("_BaseMap") as Texture2D : null;
-        float texAspect = curbTex != null ? curbTex.width / (float)curbTex.height : 6f;
-        float borderWidth = BorderRows * (CurbWorldPerTexture / texAspect);   // world width of BorderRows square rows
+        float borderWidth = BorderRows * CurbBandWidth(curbMat);   // world width of BorderRows square rows
 
         // Sub-cells per painter cell → keep the grass/dirt blend as fine as the flat mesh's ~0.8u vertex grid. Must be
         // EVEN and ≥2 so a vertex lands on every cell CENTRE: a 1-cell-wide painted path only reaches full blend weight
@@ -789,6 +791,530 @@ public static class GroundBlendBuilder
         return root;
     }
 
+    /// <summary>What a curbed ground holds besides its streets and paving: a stream cut into it, its ground lifted into
+    /// mounds and ramps, and more ground with a look of its own (a bridge's model) joined into it.</summary>
+    public sealed class CurbedExtras
+    {
+        /// <summary>Signed distance into water, above 0 inside it; null when there is none.</summary>
+        public System.Func<float, float, float> sink;
+        /// <summary>How deep the water's bed goes below the raised top, how steep its banks fall (rise per unit in), and
+        /// how far below the raised top the water's surface lies.</summary>
+        public float depth = 0.45f, bankSlope = 0.7f, waterBelow = 0.2f;
+        /// <summary>The look of the water's bed and banks, as a vertex colour of the ground material.</summary>
+        public Color bedLook = new Color(0f, 0f, 0f, 1f);
+        /// <summary>Height added to the ground at a point (mounds, ramps up to a bridge's ends); null for none.</summary>
+        public System.Func<float, float, float> lift;
+        /// <summary>Called with the ground's vertex lists before the mesh is made, to join more ground into it with looks of
+        /// its own (a bridge's model): its tangents, and its triangles by the material each is drawn with — one drawn
+        /// submesh per material after the ground's own.</summary>
+        public System.Action<List<Vector3>, List<Vector3>, List<Vector2>, List<Color>, List<Vector4>, Dictionary<Material, List<int>>> joinTops;
+    }
+
+    /// <summary>
+    /// A ground of LEVELS bounded by SMOOTH CURVES, for a plan drawn in shapes rather than painted in cells: the ground
+    /// stands at a whole number of curbs (<paramref name="rise"/> each) above its own height, from <paramref name="lowest"/>
+    /// (0 or below) up. <paramref name="raise"/> gives, at any point, one value per step of height: the signed distance into
+    /// the ground standing at level lowest + t + 1 or higher (above 0 inside it). Each step's curb is traced along the line
+    /// where its value is 0 — through every cell, at the exact point between two samples — so a round street gets a round
+    /// curb, not steps or 45-degree cuts; two steps meeting on one line make a curb two high. Like the cell-painted curbs, the curb has a vertical face and, on the raised top along
+    /// its edge, a band of the curb's own stones one row wide, both in the curb's submesh; along a curve the band bends
+    /// with it, its stones running the length of the curb (measured along it, each run shrunk a little to hold a whole
+    /// number of stones), so face and band line up stone for stone.
+    /// <para>With <paramref name="extras"/>: water cut into the ground (its bed sloping down from a band of curb stones at
+    /// its edge, gentle enough to walk out of, so nobody is ever trapped in it) with a water surface on it, the ground
+    /// lifted into mounds and ramps, and a bridge's model joined in. Tops are coloured from <paramref name="sample"/>.
+    /// One mesh, one collider: the curb face, the band, the banks and the bridges are all part of the ground, never pieces
+    /// laid on it (RULE ONEGROUND). The water is a separate surface, drawn only. Centred on the origin; the caller keeps
+    /// both meshes.</para>
+    /// </summary>
+    public static GameObject LayPlotCurbed(Scene scene, string rootName, float sizeX, float sizeZ, float cellSize, int groundLayer,
+                                           System.Func<float, float, float[]> raise, int lowest, float rise, GroundSampler sample,
+                                           Material groundMat, Material curbMat, out Mesh mesh, CurbedExtras extras = null)
+        => LayPlotCurbed(scene, rootName, sizeX, sizeZ, cellSize, groundLayer, raise, lowest, rise, sample, groundMat, curbMat, out mesh, out _, extras);
+
+    public static GameObject LayPlotCurbed(Scene scene, string rootName, float sizeX, float sizeZ, float cellSize, int groundLayer,
+                                           System.Func<float, float, float[]> raise, int lowest, float rise, GroundSampler sample,
+                                           Material groundMat, Material curbMat, out Mesh mesh, out Mesh water, CurbedExtras extras = null)
+    {
+        extras ??= new CurbedExtras();
+        System.Func<float, float, float> sink = extras.sink ?? ((x, z) => -1f);
+        System.Func<float, float, float> lift = extras.lift ?? ((x, z) => 0f);
+        int cols = Mathf.RoundToInt(sizeX / cellSize), rows = Mathf.RoundToInt(sizeZ / cellSize);
+        float ox = -sizeX * 0.5f, oz = -sizeZ * 0.5f;
+        float band = curbMat != null ? CurbBandWidth(curbMat) : 0f;
+        float waterLevel = rise - extras.waterBelow;
+        // NEVER HOLDS THE EDITOR: this runs on the editor's own thread, so a step that takes too long stops the build with
+        // the step's name instead of freezing the editor (it froze once, 2026-10-28).
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var said = new System.Text.StringBuilder();
+        void Step(string what)
+        {
+            said.Append(what).Append(' ').Append(clock.ElapsedMilliseconds).Append(" ms; ");
+            if (clock.ElapsedMilliseconds > 60000) throw new System.Exception("curbed ground took over a minute, at: " + said);
+        }
+
+        // The fields at every corner of every cell: f the curb's, one value per step of height, and g the water's.
+        var f = new float[cols + 1, rows + 1][]; var g = new float[cols + 1, rows + 1];
+        for (int i = 0; i <= cols; i++)
+            for (int j = 0; j <= rows; j++) { float x = ox + i * cellSize, z = oz + j * cellSize; f[i, j] = raise(x, z); g[i, j] = sink(x, z); }
+        int steps = f[0, 0].Length;
+        // The water and its band of stones lie in ground one curb up, so levels 0 and 1 are always among them.
+        if (lowest > 0 || lowest + steps < 1) throw new System.Exception($"the ground's levels run from {lowest} to {lowest + steps}; they must reach 0 and 1");
+        int LevelOf(float[] at) { int l = lowest; foreach (float x in at) if (x > 0f) l++; return l; }
+        Step("fields");
+        bool Plain(int i, int j)
+        {
+            float gHi = Mathf.Max(Mathf.Max(g[i, j], g[i + 1, j]), Mathf.Max(g[i + 1, j + 1], g[i, j + 1]));
+            if (gHi > -band) return false;
+            for (int t = 0; t < steps; t++)
+            {
+                float lo = float.MaxValue, hi = float.MinValue;
+                foreach (var (a, b) in new[] { (i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1) }) { lo = Mathf.Min(lo, f[a, b][t]); hi = Mathf.Max(hi, f[a, b][t]); }
+                if (!(lo > band || hi <= 0f)) return false;
+            }
+            return true;
+        }
+        // The cells the curb, its band or the water runs through are cut into four triangles round their middle.
+        var split = new List<(Vector2[] p, float[][] v, float[] w)>();
+        for (int i = 0; i < cols; i++)
+            for (int j = 0; j < rows; j++)
+            {
+                if (Plain(i, j)) continue;
+                Vector2 sw = new Vector2(ox + i * cellSize, oz + j * cellSize), m = sw + Vector2.one * (cellSize * 0.5f);
+                split.Add((new[] { sw, sw + new Vector2(cellSize, 0f), sw + new Vector2(cellSize, cellSize), sw + new Vector2(0f, cellSize), m },
+                           new[] { f[i, j], f[i + 1, j], f[i + 1, j + 1], f[i, j + 1], raise(m.x, m.y) },
+                           new[] { g[i, j], g[i + 1, j], g[i + 1, j + 1], g[i, j + 1], sink(m.x, m.y) }));
+            }
+        Step("cut cells " + split.Count);
+
+        // THE CURB'S LENGTH: its pieces of line (on dry ground only), joined into runs, each point given how far along it is.
+        var lines = new List<(Vector2 a, Vector2 b)>();
+        var lowSide = new List<Vector2>();   // per piece of curb: the way down, toward the low ground
+        var lineStep = new List<int>();      // per piece of curb: the step of height it is the curb of
+        var edgeLines = new List<(Vector2 a, Vector2 b)>();
+        foreach (var (q, v, w) in split)
+            foreach (var (x, y) in new[] { (0, 1), (1, 2), (2, 3), (3, 0) })
+            {
+                for (int t = 0; t < steps; t++)
+                {
+                var cut = Crossing(q[x], q[y], q[4], v[x][t], v[y][t], v[4][t], 0f);
+                if (cut.HasValue && (cut.Value.b - cut.Value.a).sqrMagnitude > 1e-8f)
+                {
+                    var mid = (cut.Value.a + cut.Value.b) * 0.5f;
+                    if (sink(mid.x, mid.y) <= -band)
+                    {
+                        lines.Add(cut.Value);
+                        // Down the field's slope across this very triangle — the slope that cut the top here, so the face
+                        // always looks at the low ground beside it. (Reading the field a step off the piece's middle
+                        // instead landed on the wrong side wherever the curb bends tightly: 118 faces turned their
+                        // backs to the camera and showed the sky through the ground, 2026-10-28.)
+                        lowSide.Add(-Slope(q[x], q[y], q[4], v[x][t], v[y][t], v[4][t]));
+                        lineStep.Add(t);
+                    }
+                }
+                }
+                var edge = Crossing(q[x], q[y], q[4], w[x], w[y], w[4], 0f);
+                if (edge.HasValue && (edge.Value.b - edge.Value.a).sqrMagnitude > 1e-8f) edgeLines.Add(edge.Value);
+            }
+        var along = Lengths(lines, CurbWorldPerTexture, Step);
+        var edgeAlong = Lengths(edgeLines, CurbWorldPerTexture, Step);
+        Step("lengths");
+        var all = new List<(Vector2 a, Vector2 b)>(lines); all.AddRange(edgeLines);
+        var allAlong = new List<Vector2>(along); allAlong.AddRange(edgeAlong);
+        var bins = new Dictionary<(int, int), List<int>>();
+        for (int k = 0; k < all.Count; k++)
+        {
+            var key = (Mathf.FloorToInt(all[k].a.x), Mathf.FloorToInt(all[k].a.y));
+            if (!bins.TryGetValue(key, out var l)) bins[key] = l = new List<int>();
+            l.Add(k);
+        }
+        // How far along its curb the point nearest `pt` is, the way the curb runs there (`ahead`, a unit step in the
+        // direction it counts up) and how many repeats a unit of that way is worth (`rate`).
+        float AlongNear(Vector2 pt, out Vector2 ahead, out float rate)
+        {
+            float best = float.MaxValue, u = 0f;
+            ahead = Vector2.zero; rate = 0f;
+            int bx = Mathf.FloorToInt(pt.x), bz = Mathf.FloorToInt(pt.y);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++)
+                {
+                    if (!bins.TryGetValue((bx + dx, bz + dz), out var l)) continue;
+                    foreach (int k in l)
+                    {
+                        var (a, b) = all[k];
+                        Vector2 ab = b - a;
+                        float t = Mathf.Clamp01(Vector2.Dot(pt - a, ab) / Mathf.Max(1e-8f, ab.sqrMagnitude));
+                        float dd = (a + ab * t - pt).sqrMagnitude;
+                        if (dd < best)
+                        {
+                            best = dd; u = Mathf.Lerp(allAlong[k].x, allAlong[k].y, t);
+                            float span = allAlong[k].y - allAlong[k].x, len = Mathf.Sqrt(ab.sqrMagnitude);
+                            ahead = len > 1e-6f ? ab / len * Mathf.Sign(span) : Vector2.zero;
+                            rate = len > 1e-6f ? Mathf.Abs(span) / len : 0f;
+                        }
+                    }
+                }
+            return u;
+        }
+
+        var verts = new List<Vector3>(); var norms = new List<Vector3>(); var uvs = new List<Vector2>(); var colours = new List<Color>();
+        var trisTop = new List<int>(); var trisCurb = new List<int>();
+        var wverts = new List<Vector3>(); var wtris = new List<int>();
+        var shared = new Dictionary<(int, int, int), int>();
+        // 0 the ground's own height, 1 a band of curb stones, 2 the raised top, 3 the water's bed and banks. The bed's depth
+        // comes from the water's value carried on the piece's corners (`v`), never read afresh: on the bed's edge that value
+        // is exactly 0, so the bed meets the band beside it with no crack (read afresh it was a few thousandths off).
+        // The level the pieces being laid stand at (0 and 2 regions alike; the band stands at the level its curb raised it to).
+        int curLevel = 1;
+        float HeightOf(Vector2 pt, int region, float v)
+        {
+            float l = lift(pt.x, pt.y);
+            if (region == 3) return rise + l - Mathf.Min(extras.depth + rise, Mathf.Max(0f, v) * extras.bankSlope);
+            return curLevel * rise + l;
+        }
+        // A piece of the band of stones: its stones counted along the ONE stretch of curb nearest its middle, so all its
+        // corners agree. (Each corner read on its own could land on two different stretches — either side of where a
+        // loop of curb closes, or of where two curbs meet — and squeezed many stones into one small piece: 514 striped
+        // pieces, 2026-10-28.) So its corners are its own, never shared with the piece beside it.
+        Vector2 bandMid = Vector2.zero, bandAhead = Vector2.zero; float bandU = 0f, bandRate = 0f;
+        int Point(Vector2 pt, float v, int region, Vector2 inside)
+        {
+            var key = (Mathf.RoundToInt(pt.x * 1000f), Mathf.RoundToInt(pt.y * 1000f), region == 0 ? 100 + curLevel : region);
+            int at;
+            if (region != 1 && shared.TryGetValue(key, out at)) return at;
+            at = verts.Count;
+            verts.Add(new Vector3(pt.x, HeightOf(pt, region, v), pt.y)); norms.Add(Vector3.up);
+            if (region == 1)
+            {
+                uvs.Add(new Vector2(bandU + Vector2.Dot(pt - bandMid, bandAhead) * bandRate, Mathf.Clamp01(v / Mathf.Max(1e-5f, band))));
+                colours.Add(Color.white);
+                return at;
+            }
+            else if (region == 3) { uvs.Add(pt); colours.Add(extras.bedLook); }
+            else
+            {
+                // A point on a region's edge takes its colour from just inside its own region.
+                Vector2 q = pt + (inside - pt).normalized * Mathf.Min(0.02f, (inside - pt).magnitude);
+                sample(q.x, q.y, out var w);
+                uvs.Add(pt); colours.Add(new Color(w.x, w.y, w.z, w.w));
+            }
+            shared[key] = at;
+            return at;
+        }
+        // Unity draws a triangle's front where its corners run clockwise seen from above.
+        void Fan(List<(Vector2 p, float v)> poly, int region)
+        {
+            if (poly.Count < 3) return;
+            float area = 0f;
+            for (int k = 0; k < poly.Count; k++) { var a0 = poly[k].p; var b0 = poly[(k + 1) % poly.Count].p; area += a0.x * b0.y - b0.x * a0.y; }
+            if (Mathf.Abs(area) < 1e-7f) return;
+            Vector2 mid = Vector2.zero; foreach (var (pt, _) in poly) mid += pt; mid /= poly.Count;
+            var idx = new List<int>();
+            if (region == 1) { bandMid = mid; bandU = AlongNear(mid, out bandAhead, out bandRate); }
+            foreach (var (pt, v) in poly) idx.Add(Point(pt, v, region, mid));
+            var into = region == 1 ? trisCurb : trisTop;
+            bool cw = area < 0f;
+            for (int k = 1; k + 1 < idx.Count; k++) { into.Add(idx[0]); into.Add(cw ? idx[k] : idx[k + 1]); into.Add(cw ? idx[k + 1] : idx[k]); }
+            if (region == 3)
+            {
+                // The water over the bed: the same shape at the water's level, drawn only.
+                int w0 = wverts.Count;
+                foreach (var (pt, _) in poly) wverts.Add(new Vector3(pt.x, waterLevel, pt.y));
+                for (int k = 1; k + 1 < poly.Count; k++) { wtris.Add(w0); wtris.Add(cw ? w0 + k : w0 + k + 1); wtris.Add(cw ? w0 + k + 1 : w0 + k); }
+            }
+        }
+        // A triangle's pieces: the water (w above 0), the band of stones along the water, then the ground's levels.
+        void Region(Vector2 a, Vector2 b, Vector2 c, float wa, float wb, float wc)
+        {
+            var byW = new List<(Vector2, float)> { (a, wa), (b, wb), (c, wc) };
+            curLevel = 1;
+            Fan(Clip(byW, 0f, float.PositiveInfinity), 3);
+            var dry = Clip(byW, float.NegativeInfinity, 0f);
+            if (dry.Count < 3) return;
+            if (band > 0f)
+            {
+                var nearW = Clip(dry, -band, 0f);
+                if (nearW.Count >= 3)
+                {
+                    var bandPoly = new List<(Vector2, float)>();
+                    foreach (var (pt, wv) in nearW) bandPoly.Add((pt, band + wv));
+                    curLevel = 1;
+                    Fan(bandPoly, 1);
+                }
+                dry = Clip(dry, float.NegativeInfinity, -band);
+                if (dry.Count < 3) return;
+            }
+            // Carry the curb's fields over to the dry piece's corners, read at each one.
+            var dryF = new List<(Vector2 p, float[] v)>();
+            foreach (var (pt, _) in dry) dryF.Add((pt, raise(pt.x, pt.y)));
+            Levels(dryF, 0);
+        }
+        // A dry piece cut at each step of height in turn: below the step it stands at that level, above it on to the next.
+        void Levels(List<(Vector2 p, float[] v)> poly, int t)
+        {
+            if (poly.Count < 3) return;
+            if (t == steps) { AtLevel(poly, t); return; }
+            AtLevel(ClipStep(poly, t, float.NegativeInfinity, 0f), t);
+            Levels(ClipStep(poly, t, 0f, float.PositiveInfinity), t + 1);
+        }
+        // A piece standing at level lowest + t: the band of stones along the curb that raised it there, then the rest.
+        void AtLevel(List<(Vector2 p, float[] v)> poly, int t)
+        {
+            if (poly.Count < 3) return;
+            curLevel = lowest + t;
+            if (t == 0 || band <= 0f) { Fan(Step1(poly, Mathf.Max(0, t - 1)), 0); return; }
+            var lifted = Step1(poly, t - 1);
+            Fan(Clip(lifted, 0f, band), 1);
+            Fan(Clip(lifted, band, float.PositiveInfinity), 0);
+        }
+
+        for (int i = 0; i < cols; i++)
+            for (int j = 0; j < rows; j++)
+            {
+                if (!Plain(i, j)) continue;
+                Vector2 sw = new Vector2(ox + i * cellSize, oz + j * cellSize);
+                curLevel = LevelOf(f[i, j]);
+                Fan(new List<(Vector2, float)> { (sw, 0f), (sw + new Vector2(0f, cellSize), 0f),
+                                                 (sw + new Vector2(cellSize, cellSize), 0f), (sw + new Vector2(cellSize, 0f), 0f) }, 0);
+            }
+        Step("whole cells");
+        int done = 0;
+        foreach (var (q, v, w) in split)
+        {
+            foreach (var (x, y) in new[] { (0, 1), (1, 2), (2, 3), (3, 0) })
+                Region(q[x], q[y], q[4], w[x], w[y], w[4]);
+            if (++done % 2000 == 0) Step("cut cells done " + done);
+        }
+        Step("cut cells done " + done);
+
+        // A curb's face: from one level below `level` up to it along the piece a→b, turned toward the low side (`low`),
+        // following the ground under it; `ua`/`ub` how far along its curb each end is.
+        void Face(Vector2 a, Vector2 b, Vector2 low, float ua, float ub, int level)
+        {
+            Vector2 e = (b - a).normalized, side = new Vector2(-e.y, e.x);
+            if (Vector2.Dot(side, low) < 0f) side = -side;
+            Vector3 n = new Vector3(side.x, 0f, side.y);
+            float la = lift(a.x, a.y) + (level - 1) * rise, lb = lift(b.x, b.y) + (level - 1) * rise;
+            int t0 = verts.Count;
+            foreach (var (pt, y, u) in new[] { (a, rise + la, ua), (b, rise + lb, ub), (a, la, ua), (b, lb, ub) })
+            {
+                verts.Add(new Vector3(pt.x, y, pt.y)); norms.Add(n); uvs.Add(new Vector2(u, (y - (pt == a ? la : lb)) / rise)); colours.Add(Color.white);
+            }
+            void Tri(int i0, int i1, int i2)
+            {
+                bool front = Vector3.Dot(Vector3.Cross(verts[i1] - verts[i0], verts[i2] - verts[i0]), n) >= 0f;
+                trisCurb.Add(i0); trisCurb.Add(front ? i1 : i2); trisCurb.Add(front ? i2 : i1);
+            }
+            Tri(t0, t0 + 2, t0 + 1); Tri(t0 + 1, t0 + 2, t0 + 3);
+        }
+        for (int k = 0; k < lines.Count; k++) Face(lines[k].a, lines[k].b, lowSide[k], along[k].x, along[k].y, lowest + lineStep[k] + 1);
+        // Where LOW ground reaches the band of stones along the water, the band stands up out of it the same as a curb, so it
+        // gets the same face, toward the dry side. (Without one, the step had no side at all and the sky showed through the
+        // gap, everywhere a street or a tree's pit ran down to the water, 2026-10-28.)
+        foreach (var (q, v, w) in split)
+            foreach (var (x, y) in new[] { (0, 1), (1, 2), (2, 3), (3, 0) })
+            {
+                var step = Crossing(q[x], q[y], q[4], w[x], w[y], w[4], -band);
+                if (!step.HasValue) continue;
+                Vector2 a = step.Value.a, b = step.Value.b;
+                float fa = raise(a.x, a.y)[-lowest], fb = raise(b.x, b.y)[-lowest];
+                if (fa >= 0f && fb >= 0f) continue;                     // raised on both ends: the top meets the band level
+                if (fa >= 0f) a = Vector2.Lerp(a, b, fa / (fa - fb));
+                else if (fb >= 0f) b = Vector2.Lerp(a, b, fa / (fa - fb));
+                if ((b - a).sqrMagnitude < 1e-8f) continue;
+                Vector2 m = (a + b) * 0.5f;
+                float um = AlongNear(m, out var ahead, out var rate);
+                Face(a, b, -Slope(q[x], q[y], q[4], w[x], w[y], w[4]), um + Vector2.Dot(a - m, ahead) * rate, um + Vector2.Dot(b - m, ahead) * rate, 1);
+            }
+        var tangents = new List<Vector4>();
+        var joined = new Dictionary<Material, List<int>>();
+        extras.joinTops?.Invoke(verts, norms, uvs, colours, tangents, joined);
+        Step("faces and joins, " + verts.Count + " points");
+
+        mesh = new Mesh { name = rootName + "_ground", indexFormat = verts.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
+        mesh.SetVertices(verts); mesh.SetNormals(norms); mesh.SetUVs(0, uvs); mesh.SetColors(colours);
+        if (tangents.Count == verts.Count) mesh.SetTangents(tangents);
+        bool curbs = curbMat != null && trisCurb.Count > 0;
+        var mats = new List<Material> { groundMat };
+        if (curbs) mats.Add(curbMat);
+        int own = mats.Count;
+        mats.AddRange(joined.Keys);
+        mesh.subMeshCount = mats.Count;
+        mesh.SetTriangles(trisTop, 0);
+        if (curbs) mesh.SetTriangles(trisCurb, 1);
+        for (int k = own; k < mats.Count; k++) mesh.SetTriangles(joined[mats[k]], k);
+        mesh.RecalculateBounds();
+        water = null;
+        if (wtris.Count > 0)
+        {
+            water = new Mesh { name = rootName + "_water", indexFormat = wverts.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
+            water.SetVertices(wverts);
+            var wn = new Vector3[wverts.Count]; var wuv = new Vector2[wverts.Count];
+            for (int k = 0; k < wverts.Count; k++) { wn[k] = Vector3.up; wuv[k] = new Vector2(wverts[k].x, wverts[k].z); }
+            water.SetNormals(wn); water.SetUVs(0, wuv); water.SetTriangles(wtris, 0);
+            water.RecalculateBounds();
+        }
+
+        var root = new GameObject(rootName);
+        SceneManager.MoveGameObjectToScene(root, scene);
+        var vis = new GameObject("Ground_Visual");
+        vis.transform.SetParent(root.transform, false);
+        vis.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var mr = vis.AddComponent<MeshRenderer>();
+        mr.sharedMaterials = mats.ToArray();
+        // Ground joined with a standing shape (a bridge) casts, as that shape did on its own.
+        mr.shadowCastingMode = joined.Count > 0 ? ShadowCastingMode.On : ShadowCastingMode.Off;
+        mr.receiveShadows = true;
+        vis.AddComponent<MeshCollider>().sharedMesh = mesh;
+        Step("collider");
+        Debug.Log("[unwritten] curbed ground " + rootName + ": " + said);
+        WorldBuildUtil.SetLayerRecursive(root, groundLayer);
+        return root;
+    }
+
+    // The width of the band of curb stones on a raised top: one row of the curb texture's stones, kept square by reading
+    // the texture's real aspect, so new art can never stretch them.
+    static float CurbBandWidth(Material curbMat) => CurbBandWidth(curbMat != null ? curbMat.GetTexture("_BaseMap") : null);
+    public static float CurbBandWidth(Texture tex)
+    {
+        float aspect = tex != null ? tex.width / (float)tex.height : 6f;
+        return CurbWorldPerTexture / aspect;
+    }
+
+    // The part of a flat polygon whose value lies between lo and hi, its edges cut where the value crosses them.
+    static List<(Vector2 p, float v)> Clip(List<(Vector2 p, float v)> poly, float lo, float hi)
+    {
+        List<(Vector2, float)> Keep(List<(Vector2 p, float v)> src, float limit, bool above)
+        {
+            var o = new List<(Vector2, float)>();
+            for (int k = 0; k < src.Count; k++)
+            {
+                var (a, va) = src[k]; var (b, vb) = src[(k + 1) % src.Count];
+                bool ina = above ? va >= limit : va <= limit, inb = above ? vb >= limit : vb <= limit;
+                if (ina) o.Add((a, va));
+                if (ina != inb) { float t = (limit - va) / (vb - va); o.Add((Vector2.Lerp(a, b, t), limit)); }
+            }
+            return o;
+        }
+        var r = poly;
+        if (!float.IsNegativeInfinity(lo)) r = Keep(r, lo, true);
+        if (r.Count >= 3 && !float.IsPositiveInfinity(hi)) r = Keep(r, hi, false);
+        return r;
+    }
+
+    // The part of a flat polygon whose step-t value lies between lo and hi, every step's value carried along its cut edges.
+    static List<(Vector2 p, float[] v)> ClipStep(List<(Vector2 p, float[] v)> poly, int t, float lo, float hi)
+    {
+        List<(Vector2, float[])> Keep(List<(Vector2 p, float[] v)> src, float limit, bool above)
+        {
+            var o = new List<(Vector2, float[])>();
+            for (int k = 0; k < src.Count; k++)
+            {
+                var (a, va) = src[k]; var (b, vb) = src[(k + 1) % src.Count];
+                bool ina = above ? va[t] >= limit : va[t] <= limit, inb = above ? vb[t] >= limit : vb[t] <= limit;
+                if (ina) o.Add((a, va));
+                if (ina != inb)
+                {
+                    float u = (limit - va[t]) / (vb[t] - va[t]);
+                    var at = new float[va.Length];
+                    for (int i = 0; i < at.Length; i++) at[i] = Mathf.Lerp(va[i], vb[i], u);
+                    at[t] = limit;
+                    o.Add((Vector2.Lerp(a, b, u), at));
+                }
+            }
+            return o;
+        }
+        var r = poly;
+        if (!float.IsNegativeInfinity(lo)) r = Keep(r, lo, true);
+        if (r.Count >= 3 && !float.IsPositiveInfinity(hi)) r = Keep(r, hi, false);
+        return r;
+    }
+
+    // A polygon with only its step-t value.
+    static List<(Vector2 p, float v)> Step1(List<(Vector2 p, float[] v)> poly, int t)
+    {
+        var o = new List<(Vector2 p, float v)>(poly.Count);
+        foreach (var (p, v) in poly) o.Add((p, v[t]));
+        return o;
+    }
+
+    // Where the value equals `at` inside the triangle a, b, c: the piece of line across it, or none.
+    static (Vector2 a, Vector2 b)? Crossing(Vector2 a, Vector2 b, Vector2 c, float va, float vb, float vc, float at)
+    {
+        var pts = new List<Vector2>(2);
+        foreach (var (p, q, vp, vq) in new[] { (a, b, va, vb), (b, c, vb, vc), (c, a, vc, va) })
+            if ((vp > at) != (vq > at)) pts.Add(Vector2.Lerp(p, q, (at - vp) / (vq - vp)));
+        return pts.Count == 2 ? (pts[0], pts[1]) : ((Vector2, Vector2)?)null;
+    }
+
+    // Which way, and how steeply, the value rises across the triangle a, b, c (taken as flat between its corners).
+    static Vector2 Slope(Vector2 a, Vector2 b, Vector2 c, float va, float vb, float vc)
+    {
+        Vector2 e1 = b - a, e2 = c - a;
+        float d1 = vb - va, d2 = vc - va, det = e1.x * e2.y - e1.y * e2.x;
+        if (Mathf.Abs(det) < 1e-12f) return Vector2.zero;
+        return new Vector2(d1 * e2.y - d2 * e1.y, e1.x * d2 - e2.x * d1) / det;
+    }
+
+    // How far along its curb each piece's two ends are: the pieces joined at their shared ends into runs, each run's length
+    // stretched or shrunk a little to hold a whole number of the curb texture's stones, so its stones never end in a
+    // sliver. Returned in texture repeats (one per `per` units of curb).
+    static List<Vector2> Lengths(List<(Vector2 a, Vector2 b)> lines, float per, System.Action<string> step = null)
+    {
+        var u = new List<Vector2>(new Vector2[lines.Count]);
+        (int, int) Key(Vector2 v) => (Mathf.RoundToInt(v.x * 1000f), Mathf.RoundToInt(v.y * 1000f));
+        var ends = new Dictionary<(int, int), List<int>>();
+        for (int k = 0; k < lines.Count; k++)
+            foreach (var e in new[] { lines[k].a, lines[k].b })
+            {
+                if (!ends.TryGetValue(Key(e), out var l)) ends[Key(e)] = l = new List<int>();
+                l.Add(k);
+            }
+        var done = new bool[lines.Count];
+        for (int start = 0; start < lines.Count; start++)
+        {
+            if (done[start]) continue;
+            if (step != null && start % 500 == 0) step("lengths " + start);
+            // Walk back to the run's beginning (an end only one piece touches), or round a closed loop to where it began.
+            int first = start; Vector2 from = lines[start].a;
+            var seen = new HashSet<int> { start };
+            while (true)
+            {
+                // Not List.Find: for a list of numbers it answers 0, a real piece, when nothing matches (it froze the
+                // editor twice, 2026-10-28, walking round the same piece forever).
+                int next = -1;
+                foreach (int k in ends[Key(from)]) if (k != first && !seen.Contains(k)) { next = k; break; }
+                if (next < 0) break;
+                seen.Add(next);
+                from = lines[next].a == from || Key(lines[next].a).Equals(Key(from)) ? lines[next].b : lines[next].a;
+                first = next;
+            }
+            // Then forward from there, adding up the length.
+            var run = new List<(int k, bool flip)>();
+            int at = first; Vector2 p = from; float total = 0f;
+            while (at >= 0 && !done[at])
+            {
+                done[at] = true;
+                bool flip = !Key(lines[at].a).Equals(Key(p));
+                Vector2 q = flip ? lines[at].a : lines[at].b;
+                run.Add((at, flip));
+                total += Vector2.Distance(p, q);
+                p = q;
+                int cur = at;
+                at = -1;
+                foreach (int k in ends[Key(p)]) if (k != cur && !done[k]) { at = k; break; }
+            }
+            float scale = total > per ? Mathf.Round(total / per) * per / total : 1f, s = 0f;
+            foreach (var (k, flip) in run)
+            {
+                float len = Vector2.Distance(lines[k].a, lines[k].b) * scale / per;
+                u[k] = flip ? new Vector2(s + len, s) : new Vector2(s, s + len);
+                s += len;
+            }
+        }
+        return u;
+    }
+
     // The cliff's material: a copy of this map's own ground material with its rock layer switched on, so the grass on
     // the cliff top is the ground's grass exactly and the face fades in from it. The face is the biome's colour when it
     // has one — lighter up the cliff, darker and greyer at its foot, in patches, split by cracks — else the gravel
@@ -863,7 +1389,7 @@ public static class GroundBlendBuilder
     // ground-blend submesh) if the texture or URP/Lit shader is missing. Idempotent — reuses the asset across bakes.
     static Material MakeCurbMaterial()
     {
-        var tex = GroundTiles.Load("CURB_blocks");
+        var tex = GroundTiles.Load(CurbTile);
         if (tex == null) return null;
         // Unwritten/GroundTrim (not URP/Lit): stamps the same stencil bit 32 as the ground so the hand-drawn INK
         // overlay skips the curb wall (a steep curb viewed edge-on otherwise smears into a solid black ink band).

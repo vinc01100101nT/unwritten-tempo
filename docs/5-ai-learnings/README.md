@@ -86,6 +86,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | About to repeat something a doc says is current — especially under "still true" — or a code comment (or a helper quoting one) telling you what a setting or an asset is | [A Doc Cannot Vouch for Its Own Freshness](a-doc-cannot-vouch-for-itself.md) |
 | You changed a value, read it back, and it had not moved — and you are about to call that a bug | [A Value You Just Changed Reads Stale](a-value-you-just-changed-reads-stale.md) |
 | You paused or froze a running system to read it, and everything reads empty | [Put the Recorder Inside — Don't Stop the World](put-the-recorder-inside-dont-stop-the-world.md) |
+| You built code that generates walkable ground, or the user reports blue/sky holes or a wall invisible from one side | [Sweep a Generated Mesh for Holes Before Anyone Walks on It](sweep-a-generated-mesh-before-showing-it.md) |
 | The user marks a line, streak, hole, crease or pale patch in a picture — before the first fix, or when a fix left it exactly the same | [Find a Visual Glitch by Casting a Ray Through Its Pixel](find-a-visual-glitch-by-casting-through-its-pixel.md) |
 | You added a tool to make a job easier and the job got slower | [You Added a Tool and Everything Got Slower](new-tooling-must-replace-work-not-add-it.md) |
 | Every fix round finds a new bug, the user is exhausted, or you are about to hand over a play-test with findings still open | [The Path Table Is the Reviewer's Checklist](the-path-table-is-the-reviewers-checklist.md) |

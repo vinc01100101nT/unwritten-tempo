@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MinimapCatalog
   maps:
   - map: world
-    worldMin: {x: -100.479996, y: -132.48}
-    worldSize: 232.95999
+    worldMin: {x: -209.91998, y: -321.91998}
+    worldSize: 931.83997
     tileSize: 32
+    tilePixels: 256

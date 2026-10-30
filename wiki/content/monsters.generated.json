@@ -55,7 +55,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 7
+                    "count": 112
                 }
             ]
         },
@@ -83,7 +83,13 @@
             "dex": 5,
             "luk": 3,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-flutterby",
@@ -139,7 +145,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 10
+                    "count": 182
                 }
             ]
         },
@@ -167,7 +173,13 @@
             "dex": 3,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 235
+                }
+            ]
         },
         {
             "id": "mob.blighted-squeak",
@@ -223,7 +235,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 5
+                    "count": 285
                 }
             ]
         },
@@ -251,7 +263,13 @@
             "dex": 10,
             "luk": 3,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 235
+                }
+            ]
         },
         {
             "id": "mob.blighted-crawlet",
@@ -307,7 +325,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 16
+                    "count": 85
                 }
             ]
         },
@@ -335,7 +353,13 @@
             "dex": 6,
             "luk": 3,
             "hardDef": 0.30000001192092898,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 150
+                }
+            ]
         },
         {
             "id": "mob.blighted-capling",
@@ -387,7 +411,13 @@
             "dex": 8,
             "luk": 6,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 188
+                }
+            ]
         },
         {
             "id": "mob.tainted-capling",
@@ -413,7 +443,13 @@
             "dex": 8,
             "luk": 6,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 181
+                }
+            ]
         },
         {
             "id": "mob.blighted-hisser",
@@ -469,7 +505,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 9
+                    "count": 212
                 }
             ]
         },
@@ -497,7 +533,13 @@
             "dex": 6,
             "luk": 4,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 361
+                }
+            ]
         },
         {
             "id": "mob.blighted-blinkbat",
@@ -553,7 +595,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 8
+                    "count": 206
                 }
             ]
         },
@@ -637,7 +679,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 3
+                    "count": 242
                 }
             ]
         },
@@ -665,7 +707,13 @@
             "dex": 8,
             "luk": 4,
             "hardDef": 0.30000001192092898,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 317
+                }
+            ]
         },
         {
             "id": "mob.blighted-tarantix",
@@ -717,7 +765,13 @@
             "dex": 8,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 86
+                }
+            ]
         },
         {
             "id": "mob.tarantix",
@@ -747,7 +801,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 7
+                    "count": 202
                 }
             ]
         },
@@ -805,7 +859,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 6
+                    "count": 225
                 }
             ]
         },
@@ -833,7 +887,13 @@
             "dex": 9,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 324
+                }
+            ]
         },
         {
             "id": "mob.blighted-rascal",
@@ -889,7 +949,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 33
+                    "count": 283
                 }
             ]
         },
@@ -917,7 +977,13 @@
             "dex": 12,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 472
+                }
+            ]
         },
         {
             "id": "mob.blighted-kappi",
@@ -973,7 +1039,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 8
+                    "count": 76
                 }
             ]
         },
@@ -1057,7 +1123,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 418
                 }
             ]
         },
@@ -1085,7 +1151,13 @@
             "dex": 13,
             "luk": 10,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 399
+                }
+            ]
         },
         {
             "id": "mob.blighted-gillie",
@@ -1141,7 +1213,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 3
+                    "count": 179
                 }
             ]
         },
@@ -1169,7 +1241,13 @@
             "dex": 14,
             "luk": 6,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 64
+                }
+            ]
         },
         {
             "id": "mob.blighted-shellby",
@@ -1225,7 +1303,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 3
+                    "count": 161
                 }
             ]
         },
@@ -1253,7 +1331,13 @@
             "dex": 6,
             "luk": 6,
             "hardDef": 1.2000000476837159,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 142
+                }
+            ]
         },
         {
             "id": "mob.blighted-webber",
@@ -1305,7 +1389,13 @@
             "dex": 11,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 124
+                }
+            ]
         },
         {
             "id": "mob.webber",
@@ -1331,7 +1421,13 @@
             "dex": 11,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 163
+                }
+            ]
         },
         {
             "id": "mob.blighted-newtie",
@@ -1387,7 +1483,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 8
+                    "count": 62
                 }
             ]
         },
@@ -1415,7 +1511,13 @@
             "dex": 7,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 116
+                }
+            ]
         },
         {
             "id": "mob.blighted-pando",
@@ -1467,7 +1569,13 @@
             "dex": 12,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 619
+                }
+            ]
         },
         {
             "id": "mob.tainted-pando",
@@ -1493,7 +1601,13 @@
             "dex": 12,
             "luk": 7,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 510
+                }
+            ]
         },
         {
             "id": "mob.blighted-mudpup",
@@ -1549,7 +1663,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 8
+                    "count": 215
                 }
             ]
         },
@@ -1577,7 +1691,13 @@
             "dex": 24,
             "luk": 8,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 136
+                }
+            ]
         },
         {
             "id": "mob.blighted-burrowbo",
@@ -1633,7 +1753,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 3
+                    "count": 392
                 }
             ]
         },
@@ -1661,7 +1781,13 @@
             "dex": 8,
             "luk": 8,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 480
+                }
+            ]
         },
         {
             "id": "mob.blighted-pilfer",
@@ -1717,7 +1843,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 17
+                    "count": 609
                 }
             ]
         },
@@ -1745,7 +1871,13 @@
             "dex": 20,
             "luk": 15,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 435
+                }
+            ]
         },
         {
             "id": "mob.blighted-grumbear",
@@ -1797,7 +1929,13 @@
             "dex": 10,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 466
+                }
+            ]
         },
         {
             "id": "mob.tainted-grumbear",
@@ -1823,7 +1961,13 @@
             "dex": 10,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 437
+                }
+            ]
         },
         {
             "id": "mob.blighted-mossgore",
@@ -1849,7 +1993,13 @@
             "dex": 18,
             "luk": 11,
             "hardDef": 2.700000047683716,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-wyrmlet",
@@ -1875,7 +2025,13 @@
             "dex": 18,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.mossgore",
@@ -1905,7 +2061,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 3
+                    "count": 62
                 }
             ]
         },
@@ -1937,7 +2093,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 173
                 }
             ]
         },
@@ -1965,7 +2121,13 @@
             "dex": 18,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 352
+                }
+            ]
         },
         {
             "id": "mob.wyrmlet",
@@ -1995,7 +2157,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 2
+                    "count": 302
                 }
             ]
         },
@@ -2023,7 +2185,13 @@
             "dex": 30,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.digger",
@@ -2049,7 +2217,13 @@
             "dex": 30,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 98
+                }
+            ]
         },
         {
             "id": "mob.tainted-digger",
@@ -2075,7 +2249,13 @@
             "dex": 30,
             "luk": 11,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 222
+                }
+            ]
         },
         {
             "id": "mob.blighted-scaly",
@@ -2101,7 +2281,13 @@
             "dex": 12,
             "luk": 19,
             "hardDef": 2.700000047683716,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.scaly",
@@ -2127,7 +2313,13 @@
             "dex": 12,
             "luk": 19,
             "hardDef": 2.700000047683716,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 173
+                }
+            ]
         },
         {
             "id": "mob.tainted-scaly",
@@ -2153,7 +2345,13 @@
             "dex": 12,
             "luk": 19,
             "hardDef": 2.700000047683716,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 69
+                }
+            ]
         },
         {
             "id": "mob.blighted-canewick",
@@ -2179,7 +2377,13 @@
             "dex": 37,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 71
+                }
+            ]
         },
         {
             "id": "mob.canewick",
@@ -2205,7 +2409,13 @@
             "dex": 37,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 472
+                }
+            ]
         },
         {
             "id": "mob.tainted-canewick",
@@ -2231,7 +2441,13 @@
             "dex": 37,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 482
+                }
+            ]
         },
         {
             "id": "mob.blighted-dewdrop",
@@ -2261,7 +2477,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 44
                 }
             ]
         },
@@ -2289,7 +2505,13 @@
             "dex": 21,
             "luk": 12,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 322
+                }
+            ]
         },
         {
             "id": "mob.tainted-dewdrop",
@@ -2319,7 +2541,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 304
                 }
             ]
         },
@@ -2347,7 +2569,13 @@
             "dex": 13,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.peeper",
@@ -2373,7 +2601,13 @@
             "dex": 13,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 124
+                }
+            ]
         },
         {
             "id": "mob.tainted-peeper",
@@ -2399,7 +2633,13 @@
             "dex": 13,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 7
+                }
+            ]
         },
         {
             "id": "mob.blighted-viper",
@@ -2425,7 +2665,13 @@
             "dex": 22,
             "luk": 13,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 86
+                }
+            ]
         },
         {
             "id": "mob.tainted-viper",
@@ -2451,7 +2697,13 @@
             "dex": 22,
             "luk": 13,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 404
+                }
+            ]
         },
         {
             "id": "mob.viper",
@@ -2477,7 +2729,13 @@
             "dex": 22,
             "luk": 13,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 310
+                }
+            ]
         },
         {
             "id": "mob.blighted-coily",
@@ -2503,7 +2761,13 @@
             "dex": 22,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 70
+                }
+            ]
         },
         {
             "id": "mob.coily",
@@ -2529,7 +2793,13 @@
             "dex": 22,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 268
+                }
+            ]
         },
         {
             "id": "mob.tainted-coily",
@@ -2555,7 +2825,13 @@
             "dex": 22,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 358
+                }
+            ]
         },
         {
             "id": "mob.blighted-emberhoot",
@@ -2581,7 +2857,13 @@
             "dex": 23,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 52
+                }
+            ]
         },
         {
             "id": "mob.emberhoot",
@@ -2607,7 +2889,13 @@
             "dex": 23,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 354
+                }
+            ]
         },
         {
             "id": "mob.tainted-emberhoot",
@@ -2633,7 +2921,13 @@
             "dex": 23,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 252
+                }
+            ]
         },
         {
             "id": "mob.blighted-emberwyrm",
@@ -2685,7 +2979,13 @@
             "dex": 24,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 216
+                }
+            ]
         },
         {
             "id": "mob.tainted-emberwyrm",
@@ -2711,7 +3011,13 @@
             "dex": 24,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 81
+                }
+            ]
         },
         {
             "id": "mob.blighted-chomper",
@@ -2737,7 +3043,13 @@
             "dex": 15,
             "luk": 32,
             "hardDef": 4.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 42
+                }
+            ]
         },
         {
             "id": "mob.chomper",
@@ -2763,7 +3075,13 @@
             "dex": 15,
             "luk": 32,
             "hardDef": 4.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 419
+                }
+            ]
         },
         {
             "id": "mob.tainted-chomper",
@@ -2789,7 +3107,13 @@
             "dex": 15,
             "luk": 32,
             "hardDef": 4.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 268
+                }
+            ]
         },
         {
             "id": "mob.blighted-sunscale",
@@ -2841,7 +3165,13 @@
             "dex": 4,
             "luk": 4,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.sunscale",
@@ -2867,7 +3197,13 @@
             "dex": 16,
             "luk": 26,
             "hardDef": 4.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 325
+                }
+            ]
         },
         {
             "id": "mob.tainted-sunscale",
@@ -2893,7 +3229,13 @@
             "dex": 16,
             "luk": 26,
             "hardDef": 4.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 235
+                }
+            ]
         },
         {
             "id": "mob.oculord",
@@ -2919,7 +3261,13 @@
             "dex": 18,
             "luk": 5,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.autumn-stalk",
@@ -2945,7 +3293,13 @@
             "dex": 5,
             "luk": 10,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-willo",
@@ -2971,7 +3325,13 @@
             "dex": 28,
             "luk": 17,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.tainted-willo",
@@ -2997,7 +3357,13 @@
             "dex": 28,
             "luk": 17,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 232
+                }
+            ]
         },
         {
             "id": "mob.willo",
@@ -3023,7 +3389,13 @@
             "dex": 28,
             "luk": 17,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 144
+                }
+            ]
         },
         {
             "id": "mob.bandit-boss",
@@ -3053,7 +3425,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 2
                 }
             ]
         },
@@ -3081,7 +3453,13 @@
             "dex": 13,
             "luk": 8,
             "hardDef": 5.400000095367432,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.adder",
@@ -3107,7 +3485,13 @@
             "dex": 18,
             "luk": 30,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 107
+                }
+            ]
         },
         {
             "id": "mob.blighted-adder",
@@ -3133,7 +3517,13 @@
             "dex": 18,
             "luk": 30,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.tainted-adder",
@@ -3159,7 +3549,13 @@
             "dex": 18,
             "luk": 30,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 155
+                }
+            ]
         },
         {
             "id": "mob.blighted-bloodshot",
@@ -3185,7 +3581,13 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.bloodshot",
@@ -3211,7 +3613,13 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 255
+                }
+            ]
         },
         {
             "id": "mob.mossmaw",
@@ -3237,7 +3645,13 @@
             "dex": 24,
             "luk": 19,
             "hardDef": 8.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.tainted-bloodshot",
@@ -3263,7 +3677,13 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 123
+                }
+            ]
         },
         {
             "id": "mob.blighted-hornscale",
@@ -3289,7 +3709,13 @@
             "dex": 31,
             "luk": 19,
             "hardDef": 7.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 45
+                }
+            ]
         },
         {
             "id": "mob.golden-bandit",
@@ -3315,7 +3741,13 @@
             "dex": 14,
             "luk": 14,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.hornscale",
@@ -3341,7 +3773,13 @@
             "dex": 31,
             "luk": 19,
             "hardDef": 7.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 111
+                }
+            ]
         },
         {
             "id": "mob.tainted-hornscale",
@@ -3367,7 +3805,13 @@
             "dex": 31,
             "luk": 19,
             "hardDef": 7.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 97
+                }
+            ]
         },
         {
             "id": "mob.blighted-rivershell",
@@ -3397,7 +3841,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 5
+                    "count": 31
                 }
             ]
         },
@@ -3425,7 +3869,13 @@
             "dex": 31,
             "luk": 20,
             "hardDef": 7.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 133
+                }
+            ]
         },
         {
             "id": "mob.tainted-rivershell",
@@ -3455,7 +3905,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 5
+                    "count": 226
                 }
             ]
         },
@@ -3483,7 +3933,13 @@
             "dex": 15,
             "luk": 15,
             "hardDef": 8.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-snapper",
@@ -3513,7 +3969,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 24
                 }
             ]
         },
@@ -3541,7 +3997,13 @@
             "dex": 30,
             "luk": 19,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.snapper",
@@ -3567,7 +4029,13 @@
             "dex": 20,
             "luk": 42,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 168
+                }
+            ]
         },
         {
             "id": "mob.tainted-snapper",
@@ -3597,7 +4065,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 2
+                    "count": 114
                 }
             ]
         },
@@ -3629,7 +4097,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 5
+                    "count": 24
                 }
             ]
         },
@@ -3657,7 +4125,13 @@
             "dex": 21,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 114
+                }
+            ]
         },
         {
             "id": "mob.tainted-octi",
@@ -3687,7 +4161,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 5
+                    "count": 43
                 }
             ]
         },
@@ -3715,7 +4189,13 @@
             "dex": 52,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 35
+                }
+            ]
         },
         {
             "id": "mob.great-croak",
@@ -3745,7 +4225,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 2
                 }
             ]
         },
@@ -3773,7 +4253,13 @@
             "dex": 52,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 35
+                }
+            ]
         },
         {
             "id": "mob.tainted-iris",
@@ -3799,7 +4285,13 @@
             "dex": 52,
             "luk": 21,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 89
+                }
+            ]
         },
         {
             "id": "mob.blighted-gnasher",
@@ -3829,7 +4321,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 5
+                    "count": 2
                 }
             ]
         },
@@ -3857,7 +4349,13 @@
             "dex": 60,
             "luk": 21,
             "hardDef": 7.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 7
+                }
+            ]
         },
         {
             "id": "mob.tainted-gnasher",
@@ -3887,7 +4385,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 5
+                    "count": 63
                 }
             ]
         },
@@ -3915,7 +4413,13 @@
             "dex": 41,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-cinder",
@@ -3941,7 +4445,13 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 1
+                }
+            ]
         },
         {
             "id": "mob.cinder",
@@ -3967,7 +4477,13 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 278
+                }
+            ]
         },
         {
             "id": "mob.oni-tengu",
@@ -3993,7 +4509,13 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.tainted-cinder",
@@ -4019,7 +4541,13 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 186
+                }
+            ]
         },
         {
             "id": "mob.bittersweet",
@@ -4045,7 +4573,13 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 156
+                }
+            ]
         },
         {
             "id": "mob.blighted-bittersweet",
@@ -4071,7 +4605,13 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.tainted-bittersweet",
@@ -4097,7 +4637,13 @@
             "dex": 35,
             "luk": 22,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 155
+                }
+            ]
         },
         {
             "id": "mob.venom-gloop",
@@ -4123,7 +4669,13 @@
             "dex": 50,
             "luk": 33,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-cyclo",
@@ -4175,7 +4727,13 @@
             "dex": 46,
             "luk": 23,
             "hardDef": 7.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 370
+                }
+            ]
         },
         {
             "id": "mob.tainted-cyclo",
@@ -4201,7 +4759,13 @@
             "dex": 46,
             "luk": 23,
             "hardDef": 7.800000190734863,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 178
+                }
+            ]
         },
         {
             "id": "mob.abyss-maw",
@@ -4227,7 +4791,13 @@
             "dex": 52,
             "luk": 34,
             "hardDef": 8.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-emberlurk",
@@ -4279,7 +4849,13 @@
             "dex": 37,
             "luk": 23,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 203
+                }
+            ]
         },
         {
             "id": "mob.tainted-emberlurk",
@@ -4305,7 +4881,13 @@
             "dex": 37,
             "luk": 23,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 55
+                }
+            ]
         },
         {
             "id": "mob.blighted-moldy",
@@ -4331,7 +4913,13 @@
             "dex": 48,
             "luk": 24,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 14
+                }
+            ]
         },
         {
             "id": "mob.moldy",
@@ -4357,7 +4945,13 @@
             "dex": 48,
             "luk": 24,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 79
+                }
+            ]
         },
         {
             "id": "mob.tainted-moldy",
@@ -4383,7 +4977,13 @@
             "dex": 48,
             "luk": 24,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 117
+                }
+            ]
         },
         {
             "id": "mob.blighted-horngore",
@@ -4435,7 +5035,13 @@
             "dex": 67,
             "luk": 24,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 179
+                }
+            ]
         },
         {
             "id": "mob.tainted-horngore",
@@ -4461,7 +5067,13 @@
             "dex": 67,
             "luk": 24,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 26
+                }
+            ]
         },
         {
             "id": "mob.blighted-drizzle",
@@ -4513,7 +5125,13 @@
             "dex": 24,
             "luk": 50,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 86
+                }
+            ]
         },
         {
             "id": "mob.tainted-drizzle",
@@ -4539,7 +5157,13 @@
             "dex": 24,
             "luk": 50,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 26
+                }
+            ]
         },
         {
             "id": "mob.blazeskull",
@@ -4565,7 +5189,13 @@
             "dex": 40,
             "luk": 25,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 27
+                }
+            ]
         },
         {
             "id": "mob.blighted-blazeskull",
@@ -4617,7 +5247,13 @@
             "dex": 40,
             "luk": 25,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 94
+                }
+            ]
         },
         {
             "id": "mob.blighted-inky",
@@ -4647,7 +5283,7 @@
                 {
                     "map": "world",
                     "name": "world",
-                    "count": 1
+                    "count": 19
                 }
             ]
         },
@@ -4675,7 +5311,13 @@
             "dex": 25,
             "luk": 40,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 77
+                }
+            ]
         },
         {
             "id": "mob.tainted-inky",
@@ -4701,7 +5343,13 @@
             "dex": 25,
             "luk": 40,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 57
+                }
+            ]
         },
         {
             "id": "mob.blighted-sucker",
@@ -4753,7 +5401,13 @@
             "dex": 41,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 68
+                }
+            ]
         },
         {
             "id": "mob.tainted-sucker",
@@ -4779,7 +5433,13 @@
             "dex": 41,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 66
+                }
+            ]
         },
         {
             "id": "mob.blighted-squirt",
@@ -4831,7 +5491,13 @@
             "dex": 63,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 198
+                }
+            ]
         },
         {
             "id": "mob.tainted-squirt",
@@ -4857,7 +5523,13 @@
             "dex": 63,
             "luk": 26,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 70
+                }
+            ]
         },
         {
             "id": "mob.blighted-swampfang",
@@ -4883,7 +5555,13 @@
             "dex": 42,
             "luk": 26,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 12
+                }
+            ]
         },
         {
             "id": "mob.blood-ronin",
@@ -4987,7 +5665,13 @@
             "dex": 42,
             "luk": 26,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 37
+                }
+            ]
         },
         {
             "id": "mob.tainted-swampfang",
@@ -5013,7 +5697,13 @@
             "dex": 42,
             "luk": 26,
             "hardDef": 11.399999618530274,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 38
+                }
+            ]
         },
         {
             "id": "mob.wraithmother",
@@ -5065,7 +5755,13 @@
             "dex": 44,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.tainted-wisp",
@@ -5091,7 +5787,13 @@
             "dex": 44,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 34
+                }
+            ]
         },
         {
             "id": "mob.wisp",
@@ -5117,7 +5819,13 @@
             "dex": 44,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 26
+                }
+            ]
         },
         {
             "id": "mob.blighted-skywing",
@@ -5143,7 +5851,13 @@
             "dex": 58,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.skywing",
@@ -5169,7 +5883,13 @@
             "dex": 58,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 25
+                }
+            ]
         },
         {
             "id": "mob.tainted-skywing",
@@ -5195,7 +5915,13 @@
             "dex": 58,
             "luk": 29,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 40
+                }
+            ]
         },
         {
             "id": "mob.blighted-glowcoil",
@@ -5221,7 +5947,13 @@
             "dex": 30,
             "luk": 46,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 18
+                }
+            ]
         },
         {
             "id": "mob.glowcoil",
@@ -5247,7 +5979,13 @@
             "dex": 30,
             "luk": 46,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 171
+                }
+            ]
         },
         {
             "id": "mob.tainted-glowcoil",
@@ -5273,7 +6011,13 @@
             "dex": 30,
             "luk": 46,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 127
+                }
+            ]
         },
         {
             "id": "mob.blighted-grubble",
@@ -5299,7 +6043,13 @@
             "dex": 47,
             "luk": 30,
             "hardDef": 15.600000381469727,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 21
+                }
+            ]
         },
         {
             "id": "mob.grubble",
@@ -5325,7 +6075,13 @@
             "dex": 47,
             "luk": 30,
             "hardDef": 15.600000381469727,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 203
+                }
+            ]
         },
         {
             "id": "mob.tainted-grubble",
@@ -5351,7 +6107,13 @@
             "dex": 47,
             "luk": 30,
             "hardDef": 15.600000381469727,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 128
+                }
+            ]
         },
         {
             "id": "mob.blighted-frostskull",
@@ -5377,7 +6139,13 @@
             "dex": 83,
             "luk": 31,
             "hardDef": 15.600000381469727,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 112
+                }
+            ]
         },
         {
             "id": "mob.frostskull",
@@ -5403,7 +6171,13 @@
             "dex": 83,
             "luk": 31,
             "hardDef": 15.600000381469727,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 25
+                }
+            ]
         },
         {
             "id": "mob.tainted-frostskull",
@@ -5429,7 +6203,13 @@
             "dex": 83,
             "luk": 31,
             "hardDef": 15.600000381469727,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 34
+                }
+            ]
         },
         {
             "id": "mob.blighted-nightsqueak",
@@ -5455,7 +6235,13 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 18
+                }
+            ]
         },
         {
             "id": "mob.nightsqueak",
@@ -5481,7 +6267,13 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 161
+                }
+            ]
         },
         {
             "id": "mob.tainted-nightsqueak",
@@ -5507,7 +6299,13 @@
             "dex": 62,
             "luk": 49,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 166
+                }
+            ]
         },
         {
             "id": "mob.blighted-frostcap",
@@ -5533,7 +6331,13 @@
             "dex": 32,
             "luk": 31,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 114
+                }
+            ]
         },
         {
             "id": "mob.frostcap",
@@ -5559,7 +6363,13 @@
             "dex": 32,
             "luk": 31,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 25
+                }
+            ]
         },
         {
             "id": "mob.tainted-frostcap",
@@ -5585,7 +6395,13 @@
             "dex": 32,
             "luk": 31,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 7
+                }
+            ]
         },
         {
             "id": "mob.blighted-goopie",
@@ -5611,7 +6427,13 @@
             "dex": 32,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 1
+                }
+            ]
         },
         {
             "id": "mob.goopie",
@@ -5637,7 +6459,13 @@
             "dex": 32,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 160
+                }
+            ]
         },
         {
             "id": "mob.tainted-goopie",
@@ -5663,7 +6491,13 @@
             "dex": 32,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 47
+                }
+            ]
         },
         {
             "id": "mob.blighted-frostwick",
@@ -5689,7 +6523,13 @@
             "dex": 50,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 112
+                }
+            ]
         },
         {
             "id": "mob.frostwick",
@@ -5715,7 +6555,13 @@
             "dex": 50,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 25
+                }
+            ]
         },
         {
             "id": "mob.tainted-frostwick",
@@ -5741,7 +6587,13 @@
             "dex": 50,
             "luk": 32,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 2
+                }
+            ]
         },
         {
             "id": "mob.blighted-lovebite",
@@ -5767,7 +6619,13 @@
             "dex": 33,
             "luk": 51,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 1
+                }
+            ]
         },
         {
             "id": "mob.lovebite",
@@ -5793,7 +6651,13 @@
             "dex": 33,
             "luk": 51,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 89
+                }
+            ]
         },
         {
             "id": "mob.tainted-lovebite",
@@ -5819,7 +6683,13 @@
             "dex": 33,
             "luk": 51,
             "hardDef": 0.0,
-            "homes": []
+            "homes": [
+                {
+                    "map": "world",
+                    "name": "world",
+                    "count": 48
+                }
+            ]
         },
         {
             "id": "mob.shadow.riven",

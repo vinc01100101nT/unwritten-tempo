@@ -112,6 +112,30 @@ public class PersistentPlayer3D : MonoBehaviour
                              + Coords.Text(transform.position, "0.00"));   // perf-ok: once per map arrival
     }
 
+    // How far an arrival may be stepped out of something solid — under the server's 1.5 m reach for an arrival report.
+    const float ArrivalNudge = 1.25f;
+    static readonly Collider[] blockScratch = new Collider[16];
+
+    // Something solid in this map — not the ground, not a trigger, not this body — inside the body's capsule at `at`.
+    bool Blocked(Vector3 at, CharacterController cc, UnityEngine.SceneManagement.Scene arrivedIn)
+    {
+        float s = transform.lossyScale.y, radius = cc.radius * s;
+        Vector3 c = at + cc.center * s;
+        float half = Mathf.Max(0f, cc.height * 0.5f * s - radius);
+        // The bottom sphere is lifted off the ground by a hair, so the ground under the feet is never counted.
+        var bottom = c - Vector3.up * (half - 0.02f);
+        var top = c + Vector3.up * half;
+        int n = Physics.OverlapCapsuleNonAlloc(bottom, top, radius, blockScratch, ~(groundMask.value), QueryTriggerInteraction.Ignore);   // perf-ok: once per map arrival / respawn
+        for (int i = 0; i < n; i++)
+        {
+            var col = blockScratch[i];
+            if (col.transform.IsChildOf(transform)) continue;
+            if (arrivedIn.IsValid() && col.gameObject.scene != arrivedIn) continue;
+            return true;
+        }
+        return false;
+    }
+
     void MoveTo(Vector3 pos)
     {
         var cc = GetComponent<CharacterController>();
@@ -122,18 +146,36 @@ public class PersistentPlayer3D : MonoBehaviour
         // unload is asynchronous) and sits on the same coordinates, so a single nearest-hit raycast could seat
         // the feet on ground that is about to vanish — and leave them sunk into this map's.
         var arrivedIn = MapManager.CurrentScene;
-        var hits = Physics.RaycastAll(new Vector3(pos.x, pos.y + 50f, pos.z), Vector3.down, 200f,
-                                      groundMask.value != 0 ? groundMask : ~0, QueryTriggerInteraction.Ignore);   // perf-ok: once per map arrival / respawn
-        float groundY = float.NaN;
-        for (int i = 0; i < hits.Length; i++)
+        float capsuleBottom = cc != null ? (cc.center.y - cc.height * 0.5f) * transform.lossyScale.y : 0f;
+        Vector3 Grounded(Vector3 p)
         {
-            if (arrivedIn.IsValid() && hits[i].collider.gameObject.scene != arrivedIn) continue;
-            if (float.IsNaN(groundY) || hits[i].point.y > groundY) groundY = hits[i].point.y;
+            var hits = Physics.RaycastAll(new Vector3(p.x, p.y + 50f, p.z), Vector3.down, 200f,
+                                          groundMask.value != 0 ? groundMask : ~0, QueryTriggerInteraction.Ignore);   // perf-ok: once per map arrival / respawn
+            float groundY = float.NaN;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                if (arrivedIn.IsValid() && hits[i].collider.gameObject.scene != arrivedIn) continue;
+                if (float.IsNaN(groundY) || hits[i].point.y > groundY) groundY = hits[i].point.y;
+            }
+            if (!float.IsNaN(groundY)) p.y = groundY - capsuleBottom;
+            return p;
         }
-        if (!float.IsNaN(groundY))
+        Vector3 want = pos;
+        pos = Grounded(want);
+
+        // NEVER PUT DOWN INSIDE SOMETHING SOLID. An arrival spot is a point on the ground, and a rock, a tree or a wall can
+        // stand on it (measured 2026-10-29: Gemmara's middle is 0.39 from a rock a metre wide). Stepped out in rings of a
+        // quarter metre, up to ArrivalNudge — inside the server's own reach for an arrival, so the server still takes it.
+        if (cc != null && Blocked(pos, cc, arrivedIn))
         {
-            float capsuleBottom = cc != null ? (cc.center.y - cc.height * 0.5f) * transform.lossyScale.y : 0f;
-            pos.y = groundY - capsuleBottom;
+            bool found = false;
+            for (float r = 0.25f; r <= ArrivalNudge && !found; r += 0.25f)
+                for (int k = 0; k < 8 && !found; k++)
+                {
+                    float a = k * Mathf.PI / 4f;
+                    var tryAt = Grounded(want + new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r));
+                    if (!Blocked(tryAt, cc, arrivedIn)) { pos = tryAt; found = true; }
+                }
         }
 
         // CharacterController fights direct transform writes — disable it for the teleport frame. try/finally so

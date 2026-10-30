@@ -13,17 +13,18 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// BUILDS THE WORLD, square by square, from the world layout (<c>data/world-layout.json</c>, written only by
-/// <c>tools/world-layout/build_world_layout.py</c>): its ground, cliffs, roads, rivers, bridges, ponds, themes, props
+/// <c>tools/world-layout/build_world_layout.py</c>): its ground, cliffs, roads, rivers, bridges, ponds, caves, themes, props
 /// and carpets — every square of ground a prefab of its own, loaded around whoever is near (<see cref="SeamlessWorld"/>).
 ///
 /// <para><b>One ground.</b> Every height, every colour and every normal comes from one set of functions of the world
 /// position (<see cref="Terrain"/>), read from the layout, so two neighbouring squares work out the very same points along
 /// the edge they share and meet without a seam, and a square built later never changes one built before. A level change
 /// of the layout is a sheer rock wall in that one ground (RULE ONEGROUND); a road climbs it on the ramp the layout cut.
-/// The bridge's walkable deck is the bridge model's own top surface, sampled into the ground mesh; Lastline's own
-/// hand-made ground is kept exactly, and the world ground meets its rim at the same points.</para>
+/// A bridge is the bridge model's own triangles laid into the ground mesh, drawn with its own look; each town's own
+/// ground (Lastline's hand-made, the others from their pieces) is kept exactly, and the world ground meets its rim at the
+/// same points.</para>
 ///
-/// <para><b>Run through the live editor</b> — <c>SeamlessWorldBuilder.BuildCore()</c>. It opens no scene: Lastline is
+/// <para><b>Run through the live editor</b> — <c>SeamlessWorldBuilder.BuildCore()</c>. It opens no scene: each town is
 /// read from a hidden copy, the squares are assembled in a hidden scene, and the world scene file is written directly,
 /// so nothing the user has open changes. It writes only its own output — the world scene, the prefabs, meshes and
 /// materials under <see cref="OutDir"/>, the scene's line in the build list and its entries in the Addressables group
@@ -33,9 +34,10 @@ public static class SeamlessWorldBuilder
 {
     public const string MapId = "world";
     const string ScenePath = "Assets/Scenes/" + MapId + ".unity";
-    // Lastline as the world builds it: its ground, props, walls, a marker in each gate and its arrival spot. Authored,
-    // since the old Lastline map it was taken from is gone (2026-10-27).
-    const string LastlineSourcePath = "Assets/1_Authored/Prefabs/Towns/Lastline.prefab";
+    // THE TOWNS AS THE WORLD BUILDS THEM: every town of the layout that has a town piece here — its ground, props, walls, a
+    // marker in each gate and its arrival spot — named as the layout names it. Lastline was hand-made (its old map is gone,
+    // 2026-10-27); the others are started from their plans by TownPieceBuilder. A town with no piece is not built.
+    const string TownsDir = "Assets/1_Authored/Prefabs/Towns";
     const string OutDir = "Assets/2_Generated/World";
     const string GroupName = "World";
     const string FieldRecipePath = "Assets/3_Data/Recipes/FieldRecipe.asset";
@@ -50,12 +52,43 @@ public static class SeamlessWorldBuilder
     // THE SQUARES BUILT, by the layout's own grid: square (I, J) holds layout x I*32..(I+1)*32 and layout y J*32..(J+1)*32.
     // Ids come from the layout, never from what is built, so a square keeps its id and its content as the world grows.
     // Lastline's 7 x 7 (decided 2026-10-27): Lastline sits on the corner of squares 19/20, so the block runs 17..23.
-    static readonly (int i0, int i1, int j0, int j1)[] Blocks = { (17, 23, 17, 23) };
+    // Parley's 7 x 5 north of it (2026-10-28): Parley and the whole road to it from Lastline's north gate.
+    // The 7 x 7 north of Parley (2026-10-29): the hardest ground first — Gemmara's mountains, the gorge round the Mountain's
+    // Root rock with its cave and the Last Bridge, the river and the Parley–Tornel bridge; the gorge's north rim (row 4) and
+    // the cutting that climbs out of it to the south-west (14..15 x 6..7), so a fall into it never ends at the world's edge.
+    // And the 3 x 2 holding Lastline's pond, and the column (24) between Lastline's 7 x 7 and Old Oak's, so the two are one land.
+    // Velmora's 7 x 7 (2026-10-30): the middle river joining the east one, the Old Oak–Velmora and Old Oak–Pluvenne
+    // bridges, and the sea in its north-west corner. Hilt's 7 x 7: the coast, the sea cave and Hilt's dungeon door. And the
+    // Tide Temple's islet east of it (39..41 x 23..26), where the low-tide path from Hilt's shore ends.
+    static readonly (int i0, int i1, int j0, int j1)[] Blocks =
+        { (17, 23, 17, 23), (17, 23, 12, 16), (16, 22, 5, 11), (16, 19, 4, 4), (14, 15, 6, 7), (19, 21, 24, 25), (24, 24, 14, 20),
+          (28, 34, 7, 13), (32, 38, 20, 26), (39, 41, 23, 26) };
+    // Every other town with a plan (data/towns/<id>.json, started in the town editor) gets the same 7 x 7 as Lastline,
+    // around the square its middle falls in, unless its own ground is already in the squares above.
+    const int TownBlockReach = 3;
+    static string TownPlanPath(string id) => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "data", "towns", id + ".json"));
 
     // The built squares' box, in this scene's coordinates — set from Blocks when a build starts.
     static Vector2 WorldMin, WorldMax;
-    // Lastline's own ground, measured from its saved mesh: 49 x 62 m around the middle.
-    static readonly Rect Town = Rect.MinMaxRect(-24.5f, -31f, 24.5f, 31f);
+    // A town's own ground, around its middle: Lastline's, measured from its saved mesh (49 x 62 m), the room the layout
+    // gives every town.
+    static readonly Rect TownLocal = Rect.MinMaxRect(-24.5f, -31f, 24.5f, 31f);
+
+    /// <summary>One town set into the world: where its piece stands in this scene, its gates, and the heights of its
+    /// ground's rim, which the world ground meets.</summary>
+    sealed class TownSite
+    {
+        public string id, name, sourcePath;
+        public Vector2 centre;
+        public float groundY;
+        public Rect rect;
+        public float[] rimW, rimE, rimS, rimN;
+        public readonly List<(Vector2 at, Vector2 outward)> gates = new List<(Vector2, Vector2)>();
+        public GameObject ground, props, wall;
+        // Anything else the town holds — its bridges, its water — kept as it is.
+        public readonly List<GameObject> others = new List<GameObject>();
+        public Vector3 arrival;
+    }
 
     // ---- the layout ------------------------------------------------------------------------------------------------
 
@@ -65,6 +98,7 @@ public static class SeamlessWorldBuilder
         public string[] themes; public int[] theme_cells;
         public LTown[] towns; public LRiver[] rivers; public LRoad[] roads; public LBridge[] bridges;
         public LPond[] ponds; public LPlace[] landmarks; public LDoor[] dungeon_doors;
+        public LCave[] caves; public LGorge[] gorges; public LTidePath[] low_tide_paths;
     }
     [System.Serializable] sealed class LTown { public string id, name, weapon; public float x, y, height; }
     [System.Serializable] sealed class LRiver { public float[] spring, xy, bed; }
@@ -73,6 +107,11 @@ public static class SeamlessWorldBuilder
     [System.Serializable] sealed class LPond { public string id, near; public float x, y, radius, water; }
     [System.Serializable] sealed class LPlace { public string id, name; public float x, y; }
     [System.Serializable] sealed class LDoor { public string town; public float x, y; }
+    // A cave's mouth, the way into it (layout x, y), the ground at its mouth, and its rock and hall (along the way in, across).
+    [System.Serializable] sealed class LCave { public string id, near; public float x, y, ground; public float[] into, rock_size, hall_size; }
+    [System.Serializable] sealed class LGorge { public string id, cave; public float x, y; public LSpan bridge; }
+    [System.Serializable] sealed class LSpan { public float[] from, to; }
+    [System.Serializable] sealed class LTidePath { public string from, to; public float[] start, end; }
 
     // A line of the layout (a road, a river) with a number along it, filed by 16-unit squares so a point only measures
     // the pieces near it: thousands of points per square, thousands of pieces in the world.
@@ -83,6 +122,7 @@ public static class SeamlessWorldBuilder
         readonly Dictionary<(int, int), List<int>> bins = new Dictionary<(int, int), List<int>>();
         public readonly float reach;
         public Lines(float reach) { this.reach = reach; }
+        public IEnumerable<(Vector2 a, Vector2 b, float va, float vb)> Segments => segs;
 
         public void Add(Vector2[] pts, float[] values)
         {
@@ -139,6 +179,22 @@ public static class SeamlessWorldBuilder
         const float RoadGrade = 0.25f;
         // How far beyond each end of a bridge the road's ground eases up to its deck.
         const float BridgeApproach = 6f;
+        // How wide the beach is from the land down to the water's edge.
+        const float SeaBank = 3f;
+
+        // THE SEA: every layout cell no town's land holds (theme -1), its surface at the layout's height 0. seaDist holds
+        // each cell's distance in metres from the coast, out to sea positive, read from the whole layout so a square's
+        // shore comes out the same whichever squares are built.
+        public readonly float seaLevel;
+        readonly float[] seaDist;
+        // SAND GROUND on the land of every town whose kept biome is sand (SandBiomes): each cell's distance in metres from
+        // the edge of that land, inside it negative, the sea counted with neither side so a beach stays sand to the water.
+        readonly float[] sandDist;
+        // THE LOW-TIDE PATHS (the layout's low_tide_paths): a strip this wide either side of its line, across the sea at
+        // wading depth, cut down each shore at this grade.
+        public const float TideHalf = 3f;
+        const float TideGrade = 0.3f;
+        public readonly List<(Vector2 a, Vector2 b)> tidePaths = new List<(Vector2, Vector2)>();
 
         public readonly LayoutFile L;
         readonly float ox, oy, baseHeight;
@@ -146,12 +202,16 @@ public static class SeamlessWorldBuilder
         public readonly Lines roads = new Lines(12f), rivers = new Lines(14f);
         public readonly List<(LPond p, Vector2 at, float level)> ponds = new List<(LPond, Vector2, float)>();
         public readonly List<(string name, Vector2 at)> keepClear = new List<(string, Vector2)>();
-        public readonly List<BridgeDeck> bridges = new List<BridgeDeck>();
-        public readonly List<(Vector2 from, Vector2 to, float height)> crossings = new List<(Vector2, Vector2, float)>();
+        public readonly List<BridgeDecks.Deck> bridges = new List<BridgeDecks.Deck>();
+        // Each bridge's ends, its deck's height, how far either side of its line the ground eases up to the deck, and the
+        // fitted bridge itself.
+        public readonly List<(Vector2 from, Vector2 to, float height, float half, BridgeDecks.Deck deck)> crossings
+            = new List<(Vector2, Vector2, float, float, BridgeDecks.Deck)>();
+        public readonly List<Cave> caves = new List<Cave>();
         public readonly List<string> townIds;
 
-        // Lastline's rim: the height of the top of its ground along each side, a quarter metre apart.
-        float[] rimW, rimE, rimS, rimN;
+        // The towns set into the world, each with its rim: the height of the top of its ground along each side.
+        public readonly List<TownSite> towns = new List<TownSite>();
 
         public Terrain(LayoutFile layout)
         {
@@ -160,14 +220,77 @@ public static class SeamlessWorldBuilder
             ox = lastline.x; oy = lastline.y; baseHeight = lastline.height;
             cw = L.cells[0]; ch = L.cells[1]; cell = L.cell;
             townIds = L.themes.ToList();
+            seaLevel = -baseHeight;
+            seaDist = CoastDistance(L.theme_cells, cw, ch, cell);
+            var sandThemes = townIds.Select(id => KeptBiomes.TryGetValue(id, out var b) && SandBiomes.Contains(b)).ToArray();
+            sandDist = SandDistance(L.theme_cells, sandThemes, cw, ch, cell);
+            if (L.low_tide_paths != null)
+                foreach (var p in L.low_tide_paths) tidePaths.Add((Scene(p.start[0], p.start[1]), Scene(p.end[0], p.end[1])));
             foreach (var r in L.roads) layoutRoads.Add((Points(r.xy), r.heights.Select(h => h - baseHeight).ToArray()));
             foreach (var r in L.rivers) rivers.Add(Points(r.xy), r.bed.Select(h => h - baseHeight).ToArray());
             foreach (var p in L.ponds) ponds.Add((p, Scene(p.x, p.y), p.water - baseHeight));
             foreach (var m in L.landmarks) keepClear.Add((m.name, Scene(m.x, m.y)));
             foreach (var d in L.dungeon_doors) keepClear.Add((d.town + " dungeon door", Scene(d.x, d.y)));
+            if (L.caves != null)
+                foreach (var c in L.caves)
+                {
+                    // The layout's y runs south, this scene's z north.
+                    var cave = new Cave { id = c.id, mouth = Scene(c.x, c.y), into = new Vector2(c.into[0], -c.into[1]).normalized,
+                                          floor = c.ground - baseHeight, rock = new Vector2(c.rock_size[0], c.rock_size[1]),
+                                          hall = new Vector2(c.hall_size[0], c.hall_size[1]) };
+                    caves.Add(cave);
+                    keepClear.Add((c.id + " cave mouth", cave.mouth - cave.into * 4f));
+                }
+        }
+
+        // A CAVE: a block of rock raised with sheer walls all round, a hall inside it at the ground of its mouth, and one way
+        // in — a passage through its front wall. Open to the sky, so the camera above sees whoever is inside.
+        public sealed class Cave { public string id; public Vector2 mouth, into, rock, hall; public float floor; }
+        public enum CavePart { None, Wall, Hall, Passage }
+        // How far the rock stands above the hall's floor, and half the passage's width.
+        public const float CaveRise = 8f, CaveMouthHalf = 4f;
+
+        /// <summary>Which part of a cave a point is in, and that cave. Never over ground lower than the cave's floor (the
+        /// gorge round the Mountain's Root rock): the rock only ever stands on its own ground.</summary>
+        public CavePart CaveAt(float x, float z, out Cave which)
+        {
+            which = null;
+            foreach (var c in caves)
+            {
+                var d = new Vector2(x, z) - c.mouth;
+                float along = Vector2.Dot(d, c.into), across = Vector2.Dot(d, new Vector2(-c.into.y, c.into.x));
+                var mid = new Vector2(along - c.rock.x * 0.5f, across);
+                // The rock's outline wanders inward a little, never outward, so it never leaves its own ground.
+                float wander = Mathf.PerlinNoise(x * 0.18f + 57f, z * 0.18f + 3f) * 2.5f;
+                if (RoundedBox(mid, c.rock * 0.5f, 6f) + wander >= 0f) continue;
+                if (LayoutGround(x, z) < c.floor - CliffStep) continue;
+                which = c;
+                if (RoundedBox(mid, c.hall * 0.5f, 4f) + wander * 0.6f < 0f) return CavePart.Hall;
+                if (along < (c.rock.x - c.hall.x) * 0.5f + 2f && Mathf.Abs(across) < CaveMouthHalf) return CavePart.Passage;
+                return CavePart.Wall;
+            }
+            return CavePart.None;
+        }
+
+        // How far a point is outside a box with rounded corners centred on zero (negative inside).
+        static float RoundedBox(Vector2 p, Vector2 half, float r)
+        {
+            var q = new Vector2(Mathf.Abs(p.x) - half.x + r, Mathf.Abs(p.y) - half.y + r);
+            return new Vector2(Mathf.Max(q.x, 0f), Mathf.Max(q.y, 0f)).magnitude + Mathf.Min(Mathf.Max(q.x, q.y), 0f) - r;
+        }
+
+        // The ground a cave makes of a point: its floor in the hall and the passage, its rock everywhere else in its block.
+        float CaveGround(float x, float z, float h)
+        {
+            var part = CaveAt(x, z, out var c);
+            if (part == CavePart.None) return h;
+            float floor = c.floor + Mounds(x, z);
+            if (part != CavePart.Wall) return floor;
+            return Mathf.Max(h, floor + CaveRise + (Mathf.PerlinNoise(x * 0.3f + 11f, z * 0.3f + 71f) - 0.5f) * 2f);
         }
 
         public Vector2 Scene(float lx, float ly) => new Vector2(lx - ox, oy - ly);
+        public float SceneHeight(float layoutHeight) => layoutHeight - baseHeight;
 
         // A road's heights along it, never steeper than RoadGrade: the layout's height at each point, eased so no stretch
         // climbs faster — a forward and a backward pass, each holding the next point within the grade of the last. Where
@@ -191,7 +314,24 @@ public static class SeamlessWorldBuilder
             return pts;
         }
 
-        public void SetRim(float[] w, float[] e, float[] s, float[] n) { rimW = w; rimE = e; rimS = s; rimN = n; }
+        // The town nearest a point and how far the point is from its ground (float.MaxValue when there is none).
+        public float NearestTown(float x, float z, out TownSite site)
+        {
+            site = null; float best = float.MaxValue;
+            foreach (var t in towns)
+            {
+                float d = DistToRect(t.rect, x, z);
+                if (d < best) { best = d; site = t; }
+            }
+            return best;
+        }
+
+        public bool InTown(Vector2 p, float margin = 0f)
+        {
+            foreach (var t in towns)
+                if (Rect.MinMaxRect(t.rect.xMin - margin, t.rect.yMin - margin, t.rect.xMax + margin, t.rect.yMax + margin).Contains(p)) return true;
+            return false;
+        }
 
         // The roads as the layout draws them, in this scene; laid by LayRoads once the hand-made town's gates are known.
         readonly List<(Vector2[] pts, float[] h)> layoutRoads = new List<(Vector2[], float[])>();
@@ -202,26 +342,28 @@ public static class SeamlessWorldBuilder
         // layout's road GateLead out. Roads that leave the town the same way share a gate.
         public const float GateStraight = 6f, GateLead = 16f;
 
-        public void LayRoads(Rect town, List<(Vector2 at, Vector2 outward)> gates)
+        public void LayRoads()
         {
             foreach (var (pts, h) in layoutRoads)
             {
                 var p = new List<Vector2>(pts); var hs = new List<float>(h);
-                if (gates.Count > 0)
-                {
-                    ThroughGate(town, gates, p, hs);
-                    p.Reverse(); hs.Reverse();
-                    ThroughGate(town, gates, p, hs);
-                    p.Reverse(); hs.Reverse();
-                }
+                ThroughGate(p, hs);
+                p.Reverse(); hs.Reverse();
+                ThroughGate(p, hs);
+                p.Reverse(); hs.Reverse();
                 var arr = p.ToArray();
                 roads.Add(arr, Graded(arr, hs.ToArray()));
             }
         }
 
-        void ThroughGate(Rect town, List<(Vector2 at, Vector2 outward)> gates, List<Vector2> p, List<float> h)
+        // When the road's first point is in a town set into the world (the layout starts every road in a town's middle),
+        // that end is led out through one of the town's gates. No town there, or one with no gates: the road is left as it is.
+        void ThroughGate(List<Vector2> p, List<float> h)
         {
-            if (DistToRect(town, p[0].x, p[0].y) > 0f) return;
+            TownSite site = null;
+            foreach (var t in towns) if (DistToRect(t.rect, p[0].x, p[0].y) <= 0f) site = t;
+            if (site == null || site.gates.Count == 0) return;
+            Rect town = site.rect; var gates = site.gates;
             int rejoin = p.FindIndex(q => DistToRect(town, q.x, q.y) >= GateLead);
             if (rejoin < 0) return;
             Vector2 toward = (p[rejoin] - town.center).normalized;
@@ -229,7 +371,7 @@ public static class SeamlessWorldBuilder
             Vector2 edge = new Vector2(Mathf.Clamp(gate.at.x, town.xMin, town.xMax), Mathf.Clamp(gate.at.y, town.yMin, town.yMax));
             if (gate.outward.x != 0f) edge.x = gate.outward.x > 0f ? town.xMax : town.xMin;
             else edge.y = gate.outward.y > 0f ? town.yMax : town.yMin;
-            float rimH = RimHeight(edge.x, edge.y), endH = h[rejoin];
+            float rimH = RimHeight(site, edge.x, edge.y), endH = h[rejoin];
             Vector2 straight = edge + gate.outward * GateStraight, end = p[rejoin];
             Vector2 bend = straight + gate.outward * (Vector2.Distance(straight, end) * 0.5f);
             var np = new List<Vector2> { gate.at, edge, straight };
@@ -245,21 +387,22 @@ public static class SeamlessWorldBuilder
             p.InsertRange(0, np); h.InsertRange(0, nh);
         }
 
-        // Every ground point's height worked out once, with one point of margin all round so a normal at the built box's
-        // edge has neighbours: i = 0..nx, j = 0..nz are the box's points, stored shifted by one.
-        float[] grid;
-        int gw, gh;
+        // Every ground point's height worked out once, the first time it is read, by tiles of one square: towns far apart
+        // put most of the built box under no square, and those points are never worked out. i, j count points from the
+        // box's corner, and may run one past it so a normal at its edge has neighbours.
+        readonly Dictionary<long, float[]> grid = new Dictionary<long, float[]>();
 
-        public void BuildGrid(int nx, int nz)
+        public void BuildGrid(int nx, int nz) => grid.Clear();
+
+        public float HeightAt(int i, int j)
         {
-            gw = nx + 3; gh = nz + 3;
-            grid = new float[gw * gh];
-            for (int j = 0; j < gh; j++)
-                for (int i = 0; i < gw; i++)
-                    grid[j * gw + i] = Height(WorldMin.x + (i - 1) * Step, WorldMin.y + (j - 1) * Step);
+            int ti = Mathf.FloorToInt(i / (float)ChunkCells), tj = Mathf.FloorToInt(j / (float)ChunkCells);
+            long key = ((long)ti << 32) ^ (uint)tj;
+            if (!grid.TryGetValue(key, out var tile)) { tile = new float[ChunkCells * ChunkCells]; for (int k = 0; k < tile.Length; k++) tile[k] = float.NaN; grid[key] = tile; }
+            int n = (j - tj * ChunkCells) * ChunkCells + (i - ti * ChunkCells);
+            if (float.IsNaN(tile[n])) tile[n] = Height(WorldMin.x + i * Step, WorldMin.y + j * Step);
+            return tile[n];
         }
-
-        public float HeightAt(int i, int j) => grid[(j + 1) * gw + (i + 1)];
 
         public Vector3 NormalAt(int i, int j)
         {
@@ -294,6 +437,120 @@ public static class SeamlessWorldBuilder
             float lx = x + ox, ly = oy - z;
             int ci = Mathf.Clamp(Mathf.FloorToInt(lx / cell), 0, cw - 1), cj = Mathf.Clamp(Mathf.FloorToInt(ly / cell), 0, ch - 1);
             return L.theme_cells[cj * cw + ci];
+        }
+
+        /// <summary>How far a point lies out to sea from the coast, in metres — negative on land — the coast wandering a
+        /// little. Blended between the cells' own distances, so the coast runs in smooth curves.</summary>
+        public float SeaInward(float x, float z)
+        {
+            float lx = x + ox, ly = oy - z;
+            float u = lx / cell - 0.5f, v = ly / cell - 0.5f;
+            int i0 = Mathf.FloorToInt(u), j0 = Mathf.FloorToInt(v);
+            float fu = u - i0, fv = v - j0;
+            float d = Mathf.Lerp(Mathf.Lerp(SeaCell(i0, j0), SeaCell(i0 + 1, j0), fu), Mathf.Lerp(SeaCell(i0, j0 + 1), SeaCell(i0 + 1, j0 + 1), fu), fv);
+            return d + (Mathf.PerlinNoise(x * 0.2f + 141f, z * 0.2f + 67f) - 0.5f) * 1.6f;
+        }
+
+        float SeaCell(int ci, int cj) => seaDist[Mathf.Clamp(cj, 0, ch - 1) * cw + Mathf.Clamp(ci, 0, cw - 1)];
+
+        // How far a point lies outside the sand land, in metres (inside negative), blended between cells, read where the
+        // border's wave moves it — the same wave the props' themes follow, so the sand ends where the sand land's props do.
+        float SandOutward(float x, float z)
+        {
+            Vector2 w = BorderShift(x, z);
+            float lx = x + w.x + ox, ly = oy - (z + w.y);
+            float u = lx / cell - 0.5f, v = ly / cell - 0.5f;
+            int i0 = Mathf.FloorToInt(u), j0 = Mathf.FloorToInt(v);
+            float fu = u - i0, fv = v - j0;
+            return Mathf.Lerp(Mathf.Lerp(SandCell(i0, j0), SandCell(i0 + 1, j0), fu), Mathf.Lerp(SandCell(i0, j0 + 1), SandCell(i0 + 1, j0 + 1), fu), fv);
+        }
+
+        float SandCell(int ci, int cj) => sandDist[Mathf.Clamp(cj, 0, ch - 1) * cw + Mathf.Clamp(ci, 0, cw - 1)];
+
+        // How far a point lies to the side of the nearest low-tide path's line, within its length, or infinity.
+        public float TideSide(float x, float z, out float along, out float length)
+        {
+            float best = float.PositiveInfinity; along = 0f; length = 0f;
+            var p = new Vector2(x, z);
+            foreach (var (a, b) in tidePaths)
+            {
+                float len = Vector2.Distance(a, b);
+                Vector2 dir = (b - a) / len;
+                float s = Vector2.Dot(p - a, dir);
+                if (s < 0f || s > len) continue;
+                float side = Mathf.Abs(Vector2.Dot(p - a, new Vector2(-dir.y, dir.x)));
+                if (side < best) { best = side; along = s; length = len; }
+            }
+            return best;
+        }
+
+        // Each cell's distance from the coast in metres: from its middle to the middle of the nearest cell across the
+        // coast, less half a cell — out to sea positive, on land negative.
+        static float[] CoastDistance(int[] themeCells, int w, int h, int cell)
+        {
+            var toLand = SquaredCellDistance(themeCells, w, h, th => th >= 0);
+            var toSea = SquaredCellDistance(themeCells, w, h, th => th < 0);
+            var d = new float[w * h];
+            for (int k = 0; k < d.Length; k++)
+                d[k] = themeCells[k] < 0 ? ((float)System.Math.Sqrt(toLand[k]) - 0.5f) * cell : -((float)System.Math.Sqrt(toSea[k]) - 0.5f) * cell;
+            return d;
+        }
+
+        // Each cell's distance in metres from the edge of the sand land, inside it negative. A sea cell sits halfway
+        // between the sand land and the other land nearest it.
+        static float[] SandDistance(int[] themeCells, bool[] sandThemes, int w, int h, int cell)
+        {
+            var toSand = SquaredCellDistance(themeCells, w, h, th => th >= 0 && sandThemes[th]);
+            var toOther = SquaredCellDistance(themeCells, w, h, th => th >= 0 && !sandThemes[th]);
+            var d = new float[w * h];
+            for (int k = 0; k < d.Length; k++)
+            {
+                float s = (float)System.Math.Sqrt(toSand[k]), o = (float)System.Math.Sqrt(toOther[k]);
+                int th = themeCells[k];
+                d[k] = th < 0 ? (s - o) * 0.5f * cell : sandThemes[th] ? -(o - 0.5f) * cell : (s - 0.5f) * cell;
+            }
+            return d;
+        }
+
+        // The squared distance, in cells, from every cell to the nearest cell whose theme passes `target`: the exact
+        // distance transform, one pass down each column, then one along each row.
+        static double[] SquaredCellDistance(int[] themeCells, int w, int h, System.Func<int, bool> target)
+        {
+            var g = new double[w * h];
+            for (int k = 0; k < g.Length; k++) g[k] = target(themeCells[k]) ? 0.0 : 1e12;
+            var f = new double[Mathf.Max(w, h)]; var o = new double[f.Length];
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++) f[j] = g[j * w + i];
+                Transform1D(f, h, o);
+                for (int j = 0; j < h; j++) g[j * w + i] = o[j];
+            }
+            for (int j = 0; j < h; j++)
+            {
+                for (int i = 0; i < w; i++) f[i] = g[j * w + i];
+                Transform1D(f, w, o);
+                for (int i = 0; i < w; i++) g[j * w + i] = o[i];
+            }
+            return g;
+        }
+
+        // The lower envelope of the parabolas rooted at each sample (Felzenszwalb and Huttenlocher).
+        static void Transform1D(double[] f, int n, double[] d)
+        {
+            var v = new int[n]; var z = new double[n + 1];
+            int k = 0; v[0] = 0; z[0] = double.NegativeInfinity; z[1] = double.PositiveInfinity;
+            for (int q = 1; q < n; q++)
+            {
+                double s = (f[q] + (double)q * q - f[v[k]] - (double)v[k] * v[k]) / (2.0 * q - 2.0 * v[k]);
+                while (s <= z[k]) { k--; s = (f[q] + (double)q * q - f[v[k]] - (double)v[k] * v[k]) / (2.0 * q - 2.0 * v[k]); }
+                k++; v[k] = q; z[k] = s; z[k + 1] = double.PositiveInfinity;
+            }
+            k = 0;
+            for (int q = 0; q < n; q++)
+            {
+                while (z[k + 1] < q) k++;
+                d[q] = (double)(q - v[k]) * (q - v[k]) + f[v[k]];
+            }
         }
 
         // THE LAYOUT'S GROUND, BETWEEN ITS CELLS. Inside a cell the four nearest cell heights are blended — but only the
@@ -343,12 +600,15 @@ public static class SeamlessWorldBuilder
 
         // A water's bed by distance from its edge inward: a gentle bank down to a shelf a body can wade, then a drop
         // too steep to walk down, to the deep middle. `inward` is metres inside the water's edge (negative = bank).
-        static float Bed(float level, float inward, float bankTop, float bankWidth)
+        // A sheer drop goes from the shelf to the deep in one step, with no ground part-way down it, for a distance that
+        // stretches too much for any slope measured in it to stay too steep to walk (the sea's and a pond's).
+        static float Bed(float level, float inward, float bankTop, float bankWidth, bool sheerDrop = false)
         {
             float shelf = level - ShelfDepth, deep = level - DeepDepth;
             if (inward < -bankWidth) return bankTop;
             if (inward < 0.6f) return Mathf.Lerp(bankTop, shelf, Smooth(-bankWidth, 0.6f, inward));
             if (inward < 1.4f) return shelf;
+            if (sheerDrop) return deep;
             if (inward < 1.75f) return Mathf.Lerp(shelf, deep, (inward - 1.4f) / 0.35f);
             return deep;
         }
@@ -360,14 +620,15 @@ public static class SeamlessWorldBuilder
             return side[i];
         }
 
-        // The height of Lastline's rim at the point of its edge nearest to (x, z).
-        float RimHeight(float x, float z)
+        // The height of a town's rim at the point of its edge nearest to (x, z).
+        static float RimHeight(TownSite site, float x, float z)
         {
-            float cx = Mathf.Clamp(x, Town.xMin, Town.xMax), cz = Mathf.Clamp(z, Town.yMin, Town.yMax);
-            if (Mathf.Approximately(cx, Town.xMin)) return Rim(rimW, cz - Town.yMin);
-            if (Mathf.Approximately(cx, Town.xMax)) return Rim(rimE, cz - Town.yMin);
-            if (Mathf.Approximately(cz, Town.yMin)) return Rim(rimS, cx - Town.xMin);
-            return Rim(rimN, cx - Town.xMin);
+            Rect r = site.rect;
+            float cx = Mathf.Clamp(x, r.xMin, r.xMax), cz = Mathf.Clamp(z, r.yMin, r.yMax);
+            if (Mathf.Approximately(cx, r.xMin)) return Rim(site.rimW, cz - r.yMin);
+            if (Mathf.Approximately(cx, r.xMax)) return Rim(site.rimE, cz - r.yMin);
+            if (Mathf.Approximately(cz, r.yMin)) return Rim(site.rimS, cx - r.xMin);
+            return Rim(site.rimN, cx - r.xMin);
         }
 
         static float Mounds(float x, float z) =>
@@ -376,32 +637,45 @@ public static class SeamlessWorldBuilder
 
         public float Height(float x, float z)
         {
-            float h = LayoutGround(x, z) + Mounds(x, z);
+            float h = CaveGround(x, z, LayoutGround(x, z) + Mounds(x, z));
             float dv = rivers.Nearest(x, z, out float riverBed, out _);
             // Roads run level across, at the layout's height along them, and the ground eases to them over four metres —
             // except over a river, where the road crosses on its bridge and the water runs underneath.
             float dr = roads.Nearest(x, z, out float roadHeight, out _);
             if (dr < RoadHalf + 4f && dv > RiverWaterOut + 1f) h = Mathf.Lerp(roadHeight, h, Smooth(RoadHalf, RoadHalf + 4f, dr));
-            // Lastline's rim, exactly, eased back into the world over six metres.
-            float dt = DistToRect(Town, x, z);
-            if (dt < 6f) h = Mathf.Lerp(RimHeight(x, z), h, Smooth(0f, 6f, dt));
+            // A town's rim, exactly, eased back into the world over six metres.
+            float dt = NearestTown(x, z, out var site);
+            if (dt < 6f) h = Mathf.Lerp(RimHeight(site, x, z), h, Smooth(0f, 6f, dt));
             // The river: the water in a channel down the valley the layout cut, its edge wandering a little.
             if (dv < RiverEdge + 1.6f + 1f)
             {
-                float level = riverBed - 0.15f;
-                float edge = RiverEdge + (Mathf.PerlinNoise(x * 0.2f + 91f, z * 0.2f + 13f) - 0.5f) * 0.8f;
+                float level = RiverLevel(riverBed, x, z);
+                float edge = RiverEdgeAt(x, z);
                 h = Mathf.Min(h, Bed(level, edge - dv, Mathf.Max(level + 0.3f, Mathf.Min(h, level + 1.2f)), 1.6f));
+                // Under the wading strip the ground is never below it, even where the layout's bed lies lower (a river
+                // running out into the sea, its level held at the sea's): else the bed's own gentle fall would lead a body
+                // down into the deep.
+                if (edge - dv > 0f && edge - dv < 1.4f) h = Mathf.Max(h, level - ShelfDepth);
             }
             // A bridge's ends: the road's ground eases up to the deck's height over BridgeApproach metres beyond each end,
             // so the deck never stands above a bank that dips down to the water.
-            foreach (var (from, to, deckHeight) in crossings)
+            // And under each end, as far in as the model's rounded end leaves uncovered (deck.insetFrom / insetTo), the ground
+            // stays at the deck's height, a hair under its stones, then falls back to its own over a metre — else a slot
+            // opens between the raised approach and the first whole row of stone.
+            foreach (var (from, to, deckHeight, half, deck) in crossings)
             {
                 Vector2 along = (to - from).normalized, p = new Vector2(x, z);
                 float s = Vector2.Dot(p - from, along), len = Vector2.Distance(from, to);
                 float beyond = s < 0f ? -s : s > len ? s - len : 0f;
                 float side = Mathf.Abs(Vector2.Dot(p - from, new Vector2(-along.y, along.x)));
-                if (beyond > 0f && beyond < BridgeApproach && side < RoadHalf + 2f)
-                    h = Mathf.Max(h, Mathf.Lerp(deckHeight, h, Mathf.Max(Smooth(0f, BridgeApproach, beyond), Smooth(RoadHalf, RoadHalf + 2f, side))));
+                if (beyond > 0f && beyond < BridgeApproach && side < half + 2f)
+                    h = Mathf.Max(h, Mathf.Lerp(deckHeight, h, Mathf.Max(Smooth(0f, BridgeApproach, beyond), Smooth(half, half + 2f, side))));
+                else if (beyond == 0f && side < deck.halfWidth + 2f)
+                {
+                    float inside = Mathf.Min(s, len - s), inset = s < len * 0.5f ? deck.insetFrom : deck.insetTo;
+                    if (inside < inset + 1f)
+                        h = Mathf.Max(h, Mathf.Lerp(deckHeight - 0.02f, h, Mathf.Max(Smooth(inset, inset + 1f, inside), Smooth(deck.halfWidth, deck.halfWidth + 2f, side))));
+                }
             }
             // A pond: a hollow with a gentle bank all round, so nobody is stuck in it.
             float dp = DistPond(x, z, out int pi);
@@ -410,10 +684,52 @@ public static class SeamlessWorldBuilder
                 float level = ponds[pi].level;
                 float edge = (Mathf.PerlinNoise(x * 0.25f + 7f, z * 0.25f + 29f) - 0.5f) * 1.2f;
                 float bank = Mathf.Lerp(level + 0.25f, h, Smooth(edge + 1.5f, 6f, dp));
-                h = Mathf.Min(h, Bed(level, edge - dp, bank, 1.5f));
+                // Sheer: the wandering edge stretches the distance too far along the drop for a slope (measured 2026-10-30:
+                // Lastline's pond could be walked down into at 38 places), where a river's stays steep.
+                h = Mathf.Min(h, Bed(level, edge - dp, bank, 1.5f, sheerDrop: true));
+            }
+            // The sea: a beach down to a shelf a body can wade, then a drop too steep to walk down, as under every water,
+            // and the layout's own seabed further out. The land by it never dips under it, except in a river's channel,
+            // which runs out into it.
+            // The coast's wander and the blend between cells stretch the distance out to sea as much as 4.7 times along the
+            // drop (measured 2026-10-30), so the drop is sheer: no slope laid out in that distance stays too steep to walk.
+            float ds = SeaInward(x, z);
+            if (ds > -(SeaBank + 4f))
+            {
+                float raw = h;
+                // The river's channel is let through only where it is deep (past its drop): wider, the layout's own ground
+                // under the river's wading strip, below the sea at a mouth, sloped gently down into the deep.
+                float floor = seaLevel + 0.3f - 2f * (1f - Smooth(-(SeaBank + 4f), -SeaBank, ds))
+                            - 3f * Smooth(1.4f, 1.75f, RiverEdgeAt(x, z) - dv);
+                float top = Mathf.Max(h, floor);
+                h = Mathf.Min(top, Bed(seaLevel, ds, top, SeaBank, sheerDrop: true));
+                if (ds > 1.75f) h = Mathf.Min(h, Mathf.Lerp(h, raw, Smooth(1.75f, 4f, ds)));
+            }
+            // A LOW-TIDE PATH: a strip across the sea at wading depth, standing off the seabed on sides too steep to walk
+            // down, and cut into each shore at TideGrade, the cutting's sides sloping back up to the land at about 34
+            // degrees. Faded out over the last 3 metres at each end, should the land there still stand above the cut.
+            float tideSide = TideSide(x, z, out float tideAlong, out float tideLength);
+            if (tideSide < TideHalf + 12f)
+            {
+                float coast = SeaInward(x, z);
+                float top = seaLevel - ShelfDepth + TideGrade * Mathf.Max(0f, -coast);
+                float strip = coast > 0f ? top : Mathf.Min(h, top);
+                float width = h > strip ? Mathf.Max(1f, 1.5f * (h - strip)) : 0.35f;
+                float keep = h > strip ? Smooth(TideHalf, TideHalf + width, tideSide) : Mathf.Clamp01((tideSide - TideHalf) / width);
+                keep = Mathf.Max(keep, 1f - Smooth(0f, 3f, Mathf.Min(tideAlong, tideLength - tideAlong)));
+                h = Mathf.Lerp(strip, h, keep);
             }
             return h;
         }
+
+        // A river's surface, never below the sea's it runs into, and easing down to it over the last 12 metres before the
+        // coast, so the two waters meet at one level: up to 0.3 above it at the coast, the sea's gentle beach lay under the
+        // river's water deeper than its wading strip, a way down into its deep (measured 2026-10-30).
+        float RiverLevel(float bed, float x, float z) =>
+            Mathf.Lerp(Mathf.Max(bed - 0.15f, seaLevel), seaLevel, Smooth(-12f, -2f, SeaInward(x, z)));
+
+        // How far out from its line a river's water edge stands at a point, wandering a little.
+        float RiverEdgeAt(float x, float z) => RiverEdge + (Mathf.PerlinNoise(x * 0.2f + 91f, z * 0.2f + 13f) - 0.5f) * 0.8f;
 
         public Vector3 Normal(float x, float z)
         {
@@ -422,19 +738,23 @@ public static class SeamlessWorldBuilder
             return new Vector3(-hx, 2f * Step, -hz).normalized;
         }
 
-        // (road, stone, rock, dirt) — the ground shader's four layers over the grass.
+        // (road, stone, sand, dirt) — the ground shader's four layers over the grass. Sand rides the shader's third
+        // layer (.b, its "rock path"), which the world's material fills with the sand tile.
         public Color Weights(float x, float z, Vector3 n)
         {
             float dv = DistRiver(x, z), dp = DistPond(x, z, out _);
             float road = dv < RiverWaterOut + 1f ? 0f : 1f - Smooth(RoadHalf - 0.35f, RoadHalf + 0.6f, DistRoads(x, z));
-            // Pebbles on the river's valley floor and round the ponds, feathered out rather than cut.
-            float stone = Mathf.Max(1f - Smooth(4.6f, 6f, dv), 1f - Smooth(1f, 2.5f, dp));
+            // Pebbles on the river's valley floor, round the ponds and along the sea, feathered out rather than cut.
+            float stone = Mathf.Max(Mathf.Max(1f - Smooth(4.6f, 6f, dv), 1f - Smooth(1f, 2.5f, dp)), Smooth(-2.5f, -1f, SeaInward(x, z)));
             float patch = Mathf.PerlinNoise(x * 0.06f + 200f, z * 0.06f + 41f) * 0.65f
                         + Mathf.PerlinNoise(x * 0.13f + 77f, z * 0.13f + 12f) * 0.35f;
             float dirt = Smooth(0.62f, 0.75f, patch);
-            // Next to Lastline the ground is plain grass and road, the two things its rim blends into.
-            dirt *= Smooth(2f, 6f, DistToRect(Town, x, z));
-            return new Color(road, stone, 0f, dirt);
+            // Next to a town the ground is plain grass and road, the two things its rim blends into.
+            float nearTown = Smooth(2f, 6f, NearestTown(x, z, out _));
+            dirt *= nearTown;
+            // Sand over everything but the road, the dirt under it, so a road's feathered edge blends into sand, not grass.
+            float sand = (1f - Smooth(-2.5f, 2.5f, SandOutward(x, z))) * nearTown;
+            return new Color(road, stone, sand * (1f - road), Mathf.Max(dirt, sand));
         }
 
         // The cliff layer (uv1): x = how much of the rock skin, laid on from the side, shows here — the steeper the
@@ -445,15 +765,19 @@ public static class SeamlessWorldBuilder
             return new Vector2(steep, Mathf.Clamp01(Mathf.Repeat(height, WallHeight) / WallHeight));
         }
 
+        // The water bodies: 0 the river, 1 + i each pond, then the sea.
+        public int SeaBody => 1 + ponds.Count;
+
         /// <summary>The surface height of the water covering a point, or NaN. The river's sheet reaches well in under its
         /// banks, so its own edge is hidden in the ground; it falls with the river.</summary>
         public float WaterAt(float x, float z, out int body)
         {
             body = -1;
             float dv = rivers.Nearest(x, z, out float bed, out _);
-            if (dv < RiverWaterOut) { body = 0; return bed - 0.15f; }
+            if (dv < RiverWaterOut) { body = 0; return RiverLevel(bed, x, z); }
             float dp = DistPond(x, z, out int pi);
             if (pi >= 0 && dp < 2.2f) { body = 1 + pi; return ponds[pi].level; }
+            if (SeaInward(x, z) > -2.2f) { body = SeaBody; return seaLevel; }
             return float.NaN;
         }
 
@@ -500,11 +824,12 @@ public static class SeamlessWorldBuilder
         public bool PropFree(float x, float z)
         {
             if (DistRoads(x, z) < RoadHalf + 1.5f) return false;
-            if (DistRiver(x, z) < 6.5f || DistPond(x, z, out _) < 4f) return false;
+            if (DistRiver(x, z) < 6.5f || DistPond(x, z, out _) < 4f || SeaInward(x, z) > -4f) return false;
+            if (TideSide(x, z, out _, out _) < TideHalf + 2f) return false;
             var p = new Vector2(x, z);
-            var town = new Rect(Town.x - 4f, Town.y - 4f, Town.width + 8f, Town.height + 8f);
-            if (town.Contains(p)) return false;
+            if (InTown(p, 4f)) return false;
             foreach (var (_, at) in keepClear) if ((at - p).sqrMagnitude < 36f) return false;
+            if (CaveAt(x, z, out _) != CavePart.None) return false;
             // Never held back from the built squares' edge: that edge moves as the world grows, and a square must not.
             return Normal(x, z).y > 0.93f;
         }
@@ -528,8 +853,28 @@ public static class SeamlessWorldBuilder
         return Rect.MinMaxRect(a.x, a.y, b.x, b.y);
     }
 
-    /// <summary>Build the squares in <see cref="Blocks"/>. Returns a report of what was written and measured.</summary>
-    public static string BuildCore()
+    /// <summary>Build every square in <see cref="Blocks"/>. Returns a report of what was written and measured.</summary>
+    public static string BuildCore() => Build(onlyNew: false);
+
+    /// <summary>Build only the squares in <see cref="Blocks"/> that have no prefab yet — extending the world — and keep
+    /// every square already built exactly as it is. A square comes out the same whichever squares are built around it
+    /// (proven 2026-10-27/28), so the new ones meet the old ones. A change to ground already built — a town's rim, a
+    /// road, the builder's own rules — still needs <see cref="BuildCore"/>.</summary>
+    public static string BuildNewSquares() => Build(onlyNew: true);
+
+    /// <summary>Rebuild only the built squares one town changes — its 7 x 7 (<see cref="TownBlockReach"/> round the square
+    /// its middle falls in), which holds its rim and the props kept off it, and every square its roads lie on differently
+    /// than with no town there (<see cref="AddRoadsTouched"/>) — for a town set in or changed after the world around it was
+    /// built. Every other square is kept exactly as it is.</summary>
+    public static string BuildTownSquares(string townId) => Build(onlyNew: false, townId);
+
+    /// <summary>Rebuild only the built squares from (<paramref name="i0"/>, <paramref name="j0"/>) to
+    /// (<paramref name="i1"/>, <paramref name="j1"/>), both ends included — for a change to the builder's rules that
+    /// reaches only those squares and the squares round them. Every other square is kept exactly as it is.</summary>
+    public static string BuildSquares(int i0, int i1, int j0, int j1) =>
+        Build(onlyNew: false, only: new RectInt(i0, j0, i1 - i0, j1 - j0));
+
+    static string Build(bool onlyNew, string onlyTown = null, RectInt? only = null)
     {
         var report = new StringBuilder();
         var clock = System.Diagnostics.Stopwatch.StartNew();
@@ -546,19 +891,62 @@ public static class SeamlessWorldBuilder
             for (int j = j0; j <= j1; j++)
                 for (int i = i0; i <= i1; i++)
                     if (!squares.Contains((i, j))) squares.Add((i, j));
+        foreach (var t in layout.towns)
+        {
+            if (!File.Exists(TownPlanPath(t.id))) continue;
+            int a0 = Mathf.FloorToInt((t.x + TownLocal.xMin) / SquareSize), a1 = Mathf.FloorToInt((t.x + TownLocal.xMax) / SquareSize);
+            int b0 = Mathf.FloorToInt((t.y - TownLocal.yMax) / SquareSize), b1 = Mathf.FloorToInt((t.y - TownLocal.yMin) / SquareSize);
+            bool inside = true;
+            for (int j = b0; j <= b1; j++) for (int i = a0; i <= a1; i++) inside &= squares.Contains((i, j));
+            if (inside) continue;
+            int ci = Mathf.FloorToInt(t.x / SquareSize), cj = Mathf.FloorToInt(t.y / SquareSize);
+            for (int j = cj - TownBlockReach; j <= cj + TownBlockReach; j++)
+                for (int i = ci - TownBlockReach; i <= ci + TownBlockReach; i++)
+                    if (!squares.Contains((i, j))) squares.Add((i, j));
+            report.AppendLine($"{t.name} has a plan: its 7 x 7 squares around ({ci}, {cj}) are built.");
+        }
         var box = SquareRect(terrain, squares[0].i, squares[0].j);
         foreach (var (i, j) in squares) { var r = SquareRect(terrain, i, j); box = Rect.MinMaxRect(Mathf.Min(box.xMin, r.xMin), Mathf.Min(box.yMin, r.yMin), Mathf.Max(box.xMax, r.xMax), Mathf.Max(box.yMax, r.yMax)); }
         WorldMin = box.min; WorldMax = box.max;
         report.AppendLine($"{squares.Count} squares, scene box {WorldMin} .. {WorldMax}.");
+        string SquarePath(int i, int j) => $"{OutDir}/Chunks/square_{i}_{j}.prefab";
+        var toBuild = onlyNew ? squares.FindAll(s => !File.Exists(SquarePath(s.i, s.j))) : squares;
+        if (onlyNew)
+        {
+            if (toBuild.Count == 0) return report.AppendLine("No new squares: nothing built.").ToString();
+            report.AppendLine($"{toBuild.Count} new squares built; the other {squares.Count - toBuild.Count} kept as they are.");
+        }
+        else if (onlyTown != null)
+        {
+            var town = layout.towns.FirstOrDefault(t => t.id == onlyTown)
+                       ?? throw new System.Exception("no town '" + onlyTown + "' in the world layout");
+            int ci = Mathf.FloorToInt(town.x / SquareSize), cj = Mathf.FloorToInt(town.y / SquareSize);
+            toBuild = squares.FindAll(s => Mathf.Abs(s.i - ci) <= TownBlockReach && Mathf.Abs(s.j - cj) <= TownBlockReach);
+            if (toBuild.Count == 0) return report.AppendLine($"None of {town.name}'s squares are built: nothing built.").ToString();
+        }
+        else if (only is RectInt pick)
+        {
+            toBuild = squares.FindAll(s => s.i >= pick.xMin && s.i <= pick.xMax && s.j >= pick.yMin && s.j <= pick.yMax);
+            if (toBuild.Count == 0) return report.AppendLine("None of those squares are built: nothing built.").ToString();
+            report.AppendLine($"{toBuild.Count} squares rebuilt; the other {squares.Count - toBuild.Count} kept as they are.");
+        }
+        bool partial = toBuild != squares;
 
         var preview = EditorSceneManager.NewPreviewScene();
         try
         {
             var material = WorldMaterial(NatureScale(report));
-            // Lastline first: its rim decides the heights the world ground must meet.
-            Vector3 arrival = LastlinePiece(terrain, material, report, out string lastlinePrefab);
+            // The towns first: their rims decide the heights the world ground must meet.
+            Vector3 arrival = TownPieces(terrain, material, report, out var townPrefabs);
+            if (onlyTown != null)
+            {
+                int inBlock = toBuild.Count;
+                float roadReach = AddRoadsTouched(terrain, layout, onlyTown, squares, toBuild);
+                report.AppendLine($"{onlyTown}: its roads change up to {roadReach:0.0} m from its middle; {inBlock} squares of its 7 x 7 and {toBuild.Count - inBlock} more its roads change rebuilt; the other {squares.Count - toBuild.Count} kept as they are.");
+            }
             var river = WaterMaterial("river", new Vector4(0f, -0.6f, 0f, 0f));
             var pondMat = WaterMaterial("pond", Vector4.zero);
+            var seaMat = WaterMaterial("sea", Vector4.zero);
 
             int nx = Mathf.RoundToInt((WorldMax.x - WorldMin.x) / Step);
             int nz = Mathf.RoundToInt((WorldMax.y - WorldMin.y) / Step);
@@ -568,26 +956,33 @@ public static class SeamlessWorldBuilder
             report.AppendLine($"Ground heights worked out in {clock.ElapsedMilliseconds} ms.");
 
             var outs = new List<ChunkOut>();
-            foreach (var (si, sj) in squares)
+            foreach (var (si, sj) in toBuild)
             {
                 var rect = SquareRect(terrain, si, sj);
                 int i0 = Mathf.RoundToInt((rect.xMin - WorldMin.x) / Step), i1 = i0 + ChunkCells;
                 int j0 = Mathf.RoundToInt((rect.yMin - WorldMin.y) / Step), j1 = j0 + ChunkCells;
                 var c = new ChunkOut { cx = si, cz = sj, rect = rect };
-                var ground = GroundMesh(terrain, i0, i1, j0, j1, c.rect, $"world_{si}_{sj}");
-                if (ground == null) continue;
+                var ground = GroundMesh(terrain, i0, i1, j0, j1, c.rect, $"world_{si}_{sj}", out var joinedMats);
                 c.root = new GameObject($"Square {si} {sj}");
                 SceneManager.MoveGameObjectToScene(c.root, preview);
-                var g = new GameObject("Ground");
-                g.transform.SetParent(c.root.transform, false);
-                g.layer = LayerMask.NameToLayer("Ground");
-                g.AddComponent<MeshFilter>().sharedMesh = ground;
-                var mr = g.AddComponent<MeshRenderer>();
-                mr.sharedMaterial = material;
-                mr.shadowCastingMode = ShadowCastingMode.On;
-                g.AddComponent<MeshCollider>().sharedMesh = ground;
+                // A SQUARE WHOLLY UNDER A TOWN is still built, only with no ground of its own (the town's is there): left
+                // out, the world's edge walls went round it as a hole and stood across the middle of the town as
+                // invisible walls (play-test, 2026-10-28).
+                if (ground != null)
+                {
+                    var g = new GameObject("Ground");
+                    g.transform.SetParent(c.root.transform, false);
+                    g.layer = LayerMask.NameToLayer("Ground");
+                    g.AddComponent<MeshFilter>().sharedMesh = ground;
+                    var mr = g.AddComponent<MeshRenderer>();
+                    var mats = new List<Material> { material };
+                    mats.AddRange(joinedMats);
+                    mr.sharedMaterials = mats.ToArray();
+                    mr.shadowCastingMode = ShadowCastingMode.On;
+                    g.AddComponent<MeshCollider>().sharedMesh = ground;
+                }
 
-                AddWater(terrain, c, river, pondMat);
+                AddWater(terrain, c, river, pondMat, seaMat);
                 var props = new GameObject("Props");
                 props.transform.SetParent(c.root.transform, false);
                 c.props = props.transform;
@@ -595,29 +990,35 @@ public static class SeamlessWorldBuilder
             }
 
             float reach = 0f;
-            foreach (var deck in terrain.bridges) reach = Mathf.Max(reach, PlaceBridge(deck, outs, preview));
+            foreach (var deck in terrain.bridges) reach = Mathf.Max(reach, BridgeReach(deck, outs));
             reach = Mathf.Max(reach, ScatterProps(terrain, outs, preview, report));
             LayCarpets(terrain, outs, report);
             ApplyNatureWind(NatureScale(report), report);
 
-            var addresses = new List<(string address, Rect rect)>();
             foreach (var c in outs)
             {
-                c.prefabPath = $"{OutDir}/Chunks/square_{c.cx}_{c.cz}.prefab";
+                c.prefabPath = SquarePath(c.cx, c.cz);
                 PrefabUtility.SaveAsPrefabAsset(c.root, c.prefabPath);
                 Object.DestroyImmediate(c.root);
-                addresses.Add(($"{MapId}/square_{c.cx}_{c.cz}", c.rect));
             }
-            addresses.Add(($"{MapId}/lastline", Town));
-            RegisterAddresses(outs, lastlinePrefab);
+            // Every square in the order a whole build lists them, the ones kept from an earlier build included.
+            var addresses = new List<(string address, Rect rect)>();
+            foreach (var (si, sj) in squares) addresses.Add(($"{MapId}/square_{si}_{sj}", SquareRect(terrain, si, sj)));
+            foreach (var site in terrain.towns) addresses.Add(($"{MapId}/{site.id}", site.rect));
+            RegisterAddresses(outs, townPrefabs);
             // A square an earlier build made that is no longer in Blocks: its prefab and its address go, so nothing can
-            // load ground the world no longer has.
-            var keepPaths = new HashSet<string>(outs.Select(c => c.prefabPath));
+            // load ground the world no longer has. A square kept as it is keeps its prefab and every mesh it uses.
+            var keepPaths = new HashSet<string>(squares.Select(s => SquarePath(s.i, s.j)));
+            if (partial)
+                foreach (var (si, sj) in squares.Except(toBuild))
+                    foreach (var dep in AssetDatabase.GetDependencies(SquarePath(si, sj), false))
+                        if (dep.StartsWith(OutDir + "/Meshes/")) madeMeshes.Add(dep);
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { OutDir + "/Chunks" }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!Path.GetFileName(path).StartsWith("square_") || keepPaths.Contains(path)) continue;
+                // A square no longer built, or a town no longer set in (its piece was deleted): its prefab and address go.
+                if (keepPaths.Contains(path) || townPrefabs.Exists(tp => tp.path == path)) continue;
                 settings.RemoveAssetEntry(guid);
                 AssetDatabase.DeleteAsset(path);
             }
@@ -625,7 +1026,19 @@ public static class SeamlessWorldBuilder
             AssetDatabase.SaveAssetIfDirty(settings);
 
             float loadSeconds = MeasureChunkBuild(outs, preview, report);
-            WriteScene(addresses, arrival, reach, loadSeconds);
+            // The kept squares' props and load time were measured by the build that made them: the scene keeps the larger.
+            if (partial && File.Exists(ScenePath))
+            {
+                var was = File.ReadAllText(ScenePath);
+                float Read(string key)
+                {
+                    var m = System.Text.RegularExpressions.Regex.Match(was, "  " + key + @": ([-\d.eE]+)");
+                    return m.Success ? float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0f;
+                }
+                reach = Mathf.Max(reach, Read("propReach"));
+                loadSeconds = Mathf.Max(loadSeconds, Read("measuredLoadSeconds"));
+            }
+            WriteScene(addresses, terrain.towns, arrival, reach, loadSeconds);
             WorldBuildUtil.RegisterInBuildSettings(ScenePath);
             // Meshes an earlier build made under names this one no longer uses are left over otherwise. Deleted only
             // after everything new is saved: deleting a mesh and making a new one at the same path in one go leaves the
@@ -641,8 +1054,9 @@ public static class SeamlessWorldBuilder
             AssetDatabase.SaveAssetIfDirty(material);
             AssetDatabase.SaveAssetIfDirty(river);
             AssetDatabase.SaveAssetIfDirty(pondMat);
+            AssetDatabase.SaveAssetIfDirty(seaMat);
             AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceUpdate);
-            report.AppendLine($"{outs.Count} squares + Lastline, prop reach {reach:0.0} m, built in {clock.ElapsedMilliseconds} ms.");
+            report.AppendLine($"{outs.Count} squares + {terrain.towns.Count} towns, prop reach {reach:0.0} m, built in {clock.ElapsedMilliseconds} ms.");
         }
         finally
         {
@@ -652,81 +1066,138 @@ public static class SeamlessWorldBuilder
         report.AppendLine(MinimapBaker.Bake(ScenePath) ? "Minimap drawn: the overview and every square." : "Minimap: nothing to draw.");
         return report.ToString();
     }
-    // Lastline's ground, buildings and walls, copied out of a hidden copy of its authored prefab into one prefab, exactly.
-    // Its gate markers stay behind; its arrival spot becomes the world's. Its rim heights are read off its ground mesh so
-    // the fields meet it.
-    static Vector3 LastlinePiece(Terrain terrain, Material world, StringBuilder report, out string prefabPath)
+    // A TOWN'S ROADS reach past its 7 x 7: each is led out through a gate and its heights graded from there, so a town's
+    // rim can tilt a road for as far as the grade carries the difference. Every built square a road lies on differently
+    // than it would with no town there is rebuilt too, and the squares round it, whose props roll against its.
+    // Returns how far from the town's middle the farthest road piece it changes lies.
+    static float AddRoadsTouched(Terrain terrain, LayoutFile layout, string townId, List<(int i, int j)> squares, List<(int i, int j)> toBuild)
     {
-        prefabPath = $"{OutDir}/Chunks/lastline.prefab";
-        var source = AssetDatabase.LoadAssetAtPath<GameObject>(LastlineSourcePath)
-                     ?? throw new System.Exception(LastlineSourcePath + " is missing");
-        var town = EditorSceneManager.NewPreviewScene();
+        var bare = new Terrain(layout);
+        bare.towns.AddRange(terrain.towns.Where(s => s.id != townId));
+        bare.LayRoads();
+        var had = new HashSet<(Vector2 a, Vector2 b, float va, float vb)>(bare.roads.Segments);
+        var has = new HashSet<(Vector2 a, Vector2 b, float va, float vb)>(terrain.roads.Segments);
+        var moved = has.Where(s => !had.Contains(s)).Concat(had.Where(s => !has.Contains(s))).ToList();
+        var town = layout.towns.First(t => t.id == townId);
+        var middle = terrain.Scene(town.x, town.y);
+        float farthest = 0f;
+        foreach (var (a, b, _, _) in moved) farthest = Mathf.Max(farthest, Vector2.Distance(a, middle), Vector2.Distance(b, middle));
+        const float ease = Terrain.RoadHalf + 4f;   // how far either side of a road the ground eases to it (Terrain.Height)
+        var touched = new List<(int i, int j)>();
+        foreach (var (si, sj) in squares)
+        {
+            var r = SquareRect(terrain, si, sj);
+            var grown = Rect.MinMaxRect(r.xMin - ease, r.yMin - ease, r.xMax + ease, r.yMax + ease);
+            bool hit = false;
+            foreach (var (a, b, _, _) in moved)
+            {
+                int n = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(a, b)));
+                for (int k = 0; k <= n && !hit; k++) hit = grown.Contains(Vector2.Lerp(a, b, (float)k / n));
+                if (hit) break;
+            }
+            if (hit) touched.Add((si, sj));
+        }
+        foreach (var (si, sj) in touched)
+            for (int dj = -1; dj <= 1; dj++)
+                for (int di = -1; di <= 1; di++)
+                    if (squares.Contains((si + di, sj + dj)) && !toBuild.Contains((si + di, sj + dj))) toBuild.Add((si + di, sj + dj));
+        return farthest;
+    }
+
+    // EVERY TOWN WITH A PIECE, set into the world where the layout puts it: its ground, buildings and walls copied out of a
+    // hidden copy of its authored prefab into one prefab, exactly. Its gate markers stay behind; Lastline's arrival spot
+    // becomes the world's. Each town's rim heights are read off its ground mesh so the fields meet it, and every road that
+    // starts in a town leaves it through a gate. Only towns whose ground lies in the built squares are set in.
+    static Vector3 TownPieces(Terrain terrain, Material world, StringBuilder report, out List<(string id, string path)> prefabs)
+    {
+        prefabs = new List<(string, string)>();
+        var built = Rect.MinMaxRect(WorldMin.x, WorldMin.y, WorldMax.x, WorldMax.y);
+        var scene = EditorSceneManager.NewPreviewScene();
         try
         {
-            var copy = (GameObject)PrefabUtility.InstantiatePrefab(source, town);
-            // Only the outer prefab: the props inside stay instances of their palette prefabs, as they were in the old map.
-            PrefabUtility.UnpackPrefabInstance(copy, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
-            GameObject ground = null, props = null, wall = null;
-            Vector3 arrival = Vector3.zero;
-            var gates = new List<(Vector2 at, Vector2 outward)>();
-            foreach (Transform part in copy.transform)
+            foreach (var t in terrain.L.towns)
             {
-                // Each gate marker is a gate, facing out of the side it is nearest.
-                if (part.name.StartsWith("Gate_")) gates.Add(Gate(new Vector2(part.position.x, part.position.z)));
-                if (part.name == "Ground_lastline") ground = part.gameObject;
-                else if (part.name == "Props") props = part.gameObject;
-                else if (part.name == "Wall") wall = part.gameObject;
-                else if (part.name == "Arrival") arrival = part.position;
+                string source = $"{TownsDir}/{t.name}.prefab";
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(source);
+                if (prefab == null) continue;
+                var centre = terrain.Scene(t.x, t.y);
+                var rect = new Rect(TownLocal.position + centre, TownLocal.size);
+                if (!built.Overlaps(rect)) continue;
+                var site = new TownSite { id = t.id, name = t.name, sourcePath = source, centre = centre, rect = rect,
+                                          groundY = terrain.SceneHeight(t.height) };
+                var copy = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+                // Only the outer prefab: the props inside stay instances of their palette prefabs, as they were in the old map.
+                PrefabUtility.UnpackPrefabInstance(copy, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
+                copy.transform.position = new Vector3(centre.x, site.groundY, centre.y);
+                foreach (Transform part in copy.transform)
+                {
+                    // Each gate marker is a gate, facing out of the side it is nearest.
+                    if (part.name.StartsWith("Gate_")) site.gates.Add(Gate(site.rect, new Vector2(part.position.x, part.position.z)));
+                    if (part.name.StartsWith("Ground_")) site.ground = part.gameObject;
+                    else if (part.name == "Props") site.props = part.gameObject;
+                    else if (part.name == "Wall") site.wall = part.gameObject;
+                    else if (part.name != "Arrival" && !part.name.StartsWith("Gate_")) site.others.Add(part.gameObject);
+                    else if (part.name == "Arrival") site.arrival = part.position;
+                }
+                if (site.ground == null) throw new System.Exception(source + " has no Ground_ part");
+                ReadRim(site, report);
+                terrain.towns.Add(site);
             }
-            if (ground == null) throw new System.Exception(LastlineSourcePath + " has no Ground_lastline");
-
-            ReadRim(terrain, ground, report);
-            terrain.LayRoads(Town, gates);
-            report.AppendLine($"Lastline: {gates.Count} gates; every road leaves it through one.");
-            BlendRim(terrain, ground, report);
-            SameGrassAsTheWorld(ground, world, report);
-
-            var holder = new GameObject("Lastline");
-            SceneManager.MoveGameObjectToScene(holder, town);
-            ground.transform.SetParent(holder.transform, true);
-            if (props != null) props.transform.SetParent(holder.transform, true);
-            // KEPT, at the user's word: Lastline's walls are part of what Lastline is.
-            if (wall != null) wall.transform.SetParent(holder.transform, true);
-            PrefabUtility.SaveAsPrefabAsset(holder, prefabPath);
-            report.AppendLine($"Lastline: ground, {(props != null ? props.transform.childCount : 0)} prop groups and its walls kept; arrival point at {arrival}.");
-            return arrival;
+            terrain.LayRoads();
+            foreach (var site in terrain.towns)
+            {
+                report.AppendLine($"{site.name}: {site.gates.Count} gates; every road leaves it through one.");
+                BlendRim(terrain, site, report);
+                SameGrassAsTheWorld(site, world, report);
+                var holder = new GameObject(site.name);
+                SceneManager.MoveGameObjectToScene(holder, scene);
+                site.ground.transform.SetParent(holder.transform, true);
+                if (site.props != null) site.props.transform.SetParent(holder.transform, true);
+                // KEPT, at the user's word: a town's walls are part of what the town is.
+                if (site.wall != null) site.wall.transform.SetParent(holder.transform, true);
+                foreach (var other in site.others) other.transform.SetParent(holder.transform, true);
+                // Lastline's piece keeps its old name, so the square it was always saved as is the same file.
+                string path = $"{OutDir}/Chunks/{site.id}.prefab";
+                PrefabUtility.SaveAsPrefabAsset(holder, path);
+                prefabs.Add((site.id, path));
+                report.AppendLine($"{site.name}: ground, {(site.props != null ? site.props.transform.childCount : 0)} prop groups, its walls and {site.others.Count} other parts kept, at {site.centre}, ground height {site.groundY:0.00}.");
+            }
+            var lastline = terrain.towns.Find(x => x.id == "lastline")
+                           ?? throw new System.Exception("Lastline has no piece in " + TownsDir + " — the world's arrival point is in it");
+            return lastline.arrival;
         }
         finally
         {
-            EditorSceneManager.ClosePreviewScene(town);
+            EditorSceneManager.ClosePreviewScene(scene);
         }
     }
 
-    static (Vector2 at, Vector2 outward) Gate(Vector2 at)
+    static (Vector2 at, Vector2 outward) Gate(Rect town, Vector2 at)
     {
-        float w = at.x - Town.xMin, e = Town.xMax - at.x, s = at.y - Town.yMin, n = Town.yMax - at.y, m = Mathf.Min(w, e, s, n);
+        float w = at.x - town.xMin, e = town.xMax - at.x, s = at.y - town.yMin, n = town.yMax - at.y, m = Mathf.Min(w, e, s, n);
         return (at, m == w ? Vector2.left : m == e ? Vector2.right : m == s ? Vector2.down : Vector2.up);
     }
 
-    // The top of Lastline's ground along each of its four sides, from the vertices that lie on that side.
-    static void ReadRim(Terrain terrain, GameObject ground, StringBuilder report)
+    // The top of a town's ground along each of its four sides, from the vertices that lie on that side.
+    static void ReadRim(TownSite site, StringBuilder report)
     {
-        var mf = ground.GetComponentInChildren<MeshFilter>();
+        var mf = site.ground.GetComponentInChildren<MeshFilter>();
         var mesh = mf.sharedMesh;
         var m = mf.transform.localToWorldMatrix;
-        int alongZ = Mathf.RoundToInt(Town.height / Step) + 1, alongX = Mathf.RoundToInt(Town.width / Step) + 1;
+        Rect r = site.rect;
+        int alongZ = Mathf.RoundToInt(r.height / Step) + 1, alongX = Mathf.RoundToInt(r.width / Step) + 1;
         var w = Filled(alongZ); var e = Filled(alongZ); var s = Filled(alongX); var n = Filled(alongX);
         foreach (var v in mesh.vertices)
         {
             Vector3 p = m.MultiplyPoint3x4(v);
-            if (Mathf.Abs(p.x - Town.xMin) < 0.02f) Top(w, (p.z - Town.yMin) / Step, p.y);
-            if (Mathf.Abs(p.x - Town.xMax) < 0.02f) Top(e, (p.z - Town.yMin) / Step, p.y);
-            if (Mathf.Abs(p.z - Town.yMin) < 0.02f) Top(s, (p.x - Town.xMin) / Step, p.y);
-            if (Mathf.Abs(p.z - Town.yMax) < 0.02f) Top(n, (p.x - Town.xMin) / Step, p.y);
+            if (Mathf.Abs(p.x - r.xMin) < 0.02f) Top(w, (p.z - r.yMin) / Step, p.y);
+            if (Mathf.Abs(p.x - r.xMax) < 0.02f) Top(e, (p.z - r.yMin) / Step, p.y);
+            if (Mathf.Abs(p.z - r.yMin) < 0.02f) Top(s, (p.x - r.xMin) / Step, p.y);
+            if (Mathf.Abs(p.z - r.yMax) < 0.02f) Top(n, (p.x - r.xMin) / Step, p.y);
         }
         FillGaps(w); FillGaps(e); FillGaps(s); FillGaps(n);
-        terrain.SetRim(w, e, s, n);
-        report.AppendLine($"Lastline rim heights: west {Range(w)}, east {Range(e)}, south {Range(s)}, north {Range(n)}.");
+        site.rimW = w; site.rimE = e; site.rimS = s; site.rimN = n;
+        report.AppendLine($"{site.name} rim heights: west {Range(w)}, east {Range(e)}, south {Range(s)}, north {Range(n)}.");
     }
 
     // HOW A HAND-MADE PIECE MEETS THE WORLD GROUND WITHOUT A LINE: its outer band fades into the very textures the world
@@ -742,60 +1213,75 @@ public static class SeamlessWorldBuilder
 
     static float Smooth01(float k) { k = Mathf.Clamp01(k); return k * k * (3f - 2f * k); }
 
-    static void BlendRim(Terrain t, GameObject ground, StringBuilder report)
+    static void BlendRim(Terrain t, TownSite site, StringBuilder report)
     {
-        var mf = ground.GetComponentInChildren<MeshFilter>();
+        var mf = site.ground.GetComponentInChildren<MeshFilter>();
+        Rect town = site.rect;
         var src = mf.sharedMesh;
         var mat = mf.GetComponent<MeshRenderer>().sharedMaterial;
         string Tile(string prop) => mat.HasProperty(prop) && mat.GetTexture(prop) != null ? mat.GetTexture(prop).name : "";
-        if (Tile("_StoneMap") != "BASE_OR_PATCH_meadow_grass" || Tile("_RockMap") != "PATH_dirt_road")
-            throw new System.Exception($"Lastline's ground no longer carries the world's grass and road (stone '{Tile("_StoneMap")}', rock '{Tile("_RockMap")}') — its rim cannot be blended.");
+        // A town of its own tile list (GroundTileArray) fades into the world's grass and road by a channel of its own (uv4),
+        // its material carrying the world's two (SameGrassAsTheWorld); Lastline's five-look ground by its vertex colours.
+        bool tiled = mat.shader.name == GroundTileArray.ShaderName;
+        if (!tiled && (Tile("_StoneMap") != "BASE_OR_PATCH_meadow_grass" || Tile("_RockMap") != "PATH_dirt_road"))
+            throw new System.Exception($"{site.name}'s ground no longer carries the world's grass and road (stone '{Tile("_StoneMap")}', rock '{Tile("_RockMap")}') — its rim cannot be blended.");
         var mesh = Object.Instantiate(src);
-        mesh.name = "world_lastline_ground";
+        mesh.name = $"world_{site.id}_ground";
         var m = mf.transform.localToWorldMatrix;
         var verts = mesh.vertices;
         var cols = mesh.colors;
+        var rim = new List<Vector2>(new Vector2[verts.Length]);
         int blended = 0;
         for (int i = 0; i < verts.Length; i++)
         {
             Vector3 p = m.MultiplyPoint3x4(verts[i]);
-            float edge = Mathf.Min(p.x - Town.xMin, Town.xMax - p.x, p.z - Town.yMin, Town.yMax - p.z);
+            float edge = Mathf.Min(p.x - town.xMin, town.xMax - p.x, p.z - town.yMin, town.yMax - p.z);
             if (edge >= GateRoadFade) continue;
             // At the rim: road where a world road arrives, grass everywhere else.
-            Vector2 rimPoint = new Vector2(Mathf.Clamp(p.x, Town.xMin, Town.xMax), Mathf.Clamp(p.z, Town.yMin, Town.yMax));
+            Vector2 rimPoint = new Vector2(Mathf.Clamp(p.x, town.xMin, town.xMax), Mathf.Clamp(p.z, town.yMin, town.yMax));
             float road = 1f - Mathf.Clamp01((t.DistRoads(rimPoint.x, rimPoint.y) - Terrain.RoadHalf + 0.35f) / 0.95f);
             float k = edge < RimBlend ? Smooth01(1f - edge / RimBlend) : 0f;
             k = Mathf.Max(k, road * (1f - Smooth01((edge - GateRoadWhole) / (GateRoadFade - GateRoadWhole))));
             if (k <= 0f) continue;
             // Grass fully under the road too: the layers are laid one over another, so anything less would let the
             // town's paving show through where the road is not whole.
-            var target = new Color(0f, 1f, road, 0f);
-            cols[i] = Color.Lerp(cols[i], target, k);
+            if (tiled) rim[i] = new Vector2(k, road);
+            else cols[i] = Color.Lerp(cols[i], new Color(0f, 1f, road, 0f), k);
             blended++;
         }
-        mesh.colors = cols;
+        if (tiled) mesh.SetUVs(4, rim);
+        else mesh.colors = cols;
         mesh = SaveMesh(mesh);
         mf.sharedMesh = mesh;
-        report.AppendLine($"Lastline's rim: {blended} points fade into the world's grass within {RimBlend} m of its edge, and into its roads within {GateRoadFade} m of a gate.");
+        report.AppendLine($"{site.name}'s rim: {blended} points fade into the world's grass within {RimBlend} m of its edge, and into its roads within {GateRoadFade} m of a gate.");
     }
 
     // LASTLINE'S GRASS AND ROAD ARE THE WORLD'S (the user, 2026-10-27): on a COPY of its ground material for this world,
     // its lawn layer wears the world's grass and its road layer the world's road, each at the world's own scale, so its
     // lawns, its rim and the fields around it are one grass and its gates run on into one road. Its paving and soil
     // are its own. Lastline's own scene and material are untouched.
-    static void SameGrassAsTheWorld(GameObject ground, Material world, StringBuilder report)
+    static void SameGrassAsTheWorld(TownSite site, Material world, StringBuilder report)
     {
-        var mr = ground.GetComponentInChildren<MeshRenderer>();
-        string path = OutDir + "/world_lastline_ground.mat";
+        var mr = site.ground.GetComponentInChildren<MeshRenderer>();
+        string path = OutDir + $"/world_{site.id}_ground.mat";
         var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (mat == null) { mat = new Material(mr.sharedMaterial); AssetDatabase.CreateAsset(mat, path); }
         else { mat.shader = mr.sharedMaterial.shader; mat.CopyPropertiesFromMaterial(mr.sharedMaterial); }
-        mat.SetTexture("_StoneMap", world.GetTexture("_GrassMap")); mat.SetFloat("_StoneTiling", world.GetFloat("_GrassTiling"));
-        mat.SetTexture("_RockMap", world.GetTexture("_PathMap")); mat.SetFloat("_RockTiling", world.GetFloat("_PathTiling"));
+        if (mat.shader.name == GroundTileArray.ShaderName)
+        {
+            // A town of its own tile list wears the world's grass on its lawns by its plan; these two are only its rim's.
+            mat.SetTexture("_RimGrassMap", world.GetTexture("_GrassMap")); mat.SetFloat("_RimGrassTiling", world.GetFloat("_GrassTiling"));
+            mat.SetTexture("_RimRoadMap", world.GetTexture("_PathMap")); mat.SetFloat("_RimRoadTiling", world.GetFloat("_PathTiling"));
+        }
+        else
+        {
+            mat.SetTexture("_StoneMap", world.GetTexture("_GrassMap")); mat.SetFloat("_StoneTiling", world.GetFloat("_GrassTiling"));
+            mat.SetTexture("_RockMap", world.GetTexture("_PathMap")); mat.SetFloat("_RockTiling", world.GetFloat("_PathTiling"));
+        }
         EditorUtility.SetDirty(mat);
         AssetDatabase.SaveAssetIfDirty(mat);
         mr.sharedMaterial = mat;
-        report.AppendLine($"Lastline's lawns and rim wear the world's grass ({world.GetTexture("_GrassMap").name}) and its gates the world's road.");
+        report.AppendLine($"{site.name}'s lawns and rim wear the world's grass ({world.GetTexture("_GrassMap").name}) and its gates the world's road.");
     }
 
     static float[] Filled(int count)
@@ -834,10 +1320,12 @@ public static class SeamlessWorldBuilder
         return $"{lo:0.00}..{hi:0.00}";
     }
 
-    // One chunk of the world ground, its points every quarter metre, Lastline's own ground left out. The bridge deck,
-    // where it falls in this chunk, is added to the same mesh. Null when the chunk lies wholly inside Lastline.
-    static Mesh GroundMesh(Terrain t, int i0, int i1, int j0, int j1, Rect rect, string name)
+    // One chunk of the world ground, its points every quarter metre, every town's own ground left out. A bridge model
+    // whose middle is in this chunk is added to the same mesh; `joinedMats` draw its submeshes after the ground's. Null
+    // when the chunk lies wholly inside a town.
+    static Mesh GroundMesh(Terrain t, int i0, int i1, int j0, int j1, Rect rect, string name, out Material[] joinedMats)
     {
+        joinedMats = new Material[0];
         int w = i1 - i0 + 1, h = j1 - j0 + 1;
         var index = new int[w * h];
         var verts = new List<Vector3>();
@@ -850,7 +1338,9 @@ public static class SeamlessWorldBuilder
             for (int i = 0; i < w; i++)
             {
                 float x = WorldMin.x + (i0 + i) * Step, z = WorldMin.y + (j0 + j) * Step;
-                bool insideTown = x > Town.xMin + 0.01f && x < Town.xMax - 0.01f && z > Town.yMin + 0.01f && z < Town.yMax - 0.01f;
+                bool insideTown = false;
+                foreach (var site in t.towns)
+                    if (x > site.rect.xMin + 0.01f && x < site.rect.xMax - 0.01f && z > site.rect.yMin + 0.01f && z < site.rect.yMax - 0.01f) insideTown = true;
                 if (insideTown) { index[j * w + i] = -1; continue; }
                 index[j * w + i] = verts.Count;
                 var normal = t.NormalAt(i0 + i, j0 + j);
@@ -865,7 +1355,7 @@ public static class SeamlessWorldBuilder
             for (int i = 0; i + 1 < w; i++)
             {
                 float mx = WorldMin.x + (i0 + i + 0.5f) * Step, mz = WorldMin.y + (j0 + j + 0.5f) * Step;
-                if (Town.Contains(new Vector2(mx, mz))) continue;
+                if (t.InTown(new Vector2(mx, mz))) continue;
                 int v0 = index[j * w + i], v1 = index[j * w + i + 1], v2 = index[(j + 1) * w + i], v3 = index[(j + 1) * w + i + 1];
                 if (v0 < 0 || v1 < 0 || v2 < 0 || v3 < 0) continue;
                 tris.Add(v0); tris.Add(v2); tris.Add(v1);
@@ -873,8 +1363,11 @@ public static class SeamlessWorldBuilder
             }
         if (tris.Count == 0) return null;
 
-        // The whole deck goes into the one chunk holding the bridge's middle, with the bridge model, never into two.
-        foreach (var deck in t.bridges) if (rect.Contains(deck.footprint.center)) AddDeck(deck, verts, norms, uvs, cols, rockUv, tris);
+        // The whole bridge model goes into the one chunk holding its middle, never into two: ground drawn with the model's
+        // own materials, one submesh each after the ground's.
+        var tangents = new List<Vector4>();
+        var joined = new Dictionary<Material, List<int>>();
+        foreach (var deck in t.bridges) if (rect.Contains(deck.footprint.center)) BridgeDecks.AddModel(deck, verts, norms, uvs, cols, rockUv, tangents, joined);
 
         var mesh = new Mesh { name = name + "_ground" };
         mesh.indexFormat = verts.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
@@ -883,7 +1376,13 @@ public static class SeamlessWorldBuilder
         mesh.SetUVs(0, uvs);
         mesh.SetColors(cols);
         mesh.SetUVs(1, rockUv);
+        if (tangents.Count == verts.Count) mesh.SetTangents(tangents);
+        mesh.subMeshCount = 1 + joined.Count;
         mesh.SetTriangles(tris, 0);
+        int sub = 1;
+        foreach (var tri in joined.Values) mesh.SetTriangles(tri, sub++);
+        joinedMats = new Material[joined.Count];
+        joined.Keys.CopyTo(joinedMats, 0);
         mesh.RecalculateBounds();
         mesh = SaveMesh(mesh);
         return mesh;
@@ -891,39 +1390,12 @@ public static class SeamlessWorldBuilder
 
     // ---- the bridge ----------------------------------------------------------------------------------------------
 
-    const string BridgePrefabPath = "Assets/1_Authored/Prefabs/Props/Bridges/BridgeRock.prefab";
-    // The deck is sampled every half metre along the crossing and every quarter metre across it, so the parapets are
-    // caught as well as the arch; it sits this far under the model's surface, so the model is what is seen.
-    const float DeckAlong = 0.5f, DeckAcross = 0.25f, DeckSink = 0.03f;
-    // Stone this much higher than the walkway's middle is a parapet; the search for it steps this far at a time.
-    // The deck's parapet stands ParapetInto inside the stone's inner face and ParapetBelow under its top; a gap in the
-    // stone wider than StoneGap ends the walkway.
-    const float ParapetRise = 0.2f, ParapetProbe = 0.05f, ParapetInto = 0.45f, ParapetBelow = 0.3f, StoneGap = 0.3f;
-
-    /// <summary>The bridge model fitted to the crossing, and its top surface: the heights the walkable deck takes.</summary>
-    sealed class BridgeDeck
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public float scale;
-        public Rect footprint;
-        // Rows along the crossing; across each row, from one side to the other: the top of the left parapet, its foot,
-        // the walkway's points, the right parapet's foot and its top. A parapet's foot and top stand on one spot just
-        // inside its inner face, so the deck rises straight up there, hidden in the stone, and stops a body.
-        public Vector3 start, along, across;
-        public int rows, cols;
-        public float[] offset, height;
-        public bool Has(int a, int c) => !float.IsNaN(height[a * cols + c]);
-        public Vector3 Point(int a, int c) => start + along * a + across * offset[a * cols + c] + Vector3.up * height[a * cols + c];
-    }
-
     // EVERY BRIDGE OF THE LAYOUT IN THE BUILT BOX: its road's crossing of the river, bank to bank along the road, at the
-    // road's height on the higher bank. The bridge model is fitted to it, and its walkable deck is the model's own top
-    // surface sampled into the ground (FitBridge).
+    // road's height on the higher bank. The bridge model is fitted to it and laid into the ground (GroundMesh).
     static void FitBridges(Terrain t, Scene preview, StringBuilder report)
     {
         // Every bridge near the built squares is fitted, built or not, so the props it keeps clear of come out the same
-        // whichever squares are built; its model and deck go only into the square holding its middle, when that is built.
+        // whichever squares are built; its model goes only into the square holding its middle, when that is built.
         var box = Rect.MinMaxRect(WorldMin.x - 40f, WorldMin.y - 40f, WorldMax.x + 40f, WorldMax.y + 40f);
         foreach (var b in t.L.bridges)
         {
@@ -944,8 +1416,9 @@ public static class SeamlessWorldBuilder
             }
             Vector2 from = End(-1f), to = End(1f);
             float height = Mathf.Max(t.Height(from.x, from.y), t.Height(to.x, to.y));
-            t.crossings.Add((from, to, height));
-            t.bridges.Add(FitBridge(from, to, height, preview, report));
+            var deck = BridgeDecks.Fit(from, to, height, preview, report);
+            t.crossings.Add((from, to, height, Terrain.RoadHalf, deck));
+            t.bridges.Add(deck);
             // The road runs straight onto each end of the bridge: a short stretch of road along the bridge's own line,
             // from the deck's height at its end to the road's own height a little way out, so a road that curves near the
             // river still meets the bridge head on instead of running past its side.
@@ -957,236 +1430,41 @@ public static class SeamlessWorldBuilder
                 t.roads.Add(new[] { end, outer }, new[] { height, outerHeight });
             }
         }
+        // A GORGE'S BRIDGE (the Last Bridge onto the Mountain's Root rock): no road leads to it, so it spans exactly the
+        // ends the layout gives, at the higher end's ground, and the ground at each end eases up to it across its whole
+        // width — no road beside it to do that.
+        if (t.L.gorges != null)
+            foreach (var g in t.L.gorges)
+            {
+                Vector2 from = t.Scene(g.bridge.from[0], g.bridge.from[1]), to = t.Scene(g.bridge.to[0], g.bridge.to[1]);
+                if (!box.Contains((from + to) * 0.5f)) continue;
+                float height = Mathf.Max(t.Height(from.x, from.y), t.Height(to.x, to.y));
+                var deck = BridgeDecks.Fit(from, to, height, preview, report);
+                t.bridges.Add(deck);
+                t.crossings.Add((from, to, height, deck.halfWidth, deck));
+            }
         report.AppendLine($"{t.bridges.Count} bridge(s) in the built box.");
     }
-    // Fits the bridge model to the crossing — as long as the crossing, at its own proportions, centred on its middle at
-    // the road's height — and samples the model's top surface from above into the deck heights. Where a sample falls
-    // through a gap between stones it takes the heights either side of it along the crossing.
-    static BridgeDeck FitBridge(Vector2 crossingFrom, Vector2 crossingTo, float crossingHeight, Scene preview, StringBuilder report)
-    {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BridgePrefabPath);
-        if (prefab == null) throw new System.Exception("no bridge model at " + BridgePrefabPath);
-        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, preview);
-        try
-        {
-            go.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            go.transform.localScale = Vector3.one;
-            var drawn = DrawnUpClose(go);
-            var b = BoundsOf(drawn, go.transform);
-
-            Vector2 line = crossingTo - crossingFrom;
-            float length = line.magnitude;
-            var u = new Vector3(line.x, 0f, line.y) / length;
-            var v = new Vector3(-u.z, 0f, u.x);
-            var mid = (crossingFrom + crossingTo) * 0.5f;
-            var deck = new BridgeDeck { scale = length / b.size.z, rotation = Quaternion.LookRotation(u) };
-            deck.position = new Vector3(mid.x, crossingHeight, mid.y) - deck.rotation * new Vector3(b.center.x, 0f, b.center.z) * deck.scale;
-            go.transform.SetPositionAndRotation(deck.position, deck.rotation);
-            go.transform.localScale = Vector3.one * deck.scale;
-            foreach (var r in drawn)
-            {
-                var mf = r.GetComponent<MeshFilter>();
-                if (mf == null || mf.sharedMesh == null) continue;
-                var mc = r.GetComponent<MeshCollider>();
-                if (mc == null) mc = r.gameObject.AddComponent<MeshCollider>();
-                mc.sharedMesh = mf.sharedMesh;
-            }
-            Physics.SyncTransforms();
-
-            var world = BoundsOf(drawn, null);
-            deck.footprint = Rect.MinMaxRect(world.min.x, world.min.z, world.max.x, world.max.z);
-            float halfWidth = b.size.x * 0.5f * deck.scale;
-            int walk = Mathf.CeilToInt(halfWidth * 2f / DeckAcross) + 1;
-            deck.rows = Mathf.CeilToInt(length / DeckAlong) + 1;
-            deck.cols = walk + 4;
-            deck.along = u * (length / (deck.rows - 1));
-            deck.across = v;
-            deck.start = new Vector3(crossingFrom.x, 0f, crossingFrom.y);
-            deck.offset = new float[deck.rows * deck.cols];
-            deck.height = new float[deck.rows * deck.cols];
-
-            var physics = preview.GetPhysicsScene();
-            float from = world.max.y + 1f, reachDown = world.size.y + 2f;
-            float Probe(Vector3 p) => physics.Raycast(new Vector3(p.x, from, p.z), Vector3.down, out var h, reachDown) ? h.point.y - DeckSink : float.NaN;
-            int found = 0;
-            for (int a = 0; a < deck.rows; a++)
-            {
-                var at = deck.start + deck.along * a;
-                float centre = Probe(at);
-                if (float.IsNaN(centre)) { for (int c = 0; c < deck.cols; c++) deck.height[a * deck.cols + c] = float.NaN; continue; }
-                found++;
-                // Out from the middle to each side, a few centimetres at a time: the walkway runs on while the stone
-                // stays within ParapetRise of the middle's height; the first point higher than that is the parapet.
-                var edge = new float[2]; var edgeY = new float[2]; var wall = new float[2]; var wallY = new float[2];
-                for (int side = 0; side < 2; side++)
-                {
-                    float dir = side == 0 ? -1f : 1f;
-                    edge[side] = 0f; edgeY[side] = centre; wall[side] = float.NaN;
-                    for (float d = ParapetProbe; d <= halfWidth; d += ParapetProbe)
-                    {
-                        float y = Probe(at + v * (dir * d));
-                        // Past the stone's own edge (a gap wider than StoneGap) the walkway has ended.
-                        if (float.IsNaN(y)) { if (d - edge[side] > StoneGap) break; continue; }
-                        if (y > centre + ParapetRise)
-                        {
-                            // Well inside the parapet and below its top, so its rounded inner edge still hides the deck.
-                            float into = Mathf.Min(d + ParapetInto, halfWidth);
-                            float top = Probe(at + v * (dir * into));
-                            wall[side] = dir * into;
-                            wallY[side] = Mathf.Max(edgeY[side], (float.IsNaN(top) ? y : top) - ParapetBelow);
-                            break;
-                        }
-                        edge[side] = d; edgeY[side] = y;
-                    }
-                    if (float.IsNaN(wall[side])) { wall[side] = dir * edge[side]; wallY[side] = edgeY[side]; }
-                }
-                int row = a * deck.cols;
-                deck.offset[row] = wall[0]; deck.height[row] = wallY[0];
-                deck.offset[row + 1] = wall[0]; deck.height[row + 1] = edgeY[0];
-                float lastY = edgeY[0];
-                for (int k = 0; k < walk; k++)
-                {
-                    float off = Mathf.Lerp(-edge[0], edge[1], k / (float)(walk - 1));
-                    float y = Probe(at + v * off);
-                    if (float.IsNaN(y)) y = lastY;
-                    deck.offset[row + 2 + k] = off; deck.height[row + 2 + k] = y;
-                    lastY = y;
-                }
-                deck.offset[row + walk + 2] = wall[1]; deck.height[row + walk + 2] = edgeY[1];
-                deck.offset[row + walk + 3] = wall[1]; deck.height[row + walk + 3] = wallY[1];
-            }
-            // A row whose middle falls through a gap between stones takes the rows either side of it.
-            for (int a = 0; a < deck.rows; a++)
-            {
-                if (deck.Has(a, 0)) continue;
-                int lo = a - 1, hi = a + 1;
-                while (lo >= 0 && !deck.Has(lo, 0)) lo--;
-                while (hi < deck.rows && !deck.Has(hi, 0)) hi++;
-                if (lo < 0 && hi >= deck.rows) continue;
-                int from0 = lo >= 0 ? lo : hi, to0 = hi < deck.rows ? hi : lo;
-                float w = from0 == to0 ? 0f : (a - from0) / (float)(to0 - from0);
-                for (int c = 0; c < deck.cols; c++)
-                {
-                    deck.offset[a * deck.cols + c] = Mathf.Lerp(deck.offset[from0 * deck.cols + c], deck.offset[to0 * deck.cols + c], w);
-                    deck.height[a * deck.cols + c] = Mathf.Lerp(deck.height[from0 * deck.cols + c], deck.height[to0 * deck.cols + c], w);
-                }
-            }
-            report.AppendLine($"Bridge: {prefab.name} at {deck.scale:0.00}x, {world.size.x:0.0} x {world.size.z:0.0} m, its deck found under {found} of {deck.rows} rows.");
-            return deck;
-        }
-        finally
-        {
-            Object.DestroyImmediate(go);
-        }
-    }
-
-    // The renderers drawn up close: level 0 of every switch, or all of them when the model does not switch.
-    static List<Renderer> DrawnUpClose(GameObject go)
-    {
-        var drawn = new List<Renderer>();
-        var groups = go.GetComponentsInChildren<LODGroup>(true);
-        foreach (var g in groups)
-        {
-            var lods = g.GetLODs();
-            if (lods.Length > 0) foreach (var r in lods[0].renderers) if (r != null) drawn.Add(r);
-        }
-        if (groups.Length == 0) drawn.AddRange(go.GetComponentsInChildren<Renderer>(true));
-        return drawn;
-    }
-
-    // Their bounds in world space, or in the space of `local` (its rotation and scale undone) when given.
-    static Bounds BoundsOf(List<Renderer> renderers, Transform local)
-    {
-        var b = new Bounds();
-        bool any = false;
-        foreach (var r in renderers)
-        {
-            var mf = r.GetComponent<MeshFilter>();
-            if (mf == null || mf.sharedMesh == null) continue;
-            foreach (var corner in Corners(mf.sharedMesh.bounds))
-            {
-                var p = mf.transform.TransformPoint(corner);
-                if (local != null) p = local.InverseTransformPoint(p);
-                if (!any) { b = new Bounds(p, Vector3.zero); any = true; }
-                else b.Encapsulate(p);
-            }
-        }
-        return b;
-    }
-
-    static IEnumerable<Vector3> Corners(Bounds b)
-    {
-        for (int i = 0; i < 8; i++)
-            yield return new Vector3((i & 1) == 0 ? b.min.x : b.max.x, (i & 2) == 0 ? b.min.y : b.max.y, (i & 4) == 0 ? b.min.z : b.max.z);
-    }
-
-    // The bridge model, drawn only (its colliders taken off — the deck in the ground is what is walked on), in the
-    // chunk holding its middle. Returns how far it reaches past that chunk's edges.
-    static float PlaceBridge(BridgeDeck deck, List<ChunkOut> chunks, Scene scene)
+    // How far a bridge — in the ground of the chunk holding its middle — reaches past that chunk's edges.
+    static float BridgeReach(BridgeDecks.Deck deck, List<ChunkOut> chunks)
     {
         var chunk = chunks.Find(c => c.rect.Contains(deck.footprint.center));
         if (chunk == null) return 0f;   // its middle's square is not built yet
-        var go = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(BridgePrefabPath), scene);
-        go.transform.SetParent(chunk.props, false);
-        go.transform.SetPositionAndRotation(deck.position, deck.rotation);
-        go.transform.localScale = Vector3.one * deck.scale;
-        WorldBuildUtil.SetLayerRecursive(go, 0);
-        PropPlacement.StripColliders(go);
         return PastChunk(deck.footprint, chunk.rect);
     }
 
     static float PastChunk(Rect r, Rect chunk) => Mathf.Max(0f, chunk.xMin - r.xMin, r.xMax - chunk.xMax, chunk.yMin - r.yMin, r.yMax - chunk.yMax);
 
-    // The deck: the bridge model's top surface, sampled, as part of the ground mesh it joins at both ends. Painted road,
-    // so where it shows between the model's stones it reads as the road running on; its own normals from its faces.
-    static void AddDeck(BridgeDeck d, List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<Color> c, List<Vector2> rk, List<int> tri)
-    {
-        var roadCol = new Color(1f, 0f, 0f, 0f);
-        int first = v.Count;
-        var index = new int[d.rows * d.cols];
-        for (int a = 0; a < d.rows; a++)
-            for (int k = 0; k < d.cols; k++)
-            {
-                if (!d.Has(a, k)) { index[a * d.cols + k] = -1; continue; }
-                index[a * d.cols + k] = v.Count;
-                var p = d.Point(a, k);
-                v.Add(p);
-                n.Add(Vector3.up);
-                uv.Add(new Vector2(p.x, p.z));
-                c.Add(roadCol);
-                rk.Add(new Vector2(0f, 0.5f));
-            }
-        // Wound so the faces look up whichever way the crossing runs.
-        bool flip = Vector3.Cross(d.along, d.across).y < 0f;
-        for (int a = 0; a + 1 < d.rows; a++)
-            for (int k = 0; k + 1 < d.cols; k++)
-            {
-                int v0 = index[a * d.cols + k], v1 = index[a * d.cols + k + 1];
-                int v2 = index[(a + 1) * d.cols + k], v3 = index[(a + 1) * d.cols + k + 1];
-                if (v0 < 0 || v1 < 0 || v2 < 0 || v3 < 0) continue;
-                if (flip) { tri.Add(v0); tri.Add(v1); tri.Add(v2); tri.Add(v1); tri.Add(v3); tri.Add(v2); }
-                else { tri.Add(v0); tri.Add(v2); tri.Add(v1); tri.Add(v1); tri.Add(v2); tri.Add(v3); }
-            }
-        var acc = new Vector3[v.Count - first];
-        for (int q = 0; q < tri.Count; q += 3)
-        {
-            int a = tri[q], bb = tri[q + 1], cc = tri[q + 2];
-            if (a < first) continue;
-            var fn = Vector3.Cross(v[bb] - v[a], v[cc] - v[a]);
-            acc[a - first] += fn; acc[bb - first] += fn; acc[cc - first] += fn;
-        }
-        for (int q = 0; q < acc.Length; q++) n[first + q] = acc[q].sqrMagnitude > 0f ? acc[q].normalized : Vector3.up;
-    }
-
-    // The water surfaces in this square: one continuous sheet per body of water (the river, each pond), each point at its
+    // The water surfaces in this square: one continuous sheet per body of water (the river, each pond, the sea), each point at its
     // water's own height — the river's falling with it — reaching in under the banks so its own edge is always hidden in
     // the ground; the water's visible edge is wherever the bank rises out of it, faded by the water shader. Each carries
     // its flow (the river downstream, a pond still) and tells the game where it lies (WaterSheet, at its highest point).
     // Drawn only — not ground, no collider.
-    static void AddWater(Terrain t, ChunkOut c, Material river, Material pond)
+    static void AddWater(Terrain t, ChunkOut c, Material river, Material pond, Material sea)
     {
         AddSheet(t, c, river, 0, "River water");
         for (int p = 0; p < t.ponds.Count; p++) AddSheet(t, c, pond, 1 + p, "Pond water " + t.ponds[p].p.id);
+        AddSheet(t, c, sea, t.SeaBody, "Sea water");
     }
 
     static void AddSheet(Terrain t, ChunkOut c, Material mat, int body, string name)
@@ -1275,6 +1553,8 @@ public static class SeamlessWorldBuilder
     {
         { "hazemere", Biome.Desert }, { "hilt", Biome.Coast }, { "cindrel", Biome.Volcanic }, { "kharnel", Biome.Haunted },
     };
+    // The kept biomes whose land wears sand ground (decided with the user 2026-10-30: the desert, and the beach for now).
+    static readonly HashSet<Biome> SandBiomes = new HashSet<Biome> { Biome.Desert, Biome.Coast };
 
     static readonly Dictionary<string, Theme> Themes = new Dictionary<string, Theme>
     {
@@ -1355,7 +1635,7 @@ public static class SeamlessWorldBuilder
         if (faceRockSizes.TryGetValue(model, out var size)) return size;
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(NatureDir + model + ".prefab");
         var drawn = new List<Renderer>(prefab.GetComponentsInChildren<Renderer>());
-        var b = BoundsOf(drawn, prefab.transform);
+        var b = BridgeDecks.BoundsOf(drawn, prefab.transform);
         float scale = NatureScale(new StringBuilder());
         return faceRockSizes[model] = (b.size.y * scale, Mathf.Min(b.size.x, b.size.z) * scale, -b.min.y * scale);   // lift: pivot to the rock's underside
     }
@@ -1371,7 +1651,7 @@ public static class SeamlessWorldBuilder
     // against a person in the pack. Both heights are read, never typed.
     const string NaturePersonPath = "Assets/1_Authored/Nature/Idyllic Fantasy Nature/Prefabs/Code Related/Controller.prefab";
 
-    static float NatureScale(StringBuilder report)
+    internal static float NatureScale(StringBuilder report)
     {
         var person = AssetDatabase.LoadAssetAtPath<GameObject>(NaturePersonPath);
         var body = person != null ? person.GetComponentInChildren<CharacterController>(true) : null;
@@ -1604,7 +1884,7 @@ public static class SeamlessWorldBuilder
                         float x = clip.xMin + i * Step, z = clip.yMin + j * Step, y = t.Height(x, z);
                         float water = t.WaterAt(x, z, out _);
                         bool bare = t.DistRoads(x, z) < Terrain.RoadHalf + 0.2f || (!float.IsNaN(water) && y < water + 0.05f)
-                                    || t.Normal(x, z).y < 0.8f || Town.Contains(new Vector2(x, z));
+                                    || t.Normal(x, z).y < 0.8f || t.InTown(new Vector2(x, z));
                         if (!bare && natureOnly)
                         {
                             int theme = t.ThemeAt(x, z);
@@ -1830,7 +2110,7 @@ public static class SeamlessWorldBuilder
             }
             if (meshes.Count > 0)
             {
-                var bd = BoundsOf(meshes, null);
+                var bd = BridgeDecks.BoundsOf(meshes, null);
                 reach = Mathf.Max(reach, PastChunk(Rect.MinMaxRect(bd.min.x, bd.min.z, bd.max.x, bd.max.z), chunk.rect));
             }
             placed++;
@@ -1897,11 +2177,17 @@ public static class SeamlessWorldBuilder
     // Which town's theme a spot shows: the layout's, at the spot moved by the border's wave and the roll's mix.
     static Theme AreaAt(Terrain t, float x, float z, float mixX, float mixZ)
     {
-        float wx = (Mathf.PerlinNoise(x * 0.035f + 3.7f, z * 0.035f + 8.1f) - 0.5f) * 2f * BorderWave + (mixX * 2f - 1f) * BorderMix;
-        float wz = (Mathf.PerlinNoise(x * 0.035f + 21.3f, z * 0.035f + 5.9f) - 0.5f) * 2f * BorderWave + (mixZ * 2f - 1f) * BorderMix;
+        Vector2 wave = BorderShift(x, z);
+        float wx = wave.x + (mixX * 2f - 1f) * BorderMix;
+        float wz = wave.y + (mixZ * 2f - 1f) * BorderMix;
         int moved = t.ThemeAt(x + wx, z + wz);
         return ThemeOf(t, moved >= 0 ? moved : t.ThemeAt(x, z));
     }
+
+    // The border's wave at a spot: how far its theme is read from, the same for its props and its ground.
+    static Vector2 BorderShift(float x, float z) =>
+        new Vector2((Mathf.PerlinNoise(x * 0.035f + 3.7f, z * 0.035f + 8.1f) - 0.5f) * 2f * BorderWave,
+                    (Mathf.PerlinNoise(x * 0.035f + 21.3f, z * 0.035f + 5.9f) - 0.5f) * 2f * BorderWave);
 
     static float Grove(float x, float z) => Mathf.PerlinNoise(x / GroveWidth + 37.1f, z / GroveWidth + 91.7f);
     static float Clump(float x, float z, float offset) => Mathf.PerlinNoise(x / 3f + offset, z / 3f + offset * 1.7f);
@@ -1925,8 +2211,10 @@ public static class SeamlessWorldBuilder
         // enough to overlap, stacked up the wall's whole height, each one solid so a body stops at the rock it sees.
         Add("cliff faces", PropCategory.Rocks, 1f, (x, z) =>
         {
-            if (t.DistRoads(x, z) < Terrain.RoadHalf + 0.6f || t.DistRiver(x, z) < 4f || t.DistPond(x, z, out _) < 1f) return 0f;
-            if (Rect.MinMaxRect(Town.xMin - 2f, Town.yMin - 2f, Town.xMax + 2f, Town.yMax + 2f).Contains(new Vector2(x, z))) return 0f;
+            if (t.DistRoads(x, z) < Terrain.RoadHalf + 0.6f || t.DistRiver(x, z) < 4f || t.DistPond(x, z, out _) < 1f || t.SeaInward(x, z) > -4f) return 0f;
+            if (t.InTown(new Vector2(x, z), 2f)) return 0f;
+            if (t.CaveAt(x, z, out _) == Terrain.CavePart.Passage) return 0f;   // the one way in stays open
+            if (t.TideSide(x, z, out _, out _) < Terrain.TideHalf + 2f) return 0f;   // and the low-tide path
             return t.WallNear(x, z, 1.4f, out _, out _) > 0f ? 0.95f : 0f;
         }, th => CliffFaceRocks, anywhere: true, keep: 0.8f, facing: true);
         // Broken rock at the foot of every cliff wall; boulders and stones in the open.
@@ -2025,7 +2313,8 @@ public static class SeamlessWorldBuilder
         Tex("_DirtMap", "BASE_OR_PATCH_OR_PATH_painted_dirt", "_DirtTiling", 4f);
         Tex("_PathMap", "BASE_OR_PATCH_OR_PATH_painted_dirt", "_PathTiling", 4f);
         Tex("_StoneMap", "BASE_OR_PATCH_OR_PATH_painted_dirt_stone", "_StoneTiling", 10f);
-        Tex("_RockMap", "BASE_OR_PATCH_OR_PATH_painted_rock", "_RockTiling", 7f);
+        // The shader's third layer (.b) carries the sand (Weights), which the world never paints as rock.
+        Tex("_RockMap", "BASE_OR_PATCH_painted_sand", "_RockTiling", 8f);
         float tiling = 1f / (7f * worldScale);
         mat.SetColor("_Color", Color.white);
         // THE CLIFF FIELDS' OWN ROCK SKIN, on every steep face and on the cave's rock: laid on from all three sides so a
@@ -2050,9 +2339,13 @@ public static class SeamlessWorldBuilder
 
     // A sheet's material: the template, with its surface foam drifting along `flow` (world X and Z) at the template's own
     // speed, or as the template has it where the water stands still.
-    static Material WaterMaterial(string name, Vector4 flow)
+    static Material WaterMaterial(string name, Vector4 flow) => WaterMaterialAt($"{OutDir}/world_{name}_water.mat", flow);
+
+    /// <summary>A water material at <paramref name="path"/>, made from the world's one water template the way the world's
+    /// own rivers and ponds are, flowing along <paramref name="flow"/>'s x and y (zero for still water). A town keeps its
+    /// own in its folder.</summary>
+    internal static Material WaterMaterialAt(string path, Vector4 flow)
     {
-        string path = $"{OutDir}/world_{name}_water.mat";
         var template = AssetDatabase.LoadAssetAtPath<Material>(WaterTemplatePath);
         if (template == null) throw new System.Exception("no water template at " + WaterTemplatePath);
         var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -2084,7 +2377,7 @@ public static class SeamlessWorldBuilder
         return WorldBuildUtil.SaveMeshInPlace(mesh, path);
     }
 
-    static void RegisterAddresses(List<ChunkOut> chunks, string lastlinePrefab)
+    static void RegisterAddresses(List<ChunkOut> chunks, List<(string id, string path)> towns)
     {
         var settings = AddressableAssetSettingsDefaultObject.Settings;
         var group = settings.FindGroup(GroupName)
@@ -2097,7 +2390,7 @@ public static class SeamlessWorldBuilder
             entry.address = address;
         }
         foreach (var c in chunks) Add(c.prefabPath, $"{MapId}/square_{c.cx}_{c.cz}");
-        Add(lastlinePrefab, $"{MapId}/lastline");
+        foreach (var (id, path) in towns) Add(path, $"{MapId}/{id}");
         settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true, true);
         AssetDatabase.SaveAssetIfDirty(group);
         AssetDatabase.SaveAssetIfDirty(settings);
@@ -2106,7 +2399,7 @@ public static class SeamlessWorldBuilder
     // The world scene, written as text: its own four settings blocks (light, fog, sky) kept from the scene as it is,
     // then the world, the pathfinder settings, the grassland marker and the arrival point. Written directly so no
     // scene is ever opened.
-    static void WriteScene(List<(string address, Rect rect)> chunks, Vector3 arrival, float reach, float loadSeconds)
+    static void WriteScene(List<(string address, Rect rect)> chunks, List<TownSite> towns, Vector3 arrival, float reach, float loadSeconds)
     {
         if (!File.Exists(ScenePath)) throw new System.Exception(ScenePath + " is missing — its settings blocks are what a rebuild keeps");
         var template = File.ReadAllLines(ScenePath);
@@ -2134,7 +2427,8 @@ public static class SeamlessWorldBuilder
         foreach (var (address, rect) in chunks)
             world.Append($"  - address: {address}\n    min: {V2(rect.min)}\n    max: {V2(rect.max)}\n");
         world.Append("  areas:\n");
-        world.Append($"  - name: Lastline\n    kind: {(int)SeamlessAreaKind.Town}\n    min: {V2(Town.min)}\n    max: {V2(Town.max)}\n");
+        foreach (var site in towns)
+            world.Append($"  - name: {site.name}\n    kind: {(int)SeamlessAreaKind.Town}\n    min: {V2(site.rect.min)}\n    max: {V2(site.rect.max)}\n");
         world.Append($"  propReach: {F(reach)}\n  measuredLoadSeconds: {F(loadSeconds)}\n");
 
         Object(100001, 100002, 100003, "World", Vector3.zero, worldGuid, world.ToString());

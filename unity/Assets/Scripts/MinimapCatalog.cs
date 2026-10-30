@@ -28,6 +28,9 @@ public class MinimapCatalog : ScriptableObject
                  "square pictures this many world units wide (TilePicture), which the minimap shows around the player; " +
                  "the one picture is then only the whole-map overview.")]
         public float tileSize;
+        [Tooltip("Written by the minimap baker: how many pixels wide each square picture is. 0 = not written, and the " +
+                 "Map window then shows only the one overview picture.")]
+        public int tilePixels;
     }
 
     /// <summary>The Resources name (under <see cref="PictureFolder"/>) of the square picture covering map units
