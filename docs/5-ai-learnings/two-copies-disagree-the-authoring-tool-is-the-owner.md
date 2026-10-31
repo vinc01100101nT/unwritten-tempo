@@ -22,8 +22,8 @@ is a place the tool's output failed to reach, so the fix is to make the tool rea
 ## Why
 
 On 2026-10-11 the doors of one town sat in different places in the town's map and on the world map. The doors
-are planted in the world creator. I measured both copies correctly, then recommended the map as built as the
-owner because it is "what the player walks through". That would have made the world creator's door planting
+were planted in the authoring tool of the time, the world creator. I measured both copies correctly, then recommended
+the map as built as the owner because it is "what the player walks through". That would have made the tool's door planting
 decorative. The user had to correct it, and it cost a full round on a bug whose cause was already measured: the
 build skips hand-made maps, so doors planted in the tool never reached that one map.
 

@@ -1,7 +1,7 @@
 ---
 status: "BUILT 2026-10-13 and compiled; not play-tested."
 owner: vince
-last-updated: 2026-10-13
+last-updated: 2026-10-31
 tags:
   - economy
   - items
@@ -28,17 +28,21 @@ up, per unit) when it sells one and takes it when it buys one back.
 
 | Item | Does | Value | Buy (with Tax) | Sells back for | Weight |
 | --- | --- | --- | --- | --- | --- |
-| Fly Wing | Sets you down on a random spot of the map you are on | 38 | 51 | 25 | 5 |
+| Fly Wing | Sets you down on a random spot of the named area you stand in | 38 | 51 | 25 | 5 |
 | Antidote | Removes 3 debuffs | 75 | 100 | 50 | 5 |
-| Butterfly Wing | Returns you to your save point, on whichever map it is | 225 | 300 | 150 | 5 |
+| Butterfly Wing | Returns you to your save point | 225 | 300 | 150 | 5 |
 
 The ten Healing Potions and Mana Draughts are town supplies too:
 [Healing Potions and Mana Draughts](healing-and-mana-potions.md).
 
 - **Fly Wing** costs what the smallest potion costs: it is used many times an hour.
 - **Antidote** sits between the size 1 and size 2 potions.
-- **Butterfly Wing** costs 300u at the shop, the same for every character, while the Keeper's teleport charges
-  40u × the character's level a door ([The Keeper and the Wings](keeper-and-wings.md)).
+- **Fly Wing** lands only inside a named area of the world (a field, a town, a cave), on ground connected to where
+  you stand, so you can always walk back. Outside every named area there is nowhere to land: the wing says so and is
+  not spent.
+- **Butterfly Wing** costs 300u at the shop, the same for every character. The Keeper's teleport is priced by doors'
+  worth (40u × the character's level a door; inside the world, a door for every 80 m between the two Keepers or part of
+  it — [The Keeper and the Wings](keeper-and-wings.md)).
 
 ## Hunting finds
 
@@ -94,5 +98,5 @@ that element's two converters; a creature of any other element gives up that ele
 - **Which food goes with which element is a first pick.**
 - **Only Lastline has a Tool Dealer**, so every town supply is bought in one town.
 - **Sage Stew's and the eight converters' descriptions are drafts.**
-- **Whether the Butterfly Wing's price should follow the level**, as the Keeper's teleport does, is to be decided: at
-  300u it is the price of two and a half doors at level 3, and of less than one door from level 8 up.
+- **Whether the Butterfly Wing's price should follow the level**, as the Keeper's teleport price does, is to be
+  decided.

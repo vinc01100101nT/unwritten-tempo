@@ -4,7 +4,6 @@ using UnityEngine;
 /// <summary>
 /// Inspector for a <see cref="MapRecipe"/> asset: draws the normal fields plus a one-click <b>Generate Map</b>
 /// button that bakes the recipe into <c>Assets/Scenes/&lt;mapName&gt;.unity</c> via <see cref="RecipeGenerator"/>.
-/// (The World Creator window bakes a whole multi-map world; this is the single-map path for editing one recipe.)
 /// </summary>
 [CustomEditor(typeof(MapRecipe))]
 public class MapRecipeEditor : Editor

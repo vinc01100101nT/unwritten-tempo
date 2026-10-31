@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 /// <list type="bullet">
 /// <item>Ground: <see cref="WalkableGround"/> / <see cref="GroundBlendBuilder"/> (tiled or blended grass→dirt).</item>
 /// <item>Prop seating: <see cref="PropPlacement"/> (bounds-driven PlaceOnGround / StripColliders).</item>
-/// <item>Spawns &amp; portals: <see cref="RegionBuilder"/> (MakeSpawn). Warp wiring is <see cref="WorldCreator"/>'s job.</item>
+/// <item>Spawns &amp; portals: <see cref="RegionBuilder"/> (MakeSpawn).</item>
 /// <item>Mobs: <see cref="RigBuilder25D.BuildMonster(in MonsterArchetype, Vector3)"/> + <see cref="MobRoster"/>.</item>
 /// </list>
 /// All randomness flows from <see cref="MapRecipe.seed"/>, so a recipe + seed reproduces a map exactly.
@@ -85,15 +85,15 @@ public static class RecipeGenerator
 
     // ── ENTRY POINTS ───────────────────────────────────────────────────────────────────────────────────
     /// <summary>Bake <paramref name="r"/> into Assets/Scenes/&lt;mapName&gt;.unity. Returns success + the scene
-    /// path and how much was placed. Leaves the new map open &amp; active. <see cref="WorldCreator"/> is the only
-    /// caller — it clones a template recipe per map cell and bakes each via the exit-aware overload below.</summary>
+    /// path and how much was placed. Leaves the new map open &amp; active. The recipe inspector's Generate button
+    /// (<see cref="MapRecipeEditor"/>) is the caller.</summary>
     public static (bool ok, string path, int props) Generate(MapRecipe r)
         => Generate(r, null);
 
-    /// <summary>As <see cref="Generate(MapRecipe)"/>, but <paramref name="exitPointsXZ"/> (a map's warp doorway
-    /// positions in world-XZ, passed by the World Creator) routes the paths to terminate at each doorway — so warp
-    /// pads land on roads, not mid-field. When null/empty, paths fall back to the recipe's random pathCount routes.
-    /// <paramref name="mapPicksRoad"/> true = the World Creator set this map's road, so it wins over the biome's.
+    /// <summary>As <see cref="Generate(MapRecipe)"/>, but <paramref name="exitPointsXZ"/> (a map's doorway positions in
+    /// world-XZ) routes the paths to terminate at each doorway — so doors land on roads, not mid-field. When null/empty,
+    /// paths fall back to the recipe's random pathCount routes.
+    /// <paramref name="mapPicksRoad"/> true = the caller set this map's road, so it wins over the biome's.
     /// <paramref name="leaveOpen"/> false = save and close the new map, leaving the scenes that were open (and the
     /// active one) exactly as they were — for builds run without the user at the controls.</summary>
     public static (bool ok, string path, int props) Generate(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ,
@@ -168,8 +168,8 @@ public static class RecipeGenerator
         // as it loads each map — so nothing about creatures is ever saved inside a scene.
 
         // NO ARRIVAL POINT IS PLANTED HERE. One used to go at the map's centre, where this also puts the plaza and
-        // its props, so arriving there put a player inside a building. The World Creator makes one beside each
-        // door when it links two maps, which is where an arriving player actually comes in.
+        // its props, so arriving there put a player inside a building. An arrival point belongs beside the door a
+        // player comes in by, so whoever adds the door adds it.
 
         // ── SAVE + REGISTER ──────────────────────────────────────────────────────────────────────────────
         if (!Directory.Exists(ScenesDir)) AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -193,15 +193,14 @@ public static class RecipeGenerator
         return (true, path, props);
     }
 
-    // The map's roads and its ground, from the recipe and seed alone — so a rebuild of the ground lays exactly the
-    // ground the map was generated with.
+    // The map's roads and its ground, from the recipe and seed alone.
     static GameObject LayGround(Scene scene, MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ, BiomeRow bio,
                                 string roadTex, float patchAmount, string safe, int seed, int groundLayer,
                                 out List<PathRouting.Route> paths, out GroundCliffs.Spec cliffs)
     {
         Vector3 center = Vector3.zero;
         // Route the path network ONCE: it drives the ground bake, follow-path placement, and prop clearance.
-        // With warp exits (World Creator), roads link the doorways to each other so pads sit on roads; else random routes.
+        // With doorways given, roads link them to each other so doors sit on roads; else random routes.
         bool toExits = exitPointsXZ != null && exitPointsXZ.Count > 0;
         paths = toExits
             ? PathRouting.BuildToExits(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, exitPointsXZ, r.pathWander, seed, r.pathSmoothness)
@@ -220,51 +219,6 @@ public static class RecipeGenerator
                                           bio.baseTile.name, bio.patchTile.name, bio.tint * r.groundTint,
                                           r.groundStyle == GroundStyle.HardEdge, bio.bumpHeight, bio.bumpWidth,
                                           bio.bumpLevels, bio.bumpSteepestDegrees, cliffs);
-    }
-
-    /// <summary>Lay a generated map's ground again, and nothing else: the same recipe, seed and doorways that built the
-    /// map rebuild its ground in place, while its props, doors, arrival points and everything else stay exactly as they
-    /// are. For a change to how ground is shaped, so it reaches maps already built without regenerating them. The map
-    /// is opened alongside whatever is open, saved and closed again; the scenes open before, and the active one, are
-    /// left as they were. Returns null on success, else what went wrong.</summary>
-    public static string RebuildGround(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ, bool mapPicksRoad = false)
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode) return "exit Play mode first";
-        if (r == null) return "no recipe";
-        if (r.randomizeSeed) return $"'{r.mapName}' rolls a new seed each build, so its ground cannot be laid again";
-        var bio = BiomeRowOrExplain(r.biome);
-        if (bio == null) return $"'{r.mapName}' has no usable biome row";
-        bool biomeRoad = !mapPicksRoad && bio.roadTile != null;
-        string roadTex = biomeRoad ? bio.roadTile.name : PathTexName(r.pathTile);
-        float patchAmount = bio.patchAmount >= 0f ? bio.patchAmount : r.dirtAmount;
-        string safe = Sanitize(string.IsNullOrWhiteSpace(r.mapName) ? "NewMap" : r.mapName);
-        string path = $"{ScenesDir}/{safe}.unity";
-        if (!File.Exists(path)) return $"no scene at {path}";
-        if (SceneManager.GetSceneByPath(path).isLoaded) return $"'{safe}' is open in the editor; not rebuilding it behind the user's back";
-        int groundLayer = WorldBuildUtil.EnsureGroundLayer();
-        if (groundLayer < 0) return "no free layer slot for 'Ground'";
-
-        var wasActive = SceneManager.GetActiveScene();
-        var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
-        try
-        {
-            string rootName = $"Ground_{safe}";
-            GameObject old = null;
-            foreach (var go in scene.GetRootGameObjects()) if (go.name == rootName) old = go;
-            if (old == null) return $"'{safe}' has no {rootName}";
-            int at = old.transform.GetSiblingIndex();
-            Object.DestroyImmediate(old);
-            var ground = LayGround(scene, r, exitPointsXZ, bio, roadTex, patchAmount, safe, r.seed, groundLayer, out _, out _);
-            if (ground == null) return $"'{safe}': the ground could not be built (missing tile or shader)";
-            ground.transform.SetSiblingIndex(at);
-            if (!EditorSceneManager.SaveScene(scene)) return $"'{safe}' could not be saved";
-            return null;
-        }
-        finally
-        {
-            EditorSceneManager.CloseScene(scene, true);
-            if (wasActive.IsValid() && wasActive.isLoaded) SceneManager.SetActiveScene(wasActive);
-        }
     }
 
     // Retrofit: make the foliage in the CURRENTLY-OPEN scene sway, without re-baking it from a recipe. Handy for

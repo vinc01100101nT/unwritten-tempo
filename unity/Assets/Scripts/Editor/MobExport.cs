@@ -17,7 +17,7 @@ using UnityEngine;
 /// <see cref="MobSizes"/>, the weapon, gear grade, folds and stat points straight off the catalog entry, drops from
 /// <see cref="CreatureDrops.Line"/>, and homes from
 /// <see cref="WorldSpawns.HomesOf"/> — so a row that draws a random mix is left out exactly as <c>/where</c> leaves
-/// it out. Map names come from the world layout, the one home of them.</para>
+/// it out. A home is named by its map id, the one name a map has.</para>
 ///
 /// <para><b>When it runs</b> is decided in one place for every Database page — <see cref="WikiExport"/>. It writes one
 /// file outside the project's assets and touches nothing Unity saves.</para>
@@ -41,14 +41,10 @@ public static class MobExport
 
     [Serializable] class Home { public string map, name; public int count; }
 
-    [Serializable] class LayoutJson { public LayoutMap[] maps; }
-    [Serializable] class LayoutMap { public string id, name; }
-
     /// <summary>Regenerate the file from the assets. Returns how many creatures were written.</summary>
     public static int Write()
     {
         MonsterCatalog.Reload();
-        var names = MapNames();
         var homes = new List<(string map, int count)>();
         var list = new List<Creature>();
 
@@ -61,7 +57,7 @@ public static class MobExport
                 h[i] = new Home
                 {
                     map = homes[i].map,
-                    name = names.TryGetValue(homes[i].map, out var n) ? n : homes[i].map,
+                    name = homes[i].map,
                     count = homes[i].count,
                 };
 
@@ -99,24 +95,5 @@ public static class MobExport
         };
         SkillExport.WriteIfChanged(WikiPath,JsonUtility.ToJson(export, true) + "\n");
         return list.Count;
-    }
-
-    // The world map export names its maps through this too — the layout is the one home of a map's name.
-    internal static Dictionary<string, string> MapNames()
-    {
-        var names = new Dictionary<string, string>();
-        try
-        {
-            var layout = JsonUtility.FromJson<LayoutJson>(WorldLayoutFile.ReadText());
-            if (layout?.maps != null)
-                foreach (var m in layout.maps)
-                    if (m != null && !string.IsNullOrEmpty(m.id)) names[m.id] = string.IsNullOrEmpty(m.name) ? m.id : m.name;
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("[Mob Table] Could not read the world layout for map names, so the wiki will show map ids: "
-                             + e.Message);
-        }
-        return names;
     }
 }

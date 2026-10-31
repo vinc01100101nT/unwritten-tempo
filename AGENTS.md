@@ -4,8 +4,8 @@
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/AGENTS.md`
 - `unity/Assets/Scripts/Editor/` — one-click editor tools under `Tools ▸ unwritten ▸ …`
-- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (\~39 cmds)
-- `tools/` — HTML/Python authoring tools (world-creator, map-painter, chatgpt extractor)
+- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items
+- `tools/` — HTML/Python authoring tools (world layout, town editor, map-painter, chatgpt extractor)
 - `tempo/` — auto-generated canvas dev server; do NOT write app code here
 
 ---

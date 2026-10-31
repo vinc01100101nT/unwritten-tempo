@@ -90,7 +90,7 @@ public static class UnitStatMath
     /// own movement speed (held inside its range) times its live movement-speed effects (Slow, Haste). Never below 0.</summary>
     public static float CreatureTravelSpeed(float gearSpeed, float ownMoveSpeed, float moveMult) =>
         Mathf.Max(0f, gearSpeed * Mathf.Clamp(ownMoveSpeed, MinCreatureMoveSpeed, MaxCreatureMoveSpeed) * moveMult);
-    /// <summary>Pre-renewal "crit shield": the TARGET's LUK lowers an attacker's crit chance 0.3%/pt.</summary>
+    /// <summary>Pre-renewal "crit shield": the TARGET's LUK lowers an attacker's crit chance 0.2%/pt.</summary>
     public const float CritShieldPerLuk = 0.002f;
     /// <summary>Ragnarok's perfect dodge: each point of the defender's LUK dodges 0.1% of ordinary attacks outright —
     /// a crit included.</summary>
@@ -533,12 +533,12 @@ public static class UnitStatMath
                          * (1f + ringPct));
 
     // ---- crit / speeds ------------------------------------------------------------------------------------------
-    /// <summary>The chance one swing crits against a defender with <paramref name="targetLuk"/> LUK: the attacker's
-    /// crit chance minus the defender's crit shield, held inside [0, 95%]. The same sum for a player and a mob.</summary>
     /// <summary>A worn crit shield of <paramref name="percent"/> (whole percent off crit chance) expressed as the LUK it
     /// is worth to the crit roll, so it joins the one crit-shield sum below instead of opening a second one.</summary>
     public static int CritShieldAsLuk(float percent) => Mathf.RoundToInt(percent / (CritShieldPerLuk * 100f));
 
+    /// <summary>The chance one swing crits against a defender with <paramref name="targetLuk"/> LUK: the attacker's
+    /// crit chance minus the defender's crit shield, held inside [0, 100%]. The same sum for a player and a mob.</summary>
     public static float EffectiveCritChance(float critChance01, int targetLuk) =>
         Mathf.Clamp01(critChance01 - targetLuk * CritShieldPerLuk);
 

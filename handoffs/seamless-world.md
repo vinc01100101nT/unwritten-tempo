@@ -19,7 +19,8 @@ load) do not happen in the build (0–2 per 600 frames; 25 square loads, none ov
 `FrameStats`); skill `.claude/skills/measure-built-game/`.
 
 **Old world deleted** — 15 test maps, `seamless_test`, then all 77 zone maps, their ground, minimaps, painter files;
-`WorldAtlas.asset` and `tools/world-creator/worlds/world-regions.json` emptied; build list = Systems + world. Lastline's
+`WorldAtlas.asset` emptied and the World Creator (`tools/world-creator/`, `WorldCreator.cs`) removed — `tools/gm.py`
+resolves `--map world` and place names itself; build list = Systems + world. Lastline's
 source moved to `1_Authored/Prefabs/Towns/Lastline.prefab` (+ its meshes/materials); `SeamlessWorldBuilder` reads it.
 The builder keeps the world scene's own settings blocks (no template map). Kept: 18 Summoners (parked on old map names),
 all 230 creatures. Deleted: 15 other-town Keepers, 315 old spawn areas. Music row `lastline` → `world`.
@@ -61,14 +62,12 @@ before this one.
    hunting grounds, a new character starting in the world.
 2. **Top-down meadows still read peach**: the facing cards are upright, so from 65° above the pink tops are a sliver.
    Next idea, offered to the user: let each card also lean back toward the camera (same shader, one more step).
-3. **Keepers per map**: `WorldTownsfolk.KeeperIn(map)` returns the first Keeper of a map — breaks when a second town
-   is in the world; teleport prices count doors the world does not have. Needs a design call (price by distance?).
-4. **Fog not starting** in my test session (`FogOverlay` had no material/quad) — cause not found.
-5. **Trees missing from the minimap pictures** (the pack's leaf shader draws nothing in the bake camera) — cause not
+3. **Fog not starting** in my test session (`FogOverlay` had no material/quad) — cause not found.
+4. **Trees missing from the minimap pictures** (the pack's leaf shader draws nothing in the bake camera) — cause not
    measured.
-6. **Wiki creature list** shows the hunting grounds as "world" (no named areas for fields yet).
-7. **Character stuck** between field trees and rocks at (-56, 50) — the route-finder may not know the field fill.
-8. Next blocks of the world; the 18 Summoners' places; the other 14 towns.
+5. **Wiki creature list** shows the hunting grounds as "world" (no named areas for fields yet).
+6. **Character stuck** between field trees and rocks at (-56, 50) — the route-finder may not know the field fill.
+7. Next blocks of the world; the 18 Summoners' places; the other 14 towns.
 
 ## Dead ends (proven)
 

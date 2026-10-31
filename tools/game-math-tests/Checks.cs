@@ -1977,6 +1977,11 @@ static class Checks
         That(KeeperMath.TeleportPrice(7, 50) == 14000, KeeperF, "a trip of 7 doors at level 50 must cost 14,000");
         That(KeeperMath.TeleportPrice(1, 0) == 40, KeeperF, "a level below 1 must be priced as level 1");
         That(KeeperMath.TeleportPrice(30000000, 99) == 118800000000L, KeeperF, "a huge trip must not overflow a whole number");
+        That(KeeperMath.DoorsBetween(UnityEngine.Vector3.zero, UnityEngine.Vector3.zero) == 0, KeeperF, "two Keepers on one spot must be no doors apart");
+        That(KeeperMath.DoorsBetween(UnityEngine.Vector3.zero, new UnityEngine.Vector3(1f, 0f, 0f)) == 1, KeeperF, "any distance at all must cost at least one door");
+        That(KeeperMath.DoorsBetween(UnityEngine.Vector3.zero, new UnityEngine.Vector3(0f, 0f, 80f)) == 1, KeeperF, "80 m must be exactly one door");
+        That(KeeperMath.DoorsBetween(UnityEngine.Vector3.zero, new UnityEngine.Vector3(60f, 0f, 80f)) == 2, KeeperF, "100 m along the ground must be two doors");
+        That(KeeperMath.DoorsBetween(UnityEngine.Vector3.zero, new UnityEngine.Vector3(0f, 500f, 80f)) == 1, KeeperF, "height must not count toward a trip's doors");
 
         var home = new UnityEngine.Vector3(10f, 2f, 5f);
         var north = KeeperMath.ArrivalSpot(home, 0f, 1.5f);

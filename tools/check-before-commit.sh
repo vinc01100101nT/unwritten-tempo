@@ -67,7 +67,7 @@ check "every asset reference points at a file"     py tools/check-asset-wiring.p
 check "per-frame code follows PERFORMANCE.md"      py tools/check-perf-hotpaths.py
 check "every asset follows ASSETS.md"             py tools/check-asset-rules.py
 check "every biome's look is whole"               py tools/check-biome-table.py
-check "every map id agrees with the world layout"  py tools/check-map-ids.py
+check "every map id names a real map"              py tools/check-map-ids.py
 check "every quest can be finished"               py tools/check-quest-data.py
 check "every shadow look holds together"         py tools/check-shadow-looks.py
 

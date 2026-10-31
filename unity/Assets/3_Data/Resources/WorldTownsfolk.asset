@@ -283,6 +283,24 @@ MonoBehaviour:
     hairStyle: 
     hairColour: 
     headgear: 
+  - id: keeper-parley
+    name: Keeper
+    description: Save Point, Storage, Teleport
+    model: Suit_Female
+    map: world
+    home: {x: -17.5, y: 0, z: 164.5}
+    wanderRadius: 0
+    facing: 210
+    station: 0
+    shop: 
+    keeper: 1
+    summons: 
+    summonAt: {x: 0, y: 0, z: 0}
+    level: 1
+    barks: 0
+    hairStyle: 
+    hairColour: 
+    headgear: 
   - id: beta-hatter
     name: Hatter
     description: Headgear (beta testing)

@@ -127,7 +127,7 @@ find_browser() {
                     "$(native_path "${LOCALAPPDATA:-$HOME/AppData/Local}")/Google/Chrome/Application/chrome.exe" \
                     "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" \
                     "C:/Program Files/Microsoft/Edge/Application/msedge.exe" ;;
-    *) set -- /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser ;;
+    *) set -- /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser /opt/pw-browsers/chromium ;;
   esac
   for __b in "$@"; do [ -f "$__b" ] && { echo "$__b"; return 0; }; done
   for __n in google-chrome chromium chrome; do command -v "$__n" 2>/dev/null && return 0; done

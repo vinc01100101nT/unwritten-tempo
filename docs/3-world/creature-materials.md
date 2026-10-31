@@ -73,7 +73,9 @@ own level. That is the reward for hunting by hand.
 - **Where each creature lives:** `tools/world-spawns/build_world_spawns.py` places every creature of the seamless world
   `world` into `WorldSpawns.asset`; its `--preview` draws the patches.
 - **How many creatures there are, by kind and version:** `python3 tools/project-status.py`.
-- **Proof the saved files agree with the rule:** `tools/check-creature-materials.py`.
+- **Proof the saved files agree with the rule:** `tools/check-creature-materials.py` — which also fails when a
+  Blighted creature is kept on a world patch inside the spawn builder's ring (`RING` in
+  `tools/world-spawns/build_world_spawns.py`) of any town of `data/world-layout.json`.
 
 ## Still open
 

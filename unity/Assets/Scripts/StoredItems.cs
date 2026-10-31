@@ -151,6 +151,8 @@ public class ProgressEnvelope
 public struct KeeperTrip
 {
     public string map;
+    /// <summary>The Keeper sent to, by person id: one map can hold several towns, each with its own Keeper.</summary>
+    public string keeper;
     public string name;
     public long price;
 }

@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-30, not yet play-tested. First-guess numbers and the calls made while building are listed under Still open."
+status: "BUILT, not yet play-tested. First-guess numbers and the calls made while building are listed under Still open."
 owner: vince
-last-updated: 2026-09-30
+last-updated: 2026-10-31
 tags:
   - world-content
 ---
@@ -18,12 +18,13 @@ some fight beside you for a moment, and some choose to fight you. The lore is in
 
 ## When a mob transforms back
 
-- **15% of kills** of a normal or an elite transform. A shadow never transforms.
+- **15% of kills** of a normal or an elite transform — a Tainted or Blighted version included. A shadow never
+  transforms.
 - The mob's own drops fall as they always do, at its death. The character appears where it died.
 - **An elite always becomes the same ninja** (the table below), and every ninja is a rebel.
 - **A normal becomes a random character** from every character except the ninjas, who belong to the elites. The same
   character can come from any normal, at any level.
-- **The character is the mob's level**, and a rebel gives the experience a mob of that level gives.
+- **The character is the mob's level, and fights at its multiplier** — an ally at twice it.
 - When it appears it says one line in a speech bubble, drawn at random from its behaviour's set (below).
 
 ## The three behaviours
@@ -31,8 +32,8 @@ some fight beside you for a moment, and some choose to fight you. The lore is in
 | Behaviour | What it does | Unsigned | Items | Experience |
 | --- | --- | --- | --- | --- |
 | **Never fights** | Stays on its spot, says its line, and after **30 seconds** says a goodbye line and vanishes. | Pays its saver Unsigned (below). | Its creature's own material (below). | — |
-| **Ally** | Fights on its saver's side for **30 seconds**, then says a goodbye line and vanishes. It attacks mobs, rebels, and anything that treats its saver as an enemy. | — | — | — |
-| **Rebel** | Attacks straight away, with the same aggression as a mob: it is not tied to the player who freed it. If nobody beats it within **30 seconds**, it leaves. | None. | Drops loot **one kind up**: a rebel from a normal drops as an elite does, a rebel from an elite drops as a shadow does. | As a mob of its level. |
+| **Ally** | Fights on its saver's side for **30 seconds**, at twice its creature's multiplier, then says a goodbye line and vanishes. It attacks mobs, rebels, and anything that treats its saver as an enemy. | — | — | — |
+| **Rebel** | Attacks straight away, with the same aggression as a mob: it is not tied to the player who freed it. If nobody beats it within **30 seconds**, it leaves. | None. | **Three kills' worth** of its creature: every drop roll three times over, at the creature's own multiplier, so no higher tier opens. | Three kills of its creature. |
 
 **Sides are a general feature, not an ally special case.** Every unit belongs to a side, and anything that treats a
 player as an enemy — a mob, a rebel, and later a player in PvP — is an enemy of that player's allies too.
@@ -43,7 +44,7 @@ player as an enemy — a mob, a rebel, and later a player in PvP — is an enemy
 - **A never-fights character pays the player who saved it**, the moment it appears: Unsigned, and some of its creature's
   own material. Only a normal can become one.
 - **The Unsigned is worth a number of kills of that creature**, at 10u a level of the level its file gives it — never
-  the level it grew to in the fight — times its gear's grade multiplier and fold multiplier ([What a Kill Pays](what-a-kill-pays.md)). The saver's run of kills
+  the level it grew to in the fight — times the creature's multiplier ([What a Kill Pays](what-a-kill-pays.md)). The saver's run of kills
   multiplies the Unsigned, as it does a kill's experience.
 - **The material goes into the saver's bag**, and whatever the bag has no room for falls where the character stands,
   kept for the saver like any drop. The run of kills does not multiply it.
@@ -148,7 +149,8 @@ them there.
   pair is the rebel.
 - **The names shown** are the art folder names, spaced, until real names are chosen; each is one field on the
   character's asset.
-- **Calls made while building, each a one-line change if wrong:** a character's strength is its mob's; the rescue Unsigned is
+- **Calls made while building, each a one-line change if wrong:** a character's strength is its mob's, an ally's at twice
+  its multiplier; a rebel pays three kills of its creature; the rescue Unsigned is
   paid as the character appears; an ally's kills are its saver's; a rebel from an elite never summons; a goodbye line is
   readable for 2 seconds before the character vanishes.
 - **The dialog lines** are a first draft.

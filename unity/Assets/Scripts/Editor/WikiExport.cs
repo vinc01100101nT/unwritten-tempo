@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,9 +14,8 @@ using UnityEngine;
 ///
 /// <para><b>What counts as a change:</b> a creature, item, skill, the spawn list, the world map, the weapon colours
 /// (saved, imported, moved or deleted); every recompile, because the element chart, the formulas and the wording all
-/// live in code; and an edit to the world layout, which lives outside the project and is watched on disk. A change
-/// made during Play is held until Play ends. Map previews are the exception: rendering them costs seconds, so they
-/// re-render one map at a time when that map's scene is saved (<see cref="WorldMapExport"/>).</para>
+/// live in code. A change made during Play is held until Play ends. Map previews are the exception: rendering them
+/// costs seconds, so they re-render one map at a time when that map's scene is saved (<see cref="WorldMapExport"/>).</para>
 ///
 /// <para>Everything written lives in the wiki folder (and the skill export's own files), outside the project's
 /// assets, so nothing Unity saves can change because of it.</para>
@@ -27,12 +25,6 @@ public static class WikiExport
 {
     static bool queued, heldForPlay;
 
-    // Set from the file watcher's own thread; read on the editor's.
-    static volatile bool layoutChanged;
-    static FileSystemWatcher layoutWatcher;
-
-    static string LayoutDir => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "tools", "world-creator", "worlds"));
-
     static WikiExport()
     {
         EditorApplication.playModeStateChanged += state =>
@@ -40,9 +32,6 @@ public static class WikiExport
             if (state == PlayModeStateChange.EnteredEditMode && heldForPlay) { heldForPlay = false; Request(); }
         };
         EditorApplication.update += Tick;
-        WatchLayout();
-        // The watcher belongs to this load of the editor's code; a reload makes a new one.
-        AssemblyReloadEvents.beforeAssemblyReload += () => { if (layoutWatcher != null) { layoutWatcher.Dispose(); layoutWatcher = null; } };
         // A recompile is itself a change: the element chart, every formula and every sentence live in code.
         Request();
     }
@@ -66,7 +55,6 @@ public static class WikiExport
     // never reached the wiki until somebody clicked into Unity.
     static void Tick()
     {
-        if (layoutChanged) { layoutChanged = false; queued = true; }
         if (!queued) return;
         queued = false;
         if (EditorApplication.isPlayingOrWillChangePlaymode) { heldForPlay = true; return; }
@@ -86,29 +74,6 @@ public static class WikiExport
         MobExport.Write();
         ItemExport.Write();
         ElementExport.Write();
-        WorldMapExport.Write();
-    }
-
-    static void WatchLayout()
-    {
-        try
-        {
-            if (!Directory.Exists(LayoutDir)) return;
-            layoutWatcher = new FileSystemWatcher(LayoutDir, "*.json")
-            {
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
-            };
-            FileSystemEventHandler changed = (_, __) => layoutChanged = true;
-            layoutWatcher.Changed += changed;
-            layoutWatcher.Created += changed;
-            layoutWatcher.Renamed += (_, __) => layoutChanged = true;
-            layoutWatcher.EnableRaisingEvents = true;
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("[Wiki] Could not watch the world layout, so a renamed map reaches the wiki only on the " +
-                             "next other change: " + e.Message);
-        }
     }
 
     /// <summary>A creature, item, skill, the spawn list, the world map or the weapon colours was saved, imported,

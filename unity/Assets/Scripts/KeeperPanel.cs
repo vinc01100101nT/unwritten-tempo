@@ -350,7 +350,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
                 else Open(line.index == ButtonStorage ? Page.Storage : line.index == ButtonTeleport ? Page.Teleport : Page.Menu);
                 break;
             case Kind.Trip:
-                if (me != null && trips != null && line.index < trips.Length) me.AskKeeperTeleport(trips[line.index].map);
+                if (me != null && trips != null && line.index < trips.Length) me.AskKeeperTeleport(trips[line.index].map, trips[line.index].keeper);
                 UISounds.PlayClick();
                 break;
         }

@@ -81,8 +81,8 @@ public class MonsterDef : ScriptableObject
 
     // ---- THE stat block: identical in shape and formula to the player's (design doc "Unified Unit Stats") -----------
     // A mob is authored as a LEVEL and six PRIMARIES; every combat number below is DERIVED from them through
-    // UnitStatMath — the same functions Character runs. There is no mob-only tier or multiplier: a mob is dangerous
-    // for the same reasons a player is (its level, its stats, and eventually its gear).
+    // UnitStatMath — the same functions Character runs. The one mob-only layer is its multiplier (below), which scales
+    // its health, its attack by the cube root, and everything a kill pays.
     [Header("Stats (level + primaries — derived exactly like the player)")]
     [Tooltip("Character level. Drives the base HP/ATK curve and feeds HIT/FLEE directly, exactly as it does for the player.")]
     public int level = 1;

@@ -9,12 +9,15 @@ walks there, swings, presses up to four chosen skills, drinks potions and picks 
   switch it on. The server says yes or no; the player's machine never switches it on by itself. When the server says
   yes to the window's **Start**, every open window closes — the System menu and Settings included; a refusal leaves
   them up.
-- **Never in a town.** Free Roam only in a field or a dungeon. A refusal is said on screen.
+- **Never in a town.** Free Roam only in a field or a dungeon. A refusal is said on screen. In the seamless world the
+  server reads the named area the character stands in (`MapKindHere`, through `SeamlessWorld.AreaIndexAt`): a Town
+  area refuses, and anywhere else — a Field area, or ground outside every named area — counts as a field. A map outside
+  the seamless world is judged by the world layout's entry for it.
 - **It stops** when the player gives any order of their own (a click, WASD, a skill aimed by hand that has to walk
-  into range, T again), when the character dies, and on every trip: a door, a Butterfly Wing, a Keeper's teleport, a
-  GM's `/tp`. A Fly Wing keeps it on and moves the Radius spot to where it lands.
-- **Doors are refused while it is on** — the door says "Switch auto-combat off to use a door.", and the server refuses
-  one as well if it is asked anyway.
+  into range, T again), when the character dies, and on every trip: a Butterfly Wing, a Keeper's teleport, a GM's
+  `/tp`. A Fly Wing keeps it on and moves the Radius spot to where it lands.
+- **Doors are refused while it is on** — the server refuses a door asked for while it is on. The world has no doors
+  today, so this never comes up.
 - A creature's taunt, or a skill's own dash or lunge, does not stop it: the hunt carries on afterwards from the same spot.
 - **Whether it is on is never saved.** Every sign-in starts with it off.
 - While it is on, the tag **AUTO-COMBAT — press T to stop** shows near the bottom of the screen.
@@ -25,7 +28,7 @@ walks there, swings, presses up to four chosen skills, drinks potions and picks 
 - **Radius** — starts a fight only with a creature within **10** of the spot it was switched on at, drops a
   fight once the character or the creature is more than **14** from that spot, and walks back to the spot when there is
   nothing to fight.
-- **Free Roam** (the default) — goes for the nearest creature anywhere on the map.
+- **Free Roam** (the default) — goes for the nearest creature the player's machine has been sent, anywhere in sight.
 
 Whichever hunt, the nearest qualifying creature to the character is chosen. A target that has neither lost health
 nor been walked any closer for **6 seconds** — one the hunt cannot reach or cannot hurt — is given up on and left
@@ -60,8 +63,8 @@ is never drunk while one of its kind is still running. 0% = never.
 The settings are one row per character, `character_auto_combat` (`accounts/sql/013_character_auto_combat.sql`),
 written only when the player changes a setting, the same way the hotbar's row is — through the character server's
 `PUT /server/characters/{id}/auto-combat` door, guarded by the server secret and the hand-over number. The row travels
-to a map server with the character. A character that never changed a setting has no row and reads as: empty slots,
-auto-loot everything at 100%, a healing item below 70% health, no mana draught, Free Roam. The shared character build string is `unwritten-character-v28`.
+to the map server with the character. A character that never changed a setting has no row and reads as: empty slots,
+auto-loot everything at 100%, a healing item below 70% health, no mana draught, Free Roam. The shared character build string is `unwritten-character-v30`.
 
 ## Where it lives in the code
 

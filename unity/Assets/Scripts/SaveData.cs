@@ -161,6 +161,10 @@ public class SaveData
     // back up is worked out at use from where that Keeper stands (KeeperMath.ArrivalSpot), so a town re-laid never
     // strands anybody. False — every save written before this, and every GM /save — means the position is the spot.
     public bool   savePointAtKeeper;
+    // WHICH KEEPER, by their person id (WorldTownsfolk.Row.id): one map — the seamless world — holds many towns, each
+    // with its own Keeper, so the map alone no longer names one. Empty = not recorded (every save written before this,
+    // when each map had one Keeper at most): that map's first Keeper is used, which is the one it was set at.
+    public string savePointKeeper;
 
     // COOLDOWNS STILL RUNNING (v9+), as parallel arrays like the trio-ring walk above: the skill's id, and the
     // MOMENT it becomes ready again, counted in seconds since 1970 on the world's clock.

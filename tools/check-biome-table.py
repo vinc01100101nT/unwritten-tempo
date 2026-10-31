@@ -12,7 +12,6 @@ Reads the files on disk, never the editor's copy, so what it checks is what the 
     (BASE = main ground, PATCH = patches, PATH = road), no colour wash, every prop pointing at a real file,
     at least one prop somewhere in the field template's categories, and a saved count multiplier on every entry;
   · the Grassland row, pinned exactly as it is (the starting country's look changes only on purpose);
-  · the browser World Creator's biome list, which must name every biome;
   · the per-biome weather list: each biome at most once, every held level between 0 and 1.
 
 USAGE:   tools/check-biome-table.py [--root <repo>]
@@ -33,7 +32,6 @@ TABLE = os.path.join(ASSETS, "3_Data", "Recipes", "BiomeTable.asset")
 FIELD_TEMPLATE = os.path.join(ASSETS, "3_Data", "Recipes", "FieldRecipe.asset")
 TILES = os.path.join(ASSETS, "1_Authored", "Art", "GroundTiles")
 PREFABS = os.path.join(ASSETS, "1_Authored", "Prefabs")
-WORLD_CREATOR = os.path.join(REPO, "tools", "world-creator", "index.html")
 BIOME_WEATHER = os.path.join(ASSETS, "3_Data", "Resources", "BiomeWeather.asset")
 
 # The Grassland row, pinned: meadow grass, soil patches, the recipe's own road, no wash, the same 0.9 patch amount
@@ -84,7 +82,7 @@ def uses(tile_name):
 
 
 def main():
-    for p in (MAP_RECIPE_CS, TABLE, FIELD_TEMPLATE, WORLD_CREATOR, BIOME_WEATHER):
+    for p in (MAP_RECIPE_CS, TABLE, FIELD_TEMPLATE, BIOME_WEATHER):
         if not os.path.isfile(p):
             print("setup: missing %s" % rel(p))
             return 2
@@ -191,12 +189,6 @@ def main():
     for b in map_biomes:
         if b not in seen:
             problems.append("%s: %s has no row — a map set to it cannot be generated" % (rel(TABLE), b))
-
-    wm = re.search(r"const BIOMES = \[([^\]]*)\]", read(WORLD_CREATOR))
-    web = [x.strip().strip('"') for x in wm.group(1).split(",")] if wm else []
-    for b in map_biomes:
-        if b.lower() not in web:
-            problems.append("%s: the World Creator's biome list has no %s" % (rel(WORLD_CREATOR), b.lower()))
 
     # The per-biome weather list: each biome once, every held level a real fraction.
     held_seen = set()

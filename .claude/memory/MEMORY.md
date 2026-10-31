@@ -36,7 +36,7 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 - 🗂 [Placement / ground / pivot / collision / pathfinding](index/world-placement.md) — pivot=anchor, feet-pivot, skinWidth floats, A*/crowd, y-sort depth.
 - 🗂 [Rendering / lighting / reflection / weather](index/rendering-weather.md) — additional-lights loops, planar reflection, nightlight, rain/snow.
 - 🗂 [Asset / art pipeline](index/asset-pipeline.md) — Hunyuan/Trellis 3D props, style guides, 8-dir sprites, Pxltgr/Kenney, the Assets/ bucket mapping.
-- 🗂 [World authoring / generation / data tables](index/world-authoring.md) — MapRecipe generator, prop palette, world-creator/map-painter, data SOs, portals, ambient life, scene layering.
+- 🗂 [World authoring / generation / data tables](index/world-authoring.md) — MapRecipe generator, prop palette, map-painter, data SOs, portals, ambient life, scene layering.
 - 🗂 [Combat / skills / progression / stats](index/combat-skills-progression.md) — cast time, multi-hit/status, trio-ring model, stats, Ring of Progression, charter, weapons-define-gameplay.
 - 🗂 [HUD / UI](index/hud-ui.md) — build process, hotbar, progression windows, click-shield, dev-settings.
 - 🗂 [Performance](index/performance.md) — the hard constraint: pre-bake at author time, runtime hot-path patterns; canonical doc is `PERFORMANCE.md`.

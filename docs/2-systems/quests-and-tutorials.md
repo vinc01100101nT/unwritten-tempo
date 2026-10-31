@@ -1,7 +1,7 @@
 ---
 status: "BUILT 2026-10-04, tutorials reworked 2026-10-07 (unlock conditions, free first runs, replays, the healing tutorial), the first-gear tutorial reworked 2026-10-16 (it folds only the Sword a character arrives with); not yet play-tested. Three quests exist: two tutorials and Torvald's Ploplings."
 owner: vince
-last-updated: 2026-10-14
+last-updated: 2026-10-31
 tags:
   - systems
 ---
@@ -15,9 +15,8 @@ Quests**. Choosing a quest shows its steps. A **tutorial** has a **Play** button
 turns on its **guide** — the part of the screen to press next lit, with an arrow and a short text — and its path. Any
 other quest has a **Show path** button. A path is **arrows on the ground** to where the step happens, and the same whole
 route drawn on the minimap and in the Map window's zone view (M). While a path shows — a quest's, or a spot picked on the
-zone view — a location pin stands on the ground where the route ends in this map, and the left of the screen names the
-map the place is on with the metres of route left ("124 m", or "124 m to the next door" when the place is on another
-map), measured once per route.
+zone view — a location pin stands on the ground where the route ends, and the left of the screen names the map the
+place is on with the metres of route left ("124 m"), measured once per route.
 
 ## Unlock conditions
 
@@ -45,7 +44,7 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
     with that item, as many as it takes to get from the health the character came back on to that step's share (the
     lowest the item's written heal can roll, e.g. 130 HP a Minor Healing Potion).
 - **What is free is saved on the record and used up by the press that does the work** — the fold or the
-  purchase itself, in the same call — so a quick double press, a door to another map server or a restart can never
+  purchase itself, in the same call — so a quick double press, a hand-over to another map server or a restart can never
   spend it twice. A free fold goes only on a Raw piece, only on the first copy the run folded, and only while that
   piece is below its step's own fold target. **It is checked before the fold's roll and used up only on a success**,
   so a fold that fails from +4 costs nothing and the free fold is still there for the next press.
@@ -62,7 +61,7 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
   fold of such a copy makes it the replay's copy.
 - A new character arrives **wearing a Raw +0 Sword and a Raw +5 Chainmail, Iron Sabatons and Chain Mantle** —
   Common, with no trademark and no word — and carrying **100 Newbie Potions**, which can never leave them, and no
-  Unsigned (`StarterKit`). The armour comes folded so a new player survives the newbie maps; the Sword is left at +0 for
+  Unsigned (`StarterKit`). The armour comes folded so a new player survives the fields round Lastline; the Sword is left at +0 for
   the crafting tutorial, whose first run's folds are free, as are the healing tutorial's first potions.
 
 ## Play, Show path and requirements
@@ -106,7 +105,7 @@ numbers are the server's. Kills that land in the same moment make one line per q
   not met.
 - **The route on the ground** is the one thing worked out on the player's machine: the arrows follow the same
   route-finder the character walks by, and the minimap and the zone view draw that one route, whole. It decides nothing (user's decision 2026-10-04, as part of movement's
-  exception). Where the target is, and which door leads toward it when it is on another map, come from the server. A spot the player clicks on the zone view (`MapGuide`) is led to by the same arrows, ahead of the quest, until it is reached — and for that one the next door is found on the player's machine (`WorldRoutes`), since where they want to walk decides nothing.
+  exception). Where the target is comes from the server. A spot the player clicks on the zone view (`MapGuide`) is led to by the same arrows, ahead of the quest, until it is reached.
 
 ## How a step is finished
 
@@ -116,8 +115,8 @@ numbers are the server's. Kills that land in the same moment make one line per q
 | Have an item | a copy of it is in your bag **or worn** |
 | Folded To an item, N folds | a copy (bag or worn) has N folds or more, **or is of any grade above Raw** (a quench spends the folds) |
 | Wear an item | a copy of it is worn |
-| Kill a creature, N of them | N of that creature have been defeated by you **while this is the current step** — earlier kills do not count. A kill counts for the person the kill pays (the last to land a damaging blow); a summoned creature counts for nobody, exactly as it pays nobody, and neither does a saved character wearing the creature's body. The step may name the map it is hunted in (the arrows lead there); otherwise they lead to the nearest map, by doors, that places the creature. |
-| Buy an item, N of them | N have been bought **while this is the current step**. The arrows lead to the nearest shopkeeper, by doors, whose shop sells it. |
+| Kill a creature, N of them | N of that creature have been defeated by you **while this is the current step** — earlier kills do not count. A kill counts for the person the kill pays (the last to land a damaging blow); a summoned creature counts for nobody, exactly as it pays nobody, and neither does a saved character wearing the creature's body. The arrows lead to a spawn area that places the creature: the world is one map, so it is the first such area the world's spawn list names (`WorldSpawns`), not the nearest one. |
+| Buy an item, N of them | N have been bought **while this is the current step**. The arrows lead to a shopkeeper whose shop sells it — the first the townsfolk list names (`WorldTownsfolk`), not the nearest one. |
 | Health, a share of full health | your health is at least that share, e.g. 80%. Judged whenever your health goes up or down while this is the current step — a drink, a heal, regeneration. |
 
 - **Holding steps judge what you hold, not what you did** (decided 2026-10-04). A Have, Folded To or Wear step
@@ -140,7 +139,8 @@ numbers are the server's. Kills that land in the same moment make one line per q
 
 - **"!"** over a townsperson who offers a quest this character can accept — told only for the map you are standing in.
 - **"?"** over a townsperson where one of this character's open quests' current step happens — someone to talk to,
-  the nearest smith (by doors) for a fold step, or the nearest shopkeeper selling a Buy step's item.
+  the smith for a fold step, or the shopkeeper the arrows lead to for a Buy step's item (each the first the townsfolk
+  list names).
 - When both are true, "?" shows. Both are the server's lists; a player's machine only draws them.
 
 ## Rewards
@@ -190,8 +190,8 @@ their health without unlocking it; it unlocks the next time they come back throu
 
 ## Torvald's Ploplings — a side quest
 
-Offered by Torvald, the off-duty raider who wanders Lastline. Two steps: defeat 10 Ploplings (they live in Lastline
-Field 1, west of town — the arrows lead there), then tell Torvald. Reward, first guess: 25 experience, 300u and 5
+Offered by Torvald, the off-duty raider who wanders Lastline. Two steps: defeat 10 Ploplings (the arrows lead to where
+they live), then tell Torvald. Reward, first guess: 25 experience, 300u and 5
 Minor Healing Potions.
 
 ## Saving
@@ -202,7 +202,7 @@ folds, and the free folds and purchases left). The rows that changed since the l
 save that landed ride **inside the progress save** and are written in the same transaction, after the progress was
 taken under the same hand-over check — so the bag and the quest that judged it land together or not at all. A save
 refused for good is kept in a file for a person and not resent. The rows travel with the character on every hand-over
-(entering the world, walking through a door to another map server). The hand-over number is raised before the
+(entering the world, or a move to another map server). The hand-over number is raised before the
 character is read, so a late save from a server the character has left cannot slip in between. A replay is written only
 beside a finished row, so it can never make a quest unfinished.
 

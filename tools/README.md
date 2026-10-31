@@ -178,36 +178,34 @@ unused packages and all 84 creatures loading at level 1 because one struct was n
 
 ## check-biome-table.py · prove-biome-table-check.py
 
-Is every biome's look whole, and do the biome test maps hold their props where they were put?
+Is every biome's look whole?
 
 ```bash
-tools/check-biome-table.py           # the Biome Table, the biome list, the World Creator's list, the held weather, the test_* maps
-tools/prove-biome-table-check.py     # plants 14 faults in a throwaway mirror and expects each named
+tools/check-biome-table.py           # the Biome Table, the biome list, the held weather
+tools/prove-biome-table-check.py     # plants one fault per rule in a throwaway mirror and expects each named
 ```
 
 Fails when a biome has no row, a ground tile is laid for a job its file name does not allow (BASE / PATCH / PATH),
-a row keeps a colour wash, a prop points at no file, a biome places no props at all, the Grassland row changes, the
-browser World Creator is missing a biome, a `test_*` map's saved prop positions point at a part the prop no
-longer has (the fault that stacks every prop at the map centre), a `test_*` map is missing its biome marker or
-carries the wrong one, or the per-biome weather list holds a level outside 0..1. Built 2026-09-25 with the
-all-biome generator.
+a row keeps a colour wash, a prop points at no file, a biome places no props at all, the Grassland row changes, or
+the per-biome weather list holds a level outside 0..1.
 
 ## check-map-ids.py · prove-map-ids-check.py
 
-Does every map id agree with the ONE place map ids come from — the world layout
-(`tools/world-creator/worlds/world-regions.json`)? A map's id is its name in snake_case, set by the browser World
-Creator; it is the scene file name, what `/tp` takes, and what a character's save names.
+Does every map id the game uses name a map that exists? The game is one seamless map; its id is
+`SeamlessWorldBuilder.MapId` (`world`), read out of the code. It is the scene file name, what `/tp` and `tools/gm.py`
+take, and what a character's save names.
 
 ```bash
-tools/check-map-ids.py               # the layout, the scenes, their doors, Build Settings, the world map, Map Painter files, starting map, music table
-tools/prove-map-ids-check.py         # plants 9 faults in a throwaway mirror and expects each named
+tools/check-map-ids.py               # the world's id and scene, Build Settings, its chunks, starting map, music table, doors, world map atlas, places
+tools/prove-map-ids-check.py         # plants one fault per rule in a throwaway mirror and expects each named
 ```
 
-Fails when an id is not the snake_case of its name or is used twice, a generated map has no scene file of that
-exact name or is missing from Build Settings, a door in a world scene leads to a map outside the layout or to an
-arrival point that map does not have, the in-game world map lists a different set of maps than the layout, a Map
-Painter file's saved name differs from its file name, or the starting map or a music-table entry names no scene.
-Built 2026-09-26 when every map was renamed to its name.
+Fails when `MapId` is not declared exactly once or has no scene, the world's scene names no chunks or is not enabled
+in Build Settings, Build Settings lists a scene that does not exist, a chunk is not an address in the Addressables
+World group, the starting map (Systems' `firstMap`, `SavePoint.DefaultMap`) or a music-table entry names no scene
+(or the starting map is Systems), a door leads to a scene that does not exist or to an arrival point it does not
+have, `WorldAtlas` lists a map or a door end with no scene, a place in `WorldPlaces.json` has no id or shares one,
+or a Map Painter file's saved name differs from its file name.
 
 ## check-editor-writes.py · prove-editor-writes-check.py · cs_methods.py
 
@@ -365,7 +363,7 @@ Read the game server's log (`logs/server.log`) after a play-test.
 
 ```bash
 tools/server-log-tally.py                        # per unit: blows, skills, damage, states, passives, heals, experience
-tools/server-log-tally.py --map lst_fild01 --since 23:27:00
+tools/server-log-tally.py --map world --since 23:27:00
 tools/check-server-log.py                        # flags impossible events; exit 1 flagged, 3 no hit lines, 4 old-build log
 tools/check-server-log.py logs/server-prev.log   # the run before
 ```

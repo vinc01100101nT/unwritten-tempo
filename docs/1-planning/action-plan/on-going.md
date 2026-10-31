@@ -59,8 +59,8 @@ Every task carries:
 
 **Goal:** you can walk from the first town to any map in the game.
 
-- [ON-GOING] `MT-15` **`[A]` Connect every map of the new world by doors.** — **4–5 days** — see the `world-authoring` skill
-  *Done when:* starting from Lastline you can reach every one of the 76 maps on foot, without a game-master command.
+- [ON-GOING] `MT-15` **`[A]` Build the whole world's land, so every town and place is joined to Lastline.** — **4–5 days** — see the `world-authoring` skill; `python3 tools/project-status.py` names what is not built yet
+  *Done when:* the status script names no town, landmark, cave, pond, bridge or dungeon door as not built, and from Lastline you reach each of them on foot or by boat, without a game-master command.
 - [ON-GOING] `MT-44` **`[E]` Give the fields shape: ground levels, cliffs, meeting points, one walking rule.** — **built** — see [Biomes](../../3-world/biomes.md) and [Walking and Routing](../../2-systems/walking-and-routing.md)
   *Done when:* on both test maps you walk every level and climb a cliff at a meeting point, and a creature chases you up and down both.
 

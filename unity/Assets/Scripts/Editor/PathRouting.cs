@@ -100,7 +100,7 @@ public static class PathRouting
     /// e.g. a portal's edge+offset). The first two doorways are joined by one meandering road; every further doorway
     /// gets its own meandering road that joins the network at a random point along an existing road. A map with a
     /// single doorway gets one road from it to a random spot in the middle half of the plot. Used by
-    /// <see cref="RecipeGenerator"/> when the World Creator passes a map's portal positions; falls back to
+    /// <see cref="RecipeGenerator"/> when its caller passes a map's portal positions; falls back to
     /// <see cref="Build"/> for portal-less maps. Returns empty when there are no exits.
     /// </summary>
     public static List<Route> BuildToExits(Vector2 center, float sizeX, float sizeZ, IReadOnlyList<Vector2> exits,

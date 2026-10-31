@@ -27,12 +27,10 @@ MonoBehaviour:
   tint: {r: 1, g: 1, b: 1, a: 1}
   modelName: Wizard
   dyeSources:
-  - '#1F1F1F'
   - '#3B230F'
   - '#27425D'
   - '#926F35'
   dyeTargets:
-  - '#000000'
   - '#000000'
   - '#5D261C'
   - '#67423C'

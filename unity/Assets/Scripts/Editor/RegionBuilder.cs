@@ -7,8 +7,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Shared world-authoring helpers used across the toolchain — NOT a map generator (that's the single
-/// <see cref="RecipeGenerator"/> now). This holds the reusable building blocks the recipe generator and the
-/// <see cref="WorldCreator"/> (Build World) depend on:
+/// <see cref="RecipeGenerator"/> now). This holds the reusable building blocks the recipe generator depends on:
 /// <list type="bullet">
 /// <item><b>Spawns &amp; portals:</b> <see cref="MakeSpawn"/>/<see cref="EnsureSpawn"/>,
 /// <see cref="MakePortal"/>/<see cref="EnsurePortal"/> — a <see cref="Portal3D"/> + arrival <see cref="SpawnPoint"/>,
@@ -16,8 +15,7 @@ using UnityEngine.SceneManagement;
 /// <item><b>Authoring:</b> Fit Portal Triggers, Drop Selected to Ground.</item>
 /// </list>
 /// Travel contract (ids matched by <see cref="PersistentPlayer3D"/> on arrival): a portal stores the target
-/// scene name + the id of the <see cref="SpawnPoint"/> to arrive at; <see cref="WorldCreator"/> keys each warp's
-/// paired arrival spawn id by source map (the w{id}_from_&lt;map&gt; scheme, id = the door's permanent id in the world layout).
+/// scene name + the id of the <see cref="SpawnPoint"/> to arrive at.
 /// </summary>
 public static class RegionBuilder
 {

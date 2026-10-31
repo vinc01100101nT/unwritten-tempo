@@ -66,13 +66,13 @@
           "state": "planned",
           "when": "Planned",
           "title": "Dungeons have a destination",
-          "text": "Every elite has its place in the world, and every shadow stands on an end-game map — each worth the walk."
+          "text": "Every elite has its place in the world, and every shadow stands in an end-game place — each worth the walk."
         },
         {
           "state": "planned",
           "when": "Planned",
           "title": "The world opens",
-          "text": "Walk from the first town to every map in the world."
+          "text": "The whole world's land is built, so every town and place is joined to Lastline and you can walk from the first town to any of them."
         },
         {
           "state": "planned",
@@ -216,7 +216,7 @@
           "state": "done",
           "when": "3 Jul 2026",
           "title": "Music and ambience",
-          "text": "Every map gets its own **music and ambient sound**."
+          "text": "Every place in the world gets its own **music and ambient sound**."
         },
         {
           "state": "done",
@@ -227,8 +227,8 @@
         {
           "state": "done",
           "when": "22 Jun 2026",
-          "title": "Doorways and calendar",
-          "text": "**Doorways** between maps, and a **calendar** that decides the weather."
+          "title": "Calendar",
+          "text": "A **calendar** that decides the weather."
         },
         {
           "state": "done",

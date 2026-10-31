@@ -17,7 +17,7 @@ Every cliff map had 600–1,800 of them.
 
 **Fix:** the user ruled the whole arrangement a workaround and made RULE ONEGROUND (project rules). The cliff is now
 the ground itself, shaped in `GroundCliffs.BuildGround` — see [[biome-table]] for how. All 17 cliff maps had only
-their ground re-laid (`WorldCreator.RebuildGroundCore`, see [[world-creator-pipeline]]); props, doors and arrivals are
+their ground re-laid; props, doors and arrivals are
 byte-identical in the scene files, and the old `_cliffs.asset` meshes were deleted.
 
 **Proof method (reusable):** open the map with `EditorSceneManager.OpenPreviewScene`, drop a CharacterController

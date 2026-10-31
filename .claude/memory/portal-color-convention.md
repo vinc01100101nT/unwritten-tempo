@@ -22,8 +22,7 @@ colour-coded by the **kind of map it leads to**. The rings live in `unity/Assets
   to `1_Authored` while the code still pointed at `0_Raw/Hovl Studio/…`, and the old cylinder fallback silently gave
   almost every generated door a flat disc until 2026-10-11.
 
-To add a new map kind: add a `MapKind` case + its `MapKinds.Of`/`ColorOf` lines + an entry in `PortalPrefabFor`, and the
-same type in the browser World Creator.
+To add a new map kind: add a `MapKind` case + its `MapKinds.Of`/`ColorOf` lines + an entry in `PortalPrefabFor`.
 
 ## Portal transform facts
 - Portal ROOT is always unit scale (`localScale = Vector3.one` pinned in `MakePortal`) so the warp FBX/VFX

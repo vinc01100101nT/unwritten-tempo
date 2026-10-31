@@ -12,7 +12,8 @@ USAGE
   gm --map <map> --as <character> /heal     one command acting on a person — they must be in that map
   gm --map <map> status                     time of day, weather and who is in that map
 
-  <map> is an id, a name, or part of one: lst_fild01, "old oak", "lastline field 1".
+  <map> is the map id — the game is one seamless map, `world` — or a place in it ("old oak", lastline), which
+  means the map that place is in.
 
 Needs CHAR_SERVER_URL and SERVER_SECRET in settings.env — the same secret the servers use with each other, so
 whoever can run this can do anything a GM can.
@@ -20,6 +21,7 @@ whoever can run this can do anything a GM can.
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -27,19 +29,32 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from settings_ask import setting  # noqa: E402
 
-LAYOUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "world-creator", "worlds", "world-regions.json")
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# The world's map id is owned by the code that builds it; its places by the file the layout tool writes.
+WORLD_BUILDER = os.path.join(REPO, "unity", "Assets", "Scripts", "Editor", "SeamlessWorldBuilder.cs")
+PLACES = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "WorldPlaces.json")
 
 SESSION_HELP = """  maps             the maps open right now under the map server holding each, numbered — only these take commands
   maps all         every map in the world, the open ones marked
-  map <which>      choose the map every command goes to: a number from 'maps', the id, or part of the id or name"""
+  map <which>      choose the map every command goes to: a number from 'maps', the id (world), or a place in it"""
 
 
 def world_maps():
-    """Every map in the world layout — the one place map ids and names are written — as (id, name, kind)."""
+    """Every map in the game as (id, name, kind): the seamless world, its id read from SeamlessWorldBuilder.MapId."""
     try:
-        with open(LAYOUT, encoding="utf-8") as f:
-            return [(m["id"], m.get("name") or m["id"], m.get("type") or "") for m in json.load(f)["maps"]]
-    except (OSError, ValueError, KeyError):
+        with open(WORLD_BUILDER, encoding="utf-8") as f:
+            ids = re.findall(r'public\s+const\s+string\s+MapId\s*=\s*"([^"]+)"\s*;', f.read())
+    except OSError:
+        ids = []
+    return [(ids[0], "the world", "seamless")] if len(ids) == 1 else []
+
+
+def world_places():
+    """Every named place in the world as (id, name) — a place resolves to the map it is in."""
+    try:
+        with open(PLACES, encoding="utf-8") as f:
+            return [(p["id"], p.get("name") or "") for p in json.load(f).get("places", []) if p.get("id")]
+    except (OSError, ValueError, AttributeError):
         return []
 
 
@@ -81,7 +96,7 @@ def show_maps(everything):
         live = []
     ids = [mid for mid, _, _ in world_maps()]
     if not ids:
-        print("The world layout could not be read.")
+        print("The world's map id could not be read from %s." % os.path.relpath(WORLD_BUILDER, REPO))
         MapList.shown = []
         return
     MapList.shown = ids
@@ -121,6 +136,11 @@ def resolve_map(typed):
             return mid, None
     words = typed.lower().split()
     found = [(mid, name) for mid, name, _ in maps if all(w in (mid + " " + name).lower() for w in words)]
+    if not found and len(maps) == 1:
+        # Every place is inside the one seamless map, so a place's id or name means that map.
+        key = lambda t: re.sub(r"[^a-z0-9]", "", t.lower())
+        if any(key(typed) in (key(pid), key(pname)) for pid, pname in world_places()):
+            return maps[0][0], None
     if len(found) == 1:
         return found[0][0], None
     if not found:
@@ -130,7 +150,6 @@ def resolve_map(typed):
 
 
 SESSION_HELP += """
-  as <character>   act as that person — they must be in the map;  'as' alone acts as nobody
   as <character>   act as that person — they must be in the map;  'as' alone acts as nobody
   status           time of day, weather and who is in the map
   <command>        any GM command, with or without the '/': weather rain, /heal, help
@@ -236,7 +255,7 @@ def session(game_map, as_name):
 
 def main(argv):
     p = argparse.ArgumentParser(prog="gm", description=__doc__.split("\n\n")[0])
-    p.add_argument("--map", help="the map the command is for: its id or part of its id or name, e.g. lst_fild01 or \"lastline field 1\"")
+    p.add_argument("--map", help="the map the command is for: its id (world), or a place in it such as \"old oak\"")
     p.add_argument("--as", dest="as_name", help="the character the command acts on; they must be in that map")
     p.add_argument("line", nargs="*", help='a GM command such as "/weather rain", or the word status')
     # Before anything prints: a Windows terminal otherwise shows every dash as a question mark.

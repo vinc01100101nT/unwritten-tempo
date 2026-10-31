@@ -68,10 +68,9 @@ files. Also modified and NOT from this task: `3_Data/Resources/Fonts/DejaVuSansC
 1. User play-test of Parley after rebuilding + restarting **the game server** (ground changed; the character server and
    account service need nothing) — including walking under a bridge and swinging the camera low there.
    From below, a bridge shows its walkway's own paving and moss (the model's top seen from under it), not separate stone.
-2. The Keeper-per-map problem (deferred by the user: "easy thing").
-3. Known, not fixed: the pathfinder may route a walker hugging a bridge's side; waders can walk through the canal.
-4. Docs and wiki not touched (rule: only once the user calls the work final). Patch notes go in `launcher/news.json` on push.
-5. Next towns: each needs its own plan + preview and the user's go before building; every town wholly unique, themed by
+2. Known, not fixed: the pathfinder may route a walker hugging a bridge's side; waders can walk through the canal.
+3. Docs and wiki not touched (rule: only once the user calls the work final). Patch notes go in `launcher/news.json` on push.
+4. Next towns: each needs its own plan + preview and the user's go before building; every town wholly unique, themed by
    its weapon.
 
 ## Dead ends (don't repeat)

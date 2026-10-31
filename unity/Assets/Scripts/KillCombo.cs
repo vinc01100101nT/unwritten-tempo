@@ -6,8 +6,8 @@
 /// <see cref="KillComboMath.WindowSeconds"/> old and starts again at one, and the player's machine stops drawing it at
 /// the end moment it was sent. Nothing here runs between kills.</para>
 ///
-/// <para><b>Not saved.</b> It lives as long as the server's character does — through this map, and gone with any door
-/// or disconnect, each of which makes a new one.</para>
+/// <para><b>Not saved.</b> It lives as long as the server's character does — gone with any change of map or disconnect,
+/// each of which makes a new one.</para>
 ///
 /// <para>About 200 bytes per person playing.</para>
 /// </summary>

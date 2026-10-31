@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-18
+last-updated: 2026-10-31
 tags:
   - process
   - networking
@@ -11,7 +11,7 @@ tags:
 
 **GMCP** (the game's MCP) lets an AI — Claude in this editor, a tester sub-agent, a debugger — play the built
 game the way a person does, with no window: it reads the screen as text and gives the same orders a click or a
-key gives. Built and first played on 2026-09-17. That evening three players stood together in `lastline` and talked
+key gives. Built and first played on 2026-09-17. That evening three players stood together in Lastline and talked
 in the game's chat: Vince as **Alpha** in the editor, Claude as **Tessa** through GMCP, and a tester sub-agent as
 **Tester** through a second GMCP client.
 
@@ -70,14 +70,13 @@ it runs inside the open editor — never while somebody is in Play mode there).
 
 ## The commands
 
-Ids come from the screen: `m` a monster, `p` a player, `n` a villager, `g` a floor item, `d` a door. **An id keeps
-its meaning for as long as you are in the map**, whatever happens to the object behind it: a creature, a player
-or a floor item is known by the number the server gave it, a door by where it stands and where it leads. (Before
-2026-09-18 an id was tied to the object drawn, and the first screen's `d1` had become `d3` by the next command —
-measured twice, cause in the game not measured.) An id whose body has since been handed to another creature
-answers `unknown id` rather than acting on the wrong one. Every command that waits ends with a line saying why:
-`arrived`, `hit`, `new map lst_fild01`, `m3 died`, `you died`, `HP under 30%`, `cast Piercing Gust`, `picked up Grilled
-Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
+Ids come from the screen: `m` a monster, `p` a player, `n` a villager, `g` a floor item, `d` a door (the seamless
+world `world` has none today). **An id keeps its meaning for as long as you are in the map**, whatever happens to the
+object behind it: a creature, a player or a floor item is known by the number the server gave it, a door by where it
+stands and where it leads. An id whose body has since been handed to another creature answers `unknown id` rather
+than acting on the wrong one. Every command that waits ends with a line saying why: `arrived`, `hit`,
+`new map <map id>`, `m3 died`, `you died`, `HP under 30%`, `cast Piercing Gust`, `picked up Grilled Fish`, `revived`,
+`5s passed`. A wait may be up to 120 s.
 
 | Command | What it does |
 | --- | --- |
@@ -114,27 +113,11 @@ already drawn on a player's screen; nothing hidden.
 
 Every one of these is a fault in the game, found by playing it as text. None is about the text layer itself.
 
-- ~~A field's arrival spot is inside the scenery~~ — **FIXED 2026-09-18 at the user's instruction: every map's
-  centre arrival point is gone.** What it was: each of the 41 maps carried a point called Start at its exact
-  middle, planted automatically by the map generator with nothing checking what stood there — and the generator
-  puts the plaza, the tavern and the trees on that same middle. Arriving on it dropped you out of the world
-  (measured 22,326 units down in 123 seconds, three fields of three) or left you standing on a roof. Measured with
-  the `ground` command before the fix: at a field's Start, in the air with nothing below for 500 units; at either
-  of that same map's door arrival points, standing on its floor at 0.02; walking in from a door you were stopped
-  1.5 m short of the middle by two taverns and four trees. All 41 centre points were deleted from the maps, and
-  both map generators no longer plant one, so a re-import cannot bring it back. The door arrival points are
-  untouched — 36 of them across 18 maps.
-  **What this changes for anyone arriving without a door:** the game now uses the map's first door point instead
-  (a new character starts in town beside one of its doors rather than in the middle of the plaza).
-- **A creature list that empties a few seconds after arriving is this same fall** — the list only shows what is
-  within 25 m, and 25 m down takes about 3 seconds. Nothing is wrong with the list.
-- **A field's own tavern can pin a player standing at its Start**, holding them a metre above the floor and, it
-  seems, out of every creature's reach — the same player took no blow in eight minutes with a creature half a
-  metre away. Whether the building is what stops the blows is unmeasured. (The line that named `Tavern_LOD0` is
-  NOT evidence the town leaked into the field: that probe reports the nearest solid thing in any loaded map, and
-  every field carries its own tavern and windmill.)
 - **Being hit about once a second keeps you rooted**: every hit restarts the stagger that stops your legs.
-- **The Sword item's attack range is 0**, so basic swings never land; skills do.
+
+**Where you arrive.** The seamless world has one arrival point, `center`, beside Lastline's Central Fountain; a new
+character, and one with no save point of its own, stands up there. A `say /tp` that moves you within the world
+answers `back in world`. The `ground` command is the way to check what you are standing on after any arrival.
 
 ## Related
 

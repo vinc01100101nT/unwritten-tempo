@@ -56,7 +56,7 @@ def setup_fail(msg):
 def prefabs_by_guid():
     """Prefab GUID -> path, for every prefab under unity/Assets."""
     out = {}
-    for dirpath, _dirs, files in os.walk(ASSETS):
+    for dirpath, _dirs, files in os.walk(ASSETS, followlinks=True):
         for f in files:
             if f.endswith(".prefab.meta"):
                 g = guid_of_meta(os.path.join(dirpath, f))

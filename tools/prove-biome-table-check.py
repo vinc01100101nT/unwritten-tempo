@@ -22,7 +22,6 @@ from prove_mirror import mirror_with_change, discard  # noqa: E402
 CHECK = os.path.join(HERE, "check-biome-table.py")
 TABLE = os.path.join("unity", "Assets", "3_Data", "Recipes", "BiomeTable.asset")
 ENUM = os.path.join("unity", "Assets", "Scripts", "MapRecipe.cs")
-WEB = os.path.join("tools", "world-creator", "index.html")
 HELD = os.path.join("unity", "Assets", "3_Data", "Resources", "BiomeWeather.asset")
 SANDSTONE_META = os.path.join(REPO, "unity", "Assets", "1_Authored", "Art", "GroundTiles", "PATH_OR_SIDEWALK_sandstone.png.meta")
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
@@ -78,7 +77,6 @@ def main():
     rocks_mult = re.search(r"    - category: 3\n      prefabs:\n(?:      - .*\n)+      countMultiplier: [^\n]*\n", coast + "\n").group(0)
     rocks_mult_line = rocks_mult.splitlines()[-1] + "\n"
     grass = row_of(0)
-    web = read(WEB)
 
     bad = 0
     bad += case("a colour wash left over a biome's own tiles", TABLE, coast,
@@ -101,7 +99,6 @@ def main():
                 grass.replace("patchAmount: 0.9", "patchAmount: 0.5", 1), "Grassland's look is pinned")
     bad += case("a biome added to the list with no row", ENUM, "Haunted, Mist }", "Haunted, Mist, Tundra }",
                 "Tundra has no row")
-    bad += case("the World Creator missing a biome", WEB, '"coast",', "", "biome list has no coast")
 
     code_after, out_after = run()
     if code_after != 0 or out_after != out:

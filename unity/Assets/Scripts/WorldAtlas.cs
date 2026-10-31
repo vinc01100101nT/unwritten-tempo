@@ -3,9 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// The baked world-map image + free-form layout, loaded at runtime by <see cref="MapWindow"/>.
-/// Produced by the editor "Bake World Map" step (in <c>WorldCreator</c> via <c>WorldAtlasBaker</c>): either the
-/// painted world-map picture the layout was drawn on (one picture pixel = one world unit), or one top-down snapshot
-/// per map composited into a single <see cref="atlas"/> texture by each map's world-space rectangle.
+/// It held the picture and the maps of the old world of separate maps; in the one seamless world its map and door
+/// lists are empty, and nothing writes it any more.
 ///
 /// Lives in <c>Resources/</c> so the HUD can <c>Resources.Load&lt;WorldAtlas&gt;("WorldAtlas")</c> without any
 /// scene wiring. Map space: <c>x</c>→east, <c>y</c>→south; the atlas is north-up / east-right, and empty space is
@@ -33,10 +32,8 @@ public class WorldAtlas : ScriptableObject
 
     public List<Entry> maps = new List<Entry>();
 
-    /// <summary>One door between two maps, either way through — the world layout's portals, copied here by the bake
-    /// so the game can find its way between maps (<see cref="WorldRoutes"/>) and draw each door where it stands. A
-    /// READ-ONLY MIRROR of <c>tools/world-creator/worlds/world-regions.json</c>, never edited by hand: the layout stays
-    /// the one owner, and <c>tools/check-map-ids.py</c> fails the moment this copy disagrees with it.</summary>
+    /// <summary>One door between two maps, either way through, so the game can find its way between maps
+    /// (<see cref="WorldRoutes"/>) and draw each door where it stands. The seamless world has none.</summary>
     [System.Serializable]
     public class Link
     {

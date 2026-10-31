@@ -9,8 +9,9 @@ or the Profiler ▸ Hierarchy for the precise per-system number.
 
 ## Standard test scenario (keep it the same so numbers compare)
 
-1. Open **NatureStage**, press **Play**.
-2. Gather as many mobs as possible around the player, press **T** (the auto-pilot AI).
+1. Open the **world** scene (`Assets/Scenes/world.unity`), press **Play**, sign in, and walk out of Lastline to a
+   hunting ground. Play needs the servers running — see `docs/1-planning/performance-checkup-routine.md`.
+2. Gather as many mobs as possible around the player, press **T** (auto-combat).
 3. Read the numbers:
    - **PerfHud** (top-left): `GC/s` should be ~0 (a small steady floor is the HUD itself); `peak /frame`
      should stay small (hundreds of B, not KB); FPS/ms healthy.

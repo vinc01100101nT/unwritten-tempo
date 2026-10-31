@@ -113,7 +113,7 @@ Unity and left Parley broken while the user play-tested; a redesigned Parley rea
 
 **Towns**
 - One weapon per town, 1:1: Lastline (start town, no weapon) + 14 weapon towns. Brimstone is removed; the Sniper moves
-  to Old Oak (open plains, walls, long sight lines), placed on the Finesse–Arcane border.
+  to Old Oak (open plains, walls, long sight lines).
 - Themes follow each weapon's style: Lastline green trees + green willow, mixed meadows; Old Oak (Sniper, Dark Moon)
   open grass, lone oaks; Parley (Sword, Blossom Wind) pink blossom + pink willow, pink meadows; Harrowen (Axe, Wildfire)
   green woods, orange + red-orange meadows; Pennaryl (Bow, Passing Cloud) thick forest + firs; Gemmara (Warhammer,
@@ -200,11 +200,15 @@ the wrong side = blue sky holes). Where low paving meets the stone band along wa
 
 **On the game server** — the server loads squares only around players and awake spawn areas, so anything built when
 the map loads stands on no ground. Anything placed at map load calls `SeamlessWorld.HoldGround(rect, then)` first.
-The old zone world (77 maps) was deleted on 2026-10-28; the build ships only Systems + world. Still open: Keepers are
-looked up per MAP (breaks with a second town); teleport price is by doors, which the world does not have.
+The old zone world was deleted on 2026-10-28; the build ships only Systems + world. A Keeper is found by map AND
+person id (`WorldTownsfolk.KeeperIn(map, personId)`), so every town of the world keeps its own and a save point
+remembers which; a trip between two Keepers of `world` is priced by the ground between them, one door's price per
+`KeeperMath.MetresPerDoor` (80 m) or part of it, and named by the layout's nearest town (`WorldPlaces.NearestTownName`).
+A new town needs its Keeper row (`tools/check-quest-data.py` fails without one). Auto-combat's town refusal reads the
+named area stood in (`SeamlessWorld.AreaIndexAt`): a Town area refuses, anything else is a field.
 
 **Creatures** — `tools/world-spawns/build_world_spawns.py` (rules in its header, decided 2026-10-29) writes the world's
-rows and shaped areas into `WorldSpawns.asset`, moves the 18 summoners in `WorldTownsfolk.asset`, and lays the patches
+rows and shaped areas into `WorldSpawns.asset`, moves the shadow summoners in `WorldTownsfolk.asset`, and lays the patches
 over the layout's own map, `data/world-layout.html`, behind a "Show creature patches" toggle (one map, never a second
 page). The layout tool runs it at the end of every run; run it alone after a roster change. Never hand-edit the world's
 rows. A row with `area` ≥ 0 spawns on that area's squares (`FieldMobSpawner.SetShape`); an area reaches at most ~100
@@ -221,8 +225,8 @@ Undead — the elements whose counter (skill buffs and cards) is still to come.
 - **Preview first, data only on go:** `--preview` writes nothing and draws `~/Downloads/world-spawn-preview.html`, with
   hover boxes for every patch and dungeon. The user sees it before any write.
 - **Before showing a preview, every check the tool prints must pass, and the picture is read as the user will read
-  it.** The prints: the whole roster (66 originals as themselves, 66 Tainted, 66 Blighted, 14 field elites, 4
-  summon-only elites and 14 shadows with a summoner); no elite and nothing Blighted within 150 of a town; no patch
+  it.** The prints: the whole roster (every original as itself and as its Tainted and Blighted versions, every field
+  elite, every summon-only elite, and every shadow with a summoner); no elite and nothing Blighted within 150 of a town; no patch
   spread over 12 levels; no dungeon with a Blighted floor above a Tainted one or a group dropping in level; every
   deepest floor Blighted; 0 stars, numbers or names covering something else. Then read the key, the hover boxes and
   the elite list for stale words. *(2026-10-29: the preview went out three times with faults the user's "is anything
@@ -233,7 +237,7 @@ Undead — the elements whose counter (skill buffs and cards) is still to come.
 - **Every name finds a free spot**: the layout's town, landmark and cave names and every mark are boxes; each star,
   level number and name takes the nearest spot that hits none, with a thin line back to its mark when it moved out.
   The picture grows to hold the whole key.
-- **Dungeon floors** (6 doors and 3 caves; the Mountain's Root is Tharos's place) are worked out every run and shown
+- **Dungeon floors** (every dungeon door and cave but the Mountain's Root, which is Tharos's place) are worked out every run and shown
   in the preview, but written only once the floor maps exist: a row needs a map and a spawn area on that map.
 - `tools/check-creature-roster.py` checks the placement law on the written data (and its prover plants every fault);
   it can only pass after a write.

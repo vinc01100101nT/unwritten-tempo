@@ -52,7 +52,7 @@
           "Tharos, the Starbreaker",
           "Control enemies by denying their actions.",
           "Stuns and knocks back, interrupting what enemies were about to do.",
-          "Attack, Defense, HP",
+          "Attack, HP, Accuracy",
           "melee"
         ],
         [
@@ -144,7 +144,7 @@
           "Seraphine, Before the Dawn",
           "Keep allies alive.",
           "Heals, regeneration, damage shields, buffs, and Cleanse.",
-          "MP, Cast Speed, Defense",
+          "MP, Cast Speed, HP",
           "melee"
         ]
       ]
@@ -339,11 +339,11 @@
     },
     {
       "type": "paragraph",
-      "text": "**Every piece has a base.** A weapon's base follows how long its swing takes — and a heavier weapon swings slower — so every weapon deals the same damage a second at equal gear: a Common dagger's is **50** attack, a sword's **63**, a greatsword's **80** (a staff, wand or scythe gives magic attack instead). On armour, the **material** decides what the base buys — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and shoes give half of what body armour or a garment give. A piece a monster drops rolls its base at **85% to 115%**; anything else — what you start in, what a shop sells, a reward — has the usual 100%. Hover a piece to see it: *Base 54 (108%)*."
+      "text": "**Every piece has a base.** A weapon's base follows how long its swing takes — and a heavier weapon swings slower — so every weapon deals the same damage a second at equal gear: a dagger's is **50** attack, a sword's **63**, a greatsword's **80** (a staff, wand or scythe gives magic attack instead). On armour, the **material** decides what the base buys — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and shoes give half of what body armour or a garment give. A piece a monster drops rolls its base at **85% to 115%**; anything else — what you start in, what a shop sells, a reward — has the usual 100%. Hover a piece to see it: *Base 54 (108%)*."
     },
     {
       "type": "paragraph",
-      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs **Temper Dust** — one at Raw, and one more for each grade — plus Unsigned, and adds a share of the base: **10%** a fold at Raw, rising to **70%** a fold at A. A quench that succeeds adds far more — **100%** of the base to reach F, up to **600%** to reach A — and everything a piece has climbed through stays on it. So a Common sword is **100** attack at Raw +10, **250** at F +10 and **2,500** at A +10."
+      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs **Temper Dust** — one at Raw, and one more for each grade — plus Unsigned, and adds a share of the base: **10%** a fold at Raw, rising to **70%** a fold at A. A quench that succeeds adds far more — **100%** of the base to reach F, up to **600%** to reach A — and everything a piece has climbed through stays on it. So a weapon whose base is **50** is **100** attack at Raw +10, **250** at F +10 and **2,500** at A +10."
     },
     {
       "type": "paragraph",
@@ -356,7 +356,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every piece carries a **quality grade**. A freshly dropped piece is **Raw**; above that the ladder runs **F, E, D, C, B, A**, and A is the best there is. Quality is decided by the **quench**: it lifts a piece one rung, to +0, or fails — never a jump. **A higher grade is always stronger**: an A +0 piece is worth more than eight times an F +10 one."
+      "text": "Every piece carries a **quality grade**. The ladder starts at **Raw** and runs **F, E, D, C, B, A**, and A is the best there is. A dropped piece comes at the grade the monster wore it — the higher its level, the higher the grade. Quality is decided by the **quench**: it lifts a piece one rung, to +0, or fails — never a jump. **A higher grade is always stronger**: an A +0 piece is worth more than eight times an F +10 one."
     },
     {
       "type": "paragraph",

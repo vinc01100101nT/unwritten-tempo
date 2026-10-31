@@ -174,6 +174,16 @@ public class WorldTownsfolk : ScriptableObject
         into.Sort(ByLevelThenName);
     }
 
+    /// <summary>Every Keeper in every map, in the order they are listed.</summary>
+    public static void Keepers(List<Row> into)
+    {
+        into.Clear();
+        var list = Instance;
+        if (list == null) return;
+        foreach (var row in list.rows)
+            if (row != null && row.keeper && !string.IsNullOrEmpty(row.map)) into.Add(row);
+    }
+
     /// <summary>The Keeper of <paramref name="map"/> — their row, read for where they stand and which way they face —
     /// or null when the map has none (it is then no town a Keeper can send anybody to).</summary>
     public static Row KeeperIn(string map)
@@ -186,6 +196,21 @@ public class WorldTownsfolk : ScriptableObject
             if (row != null && row.keeper && row.map == map) return row;
         }
         return null;
+    }
+
+    /// <summary>The Keeper <paramref name="personId"/> of <paramref name="map"/> — the one a save point was set at — or,
+    /// when the id is empty (a save written before it was recorded) or names nobody who is still a Keeper there, the
+    /// map's first Keeper (<see cref="KeeperIn(string)"/>). Null when the map has no Keeper at all.</summary>
+    public static Row KeeperIn(string map, string personId)
+    {
+        var list = Instance;
+        if (list != null && !string.IsNullOrEmpty(map) && !string.IsNullOrEmpty(personId))
+            for (int i = 0; i < list.rows.Count; i++)
+            {
+                var row = list.rows[i];
+                if (row != null && row.keeper && row.map == map && row.id == personId) return row;
+            }
+        return KeeperIn(map);
     }
 
     /// <summary>Where the summoner <paramref name="personId"/> of <paramref name="map"/> calls their boss, in the world

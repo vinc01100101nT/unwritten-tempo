@@ -142,7 +142,7 @@ public class MapRecipe : ScriptableObject
     public PathStyle pathStyle = PathStyle.Winding;
     [Tooltip("Which ground texture the paths use (the 'select your tile as path' choice).")]
     public PathTile pathTile = PathTile.Road;
-    [Tooltip("How many meandering routes cross the map (0 = no paths). Maps built by the World Creator ignore this: their roads link the portals.")]
+    [Tooltip("How many meandering routes cross the map (0 = no paths).")]
     public int pathCount = 1;
     [Tooltip("Full width of a path in world units (0 = no paths). Solid props are cleared from within half this + a margin.")]
     public float pathWidth = 3.5f;
@@ -153,7 +153,7 @@ public class MapRecipe : ScriptableObject
 
     [Header("Cliffs")]
     [Tooltip("Whether this map lines its roads with rock cliffs: Follow Biome = as the biome's row in the Biome Table says; " +
-             "On / Off = regardless of the biome. A map in the World Creator can set On or Off for itself.")]
+             "On / Off = regardless of the biome.")]
     public CliffChoice cliffs = CliffChoice.FollowBiome;
     [Tooltip("How tall the rock cliffs lining both sides of every road stand, in world units (a character is 0.5 tall), " +
              "when this map has cliffs. The ground away from the roads is raised to this height and nobody can climb it.")]

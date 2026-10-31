@@ -152,8 +152,7 @@ GROUPS = {
     # that looks almost fine, so nothing but this finds it before somebody walks the map.
     "biomes": {
         "files": [os.path.join(DATA, "Recipes", "BiomeTable.asset"), os.path.join(SCRIPTS, "MapRecipe.cs"),
-                  os.path.join(DATA, "Resources", "BiomeWeather.asset"),
-                  os.path.join(REPO, "tools", "world-creator", "index.html")],
+                  os.path.join(DATA, "Resources", "BiomeWeather.asset")],
         "run": [sys.executable, os.path.join(TOOLS, "check-biome-table.py")],
         "headline": "A biome's look is incomplete, or a biome test map has props stuck at its centre:",
     },
@@ -181,18 +180,20 @@ GROUPS = {
                     "so its file and picture were not rewritten:",
         "mine_by_construction": True,
     },
-    # Every map id comes from the world layout; the scenes, doors, world map, Map Painter files, the starting map
-    # and the music table are copies of it, and a copy that drifts sends a player (or /tp) to a map that isn't there.
+    # The world's map id is SeamlessWorldBuilder.MapId; its scene, Build Settings, its chunks' addresses, the starting
+    # map, the music table, every door, the world map's atlas and the places are copies or users of map ids, and one
+    # that drifts sends a player (or /tp) to a map that isn't there.
     "map-ids": {
         "roots": [(os.path.join(REPO, "unity", "Assets", "Scenes"), ".unity"),
                   (os.path.join(REPO, "tools", "map-painter", "exports"), ".json")],
-        "files": [os.path.join(REPO, "tools", "world-creator", "worlds", "world-regions.json"),
-                  os.path.join(REPO, "tools", "world-creator", "index.html"),
+        "files": [os.path.join(SCRIPTS, "Editor", "SeamlessWorldBuilder.cs"), os.path.join(SCRIPTS, "SavePoint.cs"),
                   os.path.join(DATA, "Resources", "WorldAtlas.asset"), os.path.join(DATA, "Resources", "MapBgmTable.asset"),
+                  os.path.join(DATA, "Resources", "WorldPlaces.json"),
+                  os.path.join(REPO, "unity", "Assets", "AddressableAssetsData", "AssetGroups", "World.asset"),
                   os.path.join(REPO, "unity", "ProjectSettings", "EditorBuildSettings.asset"),
                   os.path.join(SCRIPTS, "GameRoot.cs"), os.path.join(SCRIPTS, "Editor", "SystemsSceneBuilder.cs")],
         "run": [sys.executable, os.path.join(TOOLS, "check-map-ids.py")],
-        "headline": "A map id disagrees with the world layout (the one source of every map id):",
+        "headline": "A map id names a map that does not exist (the world's id is SeamlessWorldBuilder.MapId):",
     },
     "map-ids-checker": {
         "files": [os.path.join(TOOLS, "check-map-ids.py")],

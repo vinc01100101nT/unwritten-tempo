@@ -1,7 +1,7 @@
 ---
 status: current
 owner: vince
-last-updated: 2026-09-07
+last-updated: 2026-10-31
 tags:
   - systems-combat-design
 ---
@@ -70,39 +70,39 @@ nothing knows the two are the same person — so it is stopped where it starts.
 
 ---
 
-## More than one map server
+## One world, and which map server holds it
 
-**No map server is told which zones to hold.** They are identical and pre-assigned nothing. Which zone lives on
-which process is decided while people play, and changes through the evening.
+**The game has one map, `world`, and one map server holds it.** No map server is told which map to hold when it
+starts; they are identical and pre-assigned nothing.
 
-- **A zone is brought up when somebody wants it.** Nobody holding a zone is the ordinary state of every zone
-  nobody is standing in. When a player enters one, the character server picks the **quietest** map server —
-  weighing how many players and creatures each reports — tells it to bring that zone up, and waits until it is
-  genuinely standing before pushing the character across.
-- **A zone is let go when nobody is in it.** Forty-five seconds empty and it is unloaded, creatures and all.
-  Everything in a zone is only ever seen by somebody standing in it, so nothing anyone can see is taken away, and
-  a zone that comes back runs its spawners again and arrives fully populated.
-- **A server never lets go of its last zone**, so there is always somewhere to put somebody.
+- **The world is brought up when somebody wants it.** When a player enters and no map server is holding the world,
+  the character server picks the **quietest** map server still answering — weighing how many players and creatures
+  each reports — tells it to bring the world up, and waits until it is genuinely standing before pushing the
+  character across. Everybody after that is sent to the server already holding it.
+- **Nothing unloads the map once it is up.** What comes and goes is the world's ground: the map server keeps the
+  squares around every player and under every awake spawn area loaded, and puts a spawn area nobody is near to
+  sleep with its creatures banked, waking it — respawn waits kept — once somebody comes near and its ground is in.
+- **A character saved in a map the build no longer has** is sent to the build's starting map, the world.
 
-### Walking through a door into a zone another server holds
+### Moving to a map another server holds
 
-A door no longer travels on the player's own machine. It asks, because only the server can find out which
-process holds the far side, bring it up, or refuse.
+Built, and nothing sets it off today: the world layout lists no doors, so every door is refused (a game master's
+excepted), and every save point, Keeper and `/tp` destination is in the one world. A player's machine never travels on its
+own; it asks, because only the server can find out which process holds the far side, bring it up, or refuse.
 
 ```mermaid
 sequenceDiagram
     participant G as Player's game
     participant A as The server they are on
     participant C as Character server
-    participant B as The server holding the zone
+    participant B as The server holding the map
 
-    G->>G: touches the door — the curtain goes up at once
-    G->>A: I am walking into this map
-    Note over A: already holding it? then just travel, and the door is instant
+    G->>A: I am going to this map
+    Note over A: already holding it? then just travel
     A->>A: stop accepting anything from them
     A->>C: write them down — and WAIT for it to land
     A->>C: move them to this map
-    C->>B: bring that zone up, if nobody has it
+    C->>B: bring that map up, if nobody has it
     C->>B: here is their whole character, expect them
     C-->>A: go to this address, with this ticket
     A-->>G: this address, this ticket
@@ -111,7 +111,7 @@ sequenceDiagram
     G->>G: only NOW load the map
 ```
 
-**Written down first, and the write waited for.** The zone they are going to is handed the stored character, so
+**Written down first, and the write waited for.** The map they are going to is handed the stored character, so
 starting the move before that write landed would hand over whoever they were up to fifteen seconds ago.
 
 **Nothing they send is acted on from the moment the move starts.** Their state on the old server is finished, so
@@ -181,7 +181,7 @@ This table is the one home for it. The other documents in this folder point here
 | Your bag, money and worn gear | the server | asks, is sent the result |
 | Writing to the database | the **character server**, only | the map server pushes progress to it and never writes |
 | **What time it is in the world** | the **clock of the machine running the world** | is told it when it is handed a body, and counts forward |
-| **Which zone lives on which server** | the **character server** | a map server is told, and never chooses |
+| **Which server holds the world** | the **character server** | a map server is told, and never chooses |
 | **Which sign-in is the live one** | the **sign-in service** | the newest one takes over; older ones are refused at the door |
 
 **The one-line rule:** your machine owns how things *look*, and when *your own* body reacts to *your own* input.
@@ -296,7 +296,7 @@ Each of these was paid for. The incidents are in [Implementation Notes](implemen
   player's machine is told it when the server hands them a body and counts forward from there, and the sun holds
   still until it has been told rather than using the player's own clock. Every timer that has to outlive
   something — a cooldown, a creature's return — stores an absolute moment on that clock, never a countdown: a
-  countdown means nothing once it is saved, its map is put to sleep, or its player moves to another server.
+  countdown means nothing once it is saved, its spawn area is put to sleep, or its player moves to another server.
 - **There is no offline game.** A player who is not joined is not in the world, so no local code is ever the
   authority and there is no fallback branch. The editor is not exempt.
 - **Never gate behaviour on "is the wire up right now."** That is a timing accident. Ask what job this copy was

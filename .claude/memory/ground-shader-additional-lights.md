@@ -11,7 +11,7 @@ metadata:
 
 Root cause: `unity/Assets/Shaders/GroundBlend.shader` ForwardLit pass only computed **main light (sun) + ambient SH** — it had **no additional-lights loop**, so point/spot lights (lamps, torches, portals = URP "additional lights") physically could not touch the ground. The character lit up only because `BillboardLit.shader` *does* loop additional lights (see [[billboard-additional-lights]]).
 
-⚠️ CORRECTION (verified via git): this was **NOT a regression** — `GetAdditionalLight` has NEVER been in GroundBlend's git history. Ground-under-lamp lighting was a brand-new feature added here, not something a tool deleted. Do not blame the map generators (RecipeGenerator/WorldCreator only write scene/prefab content; only Build25DSpike touches the URP asset and it just appends a renderer, never the lights mode).
+⚠️ CORRECTION (verified via git): this was **NOT a regression** — `GetAdditionalLight` has NEVER been in GroundBlend's git history. Ground-under-lamp lighting was a brand-new feature added here, not something a tool deleted. Do not blame the map generators (RecipeGenerator only write scene/prefab content; only Build25DSpike touches the URP asset and it just appends a renderer, never the lights mode).
 
 Related trap (the REAL recurring issue): `m_AdditionalLightsRenderingMode` in `UniversalRP.asset` was Per Vertex (1) on disk; the "Per Pixel" (2) from the billboard-lights session was apparently a live editor change that was never committed, so it reverted on reserialize. Lighting-without-shadows = this flag on Per Vertex. **Lesson: editor-only render settings silently revert — commit them.** A "Verify Render Settings" guardrail tool is the fix.
 

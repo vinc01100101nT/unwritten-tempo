@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-27/28, partly play-tested: water sheets and rain-fed lakes with exact reflections; the rain-fed lakes and the downhill spill are not yet played."
+status: "BUILT, partly play-tested on per-map fields: water sheets and rain-fed lakes with exact reflections; the rain-fed lakes and the downhill spill are not yet played, and nothing here has been watched on the seamless world."
 owner: vince
-last-updated: 2026-09-28
+last-updated: 2026-10-31
 tags:
   - systems
 ---
@@ -38,12 +38,13 @@ on the player's machine; the game server only says what weather it holds and whe
   Seen from the game's usual steep view the reflection is as strong as before; as the view flattens toward the water
   it becomes a full mirror. Only water near the middle of the view reflects the world: within 6 m of it fully, fading
   until at 9 m and beyond the water reflects the sky alone. No water ever disappears.
-- **A Swamp always holds water:** puddles at full, and its hollows as if the first 30 seconds of heavy rain had just
-  fallen, on every graphics setting.
+- **A Swamp always holds water:** on a map carrying the Swamp biome marker, puddles at full, and its hollows as if
+  the first 30 seconds of heavy rain had just fallen, on every graphics setting. The seamless world carries
+  Grassland's marker, so it holds none ([Biomes](../3-world/biomes.md)).
 
 ## How it works
 
-- **Reading the ground** (`WaterSurfaces`, once per map, the first time the ground is wet after a map loads): the
+- **Reading the ground** (`WaterSurfaces`, the first time the ground is wet after a scene loads or unloads): the
   heights of every exactly-level triangle of the map's ground become the sheets (levels within 1 cm share one sheet). A sheet covers the squares of a 0.5 m
   grid whose centre lies on one of its level triangles (`WaterPooling.MarkLevelGround`), and the two squares round
   them that its edge crosses — never a square only because its ground stands at the sheet's height. The ground's top height on a 0.5 m grid
@@ -54,7 +55,7 @@ on the player's machine; the game server only says what weather it holds and whe
   only when it crosses one): every hollow takes rain × its sloping squares; what does not fit runs into the hollow its
   spill reaches, or rises with its neighbour once that is full too. Every frame each lake's surface glides between the
   two (`WaterPooling.StartLevels` says where each stood at the lower one; a new lake grows from its bottom), so it
-  moves by under 1 mm a frame where it used to jump 7 mm (measured on `test_grassland`, draining a full storm).
+  moves by under 1 mm a frame (measured on a generated field, draining a full storm).
 - **When it is drawn:** while it rains, while puddles show, and while any lake is still draining after the rain; the
   mirrors run whenever it is drawn, so water never shows without its reflection.
 - **The rain, the same for everyone** (`WaterPooling.Rainfall`): worked out from the shared world clock and the weather
@@ -81,21 +82,21 @@ on the player's machine; the game server only says what weather it holds and whe
 | Mirrors at once | 8, plus the sky-only one |
 | Full reflection within / sky only from (from the middle of the view) | 6 m / 9 m |
 
-Measured on `test_grassland` (ground drawn at 0.25 m) at the most rain: 15 lakes covering 912 m² of the 3,600 m² map,
-from 3 cm to 44 cm deep (a small dip under a big slope); the Swamp field `khn_fild09`: 3 lakes covering 2,699 m², up
-to 16 cm deep; the town `hilt`: none.
+**Not yet measured on the seamless world `world`** — how many sheets and lakes it holds at the most rain, and how
+deep.
 
 ### Ground shape that water needs
 
 A sheet of water ends exactly where the drawn ground drops away, so a level's edge must be drawn round, not in the
 steps of the ground's triangles. Shaped ground (a biome with levels or mounds) is therefore drawn with its points
 0.25 m apart and its shape worked out on a 0.2 m grid, with the crease where a ramp meets a level rounded over about
-half a metre ([Biomes](../3-world/biomes.md)). `test_grassland`, `test_grassland_cliffs` and
-the 39 world fields have it (all rebuilt 2026-09-28).
+half a metre ([Biomes](../3-world/biomes.md)). That is the per-map generator's ground; the seamless world's ground is
+built by its own builder and has not been checked against this.
 
 ## Cost
 
-- Reading a map's ground: about 80 ms, once, when the ground first gets wet after a map loads.
+- Reading a map's ground: about 80 ms on a 60 m generated field, once, when the ground first gets wet after a scene
+  loads. Not measured on the seamless world.
 - Refilling the lakes: under 2 ms, a few times during each 3-second rise and about three times a second while
   draining; the glide in between is one small sum per lake per frame.
 - Each mirror draws the whole world again, every frame, and only water within 9 m of the middle of the view gets one;
@@ -112,6 +113,10 @@ and the rain's steps, limit, drain and Swamp hold.
 
 ## Not settled
 
-- Water that got no mirror used to vanish (2026-09-28); it now reflects the sky instead. Not yet watched in the game.
+- **The seamless world's squares load as the player moves, and the ground is not read again when they do**:
+  `WaterSurfaces` re-reads only when a scene loads or unloads, and a square is a prefab placed inside the one world
+  scene. So the water is worked out from the squares standing when the ground first got wet. Not yet watched in the
+  game.
+- Water that gets no mirror reflects the sky. Not yet watched in the game.
 - Creatures drawn as flat pictures stand on top of the water rather than in it.
 - The frame cost of the mirrors.

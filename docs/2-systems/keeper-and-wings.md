@@ -1,5 +1,5 @@
 ---
-status: "BUILT, not play-tested. Lastline's is the only Keeper in the world. Teleport offers no town in the seamless world (see Open). Storage needs migration accounts/sql/012_account_storage.sql applied."
+status: "BUILT, not play-tested. Storage needs migration accounts/sql/012_account_storage.sql applied."
 owner: vince
 last-updated: 2026-10-31
 tags:
@@ -20,12 +20,14 @@ list arrive finished.
 ## Where a Keeper is
 
 A Keeper is a row of the townsfolk list (`unity/Assets/3_Data/Resources/WorldTownsfolk.asset`) with **Keeper** ticked.
-The row owns where they stand and which way they face; nothing else keeps a copy. Today the one Keeper stands in
-Lastline, just north of the default arrival point beside the Central Fountain.
+The row owns where they stand and which way they face; nothing else keeps a copy. Every town built in the world so far
+has its Keeper there, one row each: Lastline's (`keeper-lastline`) stands just north of the default arrival point
+beside the Central Fountain; Parley's is `keeper-parley`.
 
 A Keeper stands still, keeps no shop and works no station. `tools/check-quest-data.py` fails when a town of the world
-has no Keeper or two, when a Keeper stands outside a town, strolls, or also keeps a shop or a station — so it fails
-today for every town area of the world that has no Keeper yet.
+has no Keeper or two, when a Keeper stands outside a town, strolls, or also keeps a shop or a station. A town of the
+seamless world is one of its named Town areas, so every town built into the world needs its Keeper row in the same
+change.
 
 The server holds every Keeper service to the same reach as a shop: within 3.5 m of a Keeper, plus 0.6 m for a position
 that is a tenth of a second old. Outside it the answer is "You are not at a Keeper."; a dead character is told "You
@@ -33,32 +35,32 @@ cannot do that while dead."
 
 ## Save Point
 
-One press. The character's save point becomes **the Keeper** of the map they stand in, written with their next save,
-and they are told "Save point set: *name*." Where they stand back up is worked out each time they use it, 1.5 m in
-front of that Keeper, from the Keeper's row — so a Keeper who is moved never leaves anybody saved inside a wall. A map
-with no Keeper any more sends them to the default instead. The game-master's `/save` saves the exact spot the GM stands
-on. Until a character sets one they come back at the default: the arrival point `center` of `world`, beside Lastline's
-Central Fountain.
-
-**Current limit:** the save point names a MAP, not a town. The whole world is one map, `world`, so the name it reports
-is "world", and a save point set at a second town's Keeper would bring the character back to whichever Keeper of
-`world` the list holds first.
+One press. The character's save point becomes **the Keeper they stand at** — the map and that Keeper's person id
+(`SaveData.savePointKeeper`), written with their next save — and they are told "Save point set: *town*.", the town
+named as the Teleport page names it (below). Where they stand back up is worked out each time they use it, 1.5 m in
+front of that Keeper, from the Keeper's row — so a Keeper who is moved never leaves anybody saved inside a wall. A save
+with no Keeper id (written before the id was recorded), or one naming somebody who is no longer a Keeper there, goes to
+the map's first Keeper (`WorldTownsfolk.KeeperIn`); a map with no Keeper any more sends them to the default instead.
+The game-master's `/save` saves the exact spot the GM stands on. Until a character sets one they come back at the
+default: the arrival point `center` of `world`, beside Lastline's Central Fountain.
 
 ## Teleport
 
-The page shows the character's Unsigned and one line per town another Keeper stands in: its name and its price. A town
-whose price is more than the Unsigned the server last sent is drawn dim; pressing it still asks, and the server answers.
+The page shows the character's Unsigned and one line for **every other Keeper**: the town's name and its price,
+cheapest first, then by name. A town is named by the world layout's nearest town to that Keeper
+(`WorldPlaces.NearestTownName`); a Keeper in a map outside the seamless world is named by its map. A town whose price is
+more than the Unsigned the server last sent is drawn dim; pressing it still asks — naming the map and the Keeper's id
+(`KeeperTrip.keeper`) — and the server answers.
 
-- **Price: 4 kills of income for each door on the shortest way there — 40u × the character's level per door**
+- **Price: 4 kills of income for each door's worth of the trip — 40u × the character's level per door**
   (`KeeperMath.KillsPerDoor`, a kill being worth 10u × the level). Setting a save point and using storage are free.
-- The Unsigned is taken first, then the character is moved, arriving 1.5 m in front of that town's Keeper. If the move
+- **A door's worth inside one map** is the ground distance between the two Keepers (height left out): one door for
+  every 80 m or part of it (`KeeperMath.MetresPerDoor`, the width the old separate maps had; `KeeperMath.DoorsBetween`).
+  So every trip inside the seamless world costs at least one door. **To another map** it is the doors on the shortest
+  way there (`WorldRoutes.NextMap`).
+- The Unsigned is taken first, then the character is moved, arriving 1.5 m in front of that Keeper. If the move
   does not happen the Unsigned is handed back and they are told "The trip could not be made — your *N*u is back."
 - Refusals: "There is no way there." and "Needs *N*u — you have *M*u."
-
-**Current limit — Teleport offers nothing in the seamless world.** The towns offered and the doors counted come from
-the world layout's list of maps and doors (`WorldAtlas`), which is empty now that the world is one map. So the page
-lists no town, and any press is answered "There is no way there." Both the per-map Keeper lookup and the price by doors
-are still to be redesigned for one seamless map.
 
 ## Storage
 
@@ -175,14 +177,12 @@ stretches, so a Fly Wing used in the open field is always refused that way.
 
 - `charserver/test-storage.sh` — storage end to end on a throwaway database it creates and removes: stores, takes,
   the same save sent twice, every refusal, one storage per account. It never touches the real database's tables.
-- `tools/check-game-math.sh` — the Keeper's numbers: the price, the arrival spot, the reach, the limit and the listing
-  of each stretch's cells.
+- `tools/check-game-math.sh` — the Keeper's numbers: the price, the doors between two Keepers of one map, the arrival
+  spot, the reach, the limit and the listing of each stretch's cells.
 - `tools/check-quest-data.py` — one Keeper per town.
 
 ## Open
 
 - Not play-tested. The window, a wing's use, and the server-decided map and arrival have only been checked by
   compiling and by the tests above.
-- **Keepers are looked up per map, and teleport is priced by doors.** In one seamless map that gives one save-point
-  Keeper per world and a Teleport page with no towns; both wait on a redesign.
 - Only Lastline has a Tool Dealer, so wings can be bought in one town.

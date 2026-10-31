@@ -34,8 +34,13 @@ gm[world as Alpha]> quit
 - `maps` lists the maps open right now, numbered, under the game server holding each — its id, how many players and
   creatures it holds, and how long ago it last checked in. Only a map a game server holds takes a command; the
   character server never brings one up for a command.
-- `map <number>` picks from the last list. It is taken only once a game server answers for it, so a typo never becomes
-  the map every command goes to.
+- `maps all` lists every map of the game — the one seamless map, its id read from `SeamlessWorldBuilder.MapId` —
+  marking the ones open now.
+- `map <which>` picks the map: a number from the last list, the id (`world`), or a place in the world by its whole id or
+  name in any case, spaces and underscores optional (`old oak`, `lastline`), which means the map that place is in. The
+  places are read from `unity/Assets/3_Data/Resources/WorldPlaces.json`; part of a place's name is not enough ("No map
+  matches 'oak'"). The choice is taken only once a game server answers for it, so a typo never becomes the map every
+  command goes to.
 - `as <character>` acts as that person; `as` alone goes back to acting as nobody. `help` lists the session words and
   the server's GM commands. `status` and `quit` do what they say.
 
@@ -47,12 +52,8 @@ gm --map <map> --as Alpha "/item \"watery ink\" 10"
 gm --map <map> status
 ```
 
-A one-shot call without `--map` is refused, and in a session nothing is sent until a map is chosen.
-
-**Current limit — map names and ids are not found.** `gm.py` looks map ids and names up in the zone world's old list,
-`tools/world-creator/worlds/world-regions.json`, which holds no maps any more. So `map world`, `--map world` and
-`maps all` find nothing ("No map matches 'world'"; "The world layout could not be read."). Only picking by number after
-`maps` works, which means a one-shot `gm --map …` call cannot reach the game today.
+`--map` takes the same words as `map` — `--map world`, `--map "old oak"`. A one-shot call without `--map` is refused,
+and in a session nothing is sent until a map is chosen.
 
 ## Moving somebody: `/tp`
 

@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-27, not play-tested in the game: one walking rule for every body and every route; route areas per map."
+status: "BUILT 2026-09-27, not play-tested in the game: one walking rule for every body and every route; route areas per named area of the world."
 owner: vince
-last-updated: 2026-09-27
+last-updated: 2026-10-31
 tags:
   - systems
 ---
@@ -28,7 +28,7 @@ creature steps ran from 0.039 m to 0.23 m. **Every body takes the full step, the
 refuses a step taller than a controller's capsule can take, so a capsule too short for it is grown just tall enough
 (0.084 m of scaled height), its bottom kept where it was and its width untouched — only the invisible collision shape
 changes, never what is drawn. A creature resized to its size (`MobBody.Fit`) gets the rule put back on at the new
-size. Measured on the 98 creature prefabs: every one steps 0.075 m; the ten that were too short (mice, butterflies,
+size. Measured on every creature prefab: each one steps 0.075 m; the ten that were too short (mice, butterflies,
 larvae, moles, molluscs) grew from 0.044–0.078 m to 0.083 m. Pinned in the maths checks too.
 
 **On routes.** The route-finder asks `GroundElevation.Walkable` before stepping from one cell to the next: neither
@@ -40,30 +40,25 @@ drop beside a slope, a cliff).
 
 ## Route areas
 
-When a map loads, it works out once which areas of it connect to each other (`Pathfinder3D.LabelAreas`, called by
-the map's `Pathfinder3DConfig`). Before any route search, a check asks whether the start and the goal are in the
+The world is one map loaded square by square, so its connected areas are worked out per **named area** — each
+field, town or cave of the world (`SeamlessWorld.areas`). The moment every square under a named area is loaded, that
+area's ground is labelled once (`Pathfinder3D.LabelAreas`, called by `SeamlessWorld.RefreshAreaLabels`); the moment
+one of its squares goes, its labels go with it. Before any route search, a check asks whether the start and the goal are in the
 same area; if not, the search is skipped and the body walks straight toward the goal, stopping at the last spot
 still in its own area — the edge of a cliff above a creature, or the foot of it below one.
 
-- **Cost, measured on a 60 × 60 m map:** about 13 ms once when the map loads, 28.8 KB of memory while it is held,
+- **Cost, measured on a 60 × 60 m stretch of ground:** about 13 ms once when it is labelled, 28.8 KB of memory while it is held,
   and 28 ns per check. Without it, a chase toward an unreachable target searched every reachable cell up to its
   6,000-cell budget each time: 52–57 ms, three times a second.
 - **The labelling is never stricter than the search:** it uses the thinnest possible body, so "different areas" is
   only said when it is certainly true; when in doubt the normal search runs.
 - **A random landing spot comes from the same labels** (`Pathfinder3D.RandomSpotInArea`, what a Fly Wing uses): each
-  area's cells are listed once at labelling (4 bytes per walkable cell — at most about 101 KB for an 80 × 80 m map), a
+  area's cells are listed once at labelling (4 bytes per walkable cell — at most about 101 KB for an 80 × 80 m area), a
   cell of the area the unit stands in is picked evenly with one lookup (measured 1.4 µs a pick), and it is moved to the
   nearest cell a real body fits when the first is too tight — kept only if that is still the same area, so whoever
-  lands can always walk back. Asked once per use, never per frame.
-- **Where it applies:** only maps with a route-finder setup (every generated map has one). The labels go when the
-  map unloads, and are cleared at the start of every Play.
-
-## What this changed, measured on 2026-09-27
-
-- `test_grassland` (three ground levels, slopes to 20°): routes run between levels.
-- `test_grassland_cliffs`: routes run from the pass up onto the cliff tops through the meeting points, and along
-  the pass as before.
-- `lastline` used to let routes climb 0.6 m rises no body could climb; all 28 routes between its doors and arrival
-  points still route under the one rule.
+  lands can always walk back. Asked once per use, never per frame. Ground outside every named area carries no labels,
+  so a Fly Wing has nowhere to land there.
+- **Where it applies:** inside a named area whose squares are all loaded. Anywhere else the normal search runs with no
+  shortcut. The labels are cleared at the start of every Play.
 
 Related: [Biomes](../3-world/biomes.md) (ground levels, cliffs, meeting points).

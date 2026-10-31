@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name; since 2026-10-13 weapons are dropped, never forged, and the trademark roll is a class first (an ultimate's 1%), independent of the weapon's rarity."
+status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name; weapons are dropped, never forged, and the trademark roll is a class first (an ultimate's 1%). Gear has no rarity."
 owner: vince
-last-updated: 2026-10-13
+last-updated: 2026-10-31
 tags:
   - systems-combat-design
 ---
@@ -21,11 +21,12 @@ destroyed by the very quench that improved the weapon, and nobody would ever cli
 
 ## 1. What a name is
 
-- **Rolled ONCE, as the weapon is dropped**, together with the piece's rarity and its base roll; nothing rolls
-  any of the three again.
+- **Rolled ONCE, as the weapon comes into the world**, together with its base roll; nothing rolls either again. A
+  creature's weapon comes into the world with each of its lives, and a weapon it drops is an exact copy of the one it
+  wore — trademark, grade, folds and all.
 - **It never changes.** A quench moves the grade, a fold moves the number, a failed fold or quench takes some back —
-  none of them touch the name. **This is the point:** you find the weapon you want at Raw, and then spend the
-  whole crafting ladder climbing that one weapon.
+  none of them touch the name. **This is the point:** you find the weapon you want, and then spend the rest of
+  the crafting ladder climbing that one weapon.
 - **It belongs to one weapon type.** *Petal Storm* is a form of Blossom Wind, the sword's style, so it is only ever
   a sword. The name already says what the thing is, and the item's type does not need repeating in the title.
 - **It names a form, not a person.** The canon reserves real names for the Fourteen — naming a Kashira is the
@@ -178,9 +179,8 @@ parry routine does have weapons of its own.
 
 ## 4. The roll: random — a class first, then a name
 
-**A weapon's trademark has nothing to do with its rarity.** The rarity of a dropped weapon is the answer of the kind
-of creature that dropped it and multiplies its base ([V4](README.md) §4); the trademark is rolled apart from it,
-in two steps: first a **class**, then **one trademark of that class**, every one equally likely.
+**The trademark is rolled in two steps:** first a **class**, then **one trademark of that class**, every one equally
+likely. Gear has no rarity ([V4](README.md) §1), so nothing else about the weapon bends the roll.
 
 | Class | Share of all new weapons of a type | Sword trademarks | Each, on a sword |
 | --- | --- | --- | --- |
@@ -201,8 +201,9 @@ hunt — it also needs a whole new material, a drop table for it, and a second d
 
 ## 5. How a wanted trademark is found — by hunting
 
-A weapon comes only from a kill: every kill has a **10%** chance to drop one random piece of what the creature
-wears, so a wanted trademark is hunted from creatures that carry that weapon type. Of the swords that drop:
+A weapon comes only from a kill: every kill has a **10%** chance to drop an exact copy of one random piece of what the
+creature wears, and a creature's weapon rolls its trademark afresh every life, so a wanted trademark is hunted from
+creatures that carry that weapon type. Of the swords that drop:
 
 | Chasing | Chance on each dropped sword | Dropped swords it takes, on average |
 | --- | --- | --- |
@@ -226,21 +227,20 @@ A dropped piece nobody wants sells to a shop for 5u; recycling an untouched Raw 
   chance of each is `CraftingMath.TrademarkChance`, pinned in `tools/game-math-tests/Checks.cs`, and
   `Trademarks.ChanceOf` hands it to the wiki's trademark table. Each weapon type's candidates are gathered once and
   forgotten whenever the skill catalog reloads (`Trademarks.Forget`). Every new weapon comes through that same roll
-  (`EquipmentInstance.CreateFresh`) — a dropped piece (`CreateDropped`), a GM's `/weapon`, a creature's gear at any
-  grade. The one weapon made without it is a new character's (`EquipmentInstance.CreateStarter`).
+  (`EquipmentInstance.CreateFresh`) — a GM's `/weapon`, a creature's gear at any grade (`CreateWorn`); a dropped
+  piece is a copy of the creature's (`CloneAsNewCopy`) and rolls nothing. The one weapon made without it is a new character's (`EquipmentInstance.CreateStarter`).
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
-  the wire; the copy's rarity rides the same text as its sixth part, and its base roll as its seventh. The save today is **v19**, and both
-  servers' build string is `unwritten-character-v28`.
+  the wire (`EquipmentInstance.EncodeRoll`). The save today is **v21**, and both servers' build string is
+  `unwritten-character-v30`.
 - **In a fight** the lift is added to the per-cast skill-level lift (`Character.SkillOutputLift` = skill level + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
   `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`
   — happens once at the cast's release in `SkillRunner.PlayCycles` and is handed to every burst of that cast, and
   `SkillShout.Words` picks the call from it.
 - **The title** is `+7 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
-  It is written in the colour of the copy's own rarity (`Rarities.Color`, from `EquipmentInstance.rarity`) in the
-  tooltip, the bag, the worn list and on the floor, and the tooltip names the rarity on its own line.
+  Gear has no rarity, so it is written in the ordinary (Common) text colour everywhere it shows.
 - **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect, each naming the skill
   it is for ("+20% to Thousand Petals' damage", "+20% to Thousand Petals' damage buff"); the wiki's trademark table,
   which names the skill on the row, keeps the short form ("+20% damage"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:

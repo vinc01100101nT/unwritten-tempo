@@ -17,7 +17,7 @@ using UnityEngine.SceneManagement;
 /// path/dirt weights are sampled (bilinearly) from the painted cell grid instead of from noise + routes.</item>
 /// <item>Props: <see cref="PropPlacement.PlaceOnGround"/> — bounds-driven seating (Y0, any pivot), at the prop's
 /// NATIVE prefab size (nothing rescales it) and rotated to the painted yaw.</item>
-/// <item>Spawn: <see cref="RegionBuilder.MakeSpawn"/>. Warp wiring stays <see cref="WorldCreator"/>/MapLinker's job.</item>
+/// <item>Spawn: <see cref="RegionBuilder.MakeSpawn"/>.</item>
 /// </list>
 ///
 /// COORDINATE MAPPING (locked): the painter's world XZ is preserved with a pure translation that centres the map on
@@ -506,7 +506,7 @@ public class MapPainterImporter : EditorWindow
 
     // Remove a prior import's category objects from the scene so the ticked ones can be rebuilt cleanly. Ground mesh =
     // "Ground_*", props group = "Props", wall kit = "Wall". Arrival points are never touched: this tool no longer makes
-    // one, and the ones beside the doors belong to the World Creator.
+    // one, and the ones beside the doors belong to whoever placed those doors.
     static void ClearImported(Scene scene, bool ground, bool props, bool walls)
     {
         foreach (var go in scene.GetRootGameObjects())

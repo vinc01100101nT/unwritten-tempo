@@ -12,15 +12,15 @@
     },
     {
       "type": "paragraph",
-      "text": "**Every piece starts somewhere.** One kill in ten, a monster drops one piece of what it wears — an exact copy of that piece, at the **grade** and **folds** the monster wore it, with its **Ink lines** and **card slots**. An ordinary monster's gear grows with its level (Raw, then F, E and D); elites wear C and B, shadows A, and they wear more folds. Whatever it is, you can take it further: fold it with **Temper Dust** at the smith, quench it with **Quench Oil** once it reaches **+10**, write it with **Ink**, and add **card slots** at the smith. Every piece carries its own **base** — 85% to 115% of the usual — a weapon its **trademark** and an armour piece one **word** from its slot. Two drops of the same item are rarely the same, and the better one is worth more."
+      "text": "**Every piece starts somewhere.** One kill in ten, a monster drops one piece of what it wears — an exact copy of that piece, at the **grade** and **folds** the monster wore it, with its **Ink lines** and **card slots**. A monster's gear grade follows its level — Raw up to level 14, then a grade higher every fourteen levels, to A from level 85 — and elites and shadows wear more folds than ordinary monsters. Whatever it is, you can take it further: fold it with **Temper Dust** at the smith, quench it with **Quench Oil** once it reaches **+10**, write it with **Ink**, and add **card slots** at the smith. Every dropped piece carries its own **base** — 85% to 115% of the usual — a weapon its **trademark** and an armour piece one **word** from its slot. Two drops of the same item are rarely the same, and the better one is worth more."
     },
     {
       "type": "paragraph",
-      "text": "**Higher grades are always stronger.** Each fold adds a share of the piece's base — a small one — and a quench that succeeds adds a big one, so an **A +0** piece is worth more than eight times an **F +10** one, and every grade at +0 beats the grade below it at +10. Climbing from Raw +0 to A +10 is a long road: about two months of eight hours a day."
+      "text": "**Higher grades are always stronger.** Each fold adds a share of the piece's base — a small one — and a quench that succeeds adds a big one, so an **A +0** piece is worth more than eight times an **F +10** one, and every grade at +0 beats the grade below it at +10. Climbing from Raw +0 to A +10 is meant to be a long road: about two months of eight hours a day."
     },
     {
       "type": "heading",
-      "text": "The four things a station does"
+      "text": "The five things a station does"
     },
     {
       "type": "list",
@@ -28,6 +28,7 @@
         "**Fold** — Temper Dust and Unsigned: **1** Temper Dust a fold at Raw and one more for each grade, up to **7** at A. Each fold makes the piece worth more. **+0 to +4 always work**; from +4 a fold can fail, more often the higher the grade and the folds, and a failed fold takes **one fold off**, never below **+4**. Every grade stops at **+10**, and only a quench moves you on.",
         "**Quench** — at **+10** only. Quench Oil and more Unsigned: **1** Quench Oil at Raw and one more for each grade, up to **6** at B. It either lifts the piece **one grade, to +0**, or fails. With no Salt, a failure drops the piece one grade, to +0 (a Raw piece just goes back to +0), and takes the last stat Ink wrote on it. **A is the top.**",
         "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced. The Ink tab uses the strongest Ink you carry; hover the **i** beside its name to see every stat it can write with its number, a stat already in another slot greyed because it cannot land again.",
+        "**Slot** — adds one **card slot**, or fails and keeps the slots the piece had. A weapon holds up to **4**, a body piece, a garment or shoes up to **2**, a hat none. Each press costs Quench Oil and Unsigned — the piece's quench price, three times more for every slot it already has — and the chance falls with each slot already there: a weapon's first slot is a **50%** chance.",
         "**Recycle** — destroys the piece and gives back half of what its folds and quenches took, and never less than 1 Temper Dust (below)."
       ]
     },
@@ -41,7 +42,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every piece — **metal, cloth or leather** — is worked at **the smith**, and all three take the same two materials. **Temper Dust** and **Quench Oil** drop from every monster — more from higher-level monsters, far more from elites and shadows, and more again from monsters in better gear — and no shop sells them. Neither merges into anything. Every try at a station is paid for, whether it works or not, and the station's window shows the chance before you press: \"Chance: 90% · If it fails: back to +4\"."
+      "text": "Every piece — **metal, cloth or leather** — is worked at **the smith**, and all three take the same two materials. **Temper Dust** and **Quench Oil** drop from every monster, and the harder the monster, the more: a Tainted or Blighted monster drops three to ten times what an ordinary one does, an elite thirty times, a shadow ninety times or more. No shop sells them. Neither merges into anything. Every try at a station is paid for, whether it works or not, and the station's window shows the chance before you press: \"Chance: 90% · If it fails: back to +4\"."
     },
     {
       "type": "heading",
@@ -53,7 +54,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Salt** comes in three — Coarse, Fine, Pure — and decides what a failed quench costs you. **Coarse Salt** keeps the grade and puts the piece at **+4**; **Fine Salt** does the same and makes the quench more likely to work; **Pure Salt** keeps the grade at **+9** and makes it more likely still. A Salt is used up whichever way the quench goes, and no quench is ever more than **95%** sure. Coarse Salt drops from ordinary monsters; Fine and Pure are rare from them and far more common from elites and shadows."
+      "text": "**Salt** comes in three — Coarse, Fine, Pure — and decides what a failed quench costs you. **Coarse Salt** keeps the grade and puts the piece at **+4**; **Fine Salt** does the same and makes the quench more likely to work; **Pure Salt** keeps the grade at **+9** and makes it more likely still. A Salt is used up whichever way the quench goes, and no quench is ever more than **95%** sure. Coarse Salt drops from every monster; Fine Salt only from Tainted and Blighted monsters, elites and shadows; Pure Salt only from elites and shadows."
     },
     {
       "type": "paragraph",
@@ -65,7 +66,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Take any piece to the smith and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back, as Temper Dust, Quench Oil, Unsigned and Ink: every quench it successfully climbed and the folds each of those took, the folds standing on it now, and the Ink for the stats written on it. Every fold counts, Raw ones included, and every recycle gives at least 1 Temper Dust — so a Raw piece straight from a creature gives exactly that. A shop pays 5u for any piece of gear. On the Recycle page you can tick as many carried pieces as you like and recycle them all with one press; worn pieces are recycled one at a time. A piece your first tutorial still needs cannot be recycled, sold or dropped."
+      "text": "Take any piece to the smith and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back, as Temper Dust, Quench Oil, Unsigned and Ink: every quench it successfully climbed and the folds each of those took, the folds standing on it now, and the Ink for the stats written on it. Every fold counts, Raw ones included, and every recycle gives at least 1 Temper Dust — so a Raw +0 piece with nothing written on it gives exactly that. A shop pays for a piece by what recycling it would give back, Ink included — so a piece nobody has worked sells for about what one Temper Dust does. On the Recycle page you can tick as many carried pieces as you like and recycle them all with one press; worn pieces are recycled one at a time. A piece your first tutorial still needs cannot be recycled, sold or dropped."
     },
     {
       "type": "paragraph",

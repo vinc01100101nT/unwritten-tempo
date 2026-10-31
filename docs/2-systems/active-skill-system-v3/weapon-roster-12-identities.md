@@ -42,7 +42,7 @@ Each weapon is what the artist kept of one of **the Fourteen Kashira** — the c
 | Sword | Might + Finesse | Fast strike combos that burst one enemy down; parries and braces at the right moment to win the exchange. | Attack Speed, Attack, HP | melee, reach 0.5 |
 | Greatsword | Might | Wide cleaves that hit every enemy in a broad arc; built to wipe out packs, not to duel. | Attack, Critical, HP | melee, reach 0.5 |
 | Axe | Might + Finesse | Stacks Bleed; gains speed and a damage buff that keeps rising while it keeps attacking; gives up all defence to do it. | Attack Speed, Attack, Critical | melee, reach 0.5 |
-| Warhammer | Might | Stuns and knocks back, interrupting what enemies were about to do; never taunts. | Attack, Defense, HP | melee, reach 0.5 |
+| Warhammer | Might | Stuns and knocks back, interrupting what enemies were about to do; never taunts. | Attack, HP, Accuracy | melee, reach 0.5 |
 | Spear | Might | Pulls enemies in, dashes through their line, and cuts the defence of whatever it moves. | Accuracy, Attack, HP | melee, reach 1.0 |
 | Fist | Might | Two paths, chosen by which skills a player learns. **Offence:** builds energy, then spends all MP in one enormous physical blow (in the spirit of Asura Strike); energy blasts that still deal physical damage. **Defence:** taunts, cuts damage taken, blocks, reflects damage back. A player can build one path or mix both. | Attack, HP, MP | melee, reach 0.5 |
 | Bow | Finesse | Slows enemies and dashes away to keep its distance; fights on the move. | Evasion, Accuracy, Attack Speed | ranged, reach 5 |
@@ -51,10 +51,10 @@ Each weapon is what the artist kept of one of **the Fourteen Kashira** — the c
 | Shuriken | Might + Finesse | **Thrown (ranged):** normal attacks, and some skills, bounce to nearby enemies. **Swung (melee):** each swing can hit two or three times, and never bounces; its signature blow drops the wielder's HP to 1 for one huge physical hit. | Attack Speed, Accuracy, HP | melee (STR) or ranged (DEX), whichever stat is higher; ranged reach 3, melee reach 0.5 |
 | Sniper | Finesse + Arcane | One magic shot that can crit — the only magic in the game that can; the further the target, the more it hurts; the longest reach in the game. | Critical, Accuracy, Magic Attack | ranged, reach 7 |
 | Staff | Arcane | Area nukes, Burn, and Freeze and slows to lock an area down. | Magic Attack, Cast Speed, MP | melee, reach 0.5 |
-| Wand | Arcane | Heals, regeneration, damage shields, buffs, and Cleanse. | MP, Cast Speed, Defense | melee, reach 0.5 |
+| Wand | Arcane | Heals, regeneration, damage shields, buffs, and Cleanse. | MP, Cast Speed, HP | melee, reach 0.5 |
 | Scythe | Might + Arcane | Silence, defence cut and mana drain that wear an enemy down over a long fight. | Magic Attack, MP, HP | melee, reach 0.5 |
 
-No two weapons' mastery stats are the same set. Each mastery level adds +0.5% to each of the three (see V4).
+Warhammer and Spear raise the same three stats; every other weapon's three are a set of its own. Each mastery level adds +0.5% to each of the three (see V4); the table lives in code, `WeaponMasteryStats.Raises`.
 
 **The weapon groups (decided 2026-09-25, revised 2026-10-06).** Every weapon sits in one of four groups:
 

@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Writes a Map Painter <c>map.json</c> SIDECAR beside a freshly-baked scene, so any GENERATED map can be re-opened
 /// in the web Map Painter (<i>Import map…</i>), hand-edited, and re-baked via <see cref="MapPainterImporter"/> — the
-/// round-trip that makes auto-generated maps editable (the "World Creator owns generation, Map Painter owns edits"
+/// round-trip that makes auto-generated maps editable (the "generator owns generation, Map Painter owns edits"
 /// workflow). The schema mirrors EXACTLY what <see cref="MapPainterImporter"/> reads and the painter's
 /// <c>importMap()</c> consumes:
 /// <code>{ version, name, cellSize, size{x,z}, cols, rows, ground[{brush,cx,cz}], objects[{brush,prefab,x,z,yaw}] }</code>

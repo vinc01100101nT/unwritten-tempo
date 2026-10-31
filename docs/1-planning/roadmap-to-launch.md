@@ -52,8 +52,9 @@ of the world's land is not built yet, and there are no cards and no main-story q
 - **Weapon skills** — "weapon families with a published skill" against 14. Every other family can be held but has
   nothing to learn. "belonging to nothing" lists the skills no weapon and no item grants (task `MT-37`).
 - **Towns** — "towns with a built town piece" against "towns in the layout". A town with no piece has no walls,
-  gates, streets or houses; its spot is plain world ground. Every townsperson, the one Keeper among them, stands in
-  Lastline ("townsfolk rows"); the shadow summoners stand out in the world.
+  gates, streets or houses; its spot is plain world ground. Every townsperson stands in Lastline ("townsfolk rows")
+  except Parley's Keeper — each town with a built piece has its own Keeper ("keepers") — and the shadow summoners,
+  who stand out in the world.
 - **The world's land** — "land squares not built" and the "not built" lines under it. The builder makes the sea, its
   shores, sand and the low-tide path, but no boats, so neither island can be sailed to; and the dark isle's ground look
   is undecided (the `world-authoring` skill, section 6).
@@ -77,8 +78,6 @@ its reach.)*
 - Movement is reported by the player's machine and checked by the server — deliberately, see
   [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md), which also lists the other
   deliberate limits (among them that two people attacking one creature is not resolved fairly, task `MT-36`).
-- In the seamless world, Keepers are still looked up per map, which breaks with a second town, and a teleport's price
-  is counted in doors, which the world no longer has.
 - A fall into deep water strands whoever falls: the game has no swimming. The Tide Temple's low-tide path is always
   wadeable, because the game has no tide. Both deferred by the user (the `world-authoring` skill, section 2).
 

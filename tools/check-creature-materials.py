@@ -3,8 +3,9 @@
 ONE material, whose tier is the one its multiplier gives (CreatureMaterials.TierOfMultiplier: x1 Common, x3 Uncommon,
 x10 Rare, x30 Epic, x90 Legendary), no material belongs to two creatures, every material sells for exactly what the
 rule says for its creature's level and its tier, its icon is its own picture or else the box drawn in its tier's colour, every piece of gear is worth what a brand-new piece is
-(CraftingMath.NewPieceWorth), and the NEWBIE MAPS hold only x1 normal creatures of a level that wears Raw (elites,
-which roam every map, excepted). The tier openings and the price multiples are read out of CreatureMaterials.cs, the
+(CraftingMath.NewPieceWorth), and NOTHING BLIGHTED LIVES NEAR A TOWN: no Blighted version (a normal's x10 copy) is kept
+on a world patch whose middle lies within the spawn builder's ring (RING in tools/world-spawns/build_world_spawns.py)
+of any town in data/world-layout.json. The tier openings and the price multiples are read out of CreatureMaterials.cs, the
 level-to-grade ladder out of CreatureLoot.cs and the new-piece worth out of CraftingMath.cs, so the rule has one owner
 and this only proves the saved files still agree with it. The editor writes these numbers itself on every save
 (DerivedItemValues); nobody types them. Design: docs/3-world/creature-materials.md, docs/3-world/what-a-kill-pays.md.
@@ -13,6 +14,7 @@ USAGE:   tools/check-creature-materials.py [--root <repo>]
 EXIT:    0 = every creature material agrees with the rule; 1 = something does not (each fault is named).
 """
 import glob
+import json
 import os
 import re
 import sys
@@ -22,10 +24,29 @@ TIER = {1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary"}
 CREATURE_KIND = "6"
 ETC_TAB = "3"
 WEIGHT = "10"
-# The maps a brand-new player starts on: the creatures that live there are x1 normals of a level that wears Raw, so a
-# newbie map is all easy (decided 2026-10-20). Elites roam every map whatever its level and are not held to it
-# (decided 2026-10-18).
-NEWBIE_MAPS = ("lst_fild01", "prl_fild01")
+# THE GROUND ROUND A TOWN IS NEVER BLIGHTED. The world spawn builder lays every patch and keeps Blighted (x10) creatures
+# out of its ring round each town; the ring is read out of the builder and the towns out of the world layout, so the
+# rule has one owner and this only proves the saved spawn list still agrees with it. A patch's saved middle is the
+# square nearest the middle the builder measured from, so the ring is held one layout square short of RING.
+SPAWN_BUILDER = os.path.join("tools", "world-spawns", "build_world_spawns.py")
+WORLD_LAYOUT = os.path.join("data", "world-layout.json")
+WORLD_MAP = "world"
+BLIGHTED_FROM = 8      # the builder's own split: a version of x8 or more is Blighted, below it Tainted
+
+
+def town_ring(root):
+    """(ring, towns as (name, scene x, scene z)) or None: the builder's RING less one layout square, and every town."""
+    try:
+        src = open(os.path.join(root, SPAWN_BUILDER), encoding="utf-8").read()
+        layout = json.load(open(os.path.join(root, WORLD_LAYOUT), encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    ring = re.search(r"\bRING = (\d+(?:\.\d+)?)", src)
+    if ring is None or not layout.get("towns"):
+        return None
+    # Scene coordinates from the layout's: x = layout x - 640, z = 640 - layout y (the layout's own "unity" note).
+    towns = [(t["name"], t["x"] - 640, 640 - t["y"]) for t in layout["towns"]]
+    return float(ring.group(1)) - float(layout.get("cell", 0)), towns
 
 
 def field(text, key):
@@ -122,7 +143,6 @@ def main():
         print("could not read the box icon path out of DerivedItemValues.cs, or a tier's box icon is missing, "
               "so nothing can be checked")
         return 1
-    grades = "Raw F E D C B A".split()
 
     items = {}
     for path in glob.glob(os.path.join(res, "Items", "*.asset")):
@@ -192,20 +212,31 @@ def main():
         if field(item, "weight") != WEIGHT:
             faults.append("%s weighs %s, not %s" % (item_name, field(item, "weight"), WEIGHT))
     spawns = open(os.path.join(res, "WorldSpawns.asset"), encoding="utf-8").read()
-    for m in re.finditer(r"^  - map: (\S+)\n    creature: (\S+)$", spawns, re.M):
-        if m.group(1) not in NEWBIE_MAPS:
+    ringed = town_ring(root)
+    if ringed is None:
+        print("could not read RING out of %s or the towns out of %s, so nothing can be checked" % (SPAWN_BUILDER, WORLD_LAYOUT))
+        return 1
+    ring, towns = ringed
+    rows_part, _, areas_part = spawns.partition("\n  areas:\n")
+    middles = [(float(m.group(1)), float(m.group(2))) for m in
+               re.finditer(r"^  - center: \{x: ([-\d.e]+), y: [-\d.e]+, z: ([-\d.e]+)\}", areas_part, re.M)]
+    for block in re.split(r"^  - (?=map: )", rows_part, flags=re.M)[1:]:
+        mm, cr, ar = re.match(r"map: (\S+)", block), re.search(r"^    creature: (\S+)", block, re.M), \
+            re.search(r"^    area: (-?\d+)", block, re.M)
+        if not (mm and cr and ar) or mm.group(1) != WORLD_MAP:
             continue
-        row = creature_rows.get(m.group(2))
-        if row is None:
+        row, area = creature_rows.get(cr.group(1)), int(ar.group(1))
+        if row is None or not 0 <= area < len(middles):
             continue
         name, kind, grade, multiplier = row
-        # ELITES ROAM EVERY MAP, whatever its level (decided 2026-10-18), so the rule is for the creatures that live there.
-        if kind == "1":
+        if kind != "0" or multiplier < BLIGHTED_FROM:
             continue
-        if kind != "0" or grade != 0 or multiplier != 1.0:
-            faults.append("%s spawns on newbie map %s but is %s x%g wearing %s; a newbie map's own creatures are x1 "
-                          "normals wearing Raw" % (name, m.group(1), {"0": "a normal", "1": "an elite", "2": "a shadow"}.get(kind, "?"),
-                                                   multiplier, grades[grade]))
+        x, z = middles[area]
+        town, x0, z0 = min(towns, key=lambda t: (t[1] - x) ** 2 + (t[2] - z) ** 2)
+        dist = ((x0 - x) ** 2 + (z0 - z) ** 2) ** 0.5
+        if dist < ring:
+            faults.append("%s is Blighted (x%g) but lives on world patch %d, %.0f units from %s; nothing Blighted lies "
+                          "within %.0f of a town" % (name, multiplier, area, dist, town, ring))
     for guid, (item_name, _) in sorted(creature_items.items(), key=lambda kv: kv[1][0]):
         if guid not in owner:
             faults.append("%s is a creature material that no creature drops" % item_name)
@@ -225,7 +256,7 @@ def main():
         for f in faults:
             print("  " + f)
         return 1
-    print("creature materials: %d creatures, %d materials, every price agrees with the rule, and every piece of gear is worth a new piece" % (creatures, len(owner)))
+    print("creature materials: %d creatures, %d materials, every price agrees with the rule, every piece of gear is worth a new piece, and nothing Blighted lives within %.0f of a town" % (creatures, len(owner), ring))
     return 0
 
 

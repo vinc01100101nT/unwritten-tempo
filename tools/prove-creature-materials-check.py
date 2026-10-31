@@ -8,6 +8,7 @@ USAGE:   tools/prove-creature-materials-check.py
 EXIT:    0 = every planted fault caught, the valid plant passes and the real project passes; 1 = blind or crying wolf.
 """
 import glob
+import json
 import os
 import re
 import subprocess
@@ -102,13 +103,36 @@ def main():
     rare_rel, rare_text = item_of(elite[1], "material")
     spawns_rel = os.path.join(RES, "WorldSpawns.asset")
     spawns = read(spawns_rel)
-    newbie = re.search(r"(?m)^  - map: lst_fild01\r?\n    creature: (\S+)", spawns)
-    # The mirror reads the file with its line ends turned to \n, so the anchor is matched the same way.
-    newbie_anchor = newbie.group(0).replace("\r", "") if newbie else None
-    elite_id = line(elite[1], "id").split(":", 1)[1].strip()
-    if newbie is None:
-        print(RED + "no spawn on the newbie map lst_fild01 to plant into" + OFF)
+    # The world patch whose middle lies nearest a town, and one creature kept on it — found, never named here.
+    rows_part, _, areas_part = spawns.partition("\n  areas:\n")
+    middles = [(float(m.group(1)), float(m.group(2))) for m in
+               re.finditer(r"(?m)^  - center: \{x: ([-\d.e]+), y: [-\d.e]+, z: ([-\d.e]+)\}", areas_part)]
+    layout = json.load(open(os.path.join(REPO, "data", "world-layout.json"), encoding="utf-8"))
+    towns = [(t["x"] - 640, 640 - t["y"]) for t in layout["towns"]]
+    near = None
+    for m in re.finditer(r"(?m)^  - map: world\r?\n    creature: (\S+)\r?\n(?:    .*\r?\n)*?    area: (\d+)", rows_part):
+        a = int(m.group(2))
+        if a >= len(middles):
+            continue
+        d = min(((tx - middles[a][0]) ** 2 + (tz - middles[a][1]) ** 2) ** 0.5 for tx, tz in towns)
+        if near is None or d < near[0]:
+            near = (d, m.group(1))
+    # A Blighted version (x10 copy of a normal) and a Tainted one (below x8) — found, never named here.
+    blighted = tainted = None
+    for path in sorted(glob.glob(os.path.join(REPO, RES, "Monsters", "*.asset"))):
+        text = read(os.path.relpath(path, REPO))
+        if line(text, "kind")[-1] != "0" or not re.search(r"(?m)^  versionOf: \{fileID: [1-9]", text):
+            continue
+        mult = float(line(text, "multiplier").split(":")[1])
+        cid = line(text, "id").split(":", 1)[1].strip()
+        if mult >= 8 and blighted is None:
+            blighted = cid
+        elif mult < 8 and tainted is None:
+            tainted = cid
+    if near is None or blighted is None or tainted is None:
+        print(RED + "no world patch near a town, Blighted creature or Tainted creature to plant" + OFF)
         return 1
+    near_anchor = "  - map: world\n    creature: " + near[1] + "\n"
 
     bad = 0
     bad += case("a material given another description passes", ord_rel, line(ord_text, "description"),
@@ -131,11 +155,10 @@ def main():
                 "  multiplier: 3", "its multiplier x3 gives Uncommon")
     bad += case("a creature with a typed gear grade again", raw[0], line(raw[1], "multiplier"),
                 line(raw[1], "multiplier") + "\n  gearQuality: 2", "still carries a typed gear grade")
-    bad += case("an elite spawning on a newbie map passes (elites roam every map)", spawns_rel, newbie_anchor,
-                "  - map: lst_fild01\n    creature: " + elite_id, None, must_pass=True)
-    graded_id = line(graded[1], "id").split(":", 1)[1].strip()
-    bad += case("a normal creature of a higher level spawning on a newbie map", spawns_rel, newbie_anchor,
-                "  - map: lst_fild01\n    creature: " + graded_id, "a newbie map's own creatures are x1")
+    bad += case("a Tainted creature on the patch nearest a town passes", spawns_rel, near_anchor,
+                "  - map: world\n    creature: " + tainted + "\n", None, must_pass=True)
+    bad += case("a Blighted creature on the patch nearest a town", spawns_rel, near_anchor,
+                "  - map: world\n    creature: " + blighted + "\n", "nothing Blighted lies within")
     geared = None
     for path in sorted(glob.glob(os.path.join(REPO, RES, "Monsters", "*.asset"))):
         rel = os.path.relpath(path, REPO)

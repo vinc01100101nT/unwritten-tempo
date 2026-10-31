@@ -148,8 +148,9 @@ what each creature wears.
 ### Mobs never lose what they wear
 
 **A creature keeps what it wears, and 1 kill in 10 drops a copy of one piece.** Nothing is taken off the creature:
-on 10% of kills a new copy of one random piece it wears falls — Raw, unfolded, its base rolled
-([V4 §1](../gameplay-system-v4/README.md)). A kill also pays materials and consumables (no death pays Unsigned — see
+on 10% of kills a new copy of one random piece it wears falls — the same grade, folds, Inks, trademark or word,
+base roll and card slots, with its own id and no cards (`EquipmentInstance.CloneAsNewCopy`,
+[V4 §1](../gameplay-system-v4/README.md)). A kill also pays materials and consumables (no death pays Unsigned — see
 [Saved Characters](../../3-world/saved-characters.md)); each kill also has a chance of the creature's own find, a
 food or an element converter ([Town Supplies and Hunting Finds](../town-supplies-and-hunting-finds.md)). Everything
 lands on the ground where it fell, held for the killer (see

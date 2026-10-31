@@ -13,8 +13,8 @@ tags:
 > changes and delete it from Still open.
 
 **What V4 is.** V3 made the weapon the source of a character's skills: a dropped weapon rolled a random kit, and
-its rarity lifted how hard that kit hit. V4 moves progression into the character's own hands. **Gear drops Raw and
-unfolded, and is made worth more at a station. Skills are bought with weapon mastery points, not rolled. Power over
+its rarity lifted how hard that kit hit. V4 moves progression into the character's own hands. **Gear drops as a copy of
+what a creature wore, at the grade its level gives, and is made worth more at a station. Skills are bought with weapon mastery points, not rolled. Power over
 a skill comes from the level bought in it, and from the trademark of the weapon in hand.**
 
 **How it relates to V3.** This is what the code does. [V3](../active-skill-system-v3/README.md) still
@@ -27,14 +27,18 @@ what a creature wears and drops in `CreatureLoot.cs`; mastery in `MasteryMath.cs
 on the item assets under `unity/Assets/3_Data/Resources/Items/`; each skill's mastery level, parent and max level on
 its skill file. The tables below were read from those on 2026-10-31. Change the code or the asset, then this page.
 
-## 1. Gear is dropped Raw, and worked at a station
+## 1. Gear is dropped, and worked at a station
 
 - **Gear is dropped, never made.** Every kill, of every kind of creature, has a **10%** chance to drop **one**
-  random piece of what the creature wears. The drop is a new copy of that item — nothing leaves the creature — and
-  it is always **Raw, +0**, with its base roll (§2) and its trademark (a weapon) or word (an armour piece) rolled.
+  random piece of what the creature wears. The drop is an exact copy of that piece — nothing leaves the creature
+  (`EquipmentInstance.CloneAsNewCopy`): its grade, folds, Ink lines, trademark (a weapon) or word (an armour piece),
+  base roll (§2) and card slots, with an id of its own and no cards in the slots. So it comes at the grade the
+  creature's level gives, Raw to A, and the folds its kind rolled
+  ([Unified Unit Stats](../active-skill-system-v3/unified-unit-stats.md)). A piece made of no material is never
+  dropped.
   There is no way to make a piece from materials.
-- **A new character starts wearing a Sword, a Chainmail and Iron Sabatons** — Raw, +0, unrolled (§2), with no
-  trademark and no word.
+- **A new character starts wearing a Raw +0 Sword and a Raw +5 Chainmail, Iron Sabatons and Chain Mantle**
+  (`StarterKit.Worn`) — unrolled (§2), with no trademark and no word.
 - **Gear has no rarity** (decided 2026-10-18). Two pieces of the same item differ by their roll, grade, folds,
   trademark or word and Inks — never by a colour.
 - **Players make their gear worth more with materials.** Every piece — **metal, cloth or leather** — is worked at
@@ -54,8 +58,9 @@ the last grade's folds gave — and a fold is the small one. Every piece is wort
 because it has a base under its folds, and two dropped pieces are rarely the same, because each rolls its base.
 The climb from Raw +0 to A +10 is meant to be long: the user's target is about two months of eight hours a day.
 
-**How a piece arrives.** A dropped piece is **Raw: +0, no quality**. Three things are rolled as it comes into the
-world and never again: its **base roll** (below), and a weapon's **trademark** (§6) or an armour piece's **word**.
+**How a piece arrives.** Things are rolled as a piece comes into the world and never again: a weapon's
+**trademark** (§6) or an armour piece's **word**, and — on a piece a creature wears — its **base roll** (below). A
+dropped piece is a copy of a worn one, so it arrives with all of those, at the grade and folds the creature wore it at.
 
 **What a piece is called.** A weapon with a trademark goes by its trademark skill's own name: its folds, the name,
 then its grade — **+7 Thousand Petals [C]**. Any other piece: its grade, its folds, then the item — **B +6 Sword**. That one title
@@ -103,9 +108,10 @@ numbers onto the copy.
   **Leather's evasion is a fifth of its attack speed's share** (decided 2026-10-18): at the old share a full grade E
   +10 leather set already held a same-level creature to the 5% floor on the chance to hit; now that floor takes
   level 99, AGI 99, a best-roll A +10 set and a full ring.
-- **The roll.** Only a piece a creature DROPS rolls its base, at **85% to 115%** in whole percents, evenly — on the
-  server, when it drops, saved on the copy and never changed. Every other piece — a new character's, a shop's, a
-  reward, a GM grant, and what a creature wears — is unrolled and counts as 100%. A piece that was never rolled can
+- **The roll.** Only a piece a creature WEARS rolls its base, at **85% to 115%** in whole percents, evenly — on the
+  server, each life the creature comes to life wearing it; the piece it drops is a copy and keeps that roll, saved and
+  never changed. Every other piece — a new character's, a shop's, a reward, a GM grant — is unrolled and counts as
+  100%. A piece that was never rolled can
   be told apart from one that rolled 100%.
 - **Folds and quenches add percentages of the base**, by grade (§9): each fold adds 10% at Raw up to 70% at A, and
   the quench that reached a grade adds 100% at F up to 600% at A.
@@ -327,8 +333,8 @@ no experience, so it teaches nothing.
 
 A weapon does not grant a skill; it **empowers** one. Full design: [Weapon Names & Trademarks](weapon-names-and-trademarks.md).
 
-- **Rolled once, as the weapon comes into the world, and never changed.** A dropped piece, a GM grant, a reward
-  and a creature's gear all roll it the same way; folds, quenches and a failed quench leave it alone. A new
+- **Rolled once, as the weapon comes into the world, and never changed.** A creature's worn weapon (and so the
+  copy it drops), a GM grant and a reward all roll it the same way; folds, quenches and a failed quench leave it alone. A new
   character's starting Sword is the one weapon made with none.
 - **Which skills can come up:** every **published** skill of the weapon's type with a **main number** (§7) on
   any of its effects — decided from the skill's own effects every time, so a skill that gains a main number joins
@@ -522,7 +528,7 @@ What one Ink writes = the stat's top × the piece's grade share × the Ink's tie
 - [Station Window](../shop-cart-and-station-window.md) — how the station window is laid out on screen.
 - [Mob Roster](../../3-world/mob-roster.md) — the creature kinds, what they wear and what they drop.
 - [Creature Materials](../../3-world/creature-materials.md) — the material only one creature drops, and what a kill is worth.
-- [Biomes — Ground Tiles and Props](../../3-world/biomes.md) — the biomes every map is generated in, and the weather a biome always has.
+- [Biomes — Ground Tiles and Props](../../3-world/biomes.md) — the biomes the world's ground is built in, and the weather a biome always has.
 - [Biome References](../../3-world/biome-references.md) — a real photo of each biome beside its test map, with a match rate and what is still missing.
 - [Active Skill System — V3](../active-skill-system-v3/README.md) — the channels, effects and triggers V4 keeps.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the ring's draft and soft cap, which

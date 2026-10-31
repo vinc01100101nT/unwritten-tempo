@@ -29,4 +29,4 @@ furious: one id per map, derived from its name, snake_case, one source of truth,
 practice, and "do whatever it takes" (rebuild maps, edit the tools) is implied. **How to apply:** when a request is
 about consistency (ids, names, file names, keys), apply the industry-standard shape without asking — snake_case ids,
 one owning file, every copy generated or checked from it, a guard that fails on drift — and label any genuinely new
-call (like `_2` for a repeated name) as mine in the report instead of asking. See [[world-creator-pipeline]].
+call (like `_2` for a repeated name) as mine in the report instead of asking.

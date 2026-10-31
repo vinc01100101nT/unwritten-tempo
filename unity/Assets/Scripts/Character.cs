@@ -1963,20 +1963,27 @@ public class Character : MonoBehaviour, ICombatUnit
     /// existed.</summary>
     public bool SavePointAtKeeper { get; private set; }
 
+    /// <summary>Which Keeper the save point was set at, by their person id (<see cref="WorldTownsfolk.Row.id"/>) — a map
+    /// can hold several towns. Empty when it was not recorded: the map's first Keeper is then used.</summary>
+    public string SavePointKeeper { get; private set; } = "";
+
     /// <summary>SERVER: make <paramref name="positionInMap"/> in <paramref name="map"/> this person's save point.</summary>
     public void SetSavePoint(string map, Vector3 positionInMap)
     {
         SavePointMap = map ?? "";
         SavePointPosition = positionInMap;
         SavePointAtKeeper = false;
+        SavePointKeeper = "";
     }
 
-    /// <summary>SERVER: make the Keeper of <paramref name="town"/> this person's save point — the town alone, no spot.</summary>
-    public void SetSavePointAtKeeper(string town)
+    /// <summary>SERVER: make the Keeper <paramref name="keeperId"/> of <paramref name="town"/> this person's save point —
+    /// the Keeper alone, no spot. An empty id means the map's first Keeper.</summary>
+    public void SetSavePointAtKeeper(string town, string keeperId)
     {
         SavePointMap = town ?? "";
         SavePointPosition = Vector3.zero;
         SavePointAtKeeper = !string.IsNullOrEmpty(town);
+        SavePointKeeper = SavePointAtKeeper ? keeperId ?? "" : "";
     }
 
     /// <summary>Which creatures have taken health from this person that nobody has restored yet — what somebody
@@ -2425,6 +2432,7 @@ public class Character : MonoBehaviour, ICombatUnit
         d.savePointY = SavePointPosition.y;
         d.savePointZ = SavePointPosition.z;
         d.savePointAtKeeper = SavePointAtKeeper;
+        d.savePointKeeper = SavePointKeeper;
         CaptureCooldowns(d);
         CaptureTimedEffects(d);
         return d;
@@ -2693,7 +2701,7 @@ public class Character : MonoBehaviour, ICombatUnit
         CurrentMP = Mathf.Clamp(d.currentMP, 0, MaxMP);
         // Below zero means a save older than v8, which never recorded it — keep the full pool it starts with.
         SetStamina(d.stamina < 0f ? maxStamina : d.stamina);
-        if (d.savePointAtKeeper) SetSavePointAtKeeper(d.savePointMap);
+        if (d.savePointAtKeeper) SetSavePointAtKeeper(d.savePointMap, d.savePointKeeper);
         else SetSavePoint(d.savePointMap, new Vector3(d.savePointX, d.savePointY, d.savePointZ));
 
         RestoreCooldowns(d);

@@ -65,6 +65,20 @@ public static class WorldPlaces
         return sb.ToString();
     }
 
+    /// <summary>The name of the town nearest <paramref name="inMap"/> along the ground, or null when the layout lists none.</summary>
+    public static string NearestTownName(Vector3 inMap)
+    {
+        string best = null;
+        float bestSq = float.MaxValue;
+        foreach (var p in All)
+        {
+            if (p.kind != Kind.Town) continue;
+            float dx = p.inMap.x - inMap.x, dz = p.inMap.z - inMap.z, sq = dx * dx + dz * dz;
+            if (sq < bestSq) { bestSq = sq; best = p.name; }
+        }
+        return best;
+    }
+
     /// <summary>The places whose id or name is <paramref name="name"/>, or else every one whose id or name holds it.</summary>
     public static List<Place> Named(string name)
     {

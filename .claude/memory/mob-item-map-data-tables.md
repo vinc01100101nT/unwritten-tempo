@@ -23,4 +23,4 @@ Built 2026-06-27 (the foundation for the quest system — quests reference mobs/
 
 **Gotchas:** Unity MCP `execute_menu_item` FAILS on the migration's submenu item ("no menu named …", and the `→` arrow char breaks the lookup too) — ran the migration via `execute_code` instead. The QUICKFIX menu is `Tools ▸ unwritten ▸ Quick Fixes ▸ Migrate MobRoster to Assets`.
 
-Relates to [[recipe-generator]], [[hud-progression-windows]] (Item), [[world-creator-pipeline]] (maps). Next: quest system on top of these IDs.
+Relates to [[recipe-generator]], [[hud-progression-windows]] (Item). Next: quest system on top of these IDs.

@@ -68,6 +68,14 @@ public partial class NetPlayer
     // The kind of the map this person is standing in, from the world layout — a map it does not list counts as a field.
     MapKind MapKindHere()
     {
+        // IN A SEAMLESS WORLD, THE NAMED AREA STOOD IN decides: the whole world is one map, so the map's own kind says
+        // nothing about whether this spot is a town.
+        var world = SeamlessWorld.ForMap(mapName);
+        if (world != null)
+        {
+            int at = world.AreaIndexAt(MapManager.InMap(transform.position, mapName));
+            return at >= 0 && world.areas[at].kind == SeamlessAreaKind.Town ? MapKind.Town : MapKind.Field;
+        }
         var atlas = WorldRoutes.Atlas;
         var entry = atlas != null ? atlas.Find(mapName) : null;
         return MapKinds.Of(entry != null ? entry.type : null);

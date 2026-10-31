@@ -57,7 +57,6 @@ public static class MinimapBaker
             }
         }
         finally { EditorUtility.ClearProgressBar(); }
-        WorldMapExport.Write();
         return done;
     }
 
@@ -378,6 +377,5 @@ public static class MinimapBaker
         var paths = new List<string>(pending);
         pending.Clear();
         foreach (var path in paths) Bake(path);
-        WorldMapExport.Write();
     }
 }

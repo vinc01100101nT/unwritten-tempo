@@ -75,18 +75,18 @@
     {
       "type": "heading",
       "level": 2,
-      "text": "Lastline and its Keeper"
+      "text": "Keepers"
     },
     {
       "type": "paragraph",
-      "text": "Every journey starts in **Lastline**. It is the only town with townsfolk so far — its shop, the people with work for you, and its **Keeper**, standing in the middle of town. Other towns open as they are built. Walk up to the Keeper and press **F** to open the Keeper's window. A Keeper does three things."
+      "text": "Every journey starts in **Lastline** — its shop, the people with work for you, and its **Keeper**, standing in the middle of town. Every town has a Keeper of its own: **Parley** has one too, and other towns open as they are built. Walk up to a Keeper and press **F** to open the Keeper's window. A Keeper does three things."
     },
     {
       "type": "list",
       "items": [
-        "**Save Point** — this town becomes the place you come back to, in front of its Keeper. Falling in battle and choosing *Return to last saved point* brings you there, and so does a Butterfly Wing. Until you set one, you come back in front of Lastline's Keeper too.",
+        "**Save Point** — this Keeper's town becomes the place you come back to, in front of that Keeper. Falling in battle and choosing *Return to last saved point* brings you there, and so does a Butterfly Wing. Until you set one, you come back beside Lastline's fountain.",
         "**Storage** — one storage for your whole **account**: every character you play opens the same one. It holds **600** different things; a stack of one item counts as one, and each piece of gear counts as one and comes back out exactly as it went in — its folds, its grade, its written stats, its cards. A few items, like the Newbie Potion, cannot be stored.",
-        "**Teleport** — to another town's Keeper, for Unsigned. Lastline's Keeper is the only one so far, so there is nowhere to send you yet."
+        "**Teleport** — to any other town's Keeper, for Unsigned. The price grows with your level and with how far away that Keeper stands: one step of price for every **80 m** of ground between the two, or part of it. A trip you cannot afford is shown dimmed."
       ]
     },
     {
@@ -108,7 +108,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the world is one connected land, written outward from Lastline. Lastline is the only town with townsfolk, a shop and a Keeper so far; the other towns open as they are built.*"
+        "*Status: the world is one connected land, written outward from Lastline. Lastline is the only town with a shop and townsfolk with work for you so far; Parley has its Keeper; the other towns open as they are built.*"
       ]
     }
   ]

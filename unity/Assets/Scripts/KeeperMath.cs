@@ -11,6 +11,9 @@ public static class KeeperMath
     /// of a creature at the traveller's own level, a kill being worth <see cref="CreatureMaterials.GoldPerLevel"/> gold a
     /// level — 40 gold a door at level 1, 3,960 at level 99.</summary>
     public const int KillsPerDoor = 4;
+    /// <summary>How far a trip inside the one seamless world goes for one door's price: the width the old separate maps
+    /// had, so a trip costs what walking the same ground through doors used to.</summary>
+    public const float MetresPerDoor = 80f;
 
     /// <summary>How many separate things an account's storage holds: a stack of one item is one, each piece of gear is
     /// one. Sent with every move, so the character server refuses against the same number.</summary>
@@ -30,6 +33,15 @@ public static class KeeperMath
 
     /// <summary>The price of a trip that takes <paramref name="doors"/> doors on foot, for a traveller of
     /// <paramref name="level"/>. Nothing for no doors (the same town), and never below nothing.</summary>
+    /// <summary>The doors' worth of a trip between two Keepers standing in the same map, measured along the ground (the
+    /// height is left out): one door for every <see cref="MetresPerDoor"/> or part of it, and none for no distance.</summary>
+    public static int DoorsBetween(Vector3 from, Vector3 to)
+    {
+        float dx = to.x - from.x, dz = to.z - from.z;
+        float metres = (float)System.Math.Sqrt(dx * dx + dz * dz);
+        return metres <= 0f ? 0 : (int)System.Math.Ceiling(metres / MetresPerDoor);
+    }
+
     public static long TeleportPrice(int doors, int level) =>
         doors <= 0 ? 0L : (long)KillsPerDoor * CreatureMaterials.GoldPerLevel * System.Math.Max(1, level) * doors;
 

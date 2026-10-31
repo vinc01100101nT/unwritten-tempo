@@ -299,7 +299,7 @@
     },
     {
       "type": "callout",
-      "text": "There is no difficulty multiplier anywhere. A monster is hard because of its level, its stats, and its gear — the same three things that make you hard. See *Monsters*."
+      "text": "A monster is hard because of its level, its stats, and its gear — the same three things that make you hard — and one number more, out in the open: its **multiplier**. A monster at ×N has N times the health of an ordinary one of its level, hits harder by the cube root of N (×30 hits about 3 times as hard), and pays N times as much for the kill. See *Monsters*."
     },
     {
       "type": "heading",

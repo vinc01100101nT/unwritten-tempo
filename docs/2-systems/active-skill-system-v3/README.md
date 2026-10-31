@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-10-03
+last-updated: 2026-10-31
 tags:
   - systems-combat-design
 ---
@@ -20,7 +20,7 @@ tags:
 > - **Weapon** = decides which skills may be learned and used (+ weapon identity: damage type, animation). *Family is a composing guide, not stamped on the weapon — see §5.*
 > - **Skill** = its own numbers (the **Channels**, §1) **+** its own natural effects (the **Effects**, §2).
 > - **Ring** = **numeric scaling only**, and the per-skill scaling weights are what lock roles.
-> - **Every unit** = **one** stat model. A player and a mob are 1:1 — same primaries, same formulas, same point budget, no tier and no mob-only multiplier — so an effect never has to ask what kind of thing it hit. See the companion *Unified Unit Stats*.
+> - **Every unit** = **one** stat model. A player and a mob are 1:1 — same primaries, same formulas, same point budget, no tier — so an effect never has to ask what kind of thing it hit; a mob adds one typed dial, its multiplier. Every formula lives in [Unified Unit Stats](unified-unit-stats.md).
 > - **Later:** ring behavioral *voices* → v-next; **Cards** (enemy matchup) → v3-content, with mob categories.
 
 ***This doc owns the CHANNELS, the EFFECTS, the TRIGGERS and the role-lock — and those are still what the game runs.*** *[V4](../gameplay-system-v4/README.md), built 2026-09-20, replaced its rolled weapon kits, its rarity lift on skill output, the worn ring item and "skills don't level"; every passage on those points below has been rewritten to what the code now does, and V4 is where the detail lives.* *Any older doc (V2, the Fresh Brainstorm, the Anti-Stale Charter, etc.) that conflicts with V3 **loses** — V3 wins. The companions that aren't overridden are the mutable, code-facing **"Active Skill System — Implementation Notes"** and **"Unified Unit Stats"** (+ its own Implementation Notes) — they track what the code does today; on a disagreement V3 wins on intent, the Notes win on current code.*
@@ -140,8 +140,8 @@ Every behavior is a **natural effect authored on the skill** (composed in the Sk
 | **SpendAllMana** | self (always) | no | — | — | The caster spends every point of MP held, on top of the skill's MP cost. Paid once per cast, by the first tick carrying it; what it took is read by every Damage effect after it in the cast. Never rolls a chance. The Fist's all-in blow |
 | **DropHealthToOne** | self (always) | no | — | — | The caster's HP drops to 1 — never 0. Not a hit: nothing mitigates it and nothing that answers being hurt fires. What it took is read the same way. The Shuriken's all-in blow |
 | **DrainMana** | mobs/any | no | mp_drained, proc_chance | mp_drained | Takes up to N MP from the unit it lands on (never more than it holds); the caster gains exactly what was taken. The Scythe's mana drain |
-| **ReturnToSavePoint** | self/others | no | — | — | Sends the unit it lands on back to where it returns to: a person to their save point (the default one when none is set), on whichever map it is; a creature to the home it spawned at. Server only; a dead unit goes nowhere. Never rolls a chance. What a Butterfly Wing runs ([The Keeper and the Wings](../keeper-and-wings.md)) |
-| **TeleportToRandomSpot** | self/others | no | — | — | Sets the unit it lands on down on a random walkable spot of the same connected stretch of ground it stands on, so it can always walk back. Nowhere to land = nothing happens, and an item running it is not spent. Never rolls a chance. What a Fly Wing runs |
+| **ReturnToSavePoint** | self/others | no | — | — | Sends the unit it lands on back to where it returns to: a person to their save point (the default one when none is set); a creature to the home it spawned at. Server only; a dead unit goes nowhere. Never rolls a chance. What a Butterfly Wing runs ([The Keeper and the Wings](../keeper-and-wings.md)) |
+| **TeleportToRandomSpot** | self/others | no | — | — | Sets the unit it lands on down on a random walkable spot of the same connected stretch of ground it stands on, inside the named world area it stands in, so it can always walk back. Nowhere to land = nothing happens, and an item running it is not spent. Never rolls a chance. What a Fly Wing runs |
 
 **Collapsed into the two sub-stat effects — they are NOT separate kinds any more:** Haste, Guard, Regen, Buff, Vulnerability, ManaLeech and Reflect. Each is now one row of the sub-stat table plus one lift at that stat's read site. Adding any of them back as its own verb is the DRY violation the collapse removed. **Slow and Blind are likewise not ailments** — slow is the MovementSpeed sub-stat, and accuracy loss is the Accuracy sub-stat.
 
@@ -223,7 +223,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 ## Still open
 
 - Ring **voice** design when it returns (v-next); **card** list + mob categories (v3-content).
-- Mobs have the full stat model and their roster is reset onto it (98 creatures, levels 1–170, all on point budget), but there is almost no gear for them to wear yet — two equipment items exist. See *Unified Unit Stats — Implementation Notes*.
+- Mobs have the full stat model and every creature is on its point budget; what they wear is [Creature Gear](../../3-world/creature-gear.md). Counts: `python3 tools/project-status.py`.
 
 ---
 

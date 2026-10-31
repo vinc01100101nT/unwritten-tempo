@@ -22,10 +22,10 @@
     {
       "type": "list",
       "items": [
-        "**By biome** — each of the fourteen biomes has creatures of its own, and the biome decides which element most of them carry. See *World & Maps*.",
-        "**By level** — every monster has a level, exactly like you do. Its level sets its body — its health, its attack, its defence — and its gear sets how hard it is for that level (see *Its gear is its difficulty* below). Ordinary monsters and elites run from level 1 to 99, and the shadows from 105 to 170. Every place has its own creatures, most of them near one level with the odd weaker or stronger visitor, and a monster lives wherever it belongs — you will meet the same slime in field after field.",
-        "**By kind** — most monsters are ordinary. A few in each area are **elites**: thirty times the health of an ordinary monster of their level, stats and gear. Stronger still are the fourteen **shadows**, one for each weapon, each with a name of its own, gear at the highest grade and twenty times an ordinary monster's health — they are meant to take a whole guild to bring down. A monster uses only the skills it has learned, exactly as you do, and for now none has learned a weapon skill. Every elite and shadow can call helpers to its side, whatever it holds: an elite calls ordinary monsters, a shadow calls elites.",
-        "**By element** — a monster's element grows stronger with its kind: ordinary monsters are **level 1**, elites **level 2**, shadows **level 3**. Where a monster lives says what it probably is: the plains are mostly Neutral, the forests and hills Earth, the sea and snow Water, the volcano Fire, and the dark lands overseas Poison, Holy, Dark, Ghost and Undead. The shadows between them carry all ten elements, and a converter only answers the four it comes in — Water, Earth, Fire and Wind (see *Combat Mechanics*).",
+        "**By biome** — every biome has creatures of its own, and the biome decides which element most of them carry. See *World & Maps*.",
+        "**By level** — every monster has a level, exactly like you do. Its level sets its body — its health, its attack, its defence — and the grade of the gear it wears; its **multiplier** sets how hard it is for that level (see *Its multiplier is its difficulty* below). Ordinary monsters and elites run from level 1 to 99, and the shadows from 105 to 170. Every place has its own creatures, most of them near one level with the odd weaker or stronger visitor, and a monster lives wherever it belongs — you will meet the same slime in place after place.",
+        "**By kind** — most monsters are ordinary. Farther from town the same monsters come back as their **Tainted** versions, three or five times as hard, and then their **Blighted** ones, ten times as hard — each a monster of its own, with a material of its own. A few in each area are **elites**: thirty times as hard as an ordinary monster of their level. Stronger still are the fourteen **shadows**, one for each weapon, each with a name of its own and ninety to a hundred and fifty times as hard — they are meant to take a whole guild to bring down. A monster uses only the skills it has learned, exactly as you do, and for now none has learned a weapon skill. Every elite and shadow can call helpers to its side, whatever it holds: an elite calls Tainted and Blighted monsters, a shadow calls elites.",
+        "**By element** — a monster's element grows stronger with its kind: ordinary monsters and their Tainted and Blighted versions are **level 1**, elites **level 2**, shadows **level 3**. Where a monster lives says what it probably is: the plains are mostly Neutral, the forests and hills Earth, the sea and snow Water, the volcano Fire, and the dark lands overseas Poison, Holy, Dark, Ghost and Undead. The shadows between them carry all ten elements, and a converter only answers the four it comes in — Water, Earth, Fire and Wind (see *Combat Mechanics*).",
         "**By size** — every monster has a size of its own, set by what it is: the smallest, like a mouse or a raccoon, stand about a third of your height and nothing is ever smaller, a bear stands taller than you and a giant squid towers four times your height. Every size falls into one of three groups — **Small, Medium or Large**. A Medium monster stands about as tall as you; a Small one under two-thirds of your height, a Large one more than one and a half times it. A bigger monster also reaches further with its blows — and you reach it from further away. Most ordinary monsters are Small or Medium; most elites are Large; every shadow is exactly your size. Winged monsters — butterflies, bats, birds — fly at about your head height; you click and strike them up there, and they reach you exactly as far as they would on the ground. The size group is also meant to interact with your weapon type (see *Combat Mechanics*)."
       ]
     },
@@ -36,16 +36,16 @@
     },
     {
       "type": "paragraph",
-      "text": "A monster is not built from a different set of numbers than you are. It has the **same six stats**, grown by the **same formulas**, and — this is the part that matters — it gets the **same number of stat points its level allows**. A level 20 monster is carrying exactly what a level 20 player could have bought. Nothing is inflated behind the scenes and nothing is quietly weakened."
+      "text": "A monster is not built from a different set of numbers than you are. It has the **same six stats**, grown by the **same formulas**, and — this is the part that matters — it gets the **same number of stat points its level allows**. A level 20 monster is carrying exactly what a level 20 player could have bought. Nothing is quietly weakened, and what makes one monster harder than another of its level is one number, out in the open: its **multiplier** (below)."
     },
     {
       "type": "list",
       "items": [
         "**It wears real equipment** — a weapon, a body piece, shoes and a garment, the same gear you can wear, in the same slots. No monster wears anything on its head. Its armour follows what it is — metal for shell, scale, horn or bone, leather for hide, fur or feather, cloth for soft, plant, flame or spirit — and its six stats are spent for the weapon it holds.",
-        "**Its gear is its difficulty** — a monster's gear has a **grade** and **folds**, exactly like yours. An ordinary monster's grade follows its level (Raw up to level 24, then F, E and D); elites wear C and B and shadows A, and the folds on each piece are rolled every time the monster comes back to life — elites and shadows always carry more. The better its gear, the rarer the material it drops. The first fields outside the starting towns hold only monsters in plain gear.",
-        "**Better gear pays more** — a kill's experience, what a shop pays for the monster's own materials, and the Unsigned a saved character hands you all rise with the monster's gear: **25% more for each grade** above Raw, and **5% more for each fold**, up to **50%** more at +10.",
+        "**Its gear follows its level** — a monster's gear has a **grade** and **folds**, exactly like yours. Its grade is the one a player of its level is expected to have: Raw up to level 14, F from 15, E from 29, D from 43, C from 57, B from 71 and A from 85, so every shadow wears A. The folds on each piece are rolled every time the monster comes back to life — an ordinary monster anywhere from +0 to +10, an elite from +4, a shadow from +7.",
+        "**Its multiplier is its difficulty** — every monster carries one number saying how much harder it is than an ordinary monster of its level: ×1 or ×2 for an ordinary one, ×3 or ×5 Tainted, ×10 Blighted, ×30 an elite, ×90 and more a shadow. It multiplies the monster's health, and its attack by far less — a ×30 elite hits about three times as hard. And it multiplies everything the kill pays: the experience, the Temper Dust and Quench Oil, the chance of every Ink, Salt and material, and the Unsigned a saved character hands you.",
         "**It can carry Ring investment** — by the same ranks and the same 33-rank limit yours uses. A monster with a Ring behind it is a genuinely different fight.",
-        "**Its stats are visible in its numbers** — a monster that hits hard has the attack to prove it. There is no hidden multiplier making things tougher."
+        "**Its numbers are what you fight** — a monster that hits hard has the attack to prove it, and its health and attack already count its multiplier. Nothing else makes it tougher."
       ]
     },
     {
@@ -64,8 +64,8 @@
     {
       "type": "list",
       "items": [
-        "**Materials** — **Temper Dust** and, a tenth as often, **Quench Oil**: more the higher the monster's level and the better its gear; and now and then an **Ink** or a **Salt**. Elites drop ten times as much Temper Dust and Quench Oil, and rarer Inks and Salts; shadows twenty times. No stats of their own; they feed **Crafting & Recycling**.",
-        "**Its own material** — every ordinary monster and every elite drops one material that nothing else drops. A shop pays more for it the higher the monster's level and the better the monster's gear, and selling these is how hunting earns Unsigned. How rare it is follows the monster's gear: plain gear drops a Common, and each grade up a rarer one, up to Legendary; an elite always drops a Rare or better. Auto-loot never takes anything an elite drops.",
+        "**Materials** — **Temper Dust** on most kills and, a thirtieth as much, **Quench Oil**, more of both the higher the monster's multiplier; and now and then an **Ink** or a **Salt**. The rarer ones drop only from harder monsters: Thin Ink and Fine Salt from Tainted monsters up, Faint Ink from Blighted ones up, Clear Ink and Pure Salt from elites and shadows, Sharp Ink only from shadows. No stats of their own; they feed **Crafting & Recycling**.",
+        "**Its own material** — every monster, shadows included, drops one material that nothing else drops, and its multiplier decides how rare it is: an ordinary monster's is Common, a Tainted one's Uncommon, a Blighted one's Rare, an elite's Epic and a shadow's Legendary. The harder the monster, the more of it falls. A shop pays more for it the higher the monster's level and the rarer it is, and selling these is how hunting earns Unsigned. Auto-loot never takes anything an elite drops.",
         "**Its find** — now and then, the one consumable its element carries: Fire, Water, Earth and Wind monsters drop a **converter** of their own element, every other monster drops its element's **food**. Potions, wings and antidotes are only sold by Tool Dealers."
       ]
     },
@@ -81,9 +81,9 @@
     {
       "type": "list",
       "items": [
-        "**Some never fight.** They thank you, stay a while and leave — and saving one is the only time a fight itself pays **Unsigned**, and it hands you some of that monster's own material too — or, when the material is a rare one, a chance at one: more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans). The higher the monster's level and the better its gear, the more Unsigned.",
+        "**Some never fight.** They thank you, stay a while and leave — and saving one is the only time a fight itself pays **Unsigned**, and it hands you some of that monster's own material too — or, when the material is a rare one, a chance at one: more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans). The higher the monster's level and its multiplier, the more Unsigned.",
         "**Some fight beside you** against monsters and rebels, then say goodbye. You cannot hit them, and what they beat counts as yours.",
-        "**Some rebel.** Cured of Chaos but choosing to fight, they attack anyone nearby like a monster does. A rebel carries **more and rarer loot** — as if it were one kind stronger — and the experience of the monster it came from. An elite always turns into the same ninja, and every ninja rebels."
+        "**Some rebel.** Cured of Chaos but choosing to fight, they attack anyone nearby like a monster does. Beating a rebel pays **three kills** of the monster it came from: three times its experience, and its drops rolled three times. An elite always turns into the same ninja, and every ninja rebels."
       ]
     },
     {
@@ -102,7 +102,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every kill starts a run, shown big on the left of your screen: kill again within **10 seconds** and the run climbs by one; wait longer and the next kill starts it again at 1. Each kill pays **1% more experience for every kill in the run, up to 50%** at a run of 50 — and the Unsigned a saved character pays you grows the same way. Under the run you see your **EXP/h** and **u/h**, what your kills paid over the last 10 minutes. A summon or a training dummy is no part of a run, and walking through a door starts it again."
+      "text": "Every kill starts a run, shown big on the left of your screen: kill again within **10 seconds** and the run climbs by one; wait longer and the next kill starts it again at 1. Each kill pays **1% more experience for every kill in the run, up to 50%** at a run of 50 — and the Unsigned a saved character pays you grows the same way. Under the run you see your **EXP/h** and **u/h**, what your kills paid over the last 10 minutes. A summon or a training dummy is no part of a run, and leaving the game starts it again."
     },
     {
       "type": "heading",
@@ -112,14 +112,14 @@
     {
       "type": "list",
       "items": [
-        "**Elites** are the strongest corrupted pages of an area, and they keep calling ordinary monsters to their side.",
+        "**Elites** are the strongest corrupted pages of an area, and they keep calling Tainted and Blighted monsters to their side.",
         "**The shadows** are the Fourteen Kashira, turned by the artist's fear — the strongest creatures in the world, levels 105 to 170, one for each weapon, each showing its Kashira's name. Thirteen of them are that fear wearing a champion's shape; the fourteenth, **Veyra, the Last Petal**, always at level 170, is Chaos itself. See **The Whole Story**."
       ]
     },
     {
       "type": "quote",
       "text": [
-        "*Status: the monster structure is set and the full roster is now built on the level-and-stats model above — ordinary monsters and elites from level 1 to 99, shadows from 105 to 170. Individual names, kits, and art are still being finished, and the per-monster listing will appear here.*"
+        "*Status: the monster structure is set and the full roster is now built on the level, stats and multiplier model above — ordinary monsters and elites from level 1 to 99, shadows from 105 to 170. Individual names, kits, and art are still being finished, and the per-monster listing will appear here.*"
       ]
     }
   ]

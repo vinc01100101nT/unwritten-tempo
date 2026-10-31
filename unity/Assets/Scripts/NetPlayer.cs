@@ -638,7 +638,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
                 map = c.SavePointMap; toSpot = true; spot = c.SavePointPosition;
                 return;
             }
-            var keeper = WorldTownsfolk.KeeperIn(c.SavePointMap);
+            var keeper = WorldTownsfolk.KeeperIn(c.SavePointMap, c.SavePointKeeper);
             if (keeper != null)
             {
                 map = c.SavePointMap; toSpot = true;
@@ -3429,10 +3429,14 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (string.IsNullOrEmpty(mapName)) { KeeperSaid("You are not standing in a map yet.", false); return; }
         // THE TOWN, NOT A SPOT. Where they stand back up is worked out each time from where this town's Keeper stands
         // (see SavePointTrip), so a town that is re-laid never leaves anybody saved inside a wall.
-        c.SetSavePointAtKeeper(mapName);
+        // WHICH Keeper, not only the map: the seamless world holds every town, each with its own Keeper.
+        var keeper = TownNPC.NearestKeeper(transform.position, StationReach + ReachSlack);
+        string keeperId = keeper != null ? keeper.PersonId ?? "" : "";
+        c.SetSavePointAtKeeper(mapName, keeperId);
         SaveSoon();
-        GameLog.Info(LogCat.Server, playerName + " set their save point at the Keeper in '" + mapName + "'");
-        KeeperSaid("Save point set: " + TownName(mapName) + ".", true);
+        GameLog.Info(LogCat.Server, playerName + " set their save point at the Keeper '" + keeperId + "' in '" + mapName + "'");
+        var savedAt = WorldTownsfolk.KeeperIn(mapName, keeperId);
+        KeeperSaid("Save point set: " + (savedAt != null ? TripName(savedAt) : TownName(mapName)) + ".", true);
     }
 
     /// <summary>Send the asker every town this Keeper can send them to, each with its finished price.</summary>
@@ -3441,23 +3445,48 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     {
         if (Leaving) return;
         if (RefusedByKeeper(ServerCharacter)) return;
-        TargetKeeperTrips(connectionToClient, TripsFrom(mapName, ServerCharacter.Level));
+        TargetKeeperTrips(connectionToClient, TripsFrom(mapName, HereKeeperId(), ServerCharacter.Level));
     }
 
-    // Every other town with a Keeper that a way of doors reaches, cheapest first, then by name — priced for a
-    // traveller of `level`.
-    static KeeperTrip[] TripsFrom(string from, int level)
+    // The Keeper the asker is standing at, by person id — empty when none is in reach.
+    string HereKeeperId()
     {
-        var atlas = WorldRoutes.Atlas;
+        var here = TownNPC.NearestKeeper(transform.position, StationReach + ReachSlack);
+        return here != null ? here.PersonId ?? "" : "";
+    }
+
+    // The doors' worth of a trip from the Keeper `hereId` of map `from` to the Keeper `to`: inside one map, by the
+    // ground between the two Keepers; to another map, by the doors between. 0 or less when there is no trip to make.
+    static int TripDoors(string from, string hereId, WorldTownsfolk.Row to)
+    {
+        if (to == null || (to.map == from && to.id == hereId)) return 0;
+        if (to.map != from)
+        {
+            WorldRoutes.NextMap(from, to.map, out int doors);
+            return doors;
+        }
+        var here = WorldTownsfolk.KeeperIn(from, hereId);
+        return here != null && here.id == hereId ? KeeperMath.DoorsBetween(here.home, to.home) : 0;
+    }
+
+    // What players call the town a Keeper stands in: the layout's nearest town in the seamless world, else the map's name.
+    static string TripName(WorldTownsfolk.Row keeper) =>
+        (keeper.map == WorldPlaces.Map ? WorldPlaces.NearestTownName(keeper.home) : null) ?? TownName(keeper.map);
+
+    static readonly System.Collections.Generic.List<WorldTownsfolk.Row> keeperScratch =
+        new System.Collections.Generic.List<WorldTownsfolk.Row>();
+
+    // Every other Keeper a trip reaches, cheapest first, then by name — priced for a traveller of `level`.
+    static KeeperTrip[] TripsFrom(string from, string hereId, int level)
+    {
         var trips = new System.Collections.Generic.List<KeeperTrip>();
-        if (atlas != null)
-            foreach (var m in atlas.maps)
-            {
-                if (m == null || m.scene == from || WorldTownsfolk.KeeperIn(m.scene) == null) continue;
-                WorldRoutes.NextMap(from, m.scene, out int doors);
-                if (doors <= 0) continue;
-                trips.Add(new KeeperTrip { map = m.scene, name = atlas.NameOf(m.scene), price = KeeperMath.TeleportPrice(doors, level) });
-            }
+        WorldTownsfolk.Keepers(keeperScratch);
+        foreach (var k in keeperScratch)
+        {
+            int doors = TripDoors(from, hereId, k);
+            if (doors <= 0) continue;
+            trips.Add(new KeeperTrip { map = k.map, keeper = k.id, name = TripName(k), price = KeeperMath.TeleportPrice(doors, level) });
+        }
         trips.Sort((a, b) => a.price != b.price ? a.price.CompareTo(b.price) : string.CompareOrdinal(a.name, b.name));
         return trips.ToArray();
     }
@@ -3468,17 +3497,17 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         return atlas != null ? atlas.NameOf(map) : map;
     }
 
-    /// <summary>Send the asker to the Keeper of <paramref name="map"/>, for the price of the doors between. The gold is
-    /// taken first and handed back if the trip does not happen.</summary>
+    /// <summary>Send the asker to the Keeper <paramref name="keeperId"/> of <paramref name="map"/>, for the price of the
+    /// trip. The gold is taken first and handed back if the trip does not happen.</summary>
     [Command]
-    void CmdKeeperTeleport(string map)
+    void CmdKeeperTeleport(string map, string keeperId)
     {
         if (Leaving) return;
         var c = ServerCharacter;
         if (RefusedByKeeper(c)) return;
-        var keeper = WorldTownsfolk.KeeperIn(map);
-        int doors = -1;
-        if (keeper != null && map != mapName) WorldRoutes.NextMap(mapName, map, out doors);
+        var keeper = WorldTownsfolk.KeeperIn(map, keeperId);
+        if (keeper != null && !string.IsNullOrEmpty(keeperId) && keeper.id != keeperId) keeper = null;
+        int doors = TripDoors(mapName, HereKeeperId(), keeper);
         if (doors <= 0) { KeeperSaid("There is no way there.", false); return; }
         long price = KeeperMath.TeleportPrice(doors, c.Level);
         if (price > c.Gold) { KeeperSaid("Needs " + Wallet.Amount(price) + " — you have " + Wallet.Amount(c.Gold) + ".", false); return; }
@@ -3490,7 +3519,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveSoon();
         GameLog.Info(LogCat.Server, playerName + " paid " + price + " gold for a Keeper's trip from '" + mapName + "' to '"
                      + map + "' (" + doors + " doors)");
-        KeeperSaid("Off to " + TownName(map) + " for " + Wallet.Amount(price) + ".", true);
+        KeeperSaid("Off to " + TripName(keeper) + " for " + Wallet.Amount(price) + ".", true);
 
         var spot = KeeperMath.ArrivalSpot(keeper.home, keeper.facing, KeeperMath.ArrivalAhead);
         MoveToMap(map, null, true, spot, () =>
@@ -3802,7 +3831,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
     public void AskKeeperSavePoint() => CmdKeeperSavePoint();
     public void AskKeeperTrips() => CmdKeeperAskTrips();
-    public void AskKeeperTeleport(string map) => CmdKeeperTeleport(map ?? "");
+    public void AskKeeperTeleport(string map, string keeper) => CmdKeeperTeleport(map ?? "", keeper ?? "");
     public void AskKeeperStorage() => CmdKeeperOpenStorage();
     public void AskToStore(int index, string itemId, string copyId, bool all) => CmdKeeperStore(index, itemId, copyId ?? "", all);
     public void AskToTake(string itemId, string copyId, bool all) => CmdKeeperTake(itemId, copyId ?? "", all);

@@ -1,18 +1,21 @@
 ---
-status: "Reference sheet, updated 2026-09-25. One real photo per biome beside two pictures of that biome's test map as generated today, with the assistant's match rate (by look and feel, 100% = reads as the real place) and what is still missing. Rates and lists are the assistant's judgement, for the user to confirm or overrule."
+status: "Reference sheet. One real photo per biome beside two pictures of a map the per-map generator made from that biome's row on 2026-09-25, with the assistant's match rate (by look and feel, 100% = reads as the real place) and what is still missing. Rates and lists are the assistant's judgement, for the user to confirm or overrule."
 owner: vince
-last-updated: 2026-09-25
+last-updated: 2026-10-31
 tags:
   - world-content
 ---
 
 # Biome References — Real Places Beside Our Maps
 
-Each biome: a real photo, then its test map from a distance, then close up, then how well it matches. The tiles and
-props are the biome's row in the Biome Table ([Biomes — Ground Tiles and Props](biomes.md) owns them; this page only
-shows them). The photos are from Wikimedia Commons, each free to use with the credit given under it. Our pictures
-are taken in the editor with plain lighting and no weather, except the looks a biome always has: Swamp's puddles,
-Snow's snow blanket and Mist's fog are shown. There is no rain or falling snow in them.
+Each biome: a real photo, then a map the per-map generator made from its row, from a distance and close up, then how
+well it matches. The tiles and props are the biome's row in the Biome Table ([Biomes — Ground Tiles and
+Props](biomes.md) owns them; this page only shows them). No such map is in the game; the seamless world reads the table
+only for its props and its four kept-biome towns. The photos are from Wikimedia Commons, each free to use with the
+credit given under it. Our pictures were taken on 2026-09-25 in the editor with plain lighting and no weather, except
+the looks a biome always has — Swamp's puddles and Snow's snow blanket — and the fog every map shows. There is no rain
+or falling snow in them. **They show flat ground:** the rows' ground shapes and cliffs ([Biomes](biomes.md)) are not
+in them.
 
 **Match** is a judgement by look and feel, not a measurement: 100% would read as the real place at a glance.
 
@@ -84,7 +87,7 @@ Snow's snow blanket and Mist's fog are shown. There is no rain or falling snow i
 **Matches:** a bare scree field of boulders with snow lying in patches.
 
 **Still missing:**
-- slopes: the real peak is steep ground, ours is flat
+- slopes: the real peak is steep ground; the pictured map is flat (the row's 2.4 m hills in 4 levels are not in it)
 
 *Photo: [Gran tempesta versante nw](https://commons.wikimedia.org/wiki/File:Gran_tempesta_versante_nw.jpg) — F Ceragioli, CC BY-SA 3.0.*
 
@@ -116,7 +119,7 @@ Snow's snow blanket and Mist's fog are shown. There is no rain or falling snow i
 
 **Still missing:**
 - lower tussocks — the rye is still knee-high where steppe grass is ankle-high
-- rolling ground and a far horizon (the map is flat and closed)
+- rolling ground and a far horizon (the pictured map is flat and closed)
 
 *Photo: [Grassland at Dundgovi, Mongolia 02](https://commons.wikimedia.org/wiki/File:Grassland_at_Dundgovi,_Mongolia_02.jpg) — ノボホショコロトソ, CC BY 4.0.*
 
@@ -148,7 +151,7 @@ Snow's snow blanket and Mist's fog are shown. There is no rain or falling snow i
 **Matches:** open rippled orange sand.
 
 **Still missing:**
-- dunes: the real desert is shaped ground, ours is flat
+- dunes: the real desert is shaped ground; the pictured map is flat (the row's 1.5 m mounds are not in it)
 - dry shrubs and cacti (already on the props-to-make list)
 
 *Photo: [A sand dune in the Maranjab Desert of Iran- Photographer Mostafa Meraji 01](https://commons.wikimedia.org/wiki/File:A_sand_dune_in_the_Maranjab_Desert_of_Iran-_Photographer_Mostafa_Meraji_01.jpg) — Mostafameraji, CC BY-SA 4.0.*
@@ -221,7 +224,7 @@ Snow's snow blanket and Mist's fog are shown. There is no rain or falling snow i
 
 ## Mist — 55%
 
-**Ground:** mist_moss · grey-silt patches · soil road. **Props:** willows ×0.8, ferns and mushrooms ×1.5, and fog always on.
+**Ground:** mist_moss · grey-silt patches · soil road. **Props:** willows ×0.8, ferns and mushrooms ×1.5, under the fog every map shows.
 
 | Real | Ours — wide | Ours — close |
 | --- | --- | --- |

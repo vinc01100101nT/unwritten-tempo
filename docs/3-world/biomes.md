@@ -1,7 +1,7 @@
 ---
-status: "Ground tiles DONE for all 14 biomes (33 tiles in the project). The biome → tile and biome → prop matching below was agreed by the user on 2026-09-25. Generator steps 1, 2, 4 and 5 DONE (2026-09-25): all 14 biomes are rows in the Biome Table, each on its own tiles, with a test map each and a check that guards the table; step 3, walking the test maps in the game, is the one step left. Ground levels and rock cliffs (2026-09-27): every biome has its own ground shape and six have cliffs; the 39 world fields were rebuilt with them the same day, and a flat brown cliff face for Grassland is being tried on test_grassland_cliffs. None of it walked yet."
+status: "Ground tiles DONE for all 14 biomes; every biome is a row in the Biome Table with its own tiles, props, ground shape and cliffs switch, guarded by tools/check-biome-table.py. The per-map generator bakes a map from a recipe on that table; no generated map is in the game. The seamless world reads the table for its props and its four kept-biome towns."
 owner: vince
-last-updated: 2026-09-27
+last-updated: 2026-10-31
 tags:
   - world-content
 ---
@@ -14,23 +14,34 @@ the `world-authoring` skill; this page owns the LOOK.
 
 ## Where things stand
 
-- **Ground tiles: done.** 33 tiles live in `unity/Assets/1_Authored/Art/GroundTiles/`. Every biome has at least
-  one tile of its own. Each tile covers 2.5 m of ground and repeats edge to edge.
-- **In the map generator: all 14 biomes**, each laying its own tiles with no colour wash, and each with its own
-  props from the table below. No world map uses the nine new ones yet; each has a test map (see step 3).
-- **Props: temperate only.** 15 trees (birch, oak, pine, willow, deciduous), 19 plants (grass, rye, ferns, flowers,
-  sunflower, one bush), and outdoor props (3 rocks, 3 stones, 5 mushrooms, tree and pine stumps; the rest are
-  buildings, walls, carts and storage). Five biomes have nothing that fits them — see the table.
+- **Ground tiles: done.** They live in `unity/Assets/1_Authored/Art/GroundTiles/`. Every biome has at least one tile
+  of its own; each of the Biome Table's tiles covers 2.5 m of ground and repeats edge to edge.
+- **The Biome Table** (`unity/Assets/3_Data/Recipes/BiomeTable.asset`) is the one place a biome's look lives: one row
+  per biome with its main ground, patch and road tiles, its colour wash, how high its ground rises, how wide its hills
+  are and how many levels it settles into, whether its maps have cliffs and what colour a cliff face is, and which
+  props each prop category means in that biome (a category left out uses the whole pack list; a category listed with
+  no props places nothing).
+- **The seamless world `world` reads the table in two places** (`SeamlessWorldBuilder`): the **Grassland** row decides
+  which prop categories the world places at all, at the sizes the field recipe's prop groups give; and the four towns
+  that keep their biome's own look — Hazemere (Desert), Hilt (Coast), Cindrel (Volcanic) and Kharnel (Haunted) — take
+  their trees and flowers from their own row. Every other town's props are the nature pack's, by its theme. The
+  world's ground is the nature pack's painted ground, not the table's tiles: grass, dirt, stone, rock on the cliff
+  faces, and sand on Desert and Coast land. Ground shape and cliffs in the world come from the world layout, not from
+  the table (the `world-authoring` skill).
+- **The per-map generator** bakes one map from a recipe (below). No map it made is in the game today.
+- **The table's props are the temperate pack's:** trees (birch, oak, pine, willow, deciduous), plants (grass, rye,
+  ferns, flowers, sunflower, one bush) and outdoor props (rocks, stones, mushrooms, tree and pine stumps). Five biomes
+  have nothing that fits them — see the table.
 - **Snow and Peaks need no snowy props:** snow weather covers the ground and every prop while it snows.
 
 ## The fourteen biomes
 
 Tile names are shortened to their lowercase part; the full name carries its uses (see Tile names below).
-✅ = in the map generator. **Needed** = props to make later, as a separate art task.
+✅ = a row in the Biome Table. **Needed** = props to make later, as a separate art task.
 
 | Biome | Today | Main ground | Patches | Road | Props that fit now | Needed |
 | --- | --- | --- | --- | --- | --- | --- |
-| Grassland | ✅ | meadow_grass | soil | dirt_road (field maps lay the field template's own road, soil — Grassland's row sets none) | oak, deciduous and birch trees, grass, rye, flowers, sunflower, bush, rocks, stones | — |
+| Grassland | ✅ | meadow_grass | soil | the recipe's own road (the field template's is soil — Grassland's row sets none) | oak, deciduous and birch trees, grass, rye, flowers, sunflower, bush, rocks, stones | — |
 | Forest | ✅ | mud | leaf_litter | soil | all trees, ferns, bush, mushrooms, stumps, grass, rocks | — |
 | Highland | ✅ | alpine_grass | gravel_scree | dirt_road | pines, birch, grass, rocks, stones | — |
 | Peaks | ✅ | gravel_scree | snow | frozen_dirt | pine stumps, rocks, stones | — |
@@ -46,8 +57,7 @@ Tile names are shortened to their lowercase part; the full name carries its uses
 | Corrupted | ✅ | blighted_grass | blighted_soil | dark_cobble | stumps, rocks, stones | **twisted dead trees** |
 
 **How many of each** — a biome row can place more or fewer of a category than the field template does (its count
-multiplier; 1 = as the template says). Set 2026-09-25 by looking at every test map against how the real landscape
-looks:
+multiplier; 1 = as the template says). Set 2026-09-25 against how the real landscape looks:
 
 - **Grassland** — trees ×0.4, grass ×0.35, flowers ×1.5, no landmarks: an open meadow with a few trees, and no
   buildings standing in the middle of the field.
@@ -84,12 +94,15 @@ weather can still bring more on top, and rain still brings its falling drops and
   back to full by about 10 metres, so you are never hidden while the far side of the map dissolves into cloud. The clouds fade in over about 2 seconds on arrival.
 - **Every other biome** — nothing held; puddles and snow come only with the weather.
 
+**A map shows these by the biome marker it carries.** The seamless world carries Grassland's, so none of the three
+shows in the world today.
+
 **Fog is not a weather and not a biome's: every map, in every weather, shows it at full** — near things stay clear
 and the far edge of the map fades.
 
-The levels live in `unity/Assets/3_Data/Resources/BiomeWeather.asset` (one row per biome that holds something). A map
-knows its biome because the generator stamps a biome marker into every map it builds; maps built before that carry
-none and hold nothing. Arriving on a map starts straight at its snow blanket rather than building up or melting.
+The levels live in `unity/Assets/3_Data/Resources/BiomeWeather.asset` (one row per biome). A map knows its biome by
+its biome marker: the per-map generator stamps one into every map it bakes, and the world builder stamps Grassland's
+into the world. Arriving on a map starts straight at its snow blanket rather than building up or melting.
 **Parked (the user, 2026-09-25):** how often each kind of weather comes per biome — snow maps often snowing,
 grassland often sunny.
 
@@ -134,6 +147,11 @@ patches), PATH (roads), SIDEWALK, CURB, CORNER — joined by `_OR_`, then its lo
 | BASE_OR_SIDEWALK_plaza | pale cobbles in fan circles | towns |
 | CURB_blocks | curb strip | towns |
 | CORNER_curb_slab | curb corner stone | towns |
+| BASE_OR_PATCH_painted_grass | the nature pack's painted grass | the seamless world |
+| BASE_OR_PATCH_OR_PATH_painted_dirt | the nature pack's painted dirt, also its roads | the seamless world |
+| BASE_OR_PATCH_OR_PATH_painted_dirt_stone | painted dirt with stones | the seamless world |
+| BASE_OR_PATCH_painted_sand | painted sand | the seamless world (Desert and Coast land) |
+| BASE_OR_PATCH_OR_PATH_painted_rock | painted rock | the seamless world (cliff faces, cave rock) |
 
 ### Seam fixes still to do
 
@@ -144,117 +162,90 @@ Every tile was tested by laying four copies 2×2 and looking where they meet. St
   an 8 cm limit), lava_cracks (glowing cracks cut at the join). For a seam, a short "still not repeating properly"
   reply on the image has worked better than a long prompt.
 
-## The all-biome map generator — everything but the in-game test done
+## The per-map generator
 
-The map generator lays the ground, winds roads to each door and scatters props, from the existing **⚒ Generate Map**
-button (on a map's recipe) and the World Creator's **⚒ Build World** button. It was extended to every biome in the
-user's five steps:
+The per-map generator bakes one map from a **map recipe** (`MapRecipe`): select the recipe and press **⚒ Generate
+Map** in its inspector, and it writes `Assets/Scenes/<map name>.unity` (overwriting it), laying the ground, winding
+the roads and scattering props from the recipe's biome row. The templates live in `unity/Assets/3_Data/Recipes/`
+(`FieldRecipe`, `TownRecipe`, `DungeonRecipe`); **Tools ▸ unwritten ▸ World ▸ Create Biome Starter Recipes** stamps a
+starter recipe per biome into `Recipes/Biomes/` without touching one already there. No map it bakes is in the game
+today: the game ships only `Systems` and the seamless world.
 
-1. **Planning** — done (2026-09-25).
-2. **One biome first: Forest** — done (2026-09-25).
-   - **The Biome Table** (`unity/Assets/3_Data/Recipes/BiomeTable.asset`) is the one place a biome's look lives: one
-     row per biome with its main ground, patch and road tiles, its colour wash, how high its ground rises, how wide
-     its hills are and how many levels it settles into, whether its fields have cliffs and what colour a cliff face is, and which props each prop category means in that biome (a category left out uses the whole
-     pack list; a category listed with no props places nothing). A map's own road choice in the World Creator still
-     wins over the biome's road.
-   - **Ground levels** (2026-09-27, the user's request): a ground height above 0 raises the ground into hills, with
-     the collision on the same raised surface, so feet, props, doors and creatures all stand on them. With a level
-     count of 2 or more the hills settle into that many flat levels joined by slopes, each level covering about the
-     same share of the map; with 0 they are smooth rolling mounds. No slope is steeper than the biome's steepest
-     slope: where the ground would be, the higher side's edge is cut back into a ramp of that slope, so the levels
-     keep their heights. Shaped ground is drawn with its points 0.25 m apart (flat ground keeps 0.8 m), the shape is
-     worked out on a 0.2 m grid, the ramps curve around each level, and the crease where a ramp meets a level is
-     rounded over about half a metre, so a level's edge follows a smooth curve instead of a zigzag of the ground's
-     triangles (the zigzag showed as a straight, stepped cut through puddles). Each biome's shape (a character is 0.5 m tall; levels 0 = smooth mounds):
+- **Ground levels:** a ground height above 0 raises the ground into hills, with the collision on the same raised
+  surface, so feet, props, doors and creatures all stand on them. With a level count of 2 or more the hills settle
+  into that many flat levels joined by slopes, each level covering about the same share of the map; with 0 they are
+  smooth rolling mounds. No slope is steeper than the biome's steepest slope: where the ground would be, the higher
+  side's edge is cut back into a ramp of that slope, so the levels keep their heights. Shaped ground is drawn with its
+  points 0.25 m apart (flat ground keeps 0.8 m), the shape is worked out on a 0.2 m grid, the ramps curve around each
+  level, and the crease where a ramp meets a level is rounded over about half a metre, so a level's edge follows a
+  smooth curve instead of a zigzag of the ground's triangles. Each biome's shape (a character is 0.5 m tall; levels
+  0 = smooth mounds):
 
-     | Biome | Height | Hills across | Levels | Steepest slope | Cliffs |
-     | --- | --- | --- | --- | --- | --- |
-     | Grassland | 1.2 m | 16 m | 3 | 20° | off |
-     | Forest | 0.8 m | 12 m | 0 | 15° | off |
-     | Highland | 1.8 m | 18 m | 4 | 25° | on |
-     | Peaks | 2.4 m | 20 m | 4 | 30° | on |
-     | Snow | 1.2 m | 20 m | 0 | 15° | off |
-     | Steppe | 0.4 m | 30 m | 0 | 8° | off |
-     | Coast | 1.0 m | 18 m | 2 | 20° | on |
-     | Desert | 1.5 m | 14 m | 0 | 20° | off |
-     | Volcanic | 1.8 m | 14 m | 3 | 25° | on |
-     | Swamp | 0.3 m | 10 m | 0 | 8° | off |
-     | Sacred | 1.2 m | 16 m | 3 | 20° | off |
-     | Haunted | 0.8 m | 12 m | 2 | 20° | on |
-     | Mist | 0.8 m | 14 m | 0 | 12° | off |
-     | Corrupted | 1.5 m | 12 m | 3 | 30° | on |
+  | Biome | Height | Hills across | Levels | Steepest slope | Cliffs |
+  | --- | --- | --- | --- | --- | --- |
+  | Grassland | 1.2 m | 16 m | 3 | 20° | off |
+  | Forest | 0.8 m | 12 m | 0 | 15° | off |
+  | Highland | 1.8 m | 18 m | 4 | 25° | on |
+  | Peaks | 2.4 m | 20 m | 4 | 30° | on |
+  | Snow | 1.2 m | 20 m | 0 | 15° | off |
+  | Steppe | 0.4 m | 30 m | 0 | 8° | off |
+  | Coast | 1.0 m | 18 m | 2 | 20° | on |
+  | Desert | 1.5 m | 14 m | 0 | 20° | off |
+  | Volcanic | 1.8 m | 14 m | 3 | 25° | on |
+  | Swamp | 0.3 m | 10 m | 0 | 8° | off |
+  | Sacred | 1.2 m | 16 m | 3 | 20° | off |
+  | Haunted | 0.8 m | 12 m | 2 | 20° | on |
+  | Mist | 0.8 m | 14 m | 0 | 12° | off |
+  | Corrupted | 1.5 m | 12 m | 3 | 30° | on |
 
-     Grassland's 3 levels sit at 0, 0.6 and 1.2 m. `test_grassland`, `test_grassland_cliffs` and the 39 world fields
-     were rebuilt with these shapes and the 0.25 m ground on 2026-09-28; `test_grassland`'s steepest slope is 19.6°.
-     Players and creatures walk every one of those slopes by the same
-     rule (up to 45°, see [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see Cliffs). A map
-     built before then keeps its old ground until it is built again, and the Map Painter does not carry levels, so a map
-     re-imported through it comes back flat.
-   - **Cliffs** (2026-09-27, the user's request): a map with cliffs raises all the ground past a wall line about half
-     the pass width from every road, and the cliff is that same ground, shaped — one surface and one collision for the
-     pass floor, the rock face and the top, with the rock painted on it (nothing is laid over the ground, and the
-     ground has no holes; see RULE ONEGROUND in the project rules). Going across a cliff from the road: a rounded foot
-     where the pass floor curves up, starting 0.5 m in front of the wall line, gentle at the bottom and upright at the
-     top, fading from the ground's colours into the rock; a carved face standing 0.3 m behind the wall line, cut back
-     up to 0.7 m further into columns and blocks about 1–2 m wide and half a metre tall each at its own depth, with
-     level ledges about 0.45 m tall, one every metre and broken off here and there, jutting forward almost to the face's
-     line (going up, the face never leans back shallower than 50°, so no part of it is a slope anyone can walk up —
-     only the meeting points are); and a rounded shoulder at the top that rolls back into the grass. On a cliff map the biome's ground levels go on the cliff tops, not in the pass: the pass floor is
-     flat, so everything in it can walk the whole pass, and each cliff stands its height plus the level of the ground
-     behind it (1.5–2.7 m on `test_grassland_cliffs`), so its edge rises and falls. No stretch is straight: the
-     cliff's edge wanders up to 0.8 m in toward the road and out again (an 8 m pass is 6.4–9.6 m wide), every corner —
-     where passes meet, where a road bends sharply — is rounded, and the rim swells up to 0.35 m. Rock also lines the
-     map's own edge 1.5 m in, so a pass running to the edge ends in a curved cliff instead of opening onto nothing.
-     **Whether a map has cliffs:** each biome's row in the Biome Table has a cliffs switch (on for Highland, Peaks, Coast, Volcanic,
-     Haunted and Corrupted),
-     and a map can override it — "on" or "off" — from its menu in the browser World Creator, or in its recipe. How
-     tall they stand, the pass width and the meeting points come from the map's recipe: the field template says 1.5
-     m, 8 m and 3. **Meeting points** (chosen at random along the pass, at least 15 m apart and 6 m in from the map's
-     edge): there a cliff shrinks to nothing within 1.5 m of the spot and back to full height by 10 m, and its high
-     ground slopes down to meet the pass, so a player can walk up onto the top; on `test_grassland_cliffs` (3 of them)
-     walking straight up measured 22.7–25.6° at the steepest. The rock and the grass fade into each other over the
-     shoulder and at the foot. Feet stand on the top, bodies stop against the carved face, and creatures chase up and
-     down the meeting points like a player does.
-     Nothing is placed in the band the cliff takes up. **The face's colour:** a biome with a cliff face colour in its row draws the face in shades of that colour —
-     lighter toward the top, darker and greyer toward the foot, in patches about 2.5 m and 0.8 m across, split by thin dark cracks along the borders of rock cells about 0.9 m
-     across and 2 m tall, only some lengths of them cracked. Each biome's colour is the average colour of its own earthy or rocky
-     ground tile: Grassland brown #604623 (soil), Highland and Peaks grey #7B7C7E (gravel_scree), Coast pale grey-brown
-     #A1958B (pebbles), Volcanic dark grey #3D3738 (cooled_lava), Haunted dark brown #41362D (grave_dirt), Corrupted
-     near-black violet #2C2731 (blighted_soil). A biome with none draws the face with the gravel ground tile. Maps with
-     cliffs: `test_grassland_cliffs` (cliffs on, from the field template's numbers) and the 16 world fields of the six
-     cliff biomes; their ground was last laid on 2026-09-30.
-     The Map Painter does not carry cliffs.
-3. **Testing in the game** — NOT DONE. Fifteen linked test maps, one per biome plus a Grassland map with cliffs,
-   wait to be walked: `test_grassland_cliffs` ↔ `test_grassland` ↔ `test_forest_a` ↔ `test_highland` ↔ `test_peaks` ↔ `test_snow` ↔ `test_steppe` ↔ `test_coast` ↔ `test_desert` ↔ `test_volcanic` ↔
-   `test_swamp` ↔ `test_sacred` ↔ `test_haunted` ↔ `test_mist` ↔ `test_corrupted`, each 60 m, joined west to east by
-   one door each way. Each has the same creatures as `test_forest_a` (32 Grassland normals and commons, levels 1–99,
-   within 25 m of the centre), because no creature belongs to any of the nine new biomes yet. `test_grassland`
-   (added 2026-09-27 to try the Grassland ground levels) is the exception: its row asks for Grassland's own creatures, and
-   so do the three small areas of `test_grassland_cliffs`, which sit on its road so nothing is placed up on a cliff.
-4. **All biomes** — done (2026-09-25). The nine new biomes (Highland, Peaks, Steppe, Coast, Swamp, Sacred, Haunted,
-   Mist, and Forest before them) were appended to the END of the biome list — inserting one in the middle would
-   silently change every creature's biome — and Snow, Desert, Volcanic and Corrupted moved off the general tiles and
-   colour wash onto their own tiles. Each row places exactly the props in the table above; every category the field
-   template uses that a biome has nothing for is listed empty, so it places nothing (a Desert map gets no trees and
-   no grass).
-5. **Per-biome checks** — done (2026-09-25). `tools/check-biome-table.py` fails when a biome has no row, a tile is
-   used for a job its name does not allow, a row keeps a colour wash, a prop points at no file, a biome places no
-   props at all, a prop entry has no saved count multiplier, the Grassland row changes, the browser World Creator is
-   missing a biome, a test map's saved prop positions point at a part the prop no longer has, a test map is missing
-   its biome stamp or carries the wrong one, or the held-weather list holds a level outside 0..1. It runs before every commit; `tools/prove-biome-table-check.py`
-   plants each of those faults in a throwaway copy and proves the check catches it.
+  Players and creatures walk every one of those slopes by the same rule (up to 45°, see
+  [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see
+  Cliffs). The Map Painter (**Import Painted Map…**) does not carry levels, so a map imported through it is flat.
+- **Cliffs:** a map with cliffs raises all the ground past a wall line about half the pass width from every road, and
+  the cliff is that same ground, shaped — one surface and one collision for the pass floor, the rock face and the top,
+  with the rock painted on it (nothing is laid over the ground, and the ground has no holes; see RULE ONEGROUND in the
+  project rules). Going across a cliff from the road: a rounded foot where the pass floor curves up, starting 0.5 m in
+  front of the wall line, gentle at the bottom and upright at the top, fading from the ground's colours into the rock;
+  a carved face standing 0.3 m behind the wall line, cut back up to 0.7 m further into columns and blocks about 1–2 m
+  wide and half a metre tall each at its own depth, with level ledges about 0.45 m tall, one every metre and broken off
+  here and there, jutting forward almost to the face's line (going up, the face never leans back shallower than 50°,
+  so no part of it is a slope anyone can walk up — only the meeting points are); and a rounded shoulder at the top
+  that rolls back into the grass. The pass floor is flat, so everything in it can walk the whole pass, and each cliff
+  stands its height plus the level of the ground behind it, so its edge rises and falls. No stretch is straight: the
+  cliff's edge wanders up to 0.8 m in toward the road and out again (an 8 m pass is 6.4–9.6 m wide), every corner —
+  where passes meet, where a road bends sharply — is rounded, and the rim swells up to 0.35 m. Rock also lines the
+  map's own edge 1.5 m in, so a pass running to the edge ends in a curved cliff instead of opening onto nothing.
+  **Whether a map has cliffs:** each biome's row has a cliffs switch (on for Highland, Peaks, Coast, Volcanic, Haunted
+  and Corrupted), and a recipe can override it — follow the biome, on or off. How tall they stand, the pass width and
+  the meeting points come from the recipe: the field template says 1.5 m, 8 m and 3. **Meeting points** (chosen at
+  random along the pass, at least 15 m apart and 6 m in from the map's edge): there a cliff shrinks to nothing within
+  1.5 m of the spot and back to full height by 10 m, and its high ground slopes down to meet the pass, so a player can
+  walk up onto the top. The rock and the grass fade into each other over the shoulder and at the foot. Feet stand on
+  the top, bodies stop against the carved face, and creatures chase up and down the meeting points like a player does.
+  Nothing is placed in the band the cliff takes up. **The face's colour:** a biome with a cliff face colour in its row
+  draws the face in shades of that colour — lighter toward the top, darker and greyer toward the foot, in patches
+  about 2.5 m and 0.8 m across, split by thin dark cracks along the borders of rock cells about 0.9 m across and 2 m
+  tall, only some lengths of them cracked. Each biome's colour is the average colour of its own earthy or rocky ground
+  tile: Grassland brown #604623 (soil), Highland and Peaks grey #7B7C7E (gravel_scree), Coast pale grey-brown #A1958B
+  (pebbles), Volcanic dark grey #3D3738 (cooled_lava), Haunted dark brown #41362D (grave_dirt), Corrupted near-black
+  violet #2C2731 (blighted_soil). A biome with none draws the face with the gravel ground tile. The Map Painter does not
+  carry cliffs.
+- **Biome order:** a new biome is appended to the END of the biome list — inserting one in the middle would silently
+  change every creature's biome. Every category the field template uses that a biome has nothing for is listed empty,
+  so it places nothing (a Desert map gets no trees and no grass).
+- **Per-biome checks:** `tools/check-biome-table.py` fails when a biome has no row or appears twice, a tile is used
+  for a job its name does not allow, a row keeps a colour wash, a row has no saved cliffs switch, cliff face colour or
+  ground shape, a prop points at no file, a prop entry has no saved count multiplier, a biome places no props at all,
+  the Grassland row changes, or the held-weather list holds a biome twice or a level outside 0..1.
+  `tools/prove-biome-table-check.py` plants each of those faults in a throwaway copy and proves the check catches it.
 
-**Adding a biome** takes a table row, its name appended to the biome list, and its name in the browser World
-Creator's biome list (that page cannot read the table). The check above fails until all three are done.
-
-**Known problem the generator must not repeat:** in every existing map except lastline, all saved prop positions point
-at a part of the prop that no longer exists, so every prop sits at the map centre (measured 2026-09-25: 40 maps).
-A freshly generated map does not have this problem.
+**Adding a biome** takes a table row and its name appended to the biome list (in `MapRecipe.cs`). The check above fails
+until both are done.
 
 **Open decisions:** whether props get a per-biome colour tint. A tint can shift a colour (green → olive or grey-green)
-but cannot turn green into yellow or red, and all 19 plants share one image, so tinting grass also tints the flowers.
+but cannot turn green into yellow or red, and the plants share one image, so tinting grass also tints the flowers.
 
 ## Related
 
-- [Biome References — Real Places Beside Our Maps](biome-references.md) — a real photo of each biome beside its
-  test map.
+- [Biome References — Real Places Beside Our Maps](biome-references.md) — a real photo of each biome beside a map
+  the per-map generator made from its row.

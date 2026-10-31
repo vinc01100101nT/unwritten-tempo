@@ -15,7 +15,7 @@ public class WorldMapDoors : MaskableGraphic
 {
     public enum Part { Lines, Squares }
 
-    // Sizes in picture units (one unit is one metre of the world layout), as the world creator draws them.
+    // Sizes in picture units (one unit is one metre of the world layout).
     const float SquareHalf = 5f, SquareEdge = 2f, LineWidth = 2f, LitLineWidth = 4f, Dash = 7f, Gap = 6f;
     static readonly Color32 Blue = new Color32(0x2b, 0x6c, 0xf2, 0xff), Edge = new Color32(0xcf, 0xe0, 0xff, 0xff);
     // The route being walked, lit in the "you are here" marker's yellow, its squares rimmed in white.

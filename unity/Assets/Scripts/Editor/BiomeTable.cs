@@ -33,7 +33,7 @@ public class BiomeRow
     public Texture2D baseTile;
     [Tooltip("The ground sprinkled in organic patches over the main ground. A tile from the ground tile folder.")]
     public Texture2D patchTile;
-    [Tooltip("The road tile for this biome. Empty = the map recipe's own road choice. A road the World Creator sets on a map still wins over this.")]
+    [Tooltip("The road tile for this biome. Empty = the map recipe's own road choice.")]
     public Texture2D roadTile;
     [Tooltip("Colour multiplied over the whole ground. White = the tiles exactly as painted.")]
     public Color tint = Color.white;
@@ -51,8 +51,7 @@ public class BiomeRow
              "anything steeper is a wall to both.")]
     [Range(1f, 40f)] public float bumpSteepestDegrees = 5.4f;
     [Tooltip("Whether this biome's fields line their roads with rock cliffs. How tall they stand, how wide the pass is and " +
-             "how many meeting points they have come from the map's recipe; a map in the World Creator can turn them on " +
-             "or off for itself.")]
+             "how many meeting points they have come from the map's recipe, which can also turn them on or off for itself.")]
     public bool cliffs = false;
     [Tooltip("The colour of this biome's cliff faces, drawn lighter toward the top and darker toward the foot. Fully " +
              "transparent (alpha 0) = not chosen: the face is drawn with the rock tile instead.")]
