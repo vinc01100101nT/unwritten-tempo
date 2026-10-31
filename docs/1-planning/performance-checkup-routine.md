@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-10-31
 tags:
   - planning-production
 ---
@@ -12,9 +12,9 @@ tags:
 
 ## 🎯 The 30-second version
 
-1. **Start the server first** — there is no offline game any more, so pressing Play with nothing running gets me nowhere. See [Starting the Network](starting-the-network.md).
+1. **Start the server first** — there is no offline game any more, so pressing Play with nothing running gets me nowhere. See [Starting the Network](../2-systems/networking/starting-the-network.md).
 2. Open chat and type `**/perf-checkup**`
-3. In Unity, open a **field** map, press **Play**, sign in → gather a bunch of mobs → press **T** (auto-combat)
+3. In Unity, open the `world` scene, press **Play**, sign in → walk out of Lastline to a hunting ground → gather a bunch of mobs → press **T** (auto-combat)
 4. Look at the **PerfHud** box (top-left of the game view, toggle with **F10**)
 5. Tell the AI what the `**GC/s**` and `**peak**` numbers say
 6. If they're ~0 → 🎉 done. If they spiked → the AI walks me through the Profiler and fixes it.
@@ -41,13 +41,11 @@ In the AI chat, type `**/perf-checkup**`. The AI reads the rules + history and t
 
 **2. Run the stress test in Unity**
 
-- Make sure the **database, the sign-in service, the character server and the game server are running** — Play waits to be let into a world and will sit there otherwise, and without the character server nobody can be let in at all. [Starting the Network](starting-the-network.md) is the runbook.
-- In the **Project** window open `Assets/Scenes/`, double-click any **field** map (e.g. `lst_fild01`), then press **Play** (▶ at the top). Play always boots the persistent `Systems` scene and loads whichever map I had open, so I never press Play *on* `Systems` directly.
+- Make sure the **database, the sign-in service, the character server and the game server are running** — Play waits to be let into a world and will sit there otherwise, and without the character server nobody can be let in at all. [Starting the Network](../2-systems/networking/starting-the-network.md) is the runbook.
+- In the **Project** window open `Assets/Scenes/`, double-click `world` — the one seamless map the game has — then press **Play** (▶ at the top). Play always boots the persistent `Systems` scene and loads the map I had open, so I never press Play *on* `Systems` directly.
 - Sign in and pick a character at the door.
-- Walk around and gather **as many monsters as I can** near the player.
+- Walk out of town to a hunting ground and gather **as many monsters as I can** near the player.
 - Press **T** to switch on **auto-combat** (your character fights on its own; not in a town).
-
-> ⚠️ **The old instruction here said "open the NatureStage scene".** There is no such scene — it belonged to an asset pack that was removed. The maps on disk are Lastline (`lastline`) and the three-region world's maps, each named by its id (`lst_fild01`, `hlt_dun01`, `pennaryl` …).
 
 **3. Read the PerfHud overlay** (top-left corner of the Game view)
 
@@ -118,7 +116,7 @@ After the first optimization pass: combat garbage went from **~28.6 KB/frame →
 
 ## Related
 
-- [Starting the Network](starting-the-network.md) — Play needs a running world now; this is how to get one.
+- [Starting the Network](../2-systems/networking/starting-the-network.md) — Play needs a running world now; this is how to get one.
 - [Roadmap to Launch](roadmap-to-launch.md) — where the perf habit sits in the plan.
 - [Active Skill System — Implementation Notes](../2-systems/active-skill-system-v3/implementation-notes.md) — the per-hit and per-frame paths most likely to make garbage.
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — what every mob in the stress test is computing.

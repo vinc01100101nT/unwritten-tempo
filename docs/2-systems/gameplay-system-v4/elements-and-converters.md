@@ -42,11 +42,11 @@ A few cells, to read the shape:
   Mob Table's **elem** and **Element Lv** columns, and copied onto the creature at the moment it spawns — on the
   server and on every watching machine — so the two can never disagree.
 - **Levels by kind:** every **normal** creature is **level 1**, every **elite level 2**, every **shadow level 3**.
-- **Normals and elites** take their element from where they live, following the [World Map](../../3-world/world-map.md)'s
+- **Normals and elites** take their element from where they live, following the the `world-authoring` skill's
   biome table and the level tiers: a creature of levels 1–33 is only Neutral, Earth or Water; 34–66 adds Wind and
   Fire; 67–99 adds Poison, Holy, Dark, Ghost and Undead. Set 2026-09-26; each creature's value lives in its
   creature data only.
-- **The shadows' elements** cover all ten, as decided in the [World Map](../../3-world/world-map.md): Neutral — Asterion
+- **The shadows' elements** cover all ten, as decided in the the `world-authoring` skill: Neutral — Asterion
   (Fist); Holy — Seraphine (Wand); Earth — Tharos (Warhammer); Water — Orion (Spear), Mordane (Greatsword); Fire — Varkhaz (Axe),
   Kaelen (Staff); Dark — Vael (Sniper); Undead — Morwen (Scythe); Poison — Velmora (Dagger); Ghost — Nysara (Katar); Wind — Celestia (Bow), Riven (Shuriken), Veyra (Sword). A shadow shows its Kashira's name. Only four of them — the Water, Earth, Fire and Wind ones —
   can be answered with a converter today. (Full table in [Mob Roster](../../3-world/mob-roster.md).)

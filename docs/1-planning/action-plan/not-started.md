@@ -23,7 +23,7 @@ Tasks whose status is empty `[ ]` — not started. The plan is three files by st
 
 **Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
 
-- [ ] `MT-18` **`[A]` Put the fourteen shadows on their own places.** — **2 days** — see [The World Map — Three Regions](../../3-world/world-map.md)
+- [ ] `MT-18` **`[A]` Put the fourteen shadows on their own places.** — **2 days** — see the `world-authoring` skill
   *Done when:* every shadow stands in its fixed place on its own map, and the same one is there again after you leave and come back.
 
 ---

@@ -18,7 +18,7 @@ tags:
 > above it. Before finishing any edit, re-read the whole doc and confirm nothing elsewhere still describes the old
 > behaviour.
 >
-> **Sibling:** [Unified Unit Stats — Implementation Notes](unified-unit-stats-implementation-notes.md) covers the UNIT
+> **Sibling:** [Unified Unit Stats](unified-unit-stats.md) covers the UNIT
 > side (one stat model for players and mobs, the point budget, mob gear/rings/drops). This doc covers the SKILL side.
 > An effect landing on anybody at all depends on both.
 
@@ -277,7 +277,6 @@ not behaving** — a wrong formula compiles perfectly, so neither replaces a pla
 ## Related
 
 - [Active Skill System — V3](README.md) — the design source of truth this tracks.
-- [Unified Unit Stats — Implementation Notes](unified-unit-stats-implementation-notes.md) — the unit-side sibling.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — the design behind the store, the stacks and the gate.
 - [Sword — Skill Roster](sword-skill-roster.md) — the pool composed on top of all of it.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the bands the composer's starter weights still don't match.

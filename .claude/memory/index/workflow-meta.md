@@ -19,7 +19,6 @@
 - [Play mode can't enter the world = editor started from the Dock](../editor-launched-without-terminal-has-no-server-addresses.md) — "CHAR_SERVER_URL is not set" in Play mode means the editor inherited no shell settings; fix it in `unity/Assets/StreamingAssets/server.txt`, not by relaunching Unity.
 - [Live link to Unity = the Unity CLI](../unity-mcp-bridge.md) — `tools/platform.sh unity-cli` (`~/.unity/bin/unity` on the Mac, `AppData/Local/Unity/bin` on the Windows PC) + `com.unity.pipeline`; old HTTP bridge RETIRED 2026-08-20; check `unity cmd --project-path <repo>/unity editor_status` says `ready` (bare `unity status` is EMPTY on Windows), never assume; reading proven, mutating not.
 - [Run editor actions YOURSELF](../act-editor-actions-via-mcp.md) — NEVER tell user to click Tools ▸ unwritten / add a component; `eval` the dialog-free `*Core()`; still never force a recompile.
-- [Maintain gamified Dev Contribution Log](../dev-contribution-log.md) — score dev's OWN contributions; doc q17a89053cf2xqjadkyk7agjb988nvgp.
 - [YouTube devlog publishing spec](../devlog-youtube-spec.md) — start 2026-06-12, day-N calc, title `…day N | game-dev-NN`, unwritten logo card, export/tags/hashtags.
 - [Protocol: "what did you learn" = persist to memory](../learn-protocol-persist-to-memory.md) — WRITE it (topic file + index), not just chat.
 - [Feature knobs live on their OWN object/asset](../feature-knobs-own-object.md) — dedicated named GameObject (e.g. `WaterFX`), never piled onto the crowded `Sun`.

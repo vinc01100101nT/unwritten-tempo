@@ -31,7 +31,7 @@ A body or a garment is worth one sixth of a 1-second weapon's base (50, a Dagger
 the hits that land, and at the full share an E +10 leather set held a same-level creature to the 5% floor) — split
 between its material's two stats. Head and shoes take half. Sized so a full metal set's defence at equal gear is 25%
 of a Dagger's attack (20% of a Sword's). The roll, the rarity, and every fold and quench multiply that base the way they do a weapon's,
-rounded half up once (attack speed to one decimal). Full table: [Crafting Tables](crafting-tables.md).
+rounded half up once (attack speed to one decimal). Full table: [Gameplay System — V4](README.md).
 
 | Base, Common, Raw +0, unrolled | Body, garment | Head, shoes |
 | --- | --- | --- |
@@ -104,5 +104,5 @@ Ironblood; 0.5 / 0.75 / 1 / 1.25 / 1.5 / 2 / 2.5 for Wellspring. **First guesses
 
 ## Related
 
-- [Crafting Tables](crafting-tables.md) · [Weapon Names & Trademarks](weapon-names-and-trademarks.md) ·
+- [Gameplay System — V4](README.md) · [Weapon Names & Trademarks](weapon-names-and-trademarks.md) ·
   [Elements & Converters](elements-and-converters.md) · [Gameplay System — V4](README.md)

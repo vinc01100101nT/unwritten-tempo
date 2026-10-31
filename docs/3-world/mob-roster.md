@@ -110,14 +110,14 @@ map, and the map generator no longer puts any there.
   material, up to **C** with a Legendary one (see Gear state).
 - **Each of the 66 normals has its own home biome, element and level**, set from what it is (2026-09-26): critters
   low, large beasts higher. It lives in every map where it belongs, not in one. The full table is
-  [Creatures and Where They Live](biome-mob-families.md). Each one's stats are spent in the build of the weapon it holds, to its level's full point
+  the `world-authoring` skill. Each one's stats are spent in the build of the weapon it holds, to its level's full point
   budget; its weapon, armour, build and what its gear pays are in [Creature Gear](creature-gear.md).
 
 ## Elite
 
 - The stronger creatures of each area. The 18 creatures that were bosses are the 18 elites.
 - **Each elite has its own home biome, element and level** (8 to 99), and at least one elite calls each biome home;
-  the table is [Creatures and Where They Live](biome-mob-families.md).
+  the table is the `world-authoring` skill.
 - Whatever pieces are authored for them — **D** with a Rare material, **C** with an Epic one, **B** with a Legendary one (see Gear state) — and,
   they **summon normals**: the three nearest their level at or below it, from their own home
   biome first.
@@ -154,7 +154,7 @@ map, and the map generator no longer puts any there.
   | 160 | Greatsword | **Mordane, King Beneath the Waves** | Raging Tide | Water |
   | 165 | Bow | **Celestia, the Wandering Sky** | Passing Cloud | Wind |
   | 170 | Sword | **Veyra, the Last Petal** | Blossom Wind | Wind |
-- **The shadows carry all ten elements** (decided in the [World Map](world-map.md)): Wind three times, Water and Fire
+- **The shadows carry all ten elements** (decided in the the `world-authoring` skill): Wind three times, Water and Fire
   twice each, the rest once. Only the Water, Earth, Fire and Wind shadows can be answered with a converter today; the
   counter for the others is to come from skill buffs and cards. At level 3 the element matters, and its own element
   lands very differently on each: it heals the Water, Fire, Wind, Holy and Dark shadows, does nothing to the Earth,
@@ -278,13 +278,12 @@ creature's own kind.
   ([Saved Characters](saved-characters.md)); both follow the level in the creature's file and the grade and folds of its gear ([What a Kill Pays](what-a-kill-pays.md)).
 - **The fourteen shadows' bodies are starting picks** (set 2026-10-06 from each Kashira's gender and theme, no colours
   changed yet), listed under Shadow; each is the user's to change in the Mob Table.
-- **TODO — the shadows' places and the elites' spots** are designed in the [World Map](world-map.md) and not built.
+- **TODO — the shadows' places and the elites' spots** are designed in the the `world-authoring` skill and not built.
 
 ## Related
 
 - [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — dropped gear, folding, the seven grades, Ink, Salt
   and mastery: what creatures drop and what shadows wear.
-- [Creatures and Where They Live](biome-mob-families.md) — every creature's home biome, element and level, and every map's creatures.
 - [Story & Setting (Canon)](story-setting-canon.md) — the artist, Chaos and the Fourteen Kashira.
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen
   weapon types a shadow each carries.

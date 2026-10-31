@@ -8,11 +8,24 @@
     {
       "type": "heading",
       "level": 2,
-      "text": "A world of scattered pages"
+      "text": "One world, all of it connected"
     },
     {
       "type": "paragraph",
-      "text": "The pages that should have carried the rest of the record fell everywhere — so the whole world is a hunting ground. Every map belongs to a **biome**, with its own look, its own ground and creatures of its own."
+      "text": "The pages that should have carried the rest of the record fell everywhere — so the whole world is a hunting ground. It is **one land**: walk out of Lastline and the ground simply goes on, through fields, woods and hills, with no door and no loading screen between a town and the country around it."
+    },
+    {
+      "type": "paragraph",
+      "text": "The world is still being written outward from Lastline. Land that is not written yet has no ground to stand on, and more of it opens as it is built."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The land and its creatures"
+    },
+    {
+      "type": "paragraph",
+      "text": "Every stretch of land is one kind of ground — meadow, forest, high ground, riverbank, coast, desert — and the creatures living on it are ones that belong there. The farther you walk from a town, the higher their level. Close to town you meet them as they are; farther out, their **Tainted** and then **Blighted** versions take over."
     },
     {
       "type": "heading",
@@ -20,39 +33,40 @@
       "text": "The biomes"
     },
     {
+      "type": "paragraph",
+      "text": "Every creature comes from a **biome** — the kind of country its page fell in — and the biome decides which element **most** of its creatures carry. A majority, never a rule: a Snow creature is most often Water, but some are Earth."
+    },
+    {
       "type": "list",
       "items": [
-        "**Grassland** — open meadows with a few trees and plenty of flowers: the gentle starting country around Lastline. Most of its creatures are Neutral.",
-        "**Forest** — fallen leaves, ferns and mushrooms under the trees. Mostly Earth.",
-        "**Highland** — a near-treeless moor of short turf and boulders. Mostly Earth.",
-        "**Peaks** — above the treeline: bare gravel, snow and boulders. Mostly Wind.",
-        "**Snow** — a snowy pine forest, its ground always white. Mostly Water.",
-        "**Steppe** — golden tussocks with sun-baked ground between them. Mostly Wind.",
-        "**Coast** — sand, wet sand and shore pebbles, scattered with rocks. Mostly Water.",
-        "**Desert** — open orange dunes with a few stones. Mostly Fire.",
-        "**Volcanic** — black ash, glowing lava cracks and boulder fields. Mostly Fire.",
-        "**Swamp** — reedy marsh and mud under willows, water always standing in its hollows. Mostly Poison.",
-        "**Sacred** — an open birch meadow in flower, high among the clouds. Mostly Holy.",
-        "**Haunted** — withered grass, grave dirt and old dark cobbles among dead stumps. Mostly Undead.",
-        "**Mist** — pale moss and grey silt under willows, always in fog. Mostly Ghost.",
-        "**Corrupted** — where the blankness runs deepest; the most twisted pages gather here, on withered violet grass and purple-black soil. Mostly Dark."
+        "**Grassland** — mostly Neutral.",
+        "**Forest** — mostly Earth.",
+        "**Highland** — mostly Earth.",
+        "**Peaks** — mostly Wind.",
+        "**Snow** — mostly Water.",
+        "**Steppe** — mostly Wind.",
+        "**Coast** — mostly Water.",
+        "**Desert** — mostly Fire.",
+        "**Volcanic** — mostly Fire.",
+        "**Swamp** — mostly Poison.",
+        "**Sacred** — mostly Holy.",
+        "**Haunted** — mostly Undead.",
+        "**Mist** — mostly Ghost.",
+        "**Corrupted** — where the blankness runs deepest; the most twisted pages gather here. Mostly Dark."
       ]
     },
     {
       "type": "paragraph",
-      "text": "A biome decides which element **most** of its creatures carry — a majority, never a rule: a snow field is mostly Water, but some of its creatures are Earth, Dark or Wind. Every map names the creatures that live on it."
+      "text": "The **Monsters** page lists every creature with its biome and its element."
     },
     {
       "type": "heading",
+      "level": 2,
       "text": "The lie of the land"
     },
     {
       "type": "paragraph",
-      "text": "The fields are not flat. Their ground rises and falls in **broad levels joined by slopes**, so there is always higher ground to climb and lower ground to look down on."
-    },
-    {
-      "type": "paragraph",
-      "text": "Some roads run through a **pass between rock cliffs**. You cannot climb a cliff face — but here and there a cliff runs out and its high ground **slopes down to meet the road**, and there you can walk up onto the top."
+      "text": "The land is not flat. It rises into hills and high ground and falls away into river valleys. Where it rises too steeply there is a **cliff**, and you cannot climb a cliff face — go round to where the ground slopes up gently, and walk onto the top from there. Roads cross the rivers on **bridges**."
     },
     {
       "type": "paragraph",
@@ -60,18 +74,19 @@
     },
     {
       "type": "heading",
-      "text": "Towns and their Keepers"
+      "level": 2,
+      "text": "Lastline and its Keeper"
     },
     {
       "type": "paragraph",
-      "text": "There are **sixteen towns**, and every one has a **Keeper** standing just inside one of its doors. Walk up and press **F** to open the Keeper's window. A Keeper does three things."
+      "text": "Every journey starts in **Lastline**. It is the only town with townsfolk so far — its shop, the people with work for you, and its **Keeper**, standing in the middle of town. Other towns open as they are built. Walk up to the Keeper and press **F** to open the Keeper's window. A Keeper does three things."
     },
     {
       "type": "list",
       "items": [
-        "**Save Point** — this town becomes the place you come back to, in front of its Keeper. Falling in battle and choosing *Return to last saved point* brings you there, and so does a Butterfly Wing. Until you set one, you come back at Lastline's west door.",
+        "**Save Point** — this town becomes the place you come back to, in front of its Keeper. Falling in battle and choosing *Return to last saved point* brings you there, and so does a Butterfly Wing. Until you set one, you come back in front of Lastline's Keeper too.",
         "**Storage** — one storage for your whole **account**: every character you play opens the same one. It holds **600** different things; a stack of one item counts as one, and each piece of gear counts as one and comes back out exactly as it went in — its folds, its grade, its written stats, its cards. A few items, like the Newbie Potion, cannot be stored.",
-        "**Teleport** — to any other town, for Unsigned: **40u × your level** for every door you would have walked through to get there, so the town next door is cheap and the far side of the world is not. A town you cannot afford is drawn dim. You arrive in front of that town's Keeper."
+        "**Teleport** — to another town's Keeper, for Unsigned. Lastline's Keeper is the only one so far, so there is nowhere to send you yet."
       ]
     },
     {
@@ -86,14 +101,14 @@
     {
       "type": "list",
       "items": [
-        "**Butterfly Wing** — returns you to your save point, from any map. If the trip cannot be made, the wing comes back to your bag.",
-        "**Fly Wing** — sets you down on a random spot of the map you are on, always one you can walk back from. If there is nowhere to land, it stays in your bag."
+        "**Butterfly Wing** — returns you to your save point, from anywhere in the world. If the trip cannot be made, the wing comes back to your bag.",
+        "**Fly Wing** — sets you down on a random spot of the land around you, always one you can walk back from. If there is nowhere to land, it stays in your bag."
       ]
     },
     {
       "type": "quote",
       "text": [
-        "*Status: all fourteen biomes are in the game, and the world's maps are built and joined to one another by doors. Every town has its Keeper; Lastline is the only town with other townsfolk and a shop so far. Some biomes are still waiting for props of their own — palm trees, cacti, dead trees, reeds — and the towns for their buildings.*"
+        "*Status: the world is one connected land, written outward from Lastline. Lastline is the only town with townsfolk, a shop and a Keeper so far; the other towns open as they are built.*"
       ]
     }
   ]

@@ -59,7 +59,7 @@ Every task carries:
 
 **Goal:** you can walk from the first town to any map in the game.
 
-- [ON-GOING] `MT-15` **`[A]` Connect every map of the new world by doors.** — **4–5 days** — see [The World Map — Three Regions](../../3-world/world-map.md)
+- [ON-GOING] `MT-15` **`[A]` Connect every map of the new world by doors.** — **4–5 days** — see the `world-authoring` skill
   *Done when:* starting from Lastline you can reach every one of the 76 maps on foot, without a game-master command.
 - [ON-GOING] `MT-44` **`[E]` Give the fields shape: ground levels, cliffs, meeting points, one walking rule.** — **built** — see [Biomes](../../3-world/biomes.md) and [Walking and Routing](../../2-systems/walking-and-routing.md)
   *Done when:* on both test maps you walk every level and climb a cliff at a meeting point, and a creature chases you up and down both.
@@ -132,8 +132,8 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 
 - [ON-GOING] `MT-34` **`[A]` Author the bow's skills.** — **5–8 days** — see [Weapon Roster — 14 Identities](../../2-systems/active-skill-system-v3/weapon-roster-12-identities.md)
 
-- [ON-GOING] `MT-46` **`[E]` Let the World Creator put cliffs on a map.** — **built** — see [World Creator — Spec](../../3-world/world-creator-spec.md)
-  *Done when:* a field set to "Cliffs: on" in the World Creator comes out of Build World with cliffs, and one set to off comes out without.
+- [ON-GOING] `MT-46` **`[E]` Put cliffs in the world.** — **built** — the world builder cuts the land into plateau levels with sheer cliffs and walkable slopes, in the one ground; see the `world-authoring` skill
+  *Done when:* walking the built world, every cliff wall is solid, every slope between levels climbs, and no fall leaves you trapped below.
 
 - [ON-GOING] `MT-48` **`[E]` Rain leaves standing water that works like water.** — **built** — see [Rain and Standing Water](../../2-systems/rain-and-standing-water.md)
   *Done when:* in a storm on `test_grassland` the lakes rise every 30 seconds, a hollow below an overflowing one fills, two players see the same water, the frame time in a storm is measured, and the 39 fields are rebuilt at 0.25 m.

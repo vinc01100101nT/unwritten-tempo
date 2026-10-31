@@ -71,6 +71,5 @@ when creating a new update:
 ## Related
 
 - [Roadmap to Launch](roadmap-to-launch.md) — where to pull "what actually changed" from before writing an update.
-- [Dev Contribution Log](dev-contribution-log.md) — the session record an update is usually summarising.
 - [GPT Concept Prompts — Paste-Me](../4-art/gpt-concept-prompts.md) — the asset names the fact-check step is about.
 - [Mixamo Animation Integration — Workflow](../4-art/mixamo-animation-workflow.md) — the other half of the asset pipeline updates mention.

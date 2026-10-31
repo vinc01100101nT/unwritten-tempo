@@ -36,9 +36,7 @@ cap may be 99, 100 or 150. Never divide bands or curves by 46.
 
 **2026-09-20 evening:** every design decision is closed except three deferrals (material drop plan — GM command
 for now; card sockets; unlock tables for the 11 unauthored weapons). §9 of the V4 doc holds the first numbers
-(user-owned, tune in play). Crafting is at town stations. Ring keeps the name "Ring". The file-by-file build plan is written:
-docs/2-systems/gameplay-system-v4/implementation-plan.md — six slices, spot-checked, not started. 15 build questions
-await the user at its Part 4.
+(user-owned, tune in play). Crafting is at town stations. Ring keeps the name "Ring".
 
 **Why:** a long design conversation (2026-09-19/20) that must not be re-derived.
 **How to apply:** open the V4 doc first; update it IN PLACE as decisions land. Related [[the-five-anti-invention]].

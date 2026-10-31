@@ -413,6 +413,10 @@ context · "previously this worked like…". **History lives in git and in chat,
 4. Reconcile every hit in the SAME turn. A stale line I plan to fix later is a stale line that ships.
 5. Say in the report which stale passages I found and killed, or say plainly that I found none.
 
+**A count is never typed into a doc** (squares built, towns, creatures, skills, items, quests, townsfolk, files):
+the doc points at `python3 tools/project-status.py`, which counts them live, and a count it lacks is added THERE.
+A typed count is a stale string waiting for the next commit.
+
 **One string is enough to break it.** A single leftover old number reads exactly as authoritative as the twenty
 correct ones around it, so the whole doc becomes untrustworthy and every future read pays for it. There is no
 "close enough", no "that bit is harmless", and no doc small enough to skip the pass.

@@ -241,8 +241,6 @@ players' calls can be hidden in the settings.
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen identity sentences these legends are the story half of.
 - [Saved Characters — When a Mob Transforms Back](saved-characters.md) — what a restored page becomes.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the growth engine the tradeable-ring lore hangs off (recorded there as proposed, not committed).
-- [Creatures and Where They Live](biome-mob-families.md) — the corrupted pages, as data.
-- [World Creator — Spec](world-creator-spec.md) — the world these beats have to be placed in.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — "a dropped weapon remembers its wielder in fragments", as a system.
 - [Mixamo Animation Integration — Workflow](../4-art/mixamo-animation-workflow.md) — the charcoal-body rig the fiction is built on.
 - [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — M2, where the world still has no reasons in it.

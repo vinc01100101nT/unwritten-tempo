@@ -22,6 +22,16 @@ functions; a Python script asks through `platform_ask.py`; `.mcp.json` starts bo
 `start-mcp.sh`. Unity's install folder is read from Unity Hub's own setting, so an editor installed on another
 drive is found without anyone typing its path. A new computer, or a new place something lives, is one edit here.
 
+## project-status.py
+
+**The one home for every count of where the project stands** — world squares built and the places not yet on built
+ground, towns, creatures, skills by weapon, items, quests, townsfolk, code files. It reads only the repo, so it runs on
+every machine and in a cloud session. A doc never types one of these counts; it points here.
+
+```bash
+python3 tools/project-status.py
+```
+
 ## load-settings.sh · settings_ask.py
 
 **The one reader of `settings.env`**, the file holding every secret, address and port. A shell script sources

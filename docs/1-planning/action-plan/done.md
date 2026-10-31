@@ -106,13 +106,13 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
   - [DONE] `ST-39-A` **`[E]` The Ring becomes part of the character.** — see [Ring System — Current Facts (Trio-Ring)](../../2-systems/ring-system-trio-ring.md)
     *Done when:* the equipment window has no Ring row and the character sheet's numbers are unchanged.
 
-  - [DONE] `ST-39-B` **`[A]` The 29 crafting materials.** — see [Crafting Tables](../../2-systems/gameplay-system-v4/crafting-tables.md)
+  - [DONE] `ST-39-B` **`[A]` The 29 crafting materials.** — see [Gameplay System — V4](../../2-systems/gameplay-system-v4/README.md)
     *Done when:* `/item copper 10` fills the bag's Material tab and a merge turns ten Watery Ink into one Thin.
 
   - [DONE] `ST-39-C` **`[E]` Quality and folds replace rarity and refine.** — see [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md)
     *Done when:* no tier word appears anywhere on screen, and a kill gives up materials and consumables only.
 
-  - [DONE] `ST-39-D` **`[E]` The stations.** — see [Crafting Tables](../../2-systems/gameplay-system-v4/crafting-tables.md)
+  - [DONE] `ST-39-D` **`[E]` The stations.** — see [Gameplay System — V4](../../2-systems/gameplay-system-v4/README.md)
     *Done when:* a sword is forged from copper, folded five times, quenched, and written on — each step paid for.
 
 ---
@@ -133,7 +133,7 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
 
 **Goal:** you can walk from the first town to any map in the game.
 
-- [DONE] `MT-16` **`[D]` Decide the shape of the world map.** — **0.5 days** — see [The World Map — Three Regions](../../3-world/world-map.md)
+- [DONE] `MT-16` **`[D]` Decide the shape of the world map.** — **0.5 days** — see the `world-authoring` skill
 
 ---
 
@@ -176,7 +176,7 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 
 - [DONE] `MT-47` **`[D]` Decide whether the ten smallest creatures get bigger collision shapes.** — **0.5 days** — see [Walking and Routing](../../2-systems/walking-and-routing.md)
 
-- [DONE] `MT-52` **`[E]` A creature's name lives in one place.** — **0.5 days** — see [Creatures and Where They Live](../../3-world/biome-mob-families.md)
+- [DONE] `MT-52` **`[E]` A creature's name lives in one place.** — **0.5 days** — see the `world-authoring` skill
   *Done when:* every creature's art, model and spawns resolve under the new names (all 98 checked 2026-09-29).
 
 - [DONE] `MT-53` **`[E]` A shadow carries no flat picture.** — **0.25 days** — see [Mob Roster](../../3-world/mob-roster.md)

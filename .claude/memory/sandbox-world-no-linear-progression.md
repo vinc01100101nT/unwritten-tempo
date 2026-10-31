@@ -16,8 +16,8 @@ metadata:
   and stronger visitors — as long as each makes sense there. A map's level is a feel, never a gate.
 - What still follows the CREATURE's level: its element tier (1–33 Neutral/Earth/Water; 34–66 +Wind/Fire; 67–99 all)
   and its drops (material grade bands).
-- The mapping and its rules: `docs/3-world/biome-mob-families.md` (Creatures and Where They Live); the principle is
-  in `docs/3-world/world-map.md` "The shape".
+- The mapping and its rules: the `world-authoring` skill (Creatures and Where They Live); the principle is
+  in the `world-authoring` skill "The shape".
 
 **Why:** the user wants Ragnarok-style spread, where creatures are not locked to one field.
 

@@ -1,220 +1,241 @@
 ---
-status: implemented 2026-08-10 (roster re-tune pending)
+status: built; the roster's re-tune is done by playing it
 owner: vince
-last-updated: 2026-10-03
+last-updated: 2026-10-31
 tags:
   - systems-combat-design
 ---
 
 # Unified Unit Stats — one stat block for players and mobs
 
-**Status:** implemented 2026-08-10 (roster re-tune pending). Decided 2026-08-10.
-
-**Done — the model is complete in code.** `UnitStatMath` owns every formula, constant and the stat-point economy; `Character` computes nothing itself. `MonsterDef` authors level + six primaries. `UnitStatBlock` carries the live block onto each spawned mob and **re-derives on level-up** — the flat 1.15× mob growth rate is deleted, so nothing scales on a mob-only curve. `UnitEquipment` gives mobs the same worn set the player has, aggregated through the same `EquipBonuses`. `UnitMitigation` gives mobs the damage-reduction cut and Shield absorb; `Health` now also fires a mob's **reflect** and **mana-leech** piles, and mobs have a real **MP pool**. Death drops the worn set (`LootDropper.RollWornGear`). **Tier is deleted everywhere** — difficulty is level, and spawn bands are level bands. The Mob Table edits level + primaries with a live pts spent/budget guard that snaps over-budget entries down. `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries` resets the whole roster (**86 mobs** today) onto the curve.
-
-**Not done:** nothing in the model, and the roster reset has been run (98 creatures, levels 1–170, all on budget). What's left is content — real equipment for mobs to wear (two weapons and four low armour pieces exist) — and re-tuning by playing it.
-
-### The stat-point budget (added 2026-08-10)
-
-A unit's primaries are an ALLOCATION, not free-typed numbers. `PointsEarnedByLevel(L)` = 48 at level 1 plus `⌊L/5⌋+3` per level after — and a player's 48 are spent at character creation, on the stat hexagon: STR/INT, AGI/LUK and VIT/DEX are opposite pairs that always add to 10, each stat 1–9, and every such spread costs exactly 48 (`UnitStatMath.IsCreationSpread`, pinned by the maths checks), so a new character starts with none left. `PointsSpent` charges the same rising `StatCost` curve the player pays. A mob at level L may carry exactly the stats a player who reached L could have bought — which is what keeps the two sides comparable without any multiplier. `UnitStatMath.Allocate` spends a level's whole budget across a weighted spread (verified on-budget from level 1 to 99; 0–4 points can remain unspendable when the next point costs more than what's left).
-
 ## The principle
 
-Every combat unit — the player, every mob, every future NPC — carries the **same stats and substats**, produced by the **same formulas**. No unit has a stat another lacks, and no system asks "is this a player or a mob?" before reading a number.
+Every combat unit — the player, every mob, every future NPC — carries the **same stats and substats**, produced by
+the **same formulas**. No unit has a stat another lacks, and no system asks "is this a player or a mob?" before
+reading a number.
 
-This is the data-shaped half of the caster/target work in [Active Skill System V3](README.md): once an effect can land on anybody, the thing it lands on has to *have* the fields the effect reads. A damage-reduction buff needs a damage-cut on a mob, a mana-leech buff needs MP on a mob, and a shared stat block is what makes "no exceptions" true rather than aspirational.
+This is the data-shaped half of the caster/target work in [Active Skill System V3](README.md): once an effect can
+land on anybody, the thing it lands on has to *have* the fields the effect reads. A damage-reduction buff needs a
+damage cut on a mob, a mana-leech buff needs MP on a mob, and a shared stat block is what makes "no exceptions" true
+rather than aspirational.
 
-**1:1, with no scaling layers at all.** No tier, no global multiplier, no mob-only growth rate. A mob is strong for exactly the reasons a player is strong: its level, its primaries, its equipment, its ring. Difficulty is *authored*, not dialled.
+**A mob is strong for the reasons a player is strong — its level, its primaries, its gear, its ring — plus ONE
+typed dial: its multiplier.** There is no tier and no mob-only growth rate. The multiplier (`MonsterDef.multiplier`,
+1 or more, typed per creature) multiplies its health, its attack by the cube root (×30 hits about 3.1× as hard), and
+everything its kill pays — experience, Temper Dust, Quench Oil, and the chance of its Salts, Inks and own material
+([Mob Roster](../../3-world/mob-roster.md)). There is no global dial: retuning means editing a mob's level, its
+primaries, its gear or its multiplier. Decided deliberately: emergent and honest over quick-to-dial.
 
-## Where we started (measured 2026-08-10, before the change)
+**Where it lives.** `UnitStatMath.cs` owns every formula, constant and the stat-point economy; `Character` computes
+nothing itself — every derived getter delegates there. The formulas were *moved*, not copied: a new stat is added
+there, or the two sides drift. `UnitStatBlock` is a mob's live block, `UnitEquipment` the worn set for every unit
+(the player's included), `UnitMitigation` the damage cut and Shield absorb every unit shares.
 
-**Player** — `Character.cs`, three layers:
+## The stat-point budget
 
-1. **Primaries** — STR, AGI, VIT, INT, DEX, LUK. 48 starting points, max 99 each.
-2. **Derived** — MaxHP, MaxMP, Attack, MagicAttack, Defense, MagicDefense, Hit, Flee, crit chance, crit multiplier, attack-speed multiplier, cast-speed multiplier, cast-time multiplier, min/max damage spread, hard-def %, hard-magic-def %.
-3. **Ring percentages** — the 10 `StatId` nodes, applied by `Character.Scale(...)`.
+A unit's primaries are an ALLOCATION, not free-typed numbers. `PointsEarnedByLevel(L)` = 48 at level 1 plus
+`⌊L/5⌋+3` per level after — and a player's 48 are spent at character creation, on the stat hexagon: STR/INT,
+AGI/LUK and VIT/DEX are opposite pairs that always add to 10, each stat 1–9, and every such spread costs exactly 48
+(`UnitStatMath.IsCreationSpread`, pinned by the maths checks), so a new character starts with none left.
+`PointsSpent` charges the same rising `StatCost` curve the player pays (`⌊V/10⌋ + 2` a point). A mob at level L may
+carry exactly the stats a player who reached L could have bought — which is what keeps the two sides comparable.
+`UnitStatMath.Allocate` spends a level's whole budget across a weighted spread; 0–4 points can remain unspendable
+when the next point costs more than what is left.
 
-**Mobs** — `MonsterDef.cs` (**86 assets**), one flat authored layer:
+**Authoring maths is replayed in a throwaway script against the real constants before it is trusted** — that is how
+a budget guard that crushed untouched stats was caught before it shipped.
 
-| Mobs already have | Mobs are missing |
-| --- | --- |
-| maxHealth, attack, defense, magicDefense, flee, hit, luk | the six primaries |
-| hardDefPercent, hardMagicDefPercent | MP, MagicAttack (one `attack` + a Physical/Magic switch) |
-| element (and its level, 1–4), damageSpread | crit chance, crit multiplier |
-| — | attack-speed and cast-speed multipliers |
+## The stat reference
 
-So the gap is roughly nine additions, not a rebuild — mobs already carry most of the defensive half.
-
-**Three competing growth paths exist today** and all collapse into the player's:
-
-- the player's per-level growth (`hpPerLevel`, `attackPerLevel`, …) — **the survivor**,
-- `MonsterAI3D.perLevelGrowth` — a flat 1.15× on attack / maxHealth / xpReward — **deleted**, and creatures no longer level up at all,
-- `MonsterDef.tier` — **deleted** (it becomes a content label at most, never a multiplier).
-
-## The model
-
-### One block, one set of formulas
-
-A unit is authored as **six primaries + a level**. Every derived stat comes from the pre-renewal formulas already living in `Character` (constants at Character.cs:80-104) — they stop being "the player's formulas" and become the unit formulas:
-
-- `Attack = base + growth + STR + DEX/2 + LUK/4`
-- `MaxHP = (base + growth) × (1 + VIT × 0.02)`
-- `Hit = level + DEX + LUK/3` · `Flee = level + AGI + LUK/5`
-- `CritChance = LUK × 0.003` (capped 0.95) · crit multiplier from a 1.4 base
-- `AttackSpeedMult` from AGI · `CastSpeedMult` and cast time from DEX
-- damage spread from DEX (physical) / INT (magic) — this replaces `MonsterDef.damageSpread`
-
-Ring percentages stay in the same pipeline for both sides. A mob authors its ring's invested ranks; they resolve through the SAME `SkillRing.Percent` soft-cap curve the player's ring uses (`PassiveRanks`, +80% asymptote, k=40), so a mob's 20-rank ATK ring is worth the same +26.7% a player's is.
-
-### Mobs wear equipment and rings
-
-A mob carries the same `Dictionary<EquipSlotType, EquipmentInstance>` the player does, aggregated through the same `EquipBonuses.Aggregate` (EquipmentInstance.cs:111) — refine levels and cards included. Nothing about the equipment code is player-specific, so this was wiring rather than new systems. Implemented as `UnitEquipment`.
-
-This is what removes the need for a throttle. A mob is dangerous because it is a high level in good gear — the same sentence you'd write about a player.
-
-### Mobs wear rings too
-
-A creature authors its ring's invested ranks. Since V4 the ring is PART OF THE UNIT — there is no ring item and no ring slot, for a creature or for a player — so authored ranks always count.
-
-The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's own curve: 10 ranks = +16%, 20 = +26.7%, 40 = +40%, asymptotic to +80%. No mob-side copy of the maths.
-
-**A ring drops at 0.001%** (1 in 100,000) — its own constant, `LootDropper.RingDropChance`, deliberately separate from the chance every other worn piece drops at. A ring is the most valuable thing a unit carries, so it's the MVP-card-tier prize, not ordinary loot.
-
-### Mobs never drop what they wear
-
-**A creature keeps what it wears, and 1 kill in 10 drops a copy of one piece.** Nothing is taken off the creature: on 10% of kills a new copy of one random piece it wears falls — Raw, unfolded, at a rarity its kind decides ([V4 §1](../gameplay-system-v4/README.md)). A kill also pays materials and consumables (no death pays Unsigned — see [Saved Characters](../../3-world/saved-characters.md)). Its loot table carries those; each kill also has a chance of the creature's own find, a food or an element converter ([Town Supplies and Hunting Finds](../town-supplies-and-hunting-finds.md)). Everything lands on the ground where it fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)). What it wears is not shown on screen.
-
-### What state a mob's gear is in
-
-A creature wears exactly the pieces authored on its catalog entry and nothing else; an empty slot stays empty. The same entry carries three settings every one of those pieces comes to life at — `gearQuality` (the grade), `gearFolds` (clamped to the grade's cap) and `gearInkTier` (1 Watery to 5 Sharp) — built through `EquipmentInstance.CreateAt`, rolling each stat exactly as a station rolls one. Which stats the Ink lands on, a weapon's trademark and an armour piece's word (at every grade, Raw included), are re-rolled every life. No creature kind overrides them. The starting values per level are in [Mob Roster](../../3-world/mob-roster.md) (Gear state). The server decides it; a watching machine is told what each creature wears.
-
-### There is no such thing as mob-only gear
-
-**One item catalog, shared.** Anything a mob wears is a real equipment Item the player can wear too — same slot, same bonuses, same 3D model, same drop. No mob-exclusive equipment tier, no stat-bearing "natural weapon" that only exists to give a mob numbers.
-
-The codebase already enforces the line: `ItemType` is DERIVED from `slot` + `category` (ItemType.cs:14-17), so an item is Weapon/Armor *because* it has an equip slot. A stat-carrying item with no slot would be data the equip pipeline can't read — dead by construction.
-
-- **Equipment** — has an equip slot and bonuses; a weapon also has a model. Worn by anyone. Twenty-six exist today: one weapon per weapon type (fourteen) and twelve armour pieces — see the [Armour Roster](../gameplay-system-v4/armour-roster.md).
-- **Materials** — `ItemCategory.Material`: an icon, a name, a crafting input, **no stats and no model**. Fangs, hides, carapace live here and feed [Crafting & Recycling](../crafting-and-recycling.md).
-
-**A mob with no equipment is valid.** Its stats come from level + primaries; `EquipBonuses` aggregates to zeros and every formula still resolves. So mobs start unarmed and get armed as real gear is made — the art debt is incremental content, never a prerequisite for the stat unification.
-
-### No global tuning lever — accepted
-
-With tier and the throttle gone there is no single number to turn when playtesting says the game is too hard. Retuning means editing a mob's level, its primaries, or its gear. Decided deliberately: emergent and honest over quick-to-dial.
-
-### What stays on `MonsterDef`
-
-Only behaviour and inputs: level, the six primaries, worn gear and its state, ring ranks, weapon mastery, `aggroRadius`, `leashRadius`, wander knobs, `preferredRange`, `fleeHpFraction`, element, on-hit ailment, loot, sheet/tint/size.
-
-**No sub-stat is typed onto a unit, with one exception: a creature's own movement speed** (decided 2026-10-14) — a number from 0 to 2 on its catalog entry, set in the Mob Table, that multiplies the shared pace; 1 is a person's pace and 0 never moves. Everything else is shared: the movement pace and bare-handed reach are one value each on `CharacterSpec`, and the base swing interval is worked out from the held weapon's weight (`UnitOffense.SwingSeconds`), read by players and creatures alike: a creature chases on the run gear and wanders on the walk gear, each times its own movement speed, reaches `unarmedReach` (0.5) bare-handed or its weapon's `attackRange`, and swings every `UnitOffense.SwingSeconds(weapon, weight)` (0.8 s bare-handed) before attack speed. The combat numbers on a creature's body (`Health`, `MonsterAI3D`) are written only by `UnitStatBlock` and are never saved.
-
-## Migration — reset to a level template
-
-Decided: **do not** preserve the hand-set stat blocks the roster used to carry. Each mob gets a level and a primary spread from a template, plus a starting kit of natural gear; hand-tuning happens afterwards on the mobs that feel wrong. The roster is **86 mobs** today.
-
-This trades current balance for a clean base. Expect a re-tuning pass across the roster — and with no global dial, that pass is the tuning, so budget for it.
-
-## Build order — all steps done except the re-tune
-
-1. ~~**Extract the stat block.**~~ `UnitStatMath` owns the formulas; `Character` delegates.
-2. ~~**Extract the equipment holder.**~~ `UnitEquipment`.
-3. ~~**Give mobs both.**~~ `UnitStatBlock` on every spawned mob, wired by `RigBuilder25D`.
-4. ~~**Teach `Health` to read the states it already stores.**~~ `UnitMitigation` (the damage-reduction pile + Shield) + `ApplyLeech` (the reflect and mana-leech piles).
-5. ~~**Drops from the worn set.**~~ `LootDropper.DropWornGear`.
-6. ~~**Delete `perLevelGrowth` and tier.**~~ Creatures never level up; tier is gone from every file.
-7. ~~**Migration tool.**~~ `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries`.
-8. **Re-tune the roster** — the one step left, and it needs play, not code.
-
-Then, as ongoing content: make real equipment (model included), arm the mobs that should carry it, author the materials they drop.
-
-Steps 1-3 are the risky ones: every read of a mob stat moves. Step 4 is what unblocks "every effect works on everyone" and is independently shippable — it needs none of the rest.
-
-## Why this shape
-
-- **Single source of truth** — one set of formulas, so player and mob numbers can't drift apart.
-- **No dead ends for effects** — an effect never has to ask what kind of unit it hit.
-- **Kills three growth paths** and every scaling layer, leaving one rule: level + primaries + gear.
-- **Drops can't lie** — a mob's gear loot is the equipment it is visibly wearing.
-- **One item catalog** — no mob-only equipment tier to keep in sync with the real one.
-
-## Consequences worth knowing
-
-- **`CritShieldPerLuk` becomes symmetric.** It already reads the *target's* LUK to lower the attacker's crit chance (Character.cs:89). Mobs have LUK today, but mob attacks don't route through the player's crit path — unifying makes it apply both ways. That is a real balance change, not a refactor.
-- **A mob's ring is authored, not drafted.** The player's ring comes from the Ring of Progression's pick-per-10-points draft; a mob just wears a pre-authored one. Same data, no drafting code.
-
----
-
-## The stat reference (added 2026-08-23)
-
-Three tables, read off `UnitStatMath` and its callers. Every row is what the code does today, not intent.
+Read off `UnitStatMath` and its callers on 2026-10-31. The code wins any disagreement.
 
 ### Primary stats — the only six you allocate
 
-STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **two** sources: the points you spend and what your gear grants. **No skill, buff, debuff, passive, ailment or state may move a primary** — that rule is the reason the sub-stat table below exists.
+STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **two** sources: the points you spend
+and what your gear grants. **No skill, buff, debuff, passive, ailment or state may move a primary** — that rule is
+the reason the sub-stat table below exists.
 
 ### What the primaries drive
 
+Every row also takes gear, its ring node, and a timed change of that sub-stat; the ring's percentage scales the flat
+sum unless the row says otherwise.
+
 | Sub-stat | Scaled by |
 | --- | --- |
-| Melee attack | STR ×1/pt + STR's jump, DEX÷2, LUK÷4, base + 1/level, gear, the Atk ring node, a timed Attack change. Used by every weapon that is not ranged, and bare hands |
-| Ranged attack | DEX ×1/pt + DEX's jump, STR÷2, LUK÷4, base + 1/level, gear, the **same** Atk ring node, a timed Attack change. Used by normal attacks and physical skills while holding a Bow, a Shuriken with DEX above STR, or a Sniper's physical skills (`WeaponTypes.SwingsRanged`). A Sniper's normal attack is a magic shot and uses Magic attack (`WeaponTypes.ShootsMagic`) |
-| Magic attack | INT ×1/pt + INT's jump, LUK÷4, base + 1/level, gear, the MAtk ring node, a timed MagicAttack change |
-| Defence | VIT÷3 + VIT's jump, base + 1/level, gear, the Def ring node, a timed Defense change |
-| Magic defence | INT÷3, base + 1/level, gear, the **same** Def ring node, a timed MagicDefense change |
-| Max health | level curve × (1 + VIT×0.02), gear, the HP ring node, a timed MaxHP change |
-| Max mana | level curve × (1 + INT×0.015), gear, the MP ring node, a timed MaxMP change |
-| Accuracy | level + DEX×1 + LUK÷3 + worn accuracy (Ink), the Accuracy ring node, a timed Accuracy change |
-| Evasion | level + AGI×1 + AGI's jump + LUK÷5 + worn evasion (Ink, leather armour), the Evasion ring node, a timed Evasion change |
-| Attack speed | AGI 0.5%/pt + DEX at 0.25× that, gear, the AttackSpeed ring node, a timed AttackSpeed change; capped ×3 |
-| Cast speed | `1 − DEX/150` (instant at 150 DEX), divided by the CastSpeed ring node and a timed CastSpeed change |
-| Crit chance | LUK 0.3%/pt, gear, the Critical ring node, a timed CritChance change; capped 95% |
-| Crit damage | 1.4 base + **LUK 0.2%/pt** + LUK's jump as percentage points, the same Critical ring node, a timed CritDamage change |
-| Crit resistance | the DEFENDER's LUK, 0.3%/pt off the attacker's crit chance |
-| HP regen | **Ragnarok's: VIT/5 + MaxHP/200 (at least 1) every 6 s**, paid as that ÷ 6 per second, plus a timed HPRegen change |
-| Mana regen | **Ragnarok's: 1 + INT/6 + MaxMP/100 every 8 s, plus (INT−120)/2 + 4 from 120 INT**, paid as that ÷ 8 per second, plus a timed MPRegen change |
-| Minimum damage floor | 55% of max, closed toward 1.0 by DEX (physical) / INT (magic) at 1.2%/pt |
+| Melee attack | base + 1/level, STR ×1 + (STR÷10)², DEX÷5, LUK÷5. Every weapon that is not ranged, and bare hands |
+| Ranged attack | the same with STR and DEX swapped: DEX ×1 + (DEX÷10)², STR÷5, LUK÷5, and the **same** Atk ring node. Used while holding a Bow or a Sniper, or a Shuriken with DEX above STR (`WeaponTypes.SwingsRanged`). A Sniper's own power is magic attack (§2 of [V4](../gameplay-system-v4/README.md)) |
+| Magic attack | base + 1/level, INT ×1 + (INT÷5)² |
+| Soft defence (flat) | base + 1/level, VIT÷2 + the larger of VIT×0.3 and VIT²÷150 − 1 |
+| Soft magic defence (flat) | base + 1/level, INT ×1 |
+| Hard defence / hard magic defence (a percentage) | the Def ring node (+1 point a rank), what is worn (armour, Ink, the Bulwark word), timed Defence changes; never below 0, and a blow uses at most 90% |
+| Max health | the level's health curve × (1 + VIT×1%), plus gear; a creature's then × its multiplier |
+| Max mana | the level curve × (1 + INT×1%), plus gear |
+| Accuracy | level + DEX + worn accuracy |
+| Evasion | level + AGI + worn evasion (Ink, leather); with more than two attackers on it, 10% off for each past the second, and 12 or more always hit |
+| Attack speed | AGI 0.4%/pt + DEX at a quarter of that, gear, ring, × the attack-speed buff; the swing is timed by Ragnarok's ASPD, capped at 190 |
+| Cast speed | `1 − DEX/150` (instant at 150 DEX), divided by the CastSpeed ring node and a timed CastSpeed change; a fixed cast time is never shortened |
+| Crit chance | 1% + LUK 0.3%/pt, gear, ring; the defender's LUK takes 0.2%/pt off it, and the result is held inside 0–95% |
+| Crit damage | ×2 base + LUK 0.2%/pt + LUK's jump (⌊LUK/10⌋² + 3×⌊LUK/10⌋ percentage points), gear, the same Critical node; never past ×3 |
+| Perfect dodge | the defender's LUK, 0.1%/pt of ordinary attacks dodged outright, a crit included |
+| HP regen | **Ragnarok's: VIT/5 + MaxHP/200 (at least 1) every 6 s**, plus a timed HPRegen change |
+| Mana regen | **Ragnarok's: 1 + INT/6 + MaxMP/100 every 8 s, plus (INT−120)/2 + 4 from 120 INT**, plus a timed MPRegen change |
+| Minimum damage | physical: 55% of max, closed toward max by DEX at 1.2%/pt; magic: max less ((INT÷5)² − (INT÷7)²). A crit ignores the spread |
 
-Both regen lines are Ragnarok pre-renewal's formula (rAthena `status_calc_regen`), with whole-number division. Moving never stops them; peace doubles them (below).
+Both regen lines are Ragnarok pre-renewal's formula (rAthena `status_calc_regen`), with whole-number division.
 
 ### Misc — nothing here reads a primary
 
 | Stat | Where it comes from |
 | --- | --- |
-| Movement speed | `CharacterSpec` gear speeds — the run gear is the base at 1 world unit/s, the walk gear 0.4 of it and the sprint gear 2 times it (one movement speed, no gait term) — × `UnitStates.MoveMult`, which carries timed movement-speed effects only; no gear gives movement speed. A creature also multiplies by its own movement speed, 0 to 2 (`MonsterDef.moveSpeed`, through `UnitStatMath.CreatureTravelSpeed`) |
-| Attack reach | `CharacterSpec.unarmedReach` (0.5) bare-handed, or the held weapon's `attackRange`; blended by the pair's body sizes |
-| Base swing interval | `UnitOffense.SwingSeconds(weapon, weight)` for every unit, divided by attack speed — 0.8 s bare-handed plus 0.005 s per point of weight a hand carries (a pair weapon's two hands carry half its weight each): Fist 0.95 s, Dagger, Shuriken and Katar 1 s, Wand 1.05 s, Bow and Axe 1.1 s, Staff 1.2 s, Sword 1.25 s, Spear and Sniper 1.35 s, Warhammer 1.45 s, Scythe 1.5 s, Greatsword 1.6 s |
-| Mana leech | 0; a timed sub-stat change only |
-| Life steal | worn words + a timed LifeSteal change; nothing typed |
-| Damage reflect | worn words + a timed Reflect change; nothing typed |
+| Movement speed | `CharacterSpec`'s shared pace — the run gear is the base, the walk gear 0.4 of it, the sprint gear 2 times it — × timed movement-speed effects, held inside 30%–250%. No gear gives movement speed. A creature also multiplies by its own movement speed, 0 to 2 (`MonsterDef.moveSpeed`) |
+| Attack reach | `CharacterSpec.unarmedReach` bare-handed, or the held weapon's `attackRange`; blended by the pair's body sizes |
+| Base swing interval | `UnitOffense.SwingSeconds(weapon, weight)` for every unit — 0.8 s bare-handed plus 0.005 s per point of weight a hand carries (a pair weapon's two hands carry half its weight each) — before attack speed |
+| Mana leech | a timed sub-stat change only |
+| Life steal | worn words + a timed LifeSteal change; at most 25% of a blow |
+| Damage reflect | worn words + a timed Reflect change; at most 50% of a blow |
 | Damage dealt | **not a character stat** — a per-hit multiplier applied while the hit is built (`UnitOffense.Dealt`) |
-| Damage reduction | **not a character stat** — the DamageReduction sub-stat (the worn Bulwark word + timed states such as Guard), read per incoming hit by `UnitMitigation.Landed`. It is the ONLY percentage cut on a hit; defence itself subtracts flat |
-| Max stamina | flat 100 on `Character`; drain/refill rates on `Player3DController`, player-only |
-| Block chance | the block-chance sub-stat, which only a skill grants (`SubStat.BlockChance`) |
+| Damage reduction | **not a character stat** — the Guard damage cut, a percentage of the incoming hit after defence, then the Shield absorb soaks a flat pool of what is left (`UnitMitigation`). Both are hit-only: damage over time bypasses them |
+| Max stamina | flat 100 on `Character`, player-only |
+| Block chance | the block-chance sub-stat, which only a skill grants |
 | Extra bounce jumps | the extra-bounce-jumps sub-stat, which only a skill grants (`SubStat.ExtraBounceJumps`): whole jumps added to every bounce chain the unit starts — a thrown shuriken or a bouncing skill — never making one bounce that does not |
 | Element (what the unit is hit as) | a person: Neutral level 1, or an Armor Converter's element at level 1 while one runs; a mob: its authored element and level (`MonsterDef.element` / `elementLevel`), or a converter's |
 
-### Regeneration is one ticker for everyone (2026-08-23)
+**`CritShieldPerLuk` is symmetric.** It reads the *target's* LUK to lower the attacker's crit chance, for a mob's
+attack exactly as for a player's — a real balance consequence of the shared path, not a refactor.
 
-Both pools refill in `StatusController` — the one per-unit ticker — on the 0.8s cadence, each carrying its sub-1-point remainder so a tiny rate is paid exactly rather than rounded up. Rate = the unit's own natural rate (doubled while its weapon is put away and it has neither dealt nor taken a blow for 5 s — see [Combat and Peace Mode](../combat-and-peace-mode.md)) + the timed sub-stat change, which peace never doubles; **a rate at or below zero pays nothing**, so a regen debuff can stop healing but never drain, and never heals what it is meant to weaken.
+## Regeneration is one ticker for everyone
 
-This closed a player-only gap: mobs had an MP pool that nothing ever refilled. `Character.Update` no longer trickles either pool.
+Both pools refill in `StatusController` — the one per-unit ticker — each carrying its sub-1-point remainder so a
+tiny rate is paid exactly rather than rounded up. Rate = the unit's own natural rate (doubled while its weapon is put
+away and it has neither dealt nor taken a blow for 5 s — see [Combat and Peace Mode](../combat-and-peace-mode.md)) +
+the timed sub-stat change, which peace never doubles; **a rate at or below zero pays nothing**, so a regen debuff can
+stop healing but never drain. Moving never stops either pool.
 
-### Every HP gain announces itself the same way (2026-08-23)
+## Every HP gain announces itself the same way
 
-`CombatAuthority.NoteHPAdded` is the ONE door: it draws the green digits, fires the cue and raises the `OnHPAdded` event, which carries only WHO and HOW MUCH. Any healing source added later is covered for free. The cue was renamed from `OnReceiveHeal` (same int, so authored libraries keep their binding) because a cue must name the moment, not the source.
+`CombatAuthority.NoteHPAdded` is the ONE door: it draws the green digits, fires the `OnHPAdded` cue and raises the
+`OnHPAdded` event, which carries only WHO and HOW MUCH, so any healing source added later is covered for free. A cue
+names the moment, never the source. **One deliberate exception:** `Character.LeechHeal` adds HP silently, so
+multi-hit life steal does not spam numbers.
 
-**One deliberate exception left:** `Character.LeechHeal` still adds HP silently, so multi-hit life steal doesn't spam numbers.
-- **A mob's skills come from one place only: the levels it has bought with mastery points**, in the same store a player's live in (`Health.Mastery`, a `MasteryProgress`), decided by the user 2026-10-04. It may use a bought skill by the player's own rule — never what an item runs, and a weapon's skill only with that weapon in its hands — at the level bought, capped by its weapon's grade. Its weapon mastery opens nothing on its own, and nothing is drawn at random. **Nothing spends a mob's points yet, so today no mob casts any skill.** A mob that has bought skills casts an active or the ultimate in place of a swing when one is off cooldown, affordable and in reach (the summon first, then the ultimate, otherwise one at random), and its passives fire on their own triggers. It pays MP and waits out cooldowns exactly as a player does, and its skills land on people, never on other mobs. Every cooldown starts ready on a new life.
+## Mobs wear equipment and rings
+
+A mob carries the same worn set the player does (`UnitEquipment`), aggregated through the same `EquipBonuses` —
+folds and Inks included. A mob is dangerous because it is a high level in good gear — the same sentence you would
+write about a player.
+
+**The ring is part of the unit.** There is no ring item and no ring slot, for a creature or for a player. A creature
+authors its ring's invested ranks (`ringRankStats` / `ringRankValues`); they always count, and resolve through
+`PassiveRanks` → `SkillRing.Percent`, the player's own soft-cap curve (10 ranks = +16%, 20 = +26.7%, 40 = +40%,
+asymptotic to +80%). No mob-side copy of the maths, and no drafting: a player's ring comes from the level-up draft,
+a mob's is authored.
+
+**Worn gear is serialized on the component, not the dictionary.** `UnitEquipment.startingGear` is the serialized
+half; the live dictionary is runtime-only, equipped **lazily on first access**, not in `Awake`, so the wake order of
+`UnitEquipment` and `UnitStatBlock` cannot matter.
+
+### What state a mob's gear is in
+
+A creature wears exactly the pieces authored on its catalog entry and nothing else; an empty slot stays empty —
+unless it `rollsGearEachLife`, when every life it picks a weapon type at random and one armour material for its
+body, shoes and garment instead. **Every piece comes to life at the grade its LEVEL gives** (`CreatureLoot.WornGrade`:
+levels 1–99 in seven even stretches, Raw to A — the gear a player of that level is expected to have), never typed.
+Its folds are rolled each life by its kind (normal from 0, elite from 4, shadow from 7, each fold rarer than the one
+before); its sheet shows the fewest. Its Inks are written by its grade, and which stats they land on, a weapon's
+trademark and an armour piece's word are re-rolled every life. The server decides it; a watching machine is told
+what each creature wears.
+
+### Mobs never lose what they wear
+
+**A creature keeps what it wears, and 1 kill in 10 drops a copy of one piece.** Nothing is taken off the creature:
+on 10% of kills a new copy of one random piece it wears falls — Raw, unfolded, its base rolled
+([V4 §1](../gameplay-system-v4/README.md)). A kill also pays materials and consumables (no death pays Unsigned — see
+[Saved Characters](../../3-world/saved-characters.md)); each kill also has a chance of the creature's own find, a
+food or an element converter ([Town Supplies and Hunting Finds](../town-supplies-and-hunting-finds.md)). Everything
+lands on the ground where it fell, held for the killer (see
+[Networking — Implementation Notes](../networking/implementation-notes.md)).
+
+**What a kill pays is not authored on the creature.** `CreatureKinds.KillExperience` works it out from the level in
+the creature's file and its multiplier; no per-creature pay number is saved.
+
+### There is no such thing as mob-only gear
+
+**One item catalog, shared.** Anything a mob wears is a real equipment Item the player can wear too — same slot,
+same bonuses, same 3D model, same drop. No mob-exclusive equipment tier, no stat-bearing "natural weapon" that only
+exists to give a mob numbers. The code enforces the line: `ItemType` is DERIVED from `slot` + `category`, so an item
+is Weapon/Armor *because* it has an equip slot; a stat-carrying item with no slot would be data the equip pipeline
+cannot read.
+
+- **Equipment** — has an equip slot and bonuses; a weapon also has a model. Worn by anyone — see the
+  [Armour Roster](../gameplay-system-v4/armour-roster.md).
+- **Materials** — `ItemCategory.Material`: an icon, a name, a crafting input, **no stats and no model**.
+
+**A mob with no equipment is valid.** Its stats come from level + primaries; `EquipBonuses` aggregates to zeros and
+every formula still resolves.
+
+## What stays on `MonsterDef`
+
+Only behaviour and inputs: identity, kind, size, flight, movement speed, aggression, biome, level, the six
+primaries, the multiplier, worn gear (or `rollsGearEachLife`), ring ranks, weapon mastery, aggro and wander radii,
+`preferredRange`, `fleeHpFraction`, element and its level, on-hit ailment, its own material, loot, art.
+
+**No sub-stat is typed onto a unit, with one exception: a creature's own movement speed** (decided 2026-10-14) — a
+number from 0 to 2 that multiplies the shared pace; 1 is a person's pace and 0 never moves. The movement pace and
+bare-handed reach are one value each on `CharacterSpec`, and the swing interval is worked out from the held weapon's
+weight, read by players and creatures alike. The combat numbers on a creature's body (`Health`, `MonsterAI3D`) are
+written only by `UnitStatBlock` and are never saved.
+
+## Load-bearing decisions — don't undo these by accident
+
+- **A creature never gains a level in a fight.** Its level is what it spawned at (or what `/summon` re-statted it
+  to), and its numbers are re-derived from that level, never scaled.
+- **Tune the CAUSE, never the result.** Anything that changes a mob's numbers — `/summon` with a level included —
+  sets level + the six primaries and re-derives. A derived stat written directly is silently overwritten by the
+  block on its next derive.
+- **The mob builder does NOT stamp derived stats.** `UnitStatBlock` is the single writer of a mob's health,
+  defences, evasion, attack, accuracy and damage spread; `MonsterArchetype` carries the stat block, not a snapshot of
+  its outputs, so there is no second copy to drift.
+- **A respawn is a fresh creature.** `MobRespawn.Reactivate` — the one choke every respawn goes through — seats fresh
+  gear, re-derives and refills mana before `Health.Revive()`.
+- **The training dummy opts OUT of the model.** `TrainingDummy.MakeOne` (the `/dummy` GM command) strips the
+  `UnitStatBlock` after building, because the block would re-derive over its hand-set health and attack and turn the
+  punching bag into an ordinary mob. It is a measuring instrument, not a unit.
+- **The equip-hover preview never mutates the worn set.** It is worked out on the server from a pure aggregate of
+  the hypothetical set, and the server sends back the finished "If equipped" lines (`EquipPreview`).
+- **A mob's skills come from one place only: the levels it has bought with mastery points**, in the same store a
+  player's live in (`Health.Mastery`, a `MasteryProgress`), decided by the user 2026-10-04. It may use a bought skill
+  by the player's own rule — never what an item runs, and a weapon's skill only with that weapon in its hands — at
+  the level bought. Its weapon mastery opens nothing on its own, and nothing is drawn at random. **Nothing spends a
+  mob's points yet, so no mob casts a weapon skill** (every elite and shadow holds the summon skill from birth —
+  [Mob Roster](../../3-world/mob-roster.md)). A mob that has bought skills casts an active or the ultimate in place of
+  a swing when one is off cooldown, affordable and in reach (the summon first, then the ultimate, otherwise one at
+  random), and its passives fire on their own triggers. It pays MP and waits out cooldowns exactly as a player does,
+  and its skills land on people, never on other mobs. Every cooldown starts ready on a new life.
+
+## The Mob Table is the authoring surface
+
+`Tools ▸ unwritten ▸ Catalogs ▸ Mob Table` edits every creature inline — level and the six primaries with a live
+`spent/budget` points column (green on budget, red over, amber when a real chunk is unspent), and read-only derived
+readouts computed live through `UnitStatMath`, so you edit the cause and see the effect. Its `▸` expander holds
+per-mob equipment (an item is rejected if its slot does not match), the ring's ranks with the % each is worth, and on
+a shadow its appearance.
+
+**IMGUI gotcha:** the expander toggle is queued in `_pendingToggle` and applied *after* the draw loop. Flipping it
+mid-draw changes the layout-group count between the Layout and Repaint passes of one frame → "Mismatched
+LayoutGroup" spam.
+
+## Still open
+
+- **Roster re-tuning by playing it** — the numbers are consistent, not necessarily *fun* yet.
+
 ---
 
 ## Related
 
-- [Unified Unit Stats — Implementation Notes](unified-unit-stats-implementation-notes.md) — the code-facing companion.
 - [Active Skill System — V3](README.md) — why one stat model is the data-shaped half of "one applier, no special cases".
 - [Pre-Renewal RO Port — Phase Plan & Formulas](../pre-renewal-ro-port.md) — where these formulas came from.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the percentage curve mobs share with the player.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — the sub-stat piles the table above is read through.
-- [Creatures and Where They Live](../../3-world/biome-mob-families.md) — the creatures this model was reset onto.
-- [Crafting & Recycling](../crafting-and-recycling.md) — the materials a mob drops that it isn't wearing.
+- [Mob Roster](../../3-world/mob-roster.md) — the creature kinds, the level ladder and the multiplier.
+- [Creature Gear](../../3-world/creature-gear.md) — what each creature wears.
 - [Networking — Implementation Notes](../networking/implementation-notes.md) — the per-connection fighter the server builds from this block.

@@ -71,11 +71,9 @@
           "file": "world-maps.json",
           "docId": "q17cqtsgm410vbjaw08k2rwcnx8bapcb",
           "sourceDocs": [
-            "docs/3-world/biome-mob-families.md",
             "docs/3-world/story-setting-canon.md"
           ],
           "syncedAt": {
-            "docs/3-world/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
             "docs/3-world/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
           }
         }
@@ -220,11 +218,9 @@
           "file": "monsters.json",
           "docId": "q1706w4tf9wtc9wngjvnh1r8rh8bamx2",
           "sourceDocs": [
-            "docs/3-world/biome-mob-families.md",
             "docs/2-systems/active-skill-system-v3/unified-unit-stats.md"
           ],
           "syncedAt": {
-            "docs/3-world/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
             "docs/2-systems/active-skill-system-v3/unified-unit-stats.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         }

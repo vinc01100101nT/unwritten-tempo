@@ -40,10 +40,13 @@ Unity and left Parley broken while the user play-tested; a redesigned Parley rea
   worked out at build from where each tree stands — a plan never holds them.
 - **Then area by area**, each walked by the user before the next.
 
-## 2. The user's decisions (2026-10-26 to 10-30) — binding
+## 2. The user's decisions — binding
 
 **Land and borders**
-- The continent is laid out FRESH — the old 90-map layout and the old continent draft are not the starting point.
+- **The world is a sandbox, not a ladder** (committed game-wide, 2026-09-26): no town, road or stretch of land is a
+  step a player must take in order, and from the first day they can walk anywhere the ground leads. A stretch of land
+  is known for the level most of its creatures sit at, never locked by it (how the levels are laid out is section 3,
+  Creatures). The continent is laid out FRESH — the old 90-map layout and the old continent draft are not the starting point.
 - Area borders are invisible, slightly wavy lines with NOTHING built along them (no river, no tree line, no wall);
   themes blend across them, props and paths run over them. Land is designed for itself, never shaped by borders. The
   user hates square-border looks ("rivers everywhere… square rivers and treelines"); the book's world is "peace and lively".
@@ -60,6 +63,14 @@ Unity and left Parley broken while the user play-tested; a redesigned Parley rea
   its own town's theme, and the land 60 units round it is that town's theme too (as round a town), short of any
   town's own 60 — the wavy borders had put half of Lastline's pond's banks in Hazemere's desert. Coasts are freehand noise shapes (seed 7).
 - The dark towns, Kharnel and Cindrel, are on their own dark isle off the south-west coast, reached by boat.
+- A shadow waits only at its own place, away from where players level: bringing one down takes a guild, and meeting
+  one while levelling would spoil the levelling. Each place has one way in, and none works yet (no quest leads to a
+  place, and the game has no keys that open a way, no guides that move a party and no world clock) — a **quest**
+  (Hill of the Flame, a pilgrimage carrying the flame between shrines; Thousand Gates, each gate a trial; Aurora Steps, the monastery's trials; the Mountain's Root, whose front is shut by the Iron Gate, so the
+  bridge-keeper's chain opens the Last Bridge), a **key** (Masked Ballroom: the Mask, a rare and costly item), a
+  **guide** (Burning Keel: a lava-walker; Everburning Plain: the fire temple's keeper; Sky Cairn: a steppe rider;
+  Narrowbend: a boatman), the **world clock** (Tide Temple: low tide; Dusk Tower: only at dusk; Walking Road: only in
+  fog) or **hidden** (Drowned Chapel, Unmarked Path: found by the player). Open: whether one key lets a whole party in.
 - Each shadow's place (a landmark) stands in its own weapon town's land, on the far side from the town, with the ground
   shaped to its description (the user, 2026-10-29): Hill of the Flame on Halcyra's high ground; Thousand Gates on a
   hill in Parley's land; Narrowbend on a hairpin of the river past Pluvenne; Masked Ballroom on Velmora's east shore;
@@ -81,8 +92,9 @@ Unity and left Parley broken while the user play-tested; a redesigned Parley rea
 
 **Look and props**
 - **Desert land wears desert ground, never grass** (the user, 2026-10-30: "the deserts should have desert ground, not
-  grass ofcourse"). NOT BUILT YET — see section 6. The other three kept biomes (Hilt's coast, Cindrel's volcanic,
-  Kharnel's haunted) have the same green ground today; the user has not ruled on them — ask when their land is built.
+  grass ofcourse"). The builder lays sand on every desert and coast land (`SandBiomes`: Hazemere, Hilt), a beach
+  staying sand to the water. Cindrel's volcanic and Kharnel's haunted land still wear the world's green ground; the user
+  has not ruled on them — ask when their land is built.
 - Only NATURE props are replaced by the Idyllic Fantasy Nature pack; buildings, houses and town structures stay ours.
   Never swap buildings for pack models; towns keep their buildings, only their nature surroundings take the theme.
 - The lively pack look is the main look; a FEW dark biomes stay as rare places.
@@ -116,6 +128,11 @@ Unity and left Parley broken while the user play-tested; a redesigned Parley rea
   cross, rectangular ring). Use slanted roads, water with bridges, irregular squares, landmarks shaped by the theme,
   real-town composition (houses in rows along streets, doors on the street, gardens behind). Check a new layout against
   Lastline and every planned town before showing it.
+- **No real-country culture** anywhere in the world, and no made-up language. A new place's name is either a real
+  English word or phrase (one syllable like Hilt, up to three words) — about a third of them — or a made-up name that
+  sounds like a Ragnarok place; each ties to its shadow's style, its weapon and its setting.
+- Castles, the seats guild wars will be fought over, are not placed yet, and castle gameplay is deferred; one rule
+  already holds: **a castle never gives power**.
 - A planned town's piece is never edited by hand: the plan file is the source and every build replaces the piece
   (the user's choice, 2026-10-29: a town editor with every control, the ground brush included). Lastline, which has no
   plan file, stays hand-made.
@@ -123,21 +140,22 @@ Unity and left Parley broken while the user play-tested; a redesigned Parley rea
 ## 3. How the world is built
 
 - `SeamlessWorldBuilder.BuildCore()` (Editor), output `Assets/2_Generated/World`. Squares are the layout's own 32-unit
-  grid, id (I, J) = layout x/32, y/32. `Blocks` lists every built area: 17..23 × 17..23 (Lastline's 7×7),
-  17..23 × 12..16 (Parley's 7×5), 16..22 × 5..11 north of Parley (the hardest ground first: Gemmara's mountains, the
-  gorge, the river), 16..19 × 4 (the gorge's north rim), 14..15 × 6..7 (the cutting out of the gorge) and 19..21 × 24..25
-  (Lastline's pond), 24 × 14..20 (the column joining Lastline's 7×7 to Old Oak's); a town with a plan file adds its
-  own 7×7 (Old Oak's, 25..31 × 14..20). Never leave a column of land unbuilt between two built blocks: the world map
+  grid, id (I, J) = layout x/32, y/32. `Blocks` in `SeamlessWorldBuilder.cs` lists every built area, each with a
+  comment saying what it holds and when it was decided — read it there, never copy it here; a town with a plan file
+  adds its own 7×7. `python3 tools/project-status.py` prints what is built. Never leave a column of land unbuilt between two built blocks: the world map
   shows it as a gap and the edge walls fence each block off. A square not in `Blocks` is
   deleted with its address on the next build. **Build every square a fall can lead to**: a gorge's or pit's way out
   must be inside the built squares, or the world's edge wall traps whoever falls in (found 2026-10-29: the gorge's
-  cutting ran into unbuilt squares 14–15). A 203-square build takes 539 s and the editor shows no progress while it runs. Start it only once a recompile has
+  cutting ran into unbuilt squares 14–15). A full build is slow (measured 2026-10-30: 203 squares in 539 s) and the editor shows no progress while it runs. Start it only once a recompile has
   finished loading: a request sent while the editor is still loading code is dropped and nothing is built.
 - Caves (layout `caves`): a block of rock (`rock_size`, along the way in × across) raised 8 units with sheer walls on
   the cave's own ground, a hall (`hall_size`) inside at the mouth's ground, an 8-wide passage through the front wall,
   open to the sky so the camera sees in. The rock never rises out of lower ground; no props inside it; cliff-face rocks
   line the hall but not the passage. A gorge's bridge (layout `gorges[].bridge`) is fitted between the layout's two ends
-  with no road, the ground at each end easing up across the bridge's whole width. The sea is not built yet.
+  with no road, the ground at each end easing up across the bridge's whole width.
+- The sea: every layout cell no town's land holds, its surface at the layout's height 0, its shore worked out from the
+  whole layout so it comes out the same whichever squares are built. A low-tide path (layout `low_tide_paths`) is a
+  strip across the sea at wading depth, cut down each shore. Boats are not built.
 - Scene coords: x = layout x − 640, z = 640 − layout y (north +z), y = layout height − Lastline's height (13.12).
 - Towns: every layout town with a piece at `Towns/<Name>.prefab` whose ground lies in the built box is set in (the
   builder's TownSite list; address `world/<id>`). The world builder reads Lastline from `1_Authored/Prefabs/Towns/Lastline.prefab`.
@@ -153,8 +171,9 @@ Unity and left Parley broken while the user play-tested; a redesigned Parley rea
   and a pond 60 round its middle short of any town's 60.
 - Kept-biome themes (Hazemere desert, Hilt coast, Cindrel volcanic, Kharnel haunted) take trees and flowers from their
   Biome Table row and NOTHING from the pack: no field trees, firs, bushes, rocks or plants, no field grass, no meadow
-  carpets (all gated on the theme being a pack theme). Their ground is still the world's green ground, so a kept-biome
-  square looks like empty grass: ~200–380 props against ~800–1,100 in a pack-themed square (measured 2026-10-30).
+  carpets (all gated on the theme being a pack theme), so a kept-biome square holds far fewer props: ~200–380 against
+  ~800–1,100 in a pack-themed square (measured 2026-10-30). Desert and coast land wear sand; volcanic and haunted land
+  wear the world's green ground and look like empty grass.
 - **Grass and meadow flowers are not props.** They are carpet patches on each square's root (`FlowerCarpet`), drawn
   instanced; counting a square's prefab instances counts trees, bushes, rocks, plants and reeds only.
 - Independence (proven 2026-10-27/28): shared square edges identical, a wider build changes no existing square, a
@@ -190,7 +209,14 @@ over the layout's own map, `data/world-layout.html`, behind a "Show creature pat
 page). The layout tool runs it at the end of every run; run it alone after a roster change. Never hand-edit the world's
 rows. A row with `area` ≥ 0 spawns on that area's squares (`FieldMobSpawner.SetShape`); an area reaches at most ~100
 units from its middle, because the server holds an awake area's whole ground loaded. In game, the map (M) has a "Show
-respawn patches" button.
+respawn patches" button. **A creature's home biome, element, level and size are written on the creature alone**; a row
+names which creatures live in a patch and never changes them, so a creature is the same in every patch it lives in. The
+tool reads a home biome as a kind of ground (`ground_of_creature`), so one creature can live from one end of the world
+to the other. A patch's level climbs with its distance from the nearest town, among the patches of its own ground, so
+the land round every town — Lastline's first steps included — is the gentlest, and nothing stops a player walking on.
+What a creature drops and what its kill pays follow its own level, wherever it lives. The normals keep to the element
+tiers by level: 1–33 only Neutral, Earth or Water; 34–66 add Wind and Fire; 67–99 add Poison, Holy, Dark, Ghost and
+Undead — the elements whose counter (skill buffs and cards) is still to come.
 
 - **Preview first, data only on go:** `--preview` writes nothing and draws `~/Downloads/world-spawn-preview.html`, with
   hover boxes for every patch and dungeon. The user sees it before any write.
@@ -284,44 +310,16 @@ rules or to the layout (heights, roads, rivers) still needs `BuildCore()`.
 **A spot the user names in the game** is shown as X, Y, Z = east, north, height (the engine's x, z, y). Its layout spot is
 x = X + 640, y = 640 − Y, and its square is (layout x ÷ 32, layout y ÷ 32), rounded down.
 
-**What is built, and what is not** — run this from the repo root; it reads the layout and the built squares, so it is
-never stale:
+**What is built, and what is not** — run `python3 tools/project-status.py`. Its World section reads the layout and the
+built squares, so it is never stale: it counts squares, towns, landmarks, caves, ponds, bridges, dungeon doors,
+low-tide paths and boats, and names every one not yet on built ground. Never write what is built into this skill.
 
-```bash
-python - <<'EOF'
-import json, os
-L = json.load(open("data/world-layout.json"))
-built = {tuple(map(int, f[7:-7].split("_"))) for f in os.listdir("unity/Assets/2_Generated/World/Chunks") if f.startswith("square_") and f.endswith(".prefab")}
-sq = lambda x, y: (int(x // 32), int(y // 32))
-def show(kind, name, x, y): print(f"{'built  ' if sq(x, y) in built else 'NOT    '}{kind:8} {name:28} square {sq(x, y)}")
-for t in L["towns"]: show("town", t["id"], t["x"], t["y"])
-for p in L["ponds"]: show("pond", p["id"], p["x"], p["y"])
-for c in L["caves"]: show("cave", c["id"], c["x"], c["y"])
-for b in L["bridges"]: show("bridge", "-".join(b["road"]), b["x"], b["y"])
-for d in L["dungeon_doors"]: show("door", d["town"], d["x"], d["y"])
-for l in L["landmarks"]: show("landmark", l["id"], l["x"], l["y"])
-for p in L["low_tide_paths"]: show("lowtide", p["from"] + ">" + p["to"], *p["start"])
-for b in L["boats"]: show("boat", b["from"] + ">" + b["to"], *b["start"])
-print(len(built), "squares built")
-EOF
-```
-
-On 2026-10-30, 203 squares: Lastline, Parley, Gemmara and Old Oak's squares; Lastline's pond; the Mountain's Root cave
-and the Last Bridge; the Lastline–Harrowen and Parley–Tornel bridges; Lastline's and Old Oak's dungeon doors; the
-Dusk Tower. Only Lastline and Parley have a town piece; Old Oak has a plan file but no piece; Gemmara has neither.
-
-**Never built yet, each a new kind of ground the builder has not proven** — the reason to build them early:
-- **The sea, the shore and beaches**: the world builder builds no sea at all (only rivers and ponds). Hilt's block needs
-  it first, and holds a lot of it: 61 shore cells and 345 sea cells, the sea cave, the start of the low-tide path to the
-  Tide Temple, and Hilt's dungeon door.
-- **Desert ground** (the user's ruling, section 2): Hazemere's land, and its oasis, which already reaches Old Oak's
-  southern row (Old Oak squares 29..31 × 20 are partly desert and look empty until this is built). Needs a desert ground
-  layer in the world ground and its own props; which desert ground textures exist has not been checked.
-- **The river junction** (the middle river feeding the east one past Velmora's south) and the Old Oak–Velmora and Old
-  Oak–Pluvenne bridges: Velmora's 7 × 7, 28..34 × 7..13. The Old Oak–Velmora bridge is already fitted at each build
-  (it lies within 40 units of the built squares) but its square, 31 × 11, is not built.
-- The river mouths into the sea; the other three caves (sea, forest, dark isle); the three other ponds; the dark isle
-  and its boats; the remaining four bridges.
+**Never built yet, each a new kind of thing the builder has not proven** — the reason to build them early:
+- **Boats**: the layout has them (to the dark isle and to Luminhal), and the builder makes none.
+- **Volcanic and haunted ground**: Cindrel's and Kharnel's land, on the dark isle, would wear the world's green ground
+  today (section 2 — the user has not ruled).
+- **The desert's heart**: the builder lays sand on desert land and part of Hazemere's land is built, but not Hazemere
+  itself, its oasis or the Walking Road.
 
 **Building the whole world before its towns** — possible, and Gemmara and Old Oak are already built that way. The layout
 flattens every town's ground out to 47.6 units from its middle (`TOWN_REACH` 39.6 + `TOWN_CLEAR` 8), easing into the
@@ -329,7 +327,7 @@ land over 24 more. A town with no piece gets no gates, its roads stop at its mid
 spot. When its piece comes, `BuildTownSquares("<id>")` (section 4) rebuilds only its squares. **Open, the user has not
 answered:** should a waiting town's spot stay bare, or keep the world's trees and rocks as now?
 
-**Before adding a block to `Blocks`:** run the list above; pick the block holding the most never-built kinds; check that
+**Before adding a block to `Blocks`:** run the status script; pick the block holding the most never-built kinds; check that
 no gap is left between it and what is built (a one-square gap is a wall on both sides and a hole in the world map); keep
 every square a fall can lead to inside it; then plan → picture → go (section 1). After the build, run section 5's checks
 and tell the user the game server must be rebuilt and restarted.

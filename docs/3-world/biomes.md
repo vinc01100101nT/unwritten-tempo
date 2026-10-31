@@ -10,7 +10,7 @@ tags:
 
 What every biome looks like: which ground tile it lays as its main ground, which it sprinkles in patches, which it
 uses for roads, and which props stand on it. The fourteen biomes and the element each one favours come from
-[The World Map](world-map.md); this page owns the LOOK.
+the `world-authoring` skill; this page owns the LOOK.
 
 ## Where things stand
 
@@ -258,7 +258,3 @@ but cannot turn green into yellow or red, and all 19 plants share one image, so 
 
 - [Biome References — Real Places Beside Our Maps](biome-references.md) — a real photo of each biome beside its
   test map.
-- [The World Map — Twelve Homelands](world-map.md) — the fourteen biomes, the element each favours, and which
-  homeland map uses which biome.
-- [Creatures and Where They Live](biome-mob-families.md) — which creatures live in each map, and each creature's biome, element and level.
-- [World Creator — Spec](world-creator-spec.md) — the tool that builds a world of linked maps.

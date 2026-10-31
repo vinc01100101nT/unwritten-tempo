@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-15
+last-updated: 2026-10-31
 tags:
   - process
 ---
@@ -10,7 +10,7 @@ tags:
 
 **The standing way to find out what the game actually did.** Every meaningful moment writes one line. Each line
 starts with the time to the millisecond, belongs to a named category, and names every unit by the map it is in and
-its spawn_id — so two snakes in one field are two different names. You switch categories on and off to decide what
+its spawn_id — so two snakes in one hunting ground are two different names. You switch categories on and off to decide what
 you are told, and two scripts read the whole log for you after a play-test.
 
 Use it whenever you are play-testing, hunting a bug, or driving the game through a tester. It is written for
@@ -43,7 +43,8 @@ drew. The server's log is only kept when the server is started with the run comm
   player's machine counts from the time the server gave it on arrival. Two lines 0.250 apart happened a quarter of a
   second apart, and the date keeps a play-test that runs past midnight in order.
 - **Category** — the word in square brackets. Filter on it.
-- **Map** — the scene name of the map the line is about, e.g. `lst_fild01`, `lastline`.
+- **Map** — the scene name of the map the line is about. The game is one seamless map, so this is `world`; a line
+  names no town or hunting ground. (`nowhere` is a unit that has left, or was never placed in a map.)
 - **Unit** — the unit's name, a space, `#`, and its spawn_id: `Snake #3`, `Alpha #1`, `Training_Dummy #4`.
 
 Lines about the server itself (start-up, connections) have no map or unit. Unity's own start-up text, printed
@@ -53,15 +54,15 @@ before any game code runs, has no time and no category.
 
 | Category | Shape |
 | --- | --- |
-| `spawn` | `<map> <name> #<n> (<mob id>) appeared` — a creature or townsperson came into the map (a townsperson's name is `Townsfolk_<their name>`, and their model name is in the brackets). A townsperson's line goes on: `at x <x>, y <y>, z <z> — ground y <g>, <gap> above it`, or `NO GROUND FOUND under it` when it was placed before its map's ground existed. The player's own log (`Player.log`, category `client`) writes the same for the body it draws: `<map> townsperson '<name>' drawn at x …, y …, z … — ground y …` — side by side, the two say which machine put a townsperson in the air |
-| `spawn` | `map '<map>' given <n> spawn area(s), <m> creature(s).` — the server read this map's rows from the world spawn list as it loaded it |
-| `spawn` | `map '<map>' given <n> townsperson(s).` — the server read this map's people from the townsfolk list as it loaded it |
+| `spawn` | `<map> <name> #<n> (<mob id>) appeared` — a creature or townsperson came into the map (a townsperson's name is `Townsfolk_<their name>`, and their model name is in the brackets). A townsperson's line goes on: `at x <x>, y <y>, z <z> — ground y <g>, <gap> above it`, or `NO GROUND FOUND under it` when it was placed before the ground under it was in. The player's own log (`Player.log`, category `client`) writes the same for the body it draws: `<map> townsperson '<name>' drawn at x …, y …, z … — ground y …` — side by side, the two say which machine put a townsperson in the air |
+| `spawn` | `map '<map>' given <n> spawn area(s), <m> creature(s).` — the server read the map's rows from the world spawn list as it loaded it |
+| `spawn` | `map 'world' given <n> townsperson(s), each built once the ground under them is in.` — the server read the map's people from the townsfolk list as it loaded it; each one's `appeared` line comes later, when the square under them has loaded |
 | `spawn` | `townsperson '<name>' in '<map>' has no model — left out.` — a row of the townsfolk list names no body, so that person was not made |
 | `server` | `<player> bought <n> <item id> from '<shop>' for <g> gold`, ending `(<f> free, a tutorial's first run)` when a tutorial's first run gave some of them free / `<player> sold <n> <item id> to '<shop>' for <g> gold` / `<player> bought back <n> <item id> (copy <id>) at '<shop>' for <g> gold` (no copy part for a stack) — a shop deal the server let through · `<player>'s oldest kept sale, <n> <item id> (copy <id>), is gone for good: more than 10 kept` — an eleventh sale pushed the oldest off the buy-back list |
-| `server` | `<player> set their save point at the Keeper in '<map>'` (the town only — no spot is kept) · `<player> paid <g> gold for a Keeper's trip from '<map>' to '<map>' (<n> doors)` · `<player>'s Keeper trip to '<map>' did not happen — <g> gold handed back` — the Keeper's Save Point and Teleport, as the server let them through or undid them |
+| `server` | `<player> set their save point at the Keeper in '<map>'` (the map only — no spot is kept) — the Keeper's Save Point. The Keeper's Teleport writes `<player> paid <g> gold for a Keeper's trip from '<map>' to '<map>' (<n> doors)` and `<player>'s Keeper trip to '<map>' did not happen — <g> gold handed back`, but a trip needs another map with a Keeper a door away, so in the one-map world it offers none and neither line is written |
 | `server` | `<player> is storing <n> <item id> (copy <id>) — move <move id>` / `<player> is taking <n> <item id> (copy <id>) out of storage — move <move id>` (no copy part for a stack) — a storage move started; `storage <store or take> of <n> <item id> (copy <id>) for character <id> written down` — the save that carried it landed · `storage <store or take> of <n> <item id> for character <id> was refused (<why>) — sending the save again without it` — the character server would not make the move, and wrote nothing · `storage <store or take> of <n> <item id> for character <id> was let go — the save that carried it will never be written` · `could not read <player>'s storage — <why>` |
-| `server` | `<player> asked to walk through a door to '<map>' from '<map>' at <where> — there is no such door within 3 m of them. Refused.` — a map change was asked for with no door of the world layout in reach · `GM <player> walked through a door to '<map>' from '<map>' with no door of the world layout in reach — let through` — a game master, on a door the layout does not list (the test maps) |
-| `server` | `<player> said they are in '<map>' but the server has them in '<map>' — refused.` — their machine named a map other than the one the server put them in; the server's stands · `<player> was sent into '<map>' with no arrival point the server can name — their next position is taken as read` — a door or `/tp` with no arrival point named, the one trip still taken on trust · `<player> did not report arriving where the server sent them in '<map>' <where> within 2s — standing them there` — after a trip the server ordered, their machine had the map and still had not reported the spot (said once per trip; the stand-there repeats every 2 s) |
+| `server` | `<player> asked to walk through a door to '<map>' from '<map>' at <where> — there is no such door within 3 m of them. Refused.` — a map change was asked for with no door of the world layout in reach; the world has no doors between maps, so every such ask is refused · `GM <player> walked through a door to '<map>' from '<map>' with no door of the world layout in reach — let through` — a game master's `/tp <map id>` |
+| `server` | `<player> said they are in '<map>' but the server has them in '<map>' — refused.` — their machine named a map other than the one the server put them in; the server's stands · `<player> was sent into '<map>' with no arrival point the server can name — their next position is taken as read` — a `/tp <map id>` with no arrival point named, the one trip still taken on trust · `<player> did not report arriving where the server sent them in '<map>' <where> within 2s — standing them there` — after a trip the server ordered, their machine had the map and still had not reported the spot (said once per trip; the stand-there repeats every 2 s) |
 | `server` | `<player> is going back to their save point (<item id>)` (no brackets when no item paid) · `<player>'s trip did not happen — <item id> given back` — the wing that paid for a trip that failed, or one owed to somebody who fell first · `<unit> found nowhere to land on a random spot of '<map>'` — a wing's trip, or a Fly Wing with no walkable cell to land on |
 | `server` | `<map> <player> picked up <item> — it had lain <s>s`, ending ` and fell for <unit>` when it was somebody else's kill · `<map> <player> could not pick up <item> — <why>` (`it is <d> away and the reach is <r>`, or `it is still kept for <unit>`; one a second at most) · `<map> <player> had no room: <sentence>` — a pickup or an auto-loot refused because a bag tab is full or it is too heavy, in the sentence the player was shown (a craft refused for the same reason is written as that craft's refusal) |
 | `server` | `<map> <item> vanished untaken after <s>s — it fell for <player>` — a kill's drop nobody picked up before it ran out |
@@ -75,9 +76,9 @@ before any game code runs, has no time and no category.
 | `server` | `<map> <player> accepted quest <quest id> from <townsperson id>` · `… started following quest <quest id>` / `stopped following any quest` · `… pressed Play on tutorial <quest id> — <Started / NotMet / …>` · `… reached step <i> of <n> (<step id>) of quest <quest id>` — the gap between two step lines is how long the step took |
 | `server` | `<map> <player> reached level <n>` · `<map> <player> was killed by <unit> at level <n>` — a player's death is written here even with `hit` off |
 | `server` | `<map> <player> said: <text>` — a line said in the room's chat; a private message is never written |
-| `server` | `<name> (<player id>) stopped playing after <m>m <s>s — level <a> → <b>; <k> kill(s) for <xp> experience and <g> gold; died <d> time(s); <f> thing(s) fell for them, <v> vanished untaken; picked up <p>; finished <q> quest(s); maps: <map>, …` — one line per visit, written when they leave the game; walking through doors on the same map server is the same visit |
-| `spawn` | `<map> <name> #<n> came back` — a creature that died is alive again, same body, same number |
-| `spawn` | `<map> <name> #<n> (<player id>) entered` — a player is now in this map |
+| `server` | `<name> (<player id>) stopped playing after <m>m <s>s — level <a> → <b>; <k> kill(s) for <xp> experience and <g> gold; died <d> time(s); <f> thing(s) fell for them, <v> vanished untaken; picked up <p>; finished <q> quest(s); maps: <map>, …` — one line per visit, written when they leave the game |
+| `spawn` | `<map> <name> #<n> came back` — a creature is out again, same body, same number: one that died, or one put away when its spawn area fell asleep |
+| `spawn` | `<map> <name> #<n> (<player id>) entered` — a player is now in the world |
 | `spawn` | `<map> <name> #<n> got up [HP <now>/<max>]` — a player who died is standing again, same number |
 | `hit` | `<map> <attacker> hit <target> with <skill> for <dealt> (rolled <rolled>)` — then `(critical)`, `(after it died)`, `[HP <now>/<max>]` and `— nothing got through: <reason>` when they apply, in that order |
 | `hit` | `<map> <attacker> MISSED <target> with <skill>` |
@@ -138,16 +139,18 @@ A miss is its own line (`MISSED`), not a zero-damage hit.
 A spawn_id is a number that tells units apart **inside one map's lines**. It is not the mob id (every snake shares
 one) and not the player id.
 
-- **Counted per map.** Every map has its own count, starting at 1 when the server starts.
-- **Never restarts while the server runs.** A map nobody is in is let go and brought back later; its count carries
-  on, so `lst_fild01 Snake #3` never means two different snakes in one log. A server restart starts every count again.
+- **Counted per map.** Every map has its own count, starting at 1 when the server starts. The game is one map,
+  `world`, so in practice it is one count for the whole server.
+- **Never restarts while the server runs.** `world Snake #3` never means two different snakes in one log. A server
+  restart starts the count again.
 - **A creature keeps its number through death.** A snake that dies and comes back is the same body, and says
   `came back` with the number it had. A creature that is new gets the next number.
-- **A map that is let go takes its creatures with it.** When it is brought back its creatures are new, with new
-  numbers.
-- **A player gets a number each time they enter a map.** Dying and getting up in the same map keeps it. Walking into
-  another map, or reconnecting, gives a new one. The `entered` line carries their player id, which is what joins
-  their numbers across maps.
+- **A creature keeps its number while its spawn area sleeps.** A spawn area with nobody near falls asleep and puts its
+  creatures away; when somebody comes near again they are brought back out, and each says `came back` with the number
+  it had.
+- **A player gets a number each time they enter the world.** Dying and getting up keeps it, and so does any trip
+  inside the world — a save point, a wing, a `/tp`. Reconnecting gives a new one. The `entered` line carries their
+  player id, which is what joins their numbers across visits.
 - **The player id** is the id of their row in the `character` table. Look one up:
   `psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -A -t -c "select id, name from character where deleted_at is null;"`
 - **Townsfolk** get a number on their `appeared` line and nowhere else — they take no blows.
@@ -167,8 +170,8 @@ on.
 | `server` | The machine that owns the world, talking about itself — and every choice a player makes, from picking something up to leaving | on |
 | `net` | Messages crossing between machines | on |
 | `client` | A player's own machine | on |
-| `map` | Maps loading, handing over, being let go | on |
-| `spawn` | A unit appearing, coming back, entering a map, or a player getting up, with its spawn_id | on |
+| `map` | The world's squares of ground loading (`chunk <i> of 'world' in after <ms> ms; <n> held`, and `ground around the arrival in 'world' loaded in <ms> ms` as a player lands), and this server's hand-over with the character server | on |
+| `spawn` | A unit appearing, coming back, entering the world, or a player getting up, with its spawn_id | on |
 | `census` | A routine head-count — nothing writes it today | on |
 | `loot` | What a kill paid, who it went to, and which unit paid it | on |
 | `hit` | A blow landing or being turned away and why, damage that is not a blow, and a unit dying and who killed it | **off** |
@@ -229,7 +232,7 @@ from one shared file, `tools/server_log_lines.py`, so a line whose wording chang
 ```
 tools/server-log-tally.py                                  # logs/server.log
 tools/server-log-tally.py logs/server-prev.log             # the run before
-tools/server-log-tally.py --map lst_fild01                   # one map only
+tools/server-log-tally.py --map world                        # one map only
 tools/server-log-tally.py --since "2026-09-15 23:27:00"    # only from this moment on
 tools/server-log-tally.py --since 23:27:00                 # the same, on the date of the log's first game line
 ```
@@ -283,10 +286,10 @@ was rolled, what was dealt, and why a zero was a zero.
 **"How far apart were those two things?"** — subtract the two times. Everything on one line of the log is stamped
 the moment the server did it.
 
-**"Everything that happened to one unit."** — `grep 'lst_fild01 Snake #3'` (map and number together, since numbers
-repeat across maps).
+**"Everything that happened to one unit."** — `grep 'world Snake #3'` (map, name and number together, so `#3` alone
+does not also find `#31`).
 
-**"Everything one player did across maps."** — find their `entered` lines by player id, note the `<map> <name> #<n>`
+**"Everything one player did across visits."** — find their `entered` lines by player id, note the `<map> <name> #<n>`
 each gave, and grep for those.
 
 **"How did a play-tester play?"** — start from their `stopped playing after` line: it sums the visit in one line. Then

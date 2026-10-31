@@ -157,4 +157,3 @@ them there.
 
 - [Story & Setting (Canon)](story-setting-canon.md) — the artist, Chaos and the Fourteen.
 - [Mob Roster — Normal, Elite, Shadow](mob-roster.md) — the three kinds of creature, their drops and summoning.
-- [Creatures and Where They Live](biome-mob-families.md) — every creature's home biome, element and level.

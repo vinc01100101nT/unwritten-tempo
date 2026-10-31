@@ -255,4 +255,3 @@ Snow's snow blanket and Mist's fog are shown. There is no rain or falling snow i
 
 - [Biomes — Ground Tiles and Props](biomes.md) — each biome's tiles, props, the props still to make, and the weather a
   biome always has.
-- [The World Map — Twelve Homelands](world-map.md) — which biome each homeland map uses.

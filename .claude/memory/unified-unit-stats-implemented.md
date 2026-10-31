@@ -7,7 +7,7 @@ metadata:
   originSessionId: 036aac99-29a9-45db-bff5-8157919fb418
 ---
 
-Mobs and players are **1:1**. Same stats, same formulas, same stat-point economy, no scaling layers anywhere. Docs (both under V3, since this is V3's unit-side half): `docs/2-systems/active-skill-system-v3/unified-unit-stats.md` (design) + `unified-unit-stats-implementation-notes.md` (code-facing).
+Mobs and players share the same stats, formulas and stat-point economy; the one scaling layer is the creature's multiplier (health, attack by its cube root, and what a kill pays). Doc: `docs/2-systems/active-skill-system-v3/unified-unit-stats.md`.
 
 **The pieces (all in `unity/Assets/Scripts/`):**
 - `UnitStatMath.cs` — THE formulas + constants + the point economy (`StatCost`, `PointsEarnedByLevel`, `PointsSpent`, `MaxAffordableStat`, `Allocate`). `Character` delegates to it and computes nothing itself.

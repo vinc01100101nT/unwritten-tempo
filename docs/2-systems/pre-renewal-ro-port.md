@@ -101,7 +101,6 @@ Designed in chat with the dev, 2026-06-25. Phases 1–2 implemented same session
 ## Related
 
 - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — where these formulas ended up living, for players and mobs alike.
-- [Unified Unit Stats — Implementation Notes](active-skill-system-v3/unified-unit-stats-implementation-notes.md) — the code-facing record of the same.
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the percentage layer that sits on top of these numbers.
 - [Skill Numbers & Balance Baseline](active-skill-system-v3/skill-numbers-balance-baseline.md) — the skill-side bands anchored to these player stats.
 - [Active Skill System — V3](active-skill-system-v3/README.md) — the combat rules (crit ignores defence, magic never misses) these formulas serve.
